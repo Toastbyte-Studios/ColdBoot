@@ -5,7 +5,7 @@
 const DeviceInfo = {
   getVersion: jest.fn(() => '1.0.0'),
   getBuildNumber: jest.fn(() => '1'),
-  getApplicationName: jest.fn(() => 'TOAST'),
+  getApplicationName: jest.fn(() => 'Cold Boot'),
   getBundleId: jest.fn(() => 'com.toast'),
   getDeviceId: jest.fn(() => 'test-device-id'),
   getDeviceType: jest.fn(() => 'Handset'),
