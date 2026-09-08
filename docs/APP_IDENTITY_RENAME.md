@@ -5,7 +5,7 @@ numbers verified against `feat/coldboot-theme-tokens` at `e01efbd`.
 
 **Revised** from the first draft. The app is not deployed anywhere — no
 production, no test track, no external installs — and that changes the correct
-answer on several items. Anything below marked *free today* is free precisely
+answer on several items. Anything below marked _free today_ is free precisely
 because there are no users, and becomes permanently expensive the day you first
 ship. Do those now.
 
@@ -67,12 +67,12 @@ on purpose.
 Short list. A repo-wide replace on `toast` still breaks these, and no amount of
 "nothing is live" makes them safe.
 
-| What | Where | Why |
-| --- | --- | --- |
-| `toast`, `toastText`, `showToast`, `toastOpacity` | `DownloadProgressChip.tsx`, 12 hits | UI toast notifications. Nothing to do with the brand. A blind replace mangles a working component. |
-| `KTOAST` | `__tests__/BackupService.test.ts:141` | Ham radio call sign fixture. Becomes `KCOLDBOOT` under a naive replace. |
-| `toastbyte.studio`, `support@`/`info@toastbyte.studio` | `MapScreen.tsx:120`, `RepeaterBookStore.ts:18`, `HelpModal.tsx:159` | Company domain. The company did not rebrand. |
-| `Toastbyte-Studios/TOAST#235` | `constants.ts:180`, `MapSpikeScreen.tsx:6` | Historical issue references. Still resolve via GitHub's redirect. |
+| What                                                   | Where                                                               | Why                                                                                                |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| `toast`, `toastText`, `showToast`, `toastOpacity`      | `DownloadProgressChip.tsx`, 12 hits                                 | UI toast notifications. Nothing to do with the brand. A blind replace mangles a working component. |
+| `KTOAST`                                               | `__tests__/BackupService.test.ts:141`                               | Ham radio call sign fixture. Becomes `KCOLDBOOT` under a naive replace.                            |
+| `toastbyte.studio`, `support@`/`info@toastbyte.studio` | `MapScreen.tsx:120`, `RepeaterBookStore.ts:18`, `HelpModal.tsx:159` | Company domain. The company did not rebrand.                                                       |
+| `Toastbyte-Studios/TOAST#235`                          | `constants.ts:180`, `MapSpikeScreen.tsx:6`                          | Historical issue references. Still resolve via GitHub's redirect.                                  |
 
 ---
 
@@ -83,22 +83,22 @@ These must land in the same commit. `app.json` `name` feeds
 Android and `withModuleName` on iOS. A mismatch is a white screen at launch, not
 a build error.
 
-| File | Line | Change |
-| --- | --- | --- |
-| `app.json` | 2 | `"name": "TOAST"` → `"ColdBoot"` |
-| `android/app/src/main/java/studio/toastbyte/toast/MainActivity.kt` | 14 | `getMainComponentName(): String = "TOAST"` → `"ColdBoot"` |
-| `ios/TOAST/AppDelegate.swift` | 28 | `withModuleName: "TOAST"` → `"ColdBoot"` |
+| File                                                               | Line | Change                                                    |
+| ------------------------------------------------------------------ | ---- | --------------------------------------------------------- |
+| `app.json`                                                         | 2    | `"name": "TOAST"` → `"ColdBoot"`                          |
+| `android/app/src/main/java/studio/toastbyte/toast/MainActivity.kt` | 14   | `getMainComponentName(): String = "TOAST"` → `"ColdBoot"` |
+| `ios/TOAST/AppDelegate.swift`                                      | 28   | `withModuleName: "TOAST"` → `"ColdBoot"`                  |
 
 `index.js` needs no edit — it already reads `name` from `app.json`.
 
 Then the two strings users actually see under the icon. Neither is in the #384
 checklist and both are easy to miss:
 
-| File | Change |
-| --- | --- |
-| `app.json` | `"displayName"` → your Decision 2 answer |
+| File                                          | Change                                   |
+| --------------------------------------------- | ---------------------------------------- |
+| `app.json`                                    | `"displayName"` → your Decision 2 answer |
 | `android/app/src/main/res/values/strings.xml` | `<string name="app_name">TOAST</string>` |
-| `ios/TOAST/Info.plist` | `CFBundleDisplayName` |
+| `ios/TOAST/Info.plist`                        | `CFBundleDisplayName`                    |
 
 Optional here, low risk: the `[TOAST]` log tags in `index.js:16` and
 `src/components/ErrorBoundary.tsx:35`.
@@ -195,11 +195,11 @@ None of these are safe to change once you have users. All of them are free right
 now. The only data that exists is on your own emulators; wipe app data
 afterwards and move on.
 
-| What | Where | New value |
-| --- | --- | --- |
-| SQLite filename | `EmergencyPlanStore.ts:98`, `InventoryStore.ts:166`, `NotesStore.ts:559`, `PantryStore.ts:274` — plus doc comments in `NotesStore.ts:546`, `TrackStore.ts:36,47`, `WaypointStore.ts:18,47` | `toast.db` → `coldboot.db` |
-| Share wire format | `shareUtils.ts:9-10` | `toast-rally-points` → `coldboot-rally-points`, `toast-comm-plan` → `coldboot-comm-plan` |
-| Backup file prefix | `backupService.ts:30` | `toast-backup-` → `coldboot-backup-` |
+| What               | Where                                                                                                                                                                                      | New value                                                                                |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- |
+| SQLite filename    | `EmergencyPlanStore.ts:98`, `InventoryStore.ts:166`, `NotesStore.ts:559`, `PantryStore.ts:274` — plus doc comments in `NotesStore.ts:546`, `TrackStore.ts:36,47`, `WaypointStore.ts:18,47` | `toast.db` → `coldboot.db`                                                               |
+| Share wire format  | `shareUtils.ts:9-10`                                                                                                                                                                       | `toast-rally-points` → `coldboot-rally-points`, `toast-comm-plan` → `coldboot-comm-plan` |
+| Backup file prefix | `backupService.ts:30`                                                                                                                                                                      | `toast-backup-` → `coldboot-backup-`                                                     |
 
 #384 lists the `shareUtils` identifiers as must-not-rename because renaming
 "rejects payloads from older builds." There are no older builds. The constraint
@@ -269,7 +269,7 @@ checklist.
 ## Release signing is PR #316, not this work
 
 An earlier draft of this doc said the `TOAST_RELEASE_*` Gradle properties did not
-exist. They do not exist *in the codebase*, but they exist in **PR #316,
+exist. They do not exist _in the codebase_, but they exist in **PR #316,
 "Configure Android release signing for Play Store"** — open since April 2026,
 unreviewed. It adds a `signingConfigs.release` block reading
 `TOAST_RELEASE_STORE_FILE`, `TOAST_RELEASE_STORE_PASSWORD`,
