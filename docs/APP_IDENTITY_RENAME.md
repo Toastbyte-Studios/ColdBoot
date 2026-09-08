@@ -1,7 +1,7 @@
 # App identity rename: TOAST → ColdBoot
 
-Working guide for the `App identity` blocking item on #384. Paths and line
-numbers verified against `feat/coldboot-theme-tokens` at `e01efbd`.
+Working guide for the `App identity` blocking item from #384. Paths and line
+numbers verified against `main` at `7f7e96a` (2026-09-08).
 
 **Revised** from the first draft. The app is not deployed anywhere — no
 production, no test track, no external installs — and that changes the correct
@@ -10,34 +10,37 @@ because there are no users, and becomes permanently expensive the day you first
 ship. Do those now.
 
 Already done, for context: the GitHub repo is renamed to
-`Toastbyte-Studios/ColdBoot`, and #385 (icons, theme mock, dark splash) is
-merged into `feat/coldboot-theme-tokens`.
+`Toastbyte-Studios/ColdBoot`, and both #385 (icons, theme mock, dark splash) and
+#384 (theme tokens) are merged to `main`.
 
 ---
 
-## Merge order
+## Starting point
 
-Do not start this rename until #384 is merged.
+Everything this rename was waiting on has landed. Branch off current `main` and
+go.
 
 ```
-#316 (release signing)  ─┐
-#326 (enableScreens)    ─┼─→  #384 (theme tokens)  ─→  this rename
+#385 (branding)  ─→  #384 (theme tokens)  ─→  this rename  ─→  signing / enableScreens, rewritten
 ```
 
-**#384 before the rename**, because #384 now carries 30 binary PNGs and a
-storyboard under `ios/TOAST/`, and Stage 3 moves that whole directory. Git
-handles "edit files, then rename the directory" cleanly. Rebasing a branch full
-of binary assets across a directory rename is how you end up with PNGs stranded
-at the old path that nobody notices until an icon fails to load.
+**#384 first** mattered because it carries 30 binary PNGs and a storyboard under
+`ios/TOAST/`, and Stage 3 moves that whole directory. Git handles "edit files,
+then rename the directory" cleanly; rebasing a branch full of binary assets
+across a directory rename is how you end up with PNGs stranded at the old path
+that nobody notices until an icon fails to load. It merged on 2026-09-08, so
+that ordering constraint is satisfied.
 
-**#316 and #326 before that**, because both are months stale and both collide
-with this work. #316 in particular introduces the four `TOAST_RELEASE_*`
-property names — merge it first and your rename sweep catches them in one pass;
-merge it after and you have just added four freshly-stale names. Both will need
-a rebase onto current `main` regardless.
+**#316 (release signing) and #326 (enableScreens) are closed unmerged** as of
+2026-09-08 — deliberately. Both were months stale, and rebasing them across this
+rename buys nothing over rewriting them. An earlier draft of this doc had them
+merging first so the rename sweep would catch their identifiers in one pass;
+that is no longer the plan. Nothing in those branches will be swept, so whatever
+replaces them must use ColdBoot names from its first commit. Both are picked up
+in the two follow-up sections at the end of this doc.
 
-Never do the rename and #384 as one commit. A palette change mixed with a
-49-reference `.pbxproj` rename is not reviewable.
+Never mix the rename with a palette or behaviour change in one commit. A
+49-reference `.pbxproj` rename is only reviewable on its own.
 
 ---
 
@@ -54,11 +57,15 @@ So the calculus inverts. Changing it costs nothing today and is irreversible
 after your first release. Go to `studio.toastbyte.coldboot` and do Stage 4. Same
 for `PRODUCT_BUNDLE_IDENTIFIER` on iOS in Stage 3.
 
-**2. What is the display name exactly?** `ColdBoot` and `Cold Boot` are
-different strings and both end up on a home screen. Pick one now. The component
-name in Stage 1 cannot contain spaces, so if you want `Cold Boot` visible you
-need `ColdBoot` as the component and `Cold Boot` as the display name, diverging
-on purpose.
+**2. What is the display name exactly? Decided: `Cold Boot`, two words.**
+
+`ColdBoot` and `Cold Boot` are different strings and both end up on a home
+screen. The component name in Stage 1 cannot contain spaces, so this is a
+deliberate divergence: `ColdBoot` is the component name (`app.json` `name`,
+`getMainComponentName`, `withModuleName`), `Cold Boot` is every user-visible
+string (`displayName`, `app_name`, `CFBundleDisplayName`). Keep them straight —
+they are not interchangeable, and the coupled four below must all read
+`ColdBoot`.
 
 ---
 
@@ -67,12 +74,12 @@ on purpose.
 Short list. A repo-wide replace on `toast` still breaks these, and no amount of
 "nothing is live" makes them safe.
 
-| What                                                   | Where                                                               | Why                                                                                                |
-| ------------------------------------------------------ | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| `toast`, `toastText`, `showToast`, `toastOpacity`      | `DownloadProgressChip.tsx`, 12 hits                                 | UI toast notifications. Nothing to do with the brand. A blind replace mangles a working component. |
-| `KTOAST`                                               | `__tests__/BackupService.test.ts:141`                               | Ham radio call sign fixture. Becomes `KCOLDBOOT` under a naive replace.                            |
-| `toastbyte.studio`, `support@`/`info@toastbyte.studio` | `MapScreen.tsx:120`, `RepeaterBookStore.ts:18`, `HelpModal.tsx:159` | Company domain. The company did not rebrand.                                                       |
-| `Toastbyte-Studios/TOAST#235`                          | `constants.ts:180`, `MapSpikeScreen.tsx:6`                          | Historical issue references. Still resolve via GitHub's redirect.                                  |
+| What                                                   | Where                                                               | Why                                                                                                       |
+| ------------------------------------------------------ | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `toast`, `toastText`, `showToast`, `toastOpacity`      | `DownloadProgressChip.tsx`, 12 hits                                 | UI toast notifications. Nothing to do with the brand. A blind replace mangles a working component.        |
+| `KTOAST`                                               | `__tests__/BackupService.test.ts:141`                               | Ham radio call sign fixture. Becomes `KCOLDBOOT` under a naive replace.                                   |
+| `toastbyte.studio`, `support@`/`info@toastbyte.studio` | `MapScreen.tsx:120`, `RepeaterBookStore.ts:18`, `HelpModal.tsx:159` | Company domain. The company did not rebrand. Note `RepeaterBookStore.ts:18` is _half_ keep — see Stage 7. |
+| `Toastbyte-Studios/TOAST#235`                          | `constants.ts:180`, `MapSpikeScreen.tsx:6`                          | Historical issue references. Still resolve via GitHub's redirect.                                         |
 
 ---
 
@@ -100,7 +107,11 @@ checklist and both are easy to miss:
 | `android/app/src/main/res/values/strings.xml` | `<string name="app_name">TOAST</string>` |
 | `ios/TOAST/Info.plist`                        | `CFBundleDisplayName`                    |
 
-Optional here, low risk: the `[TOAST]` log tags in `index.js:16` and
+Also `__mocks__/react-native-device-info.ts:8` — `getApplicationName` returns
+`'TOAST'`. Nothing asserts on it today, which is exactly why it rots quietly.
+It mocks the display name, so it takes the spaced form.
+
+Optional here, low risk: the `[TOAST]` log tags in `index.js:15` and
 `src/components/ErrorBoundary.tsx:35`.
 
 **Check:** build and launch on both platforms. Not Metro — a real launch on
@@ -250,6 +261,12 @@ None of these block a build.
   "only if the repo is renamed." It is. Note it currently reads
   `github.com/jason-shprintz/TOAST`, a personal or pre-transfer path, so fix the
   owner as well as the name.
+- `src/stores/RepeaterBookStore.ts:18` — the RepeaterBook `User-Agent`, currently
+  `TOAST/1.0 (+https://toastbyte.studio; support@toastbyte.studio)`. Rename the
+  `TOAST/1.0` product token only; the two `toastbyte.studio` contacts on the same
+  line stay, per the do-not-rename table. This line appears in that table, so it
+  is easy to skip the whole thing — don't. `__tests__/RepeaterBookStore.test.ts:342`
+  asserts the header contains `TOAST` and fails until you update it too.
 
 ### The proguard rule is already broken
 
@@ -266,25 +283,35 @@ checklist.
 
 ---
 
-## Release signing is PR #316, not this work
+## Follow-up 1 — release signing (was #316, now unwritten)
 
 An earlier draft of this doc said the `TOAST_RELEASE_*` Gradle properties did not
-exist. They do not exist _in the codebase_, but they exist in **PR #316,
-"Configure Android release signing for Play Store"** — open since April 2026,
-unreviewed. It adds a `signingConfigs.release` block reading
-`TOAST_RELEASE_STORE_FILE`, `TOAST_RELEASE_STORE_PASSWORD`,
-`TOAST_RELEASE_KEY_ALIAS` and `TOAST_RELEASE_KEY_PASSWORD` from
-`~/.gradle/gradle.properties`, and points `buildTypes.release` at it instead of
-the debug keystore.
+exist. They do not exist in the codebase, and as of 2026-09-08 they do not exist
+anywhere: they lived only in **PR #316, "Configure Android release signing for
+Play Store"**, which was closed unmerged rather than rebased.
 
-That is the real fix for a genuine blocker — `buildTypes.release` currently uses
-`signingConfig signingConfigs.debug` (`android/app/build.gradle:117`) and Play
-rejects debug-signed uploads.
+The blocker it addressed is real and still present. `buildTypes.release` uses
+`signingConfig signingConfigs.debug` (`android/app/build.gradle:117`), and Play
+rejects debug-signed uploads. Nothing in this rename touches that line.
 
-Merge it before this rename so the sweep renames the four properties to
-`COLDBOOT_RELEASE_*` in one pass. The keystore itself and the local
-`~/.gradle/gradle.properties` entries are manual setup outside the repo; see
-#316's description.
+So it is follow-up work, not rename work — and there is a small upside to the
+ordering flip: write it once, correctly. The rewrite adds a
+`signingConfigs.release` block reading `COLDBOOT_RELEASE_STORE_FILE`,
+`COLDBOOT_RELEASE_STORE_PASSWORD`, `COLDBOOT_RELEASE_KEY_ALIAS` and
+`COLDBOOT_RELEASE_KEY_PASSWORD` from `~/.gradle/gradle.properties`, and points
+`buildTypes.release` at it instead of the debug keystore. ColdBoot names from the
+first commit; no sweep is coming to rename them. The keystore itself and the
+local `~/.gradle/gradle.properties` entries are manual setup outside the repo.
+
+## Follow-up 2 — enableScreens (was #326, now unwritten)
+
+Closed unmerged alongside #316. `react-native-screens` is already a dependency
+(`package.json:46`), but `enableScreens()` is called nowhere, so Android screen
+transitions still run without it.
+
+Identity-neutral — it touches no `TOAST` string and collides with nothing in
+Stages 1-7 — so redo it whenever, before or after the rename. It is listed here
+only so closing #326 does not lose the thread.
 
 ---
 
