@@ -7,16 +7,9 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Image,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View, ScrollView, Alert, Image } from 'react-native';
 import { HorizontalRule } from '../../../components/HorizontalRule';
+import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
@@ -81,31 +74,29 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
     <ScreenBody>
       <SectionHeader>{noteTitle}</SectionHeader>
       <View style={styles.noteHeader}>
-        <TouchableOpacity
+        <IconButton
+          name="create-outline"
+          size={30}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Edit note"
-          accessibilityRole="button"
           style={shared.noteButton}
           onPress={() => {
             navigation.navigate('EditNote', { note });
           }}
-        >
-          <Icon name="create-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
-        <TouchableOpacity
+        />
+        <IconButton
+          name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={30}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Bookmark note"
-          accessibilityRole="button"
           style={shared.noteButton}
           onPress={handleBookmarkPress}
-        >
-          <Icon
-            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
+        />
+        <IconButton
+          name="trash-outline"
+          size={30}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Delete note"
-          accessibilityRole="button"
           style={shared.noteButton}
           onPress={() => {
             Alert.alert(
@@ -124,9 +115,7 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
               ],
             );
           }}
-        >
-          <Icon name="trash-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
+        />
       </View>
       <HorizontalRule />
       <View style={styles.container}>

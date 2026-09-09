@@ -1,5 +1,6 @@
 import React from 'react';
 import {
+  GestureResponderEvent,
   Platform,
   Pressable,
   StyleProp,
@@ -24,7 +25,11 @@ export interface IconButtonProps {
    * sensible default to fall back to.
    */
   accessibilityLabel: string;
-  onPress: () => void;
+  /**
+   * Receives the press event so nested icon buttons inside a tappable row can
+   * call `stopPropagation()`.
+   */
+  onPress: (event: GestureResponderEvent) => void;
   /** Glyph size in points. The touch target stays at 44/48 regardless. @default 24 */
   size?: number;
   /** Glyph color. Defaults to the theme foreground. */

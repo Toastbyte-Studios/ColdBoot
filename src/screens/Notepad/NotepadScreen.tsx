@@ -5,14 +5,13 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
 
 /**
@@ -32,7 +31,6 @@ import { useNotesStore } from '../../stores';
 export default observer(function NotepadScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const core = useNotesStore();
-  const COLORS = useTheme();
 
   const categoryIcons: Record<string, string> = {
     General: 'folder-outline',
@@ -44,50 +42,30 @@ export default observer(function NotepadScreen() {
     <ScreenBody>
       <SectionHeader>Notepad</SectionHeader>
       <View style={styles.noteHeader}>
-        <TouchableOpacity
-          style={styles.noteButton}
-          onPress={() => navigation.navigate('NewNote')}
+        <IconButton
+          name="create-outline"
+          size={30}
           accessibilityLabel="New Note"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="create-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.noteButton}
-          onPress={() => navigation.navigate('RecentNotes')}
+          onPress={() => navigation.navigate('NewNote')}
+        />
+        <IconButton
+          name="time-outline"
+          size={30}
           accessibilityLabel="Recent Notes"
-          accessibilityRole="button"
-        >
-          <Ionicons name="time-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.noteButton}
-          onPress={() => navigation.navigate('BookmarkedNotes')}
+          onPress={() => navigation.navigate('RecentNotes')}
+        />
+        <IconButton
+          name="bookmark-outline"
+          size={30}
           accessibilityLabel="Bookmarked Notes"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="bookmark-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.noteButton}
-          onPress={() => navigation.navigate('ManageCategories')}
+          onPress={() => navigation.navigate('BookmarkedNotes')}
+        />
+        <IconButton
+          name="folder-open-outline"
+          size={30}
           accessibilityLabel="Manage Categories"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="folder-open-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={() => navigation.navigate('ManageCategories')}
+        />
       </View>
       <HorizontalRule />
 
@@ -113,8 +91,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  noteButton: {
-    paddingVertical: 6,
   },
 });

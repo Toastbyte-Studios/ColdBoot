@@ -1,18 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View, FlatList, Alert } from 'react-native';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useNotesStore, useSettingsStore } from '../../stores';
 import { COLORS } from '../../theme';
 import { sortNotes } from '../../utils/noteSorting';
@@ -61,7 +56,7 @@ export default observer(function RecentNotesScreen() {
             const previewTitle = item.title || '(Untitled)';
             const previewText = item.text || '';
             return (
-              <TouchableOpacity
+              <Touchable
                 accessibilityRole="button"
                 onPress={() =>
                   setExpandedId((prev) => (prev === item.id ? null : item.id))
@@ -100,9 +95,11 @@ export default observer(function RecentNotesScreen() {
                       {item.category}
                     </Text>
                     {/* DELETE */}
-                    <TouchableOpacity
+                    <IconButton
+                      name="trash-outline"
+                      size={18}
+                      color={COLORS.PRIMARY_DARK}
                       accessibilityLabel="Delete note"
-                      accessibilityRole="button"
                       style={shared.noteButton}
                       onPress={(e) => {
                         e.stopPropagation();
@@ -119,16 +116,10 @@ export default observer(function RecentNotesScreen() {
                           ],
                         );
                       }}
-                    >
-                      <Icon
-                        name="trash-outline"
-                        size={18}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
+                    />
                   </View>
                 </View>
-              </TouchableOpacity>
+              </Touchable>
             );
           }}
           ListEmptyComponent={<Text style={shared.value}>No notes yet.</Text>}
