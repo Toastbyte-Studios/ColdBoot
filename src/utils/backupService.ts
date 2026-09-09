@@ -1,5 +1,5 @@
 /**
- * Backup and restore service for TOAST app data.
+ * Backup and restore service for ColdBoot app data.
  * Supports exporting all user data to a JSON file and restoring from a backup.
  */
 

@@ -17,7 +17,7 @@ export async function requestForegroundNotificationPermission(): Promise<void> {
     const result = await PermissionsAndroid.request(permission, {
       title: 'Notification Permission',
       message:
-        'TOAST uses a persistent notification while recording so trail tracking can continue with your screen locked.',
+        'Cold Boot uses a persistent notification while recording so trail tracking can continue with your screen locked.',
       buttonNeutral: 'Ask Me Later',
       buttonNegative: 'Cancel',
       buttonPositive: 'Allow',
@@ -25,7 +25,7 @@ export async function requestForegroundNotificationPermission(): Promise<void> {
     if (result !== PermissionsAndroid.RESULTS.GRANTED) {
       Alert.alert(
         'Notifications Disabled',
-        'Trail recording will still work, but Android may hide the recording notification. You can enable notifications for TOAST later in Settings.',
+        'Trail recording will still work, but Android may hide the recording notification. You can enable notifications for Cold Boot later in Settings.',
         [{ text: 'OK' }],
       );
     }

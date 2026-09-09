@@ -1,7 +1,7 @@
 # Knot Image Credits
 
 Knot reference images are sourced from Wikimedia Commons and converted to WebP
-for use in the TOAST app.
+for use in the ColdBoot app.
 
 ## Images
 

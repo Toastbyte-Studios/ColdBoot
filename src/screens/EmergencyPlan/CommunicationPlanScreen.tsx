@@ -32,7 +32,7 @@ import {
  * - Check-in schedule
  *
  * Share exports the plan via the native share sheet; Import accepts a
- * paste of the same format from another TOAST user.
+ * paste of the same format from another ColdBoot user.
  *
  * @returns The communication plan screen.
  */
@@ -96,7 +96,7 @@ export default observer(function CommunicationPlanScreen() {
     if (!data) {
       Alert.alert(
         'Invalid data',
-        'The pasted text is not a valid TOAST communication plan.',
+        'The pasted text is not a valid Cold Boot communication plan.',
       );
       return;
     }
@@ -199,7 +199,7 @@ export default observer(function CommunicationPlanScreen() {
       <ImportModal
         visible={importVisible}
         title="Import Communication Plan"
-        hint="Paste the share code received from another TOAST user. Existing content will be replaced."
+        hint="Paste the share code received from another Cold Boot user. Existing content will be replaced."
         onClose={() => setImportVisible(false)}
         onImport={handleImport}
       />

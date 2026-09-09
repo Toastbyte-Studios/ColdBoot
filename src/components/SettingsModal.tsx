@@ -224,7 +224,7 @@ export const SettingsModal = observer(
       if (!data) {
         Alert.alert(
           'Invalid File',
-          'The selected file is not a valid TOAST backup.',
+          'The selected file is not a valid Cold Boot backup.',
         );
         return;
       }
