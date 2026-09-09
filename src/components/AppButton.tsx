@@ -121,7 +121,16 @@ function relativeLuminance(hex: string): number {
  * accent, which fell below 4.5:1 in light mode.
  */
 export function onColor(background: string): string {
-  return relativeLuminance(background) > 0.45 ? '#101B24' : '#FFFFFF';
+  const bg = relativeLuminance(background);
+  const ink = relativeLuminance('#101B24');
+  const white = 1;
+
+  const contrastWithInk =
+    (Math.max(bg, ink) + 0.05) / (Math.min(bg, ink) + 0.05);
+  const contrastWithWhite =
+    (Math.max(bg, white) + 0.05) / (Math.min(bg, white) + 0.05);
+
+  return contrastWithInk >= contrastWithWhite ? '#101B24' : '#FFFFFF';
 }
 
 function withAlpha(hex: string, alpha: number): string {
