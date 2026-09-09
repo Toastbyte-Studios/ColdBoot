@@ -47,7 +47,7 @@ DENSITIES = {
     "xxxhdpi": (432, 192),
 }
 
-IOS_APPICON = ROOT / "ios/TOAST/Images.xcassets/AppIcon.appiconset"
+IOS_APPICON = ROOT / "ios/ColdBoot/Images.xcassets/AppIcon.appiconset"
 IOS_SIZES = {
     "icon-20x20@1x.png": 20,
     "icon-20x20@2x.png": 40,

@@ -72,7 +72,7 @@ Throughout:
   Optional, to target a specific scheme and build mode:
 
   ```sh
-  npx react-native run-ios --scheme TOAST --mode Debug
+  npx react-native run-ios --scheme ColdBoot --mode Debug
   ```
 
 - **Android:**
@@ -110,17 +110,17 @@ State is managed with MobX — see [`docs/MOBX_GUIDE.md`](docs/MOBX_GUIDE.md). A
 
 ### Missing Scheme in Xcode
 
-If you encounter an error about a missing scheme when building for iOS, ensure that the TOAST scheme is shared in Xcode:
+If you encounter an error about a missing scheme when building for iOS, ensure that the ColdBoot scheme is shared in Xcode:
 
 ```sh
-mkdir -p ios/TOAST.xcodeproj/xcshareddata/xcschemes
+mkdir -p ios/ColdBoot.xcodeproj/xcshareddata/xcschemes
 
 # copy the real scheme (ignore the ._ file)
-cp -f ios/TOAST.xcworkspace/xcshareddata/xcschemes/TOAST.xcscheme \
-      ios/TOAST.xcodeproj/xcshareddata/xcschemes/TOAST.xcscheme
+cp -f ios/ColdBoot.xcworkspace/xcshareddata/xcschemes/ColdBoot.xcscheme \
+      ios/ColdBoot.xcodeproj/xcshareddata/xcschemes/ColdBoot.xcscheme
 
-# sanity check: project should now list TOAST scheme
-xcodebuild -list -project ios/TOAST.xcodeproj | sed -n '1,80p'
+# sanity check: project should now list ColdBoot scheme
+xcodebuild -list -project ios/ColdBoot.xcodeproj | sed -n '1,80p'
 ```
 
 ### macOS `._*` files (AppleDouble)

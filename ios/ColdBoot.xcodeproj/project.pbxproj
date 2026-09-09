@@ -22,22 +22,22 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		0AC152FA7C284B8C8E3328E1 /* Bitter-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Bitter-Regular.ttf"; path = "TOAST/Fonts/Bitter-Regular.ttf"; sourceTree = "<group>"; };
-		13B07F961A680F5B00A75B9A /* TOAST.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TOAST.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = TOAST/Images.xcassets; sourceTree = "<group>"; };
-		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = TOAST/Info.plist; sourceTree = "<group>"; };
-		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = TOAST/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
-		277094793541951660255410 /* sos_dot.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = sos_dot.wav; path = TOAST/sos_dot.wav; sourceTree = "<group>"; };
-		286498949515769630633473 /* sos_dash.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = sos_dash.wav; path = TOAST/sos_dash.wav; sourceTree = "<group>"; };
-		2E8D28AB9190422A8B6C99EC /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = TOAST/BootSplash.storyboard; sourceTree = "<group>"; };
+		0AC152FA7C284B8C8E3328E1 /* Bitter-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Bitter-Regular.ttf"; path = "ColdBoot/Fonts/Bitter-Regular.ttf"; sourceTree = "<group>"; };
+		13B07F961A680F5B00A75B9A /* ColdBoot.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ColdBoot.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = ColdBoot/Images.xcassets; sourceTree = "<group>"; };
+		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = ColdBoot/Info.plist; sourceTree = "<group>"; };
+		13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = PrivacyInfo.xcprivacy; path = ColdBoot/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		277094793541951660255410 /* sos_dot.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = sos_dot.wav; path = ColdBoot/sos_dot.wav; sourceTree = "<group>"; };
+		286498949515769630633473 /* sos_dash.wav */ = {isa = PBXFileReference; lastKnownFileType = audio.wav; name = sos_dash.wav; path = ColdBoot/sos_dash.wav; sourceTree = "<group>"; };
+		2E8D28AB9190422A8B6C99EC /* BootSplash.storyboard */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = unknown; name = BootSplash.storyboard; path = ColdBoot/BootSplash.storyboard; sourceTree = "<group>"; };
 		3B4392A12AC88292D35C810B /* Pods-TOAST.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TOAST.debug.xcconfig"; path = "Target Support Files/Pods-TOAST/Pods-TOAST.debug.xcconfig"; sourceTree = "<group>"; };
-		533563A249BD4DF28B4D934D /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = TOAST/Colors.xcassets; sourceTree = "<group>"; };
+		533563A249BD4DF28B4D934D /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = ColdBoot/Colors.xcassets; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-TOAST.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TOAST.release.xcconfig"; path = "Target Support Files/Pods-TOAST/Pods-TOAST.release.xcconfig"; sourceTree = "<group>"; };
 		5DCACB8F33CDC322A6C60F78 /* libPods-TOAST.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TOAST.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = TOAST/AppDelegate.swift; sourceTree = "<group>"; };
-		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = TOAST/LaunchScreen.storyboard; sourceTree = "<group>"; };
-		8753FCF0D162450396BAAAF7 /* Bitter-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Bitter-Bold.ttf"; path = "TOAST/Fonts/Bitter-Bold.ttf"; sourceTree = "<group>"; };
-		92814D2CACF231B03395868E /* dog_whistle.wav */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.wav; name = dog_whistle.wav; path = TOAST/dog_whistle.wav; sourceTree = "<group>"; };
+		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ColdBoot/AppDelegate.swift; sourceTree = "<group>"; };
+		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ColdBoot/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		8753FCF0D162450396BAAAF7 /* Bitter-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Bitter-Bold.ttf"; path = "ColdBoot/Fonts/Bitter-Bold.ttf"; sourceTree = "<group>"; };
+		92814D2CACF231B03395868E /* dog_whistle.wav */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.wav; name = dog_whistle.wav; path = ColdBoot/dog_whistle.wav; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
@@ -53,7 +53,7 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
-		13B07FAE1A68108700A75B9A /* TOAST */ = {
+		13B07FAE1A68108700A75B9A /* ColdBoot */ = {
 			isa = PBXGroup;
 			children = (
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
@@ -69,7 +69,7 @@
 				0AC152FA7C284B8C8E3328E1 /* Bitter-Regular.ttf */,
 				8753FCF0D162450396BAAAF7 /* Bitter-Bold.ttf */,
 			);
-			name = TOAST;
+			name = ColdBoot;
 			sourceTree = "<group>";
 		};
 		2D16E6871FA4F8E400B85C8A /* Frameworks */ = {
@@ -91,7 +91,7 @@
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
-				13B07FAE1A68108700A75B9A /* TOAST */,
+				13B07FAE1A68108700A75B9A /* ColdBoot */,
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
@@ -105,7 +105,7 @@
 		83CBBA001A601CBA00E9B192 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				13B07F961A680F5B00A75B9A /* TOAST.app */,
+				13B07F961A680F5B00A75B9A /* ColdBoot.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -122,9 +122,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		13B07F861A680F5B00A75B9A /* TOAST */ = {
+		13B07F861A680F5B00A75B9A /* ColdBoot */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "TOAST" */;
+			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ColdBoot" */;
 			buildPhases = (
 				C38B50BA6285516D6DCD4F65 /* [CP] Check Pods Manifest.lock */,
 				13B07F871A680F5B00A75B9A /* Sources */,
@@ -139,12 +139,12 @@
 			);
 			dependencies = (
 			);
-			name = TOAST;
+			name = ColdBoot;
 			packageProductDependencies = (
 				41CFE2A727A35A139284FB22 /* MapLibre */,
 			);
-			productName = TOAST;
-			productReference = 13B07F961A680F5B00A75B9A /* TOAST.app */;
+			productName = ColdBoot;
+			productReference = 13B07F961A680F5B00A75B9A /* ColdBoot.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -160,7 +160,7 @@
 					};
 				};
 			};
-			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "TOAST" */;
+			buildConfigurationList = 83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ColdBoot" */;
 			compatibilityVersion = "Xcode 12.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -176,7 +176,7 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				13B07F861A680F5B00A75B9A /* TOAST */,
+				13B07F861A680F5B00A75B9A /* ColdBoot */,
 			);
 		};
 /* End PBXProject section */
@@ -318,7 +318,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MG84G82W6D;
 				ENABLE_BITCODE = NO;
-				INFOPLIST_FILE = TOAST/Info.plist;
+				INFOPLIST_FILE = ColdBoot/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -330,8 +330,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = studio.toastbyte.TOAST;
-				PRODUCT_NAME = TOAST;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.toastbyte.coldboot;
+				PRODUCT_NAME = ColdBoot;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
@@ -349,7 +349,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = MG84G82W6D;
-				INFOPLIST_FILE = TOAST/Info.plist;
+				INFOPLIST_FILE = ColdBoot/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.1;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -361,8 +361,8 @@
 					"-ObjC",
 					"-lc++",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = studio.toastbyte.TOAST;
-				PRODUCT_NAME = TOAST;
+				PRODUCT_BUNDLE_IDENTIFIER = studio.toastbyte.coldboot;
+				PRODUCT_NAME = ColdBoot;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_VERSION = 5.0;
 				VERSIONING_SYSTEM = "apple-generic";
@@ -528,7 +528,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "TOAST" */ = {
+		13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "ColdBoot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				13B07F941A680F5B00A75B9A /* Debug */,
@@ -537,7 +537,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "TOAST" */ = {
+		83CBB9FA1A601CBA00E9B192 /* Build configuration list for PBXProject "ColdBoot" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				83CBBA201A601CBA00E9B192 /* Debug */,

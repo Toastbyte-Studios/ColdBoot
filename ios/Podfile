@@ -7,7 +7,7 @@ require Pod::Executable.execute_command('node', ['-p',
 load "#{__dir__}/../node_modules/@maplibre/maplibre-react-native/MapLibreReactNative.podspec"
 
 platform :ios, min_ios_version_supported
-project 'TOAST.xcodeproj'
+project 'ColdBoot.xcodeproj'
 prepare_react_native_project!
 
 linkage = ENV['USE_FRAMEWORKS']
@@ -16,7 +16,7 @@ if linkage != nil
   use_frameworks! :linkage => linkage.to_sym
 end
 
-target 'TOAST' do
+target 'ColdBoot' do
   config = use_native_modules!
 
   use_react_native!(
