@@ -15,7 +15,7 @@ const REPEATERBOOK_URL = 'https://www.repeaterbook.com/api/export.php';
 // "AppName/version (+https://url; email)"
 // See: https://www.repeaterbook.com/wiki/doku.php?id=api
 const USER_AGENT =
-  'TOAST/1.0 (+https://toastbyte.studio; support@toastbyte.studio)';
+  'ColdBoot/1.0 (+https://toastbyte.studio; support@toastbyte.studio)';
 
 export interface Repeater {
   id: string;

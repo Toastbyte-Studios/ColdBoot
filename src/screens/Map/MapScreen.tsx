@@ -117,7 +117,7 @@ const US_STATE_ABBR: Record<string, string> = {
 };
 
 const NOMINATIM_USER_AGENT =
-  'TOAST Survival App (toastbyte.studio, support@toastbyte.studio)';
+  'ColdBoot Survival App (toastbyte.studio, support@toastbyte.studio)';
 
 /**
  * Reverse geocodes a lat/lng via Nominatim and calls setName with the result.

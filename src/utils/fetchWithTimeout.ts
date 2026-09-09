@@ -7,7 +7,7 @@
  * loading state. This helper lets call sites enforce a bounded wait so stalled
  * requests fail fast and callers can fall back to cached data.
  *
- * See https://github.com/Toastbyte-Studios/TOAST/issues/343
+ * See https://github.com/Toastbyte-Studios/ColdBoot/issues/343
  */
 
 /** Default timeout applied to network requests, in milliseconds. */

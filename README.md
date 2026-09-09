@@ -39,8 +39,8 @@ Throughout:
 1. Clone the repository:
 
    ```sh
-   git clone https://github.com/Toastbyte-Studios/TOAST.git
-   cd TOAST
+   git clone https://github.com/Toastbyte-Studios/ColdBoot.git
+   cd ColdBoot
    ```
 
 2. Install dependencies:
