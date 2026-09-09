@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0C80B921A6F3F58F76C31292 /* libPods-TOAST.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 5DCACB8F33CDC322A6C60F78 /* libPods-TOAST.a */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		166107751750241844042215 /* sos_dot.wav in Resources */ = {isa = PBXBuildFile; fileRef = 277094793541951660255410 /* sos_dot.wav */; };
 		25D2856FDF67CCA012839549 /* dog_whistle.wav in Resources */ = {isa = PBXBuildFile; fileRef = 92814D2CACF231B03395868E /* dog_whistle.wav */; };
@@ -16,6 +15,7 @@
 		4DD3641F9FA44FF3BA922482 /* Bitter-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0AC152FA7C284B8C8E3328E1 /* Bitter-Regular.ttf */; };
 		559699633168642720008767 /* sos_dash.wav in Resources */ = {isa = PBXBuildFile; fileRef = 286498949515769630633473 /* sos_dash.wav */; };
 		63E5E6A34BE1E9F2A7DE56E3 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB81A68108700A75B9A /* PrivacyInfo.xcprivacy */; };
+		64B897A3FB4F6A02060DE791 /* libPods-ColdBoot.a in Frameworks */ = {isa = PBXBuildFile; fileRef = F264FDE58042BA604908BE29 /* libPods-ColdBoot.a */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		D57498DF1A2744A298C44FBB /* Colors.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 533563A249BD4DF28B4D934D /* Colors.xcassets */; };
@@ -33,12 +33,14 @@
 		3B4392A12AC88292D35C810B /* Pods-TOAST.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TOAST.debug.xcconfig"; path = "Target Support Files/Pods-TOAST/Pods-TOAST.debug.xcconfig"; sourceTree = "<group>"; };
 		533563A249BD4DF28B4D934D /* Colors.xcassets */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = 9; includeInIndex = 0; lastKnownFileType = folder.assetcatalog; name = Colors.xcassets; path = ColdBoot/Colors.xcassets; sourceTree = "<group>"; };
 		5709B34CF0A7D63546082F79 /* Pods-TOAST.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-TOAST.release.xcconfig"; path = "Target Support Files/Pods-TOAST/Pods-TOAST.release.xcconfig"; sourceTree = "<group>"; };
-		5DCACB8F33CDC322A6C60F78 /* libPods-TOAST.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-TOAST.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		761780EC2CA45674006654EE /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = ColdBoot/AppDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = ColdBoot/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		867D1678FAF1E8E3B829769E /* Pods-ColdBoot.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ColdBoot.debug.xcconfig"; path = "Target Support Files/Pods-ColdBoot/Pods-ColdBoot.debug.xcconfig"; sourceTree = "<group>"; };
 		8753FCF0D162450396BAAAF7 /* Bitter-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = "Bitter-Bold.ttf"; path = "ColdBoot/Fonts/Bitter-Bold.ttf"; sourceTree = "<group>"; };
 		92814D2CACF231B03395868E /* dog_whistle.wav */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = audio.wav; name = dog_whistle.wav; path = ColdBoot/dog_whistle.wav; sourceTree = "<group>"; };
+		BE17F1C853D9A7DB225F8C8E /* Pods-ColdBoot.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-ColdBoot.release.xcconfig"; path = "Target Support Files/Pods-ColdBoot/Pods-ColdBoot.release.xcconfig"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		F264FDE58042BA604908BE29 /* libPods-ColdBoot.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-ColdBoot.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -46,7 +48,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				0C80B921A6F3F58F76C31292 /* libPods-TOAST.a in Frameworks */,
+				64B897A3FB4F6A02060DE791 /* libPods-ColdBoot.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -76,7 +78,7 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				5DCACB8F33CDC322A6C60F78 /* libPods-TOAST.a */,
+				F264FDE58042BA604908BE29 /* libPods-ColdBoot.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -115,6 +117,8 @@
 			children = (
 				3B4392A12AC88292D35C810B /* Pods-TOAST.debug.xcconfig */,
 				5709B34CF0A7D63546082F79 /* Pods-TOAST.release.xcconfig */,
+				867D1678FAF1E8E3B829769E /* Pods-ColdBoot.debug.xcconfig */,
+				BE17F1C853D9A7DB225F8C8E /* Pods-ColdBoot.release.xcconfig */,
 			);
 			path = Pods;
 			sourceTree = "<group>";
@@ -224,15 +228,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-frameworks-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-frameworks-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Embed Pods Frameworks";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-frameworks-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-frameworks-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-frameworks.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		49656A4FD95E1007A3B69C36 /* [MapLibre React Native] Remove MapLibre.xcframework-ios.signature */ = {
@@ -269,7 +273,7 @@
 			outputFileListPaths = (
 			);
 			outputPaths = (
-				"$(DERIVED_FILE_DIR)/Pods-TOAST-checkManifestLockResult.txt",
+				"$(DERIVED_FILE_DIR)/Pods-ColdBoot-checkManifestLockResult.txt",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
@@ -282,15 +286,15 @@
 			files = (
 			);
 			inputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-resources-${CONFIGURATION}-input-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-resources-${CONFIGURATION}-input-files.xcfilelist",
 			);
 			name = "[CP] Copy Pods Resources";
 			outputFileListPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-resources-${CONFIGURATION}-output-files.xcfilelist",
+				"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-resources-${CONFIGURATION}-output-files.xcfilelist",
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-TOAST/Pods-TOAST-resources.sh\"\n";
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-ColdBoot/Pods-ColdBoot-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 /* End PBXShellScriptBuildPhase section */
@@ -309,7 +313,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 3B4392A12AC88292D35C810B /* Pods-TOAST.debug.xcconfig */;
+			baseConfigurationReference = 867D1678FAF1E8E3B829769E /* Pods-ColdBoot.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -341,7 +345,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 5709B34CF0A7D63546082F79 /* Pods-TOAST.release.xcconfig */;
+			baseConfigurationReference = BE17F1C853D9A7DB225F8C8E /* Pods-ColdBoot.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
