@@ -18,6 +18,7 @@ import {
   View,
   Easing,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
 import { useSunShadow } from '../hooks/useSunShadow';
@@ -55,6 +56,18 @@ const DATE_FORMAT = 'dddd, MMMM D, YYYY';
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
 
 /**
+ * The header's vertical offsets were hand-tuned as fixed pixel values against
+ * a device with a 44pt top inset. Rather than re-tune them blind, we keep the
+ * tuned spacing and shift the whole group by however far this device's inset
+ * differs: identical layout on a 44pt device, correct clearance on a Dynamic
+ * Island phone (59pt) or an Android status bar (~24pt).
+ */
+const BASELINE_TOP_INSET = 44;
+const DATE_TOP = 30;
+const SETTINGS_TOP = 50;
+const HEADER_PADDING_TOP = 80;
+
+/**
  * Root layout wrapper for the app.
  *
  * Provides:
@@ -81,6 +94,7 @@ export default function AppShell({ children }: Props) {
   const navigationHistory = useNavigationHistory();
   const { disableGestureNavigation } = useGestureNavigation();
   const { isKeyboardVisible, keyboardHeight } = useKeyboardStatus();
+  const insets = useSafeAreaInsets();
   const translateYRef = useRef(new Animated.Value(0)).current;
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isManageOfflineVisible, setIsManageOfflineVisible] = useState(false);
@@ -100,6 +114,8 @@ export default function AppShell({ children }: Props) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const COLORS = useTheme();
   const sunShadow = useSunShadow();
+
+  const insetShift = insets.top - BASELINE_TOP_INSET;
 
   const markTutorialComplete = () => {
     AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true')
@@ -270,8 +286,18 @@ export default function AppShell({ children }: Props) {
               { transform: [{ translateY: translateYRef }] },
             ]}
           >
-            <View style={styles.header}>
-              <View style={styles.dateAndHelpContainer}>
+            <View
+              style={[
+                styles.header,
+                { paddingTop: Math.max(24, HEADER_PADDING_TOP + insetShift) },
+              ]}
+            >
+              <View
+                style={[
+                  styles.dateAndHelpContainer,
+                  { top: Math.max(8, DATE_TOP + insetShift) },
+                ]}
+              >
                 <Text
                   style={[styles.dateText, { color: COLORS.PRIMARY_DARK }]}
                   accessibilityLabel={`Current date: ${currentDate}`}
@@ -291,7 +317,10 @@ export default function AppShell({ children }: Props) {
                 size={26}
                 accessibilityLabel="Settings"
                 onPress={() => setIsSettingsVisible(true)}
-                style={styles.settingsButton}
+                style={[
+                  styles.settingsButton,
+                  { top: Math.max(8, SETTINGS_TOP + insetShift) },
+                ]}
               />
 
               <Pressable
@@ -424,11 +453,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: 80,
   },
   dateAndHelpContainer: {
     position: 'absolute',
-    top: 30,
     left: 10,
     zIndex: 10,
     alignItems: 'flex-start',
@@ -440,7 +467,6 @@ const styles = StyleSheet.create({
   },
   settingsButton: {
     position: 'absolute',
-    top: 50,
     right: 10,
     zIndex: 10,
   },
