@@ -65,9 +65,7 @@ describe('onColor', () => {
     // #4CA891 sits just under a 0.45 luminance threshold, which would have
     // handed it white at 2.9:1. Comparing ratios gives it ink at 6.1:1.
     expect(onColor(DARK_COLORS.SUCCESS)).toBe('#101B24');
-    expect(
-      contrastRatio(DARK_COLORS.SUCCESS, '#FFFFFF'),
-    ).toBeLessThan(4.5);
+    expect(contrastRatio(DARK_COLORS.SUCCESS, '#FFFFFF')).toBeLessThan(4.5);
   });
 });
 

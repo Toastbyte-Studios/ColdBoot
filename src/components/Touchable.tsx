@@ -10,8 +10,10 @@ import {
 import { useTheme } from '../hooks/useTheme';
 import { withAlpha } from '../theme/colorUtils';
 
-export interface TouchableProps
-  extends Omit<PressableProps, 'style' | 'android_ripple'> {
+export interface TouchableProps extends Omit<
+  PressableProps,
+  'style' | 'android_ripple'
+> {
   style?: StyleProp<ViewStyle>;
   /** Ripple tint on Android. Defaults to the theme foreground. */
   rippleColor?: string;

@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
-import type { ThemeColors } from '../theme/colors';
 import { onColor, withAlpha } from '../theme/colorUtils';
 import { Text } from './ScaledText';
+import type { ThemeColors } from '../theme/colors';
 
 /**
  * Button styles map to the platform's own button vocabulary rather than to
