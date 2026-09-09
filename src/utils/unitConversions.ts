@@ -1,5 +1,5 @@
 /**
- * Unit conversion utilities for the TOAST app.
+ * Unit conversion utilities for the ColdBoot app.
  * Provides two-way conversions for various unit categories.
  */
 

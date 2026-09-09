@@ -6,7 +6,7 @@
  * CMake's add_subdirectory() calls mid-build.
  *
  * This script creates symlinks:
- *   node_modules/<pkg>/android/build  →  ~/Library/Caches/TOAST/android-build/libs/<pkg>
+ *   node_modules/<pkg>/android/build  →  ~/Library/Caches/ColdBoot/android-build/libs/<pkg>
  *
  * All Gradle writes go through the symlink to the APFS target, so no ._* files
  * are created. CMake paths still resolve because the ExFAT symlink path exists.
@@ -28,7 +28,7 @@ const apfsBase = path.join(
   os.homedir(),
   'Library',
   'Caches',
-  'TOAST',
+  'ColdBoot',
   'android-build',
   'libs',
 );
@@ -99,5 +99,5 @@ for (const { pkgName, androidDir } of packages) {
 
 if (created > 0)
   console.log(
-    `[android-apfs-symlinks] Created ${created} symlink(s) → ~/Library/Caches/TOAST/android-build/libs/`,
+    `[android-apfs-symlinks] Created ${created} symlink(s) → ~/Library/Caches/ColdBoot/android-build/libs/`,
   );

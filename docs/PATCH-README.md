@@ -171,4 +171,4 @@ This patch fixes `react-native-torch@1.2.0` on iOS.
 
 ## iOS permission reminder
 
-- Torch uses the camera flash; ensure `NSCameraUsageDescription` exists in `ios/TOAST/Info.plist`.
+- Torch uses the camera flash; ensure `NSCameraUsageDescription` exists in `ios/ColdBoot/Info.plist`.

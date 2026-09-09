@@ -12,7 +12,7 @@ import { name as appName } from './app.json';
 // overlay already handles this; we still log to console for Metro/logcat.
 const defaultHandler = ErrorUtils.getGlobalHandler();
 ErrorUtils.setGlobalHandler((error, isFatal) => {
-  console.error(`[TOAST] Unhandled exception (fatal=${isFatal}):`, error);
+  console.error(`[ColdBoot] Unhandled exception (fatal=${isFatal}):`, error);
   if (isFatal && !__DEV__) {
     Alert.alert(
       'Unexpected Error',

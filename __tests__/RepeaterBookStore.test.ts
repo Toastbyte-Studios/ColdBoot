@@ -339,7 +339,7 @@ describe('RepeaterBookStore', () => {
     ][];
     calls.forEach(([, opts]) => {
       const headers = opts?.headers as Record<string, string> | undefined;
-      expect(headers?.['User-Agent']).toContain('TOAST');
+      expect(headers?.['User-Agent']).toContain('ColdBoot');
       expect(headers?.['User-Agent']).toContain('toastbyte.studio');
     });
   });

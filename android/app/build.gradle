@@ -3,7 +3,7 @@
 // directory Gradle touches, which breaks ParseLibraryResourcesTask mid-build.
 // This must be set before plugins apply so the RN autolinking plugin registers
 // the correct generated-sources path when autolinkLibrariesWithApp() is called.
-buildDir = "${System.getProperty('user.home')}/Library/Caches/TOAST/android-build/${project.name}"
+buildDir = "${System.getProperty('user.home')}/Library/Caches/ColdBoot/android-build/${project.name}"
 
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
@@ -85,9 +85,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace "studio.toastbyte.toast"
+    namespace "studio.toastbyte.coldboot"
     defaultConfig {
-        applicationId "studio.toastbyte.toast"
+        applicationId "studio.toastbyte.coldboot"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

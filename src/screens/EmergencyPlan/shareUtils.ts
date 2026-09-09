@@ -3,11 +3,12 @@ import { RallyPoint, CommunicationPlan } from '../../stores';
 
 // Wire-format identifiers, not display copy. These values are written into
 // shared payloads and validated on import (see parseShared* below), so
-// renaming them would cause any payload produced by an older build to be
-// rejected. Deliberately left on the legacy prefix during the rebrand; change
-// them only alongside a VERSION bump and a migration path.
-const RALLY_POINTS_TYPE = 'toast-rally-points';
-const COMM_PLAN_TYPE = 'toast-comm-plan';
+// renaming them rejects any payload produced by an older build. That was safe
+// to do during the ColdBoot rebrand only because the app had never shipped and
+// no such payloads existed. Now that it has, change them only alongside a
+// VERSION bump and a migration path.
+const RALLY_POINTS_TYPE = 'coldboot-rally-points';
+const COMM_PLAN_TYPE = 'coldboot-comm-plan';
 const VERSION = 1;
 
 interface RallyPointsPayload {

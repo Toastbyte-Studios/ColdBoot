@@ -53,7 +53,7 @@ export default observer(function RallyPointsScreen() {
     if (!points || points.length === 0) {
       Alert.alert(
         'Invalid data',
-        'The pasted text is not a valid TOAST rally-points share.',
+        'The pasted text is not a valid Cold Boot rally-points share.',
       );
       return;
     }
@@ -182,7 +182,7 @@ export default observer(function RallyPointsScreen() {
       <ImportModal
         visible={importVisible}
         title="Import Rally Points"
-        hint="Paste the share code received from another TOAST user."
+        hint="Paste the share code received from another Cold Boot user."
         onClose={() => setImportVisible(false)}
         onImport={handleImport}
       />

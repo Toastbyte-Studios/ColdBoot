@@ -1,4 +1,4 @@
-package studio.toastbyte.toast
+package studio.toastbyte.coldboot
 
 import com.facebook.react.ReactPackage
 import com.facebook.react.bridge.NativeModule

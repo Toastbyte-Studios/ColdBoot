@@ -75,7 +75,7 @@ const KNOTS = [
 
 const WIKI_API = 'https://en.wikipedia.org/w/api.php';
 const USER_AGENT =
-  'TOAST-knot-image-downloader/2.0 (https://github.com/jason-shprintz/TOAST)';
+  'ColdBoot-knot-image-downloader/2.0 (https://github.com/Toastbyte-Studios/ColdBoot)';
 
 /**
  * Ask the Wikipedia pageimages API for the original lead image URL of

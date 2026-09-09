@@ -117,7 +117,7 @@ const US_STATE_ABBR: Record<string, string> = {
 };
 
 const NOMINATIM_USER_AGENT =
-  'TOAST Survival App (toastbyte.studio, support@toastbyte.studio)';
+  'ColdBoot Survival App (toastbyte.studio, support@toastbyte.studio)';
 
 /**
  * Reverse geocodes a lat/lng via Nominatim and calls setName with the result.
@@ -201,7 +201,7 @@ async function requestBackgroundLocationPermission(): Promise<void> {
       if (status !== 'granted') {
         Alert.alert(
           'Background Location',
-          'To keep recording while the screen is locked, allow "Always" location access in Settings → Privacy → Location Services → TOAST.',
+          'To keep recording while the screen is locked, allow "Always" location access in Settings → Privacy → Location Services → Cold Boot.',
           [{ text: 'OK' }],
         );
       }
@@ -220,7 +220,7 @@ async function requestBackgroundLocationPermission(): Promise<void> {
       if (Number(Platform.Version) >= 30) {
         Alert.alert(
           'Background Location',
-          'To keep recording while the screen is locked, go to Settings → Apps → TOAST → Permissions → Location → Allow all the time.',
+          'To keep recording while the screen is locked, go to Settings → Apps → Cold Boot → Permissions → Location → Allow all the time.',
           [{ text: 'OK' }],
         );
         return;
@@ -231,7 +231,7 @@ async function requestBackgroundLocationPermission(): Promise<void> {
         {
           title: 'Background Location',
           message:
-            'Allow TOAST to access location in the background so your GPS trail continues recording when the screen is locked.',
+            'Allow Cold Boot to access location in the background so your GPS trail continues recording when the screen is locked.',
           buttonNeutral: 'Ask Me Later',
           buttonNegative: 'Cancel',
           buttonPositive: 'Allow',

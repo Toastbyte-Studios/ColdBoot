@@ -15,7 +15,7 @@ export interface Waypoint {
 
 /**
  * Store for managing waypoints with SQLite persistence.
- * Waypoints are saved to toast.db and persist across app restarts.
+ * Waypoints are saved to coldboot.db and persist across app restarts.
  */
 export class WaypointStore {
   waypoints: Waypoint[] = [];
@@ -44,7 +44,7 @@ export class WaypointStore {
   }
 
   /**
-   * Initialises the waypoints table in the shared toast.db and loads saved waypoints.
+   * Initialises the waypoints table in the shared coldboot.db and loads saved waypoints.
    * Accepts the same SQLiteDatabase instance opened by CoreStore so all data
    * lives in a single file.
    */

@@ -1,5 +1,5 @@
 /**
- * Backup and restore service for TOAST app data.
+ * Backup and restore service for ColdBoot app data.
  * Supports exporting all user data to a JSON file and restoring from a backup.
  */
 
@@ -27,7 +27,7 @@ import type { Track } from '../stores/TrackStore';
 import type { Waypoint } from '../stores/WaypointStore';
 
 export const BACKUP_VERSION = '2.0';
-export const BACKUP_FILE_PREFIX = 'toast-backup-';
+export const BACKUP_FILE_PREFIX = 'coldboot-backup-';
 
 /** All version strings that this app can read. */
 const SUPPORTED_BACKUP_VERSIONS = ['1.0', '2.0'] as const;

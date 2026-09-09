@@ -32,7 +32,11 @@ export default class ErrorBoundary extends Component<
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo): void {
-    console.error('[TOAST] ErrorBoundary caught:', error, info.componentStack);
+    console.error(
+      '[ColdBoot] ErrorBoundary caught:',
+      error,
+      info.componentStack,
+    );
     this.setState({ info });
   }
 
