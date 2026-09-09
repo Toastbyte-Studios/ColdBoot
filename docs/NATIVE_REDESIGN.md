@@ -12,11 +12,11 @@ is going to fix this quarter — the point is that they stop being rediscovered.
 Every tappable thing should be one of these. Nothing new should reach for
 `TouchableOpacity` or a bare `Pressable`.
 
-| Component | Use for | Feedback |
-| --- | --- | --- |
-| `AppButton` | An action with a text label. Save, Add item, Delete. | Ripple (Android) / dim (iOS), platform metrics |
-| `IconButton` | A bare glyph with no label. Header and toolbar chrome, row actions. | Borderless circular ripple / deeper dim |
-| `Touchable` | Tappable regions that are not buttons. List rows, cards, chips. | Bounded ripple / dim |
+| Component    | Use for                                                             | Feedback                                       |
+| ------------ | ------------------------------------------------------------------- | ---------------------------------------------- |
+| `AppButton`  | An action with a text label. Save, Add item, Delete.                | Ripple (Android) / dim (iOS), platform metrics |
+| `IconButton` | A bare glyph with no label. Header and toolbar chrome, row actions. | Borderless circular ripple / deeper dim        |
+| `Touchable`  | Tappable regions that are not buttons. List rows, cards, chips.     | Bounded ripple / dim                           |
 
 ### Rules these encode
 
