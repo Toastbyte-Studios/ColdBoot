@@ -1,4 +1,4 @@
-package studio.toastbyte.toast
+package studio.toastbyte.coldboot
 
 import android.app.Application
 import com.facebook.react.PackageList

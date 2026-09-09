@@ -1,4 +1,4 @@
-package studio.toastbyte.toast
+package studio.toastbyte.coldboot
 
 import android.app.NotificationChannel
 import android.app.NotificationManager

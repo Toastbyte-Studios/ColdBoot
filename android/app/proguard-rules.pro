@@ -49,5 +49,5 @@
 # ── react-native-bootsplash ──────────────────────────────────────────────────
 -keep class com.zoontek.rnbootsplash.** { *; }
 
-# ── TOAST native modules ─────────────────────────────────────────────────────
--keep class com.toast.** { *; }
+# ── ColdBoot native modules ──────────────────────────────────────────────────
+-keep class studio.toastbyte.coldboot.** { *; }
