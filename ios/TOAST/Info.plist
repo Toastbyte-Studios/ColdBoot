@@ -38,7 +38,7 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>We use your location to show the last GPS fix on the Device Status screen.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>TOAST needs background location access to continue recording your GPS trail when the screen is locked or the app is backgrounded.</string>
+	<string>Cold Boot needs background location access to continue recording your GPS trail when the screen is locked or the app is backgrounded.</string>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
@@ -48,7 +48,7 @@
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs access to your photo library to attach photos to your notes.</string>
 	<key>NSContactsUsageDescription</key>
-	<string>TOAST uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
+	<string>Cold Boot uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need microphone access to record voice logs for emergency documentation.</string>
 	<key>RCTNewArchEnabled</key>
