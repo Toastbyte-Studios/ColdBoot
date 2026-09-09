@@ -1,14 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  TextInput,
-} from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -139,26 +134,16 @@ export default observer(
         <SectionHeader>Manage Pantry Categories</SectionHeader>
         <View style={styles.container}>
           <View style={styles.headerSection}>
-            <TouchableOpacity
-              style={[
-                styles.addButton,
-                { backgroundColor: COLORS.PRIMARY_DARK },
-              ]}
+            <AppButton
+              label={isAdding ? 'Cancel' : 'Add category'}
+              icon={isAdding ? 'close-outline' : 'add-outline'}
+              variant={isAdding ? 'tinted' : 'filled'}
+              fullWidth
               onPress={() => setIsAdding(!isAdding)}
-              accessibilityLabel="Add new category"
-              accessibilityRole="button"
-            >
-              <Icon
-                name={isAdding ? 'close-outline' : 'add-outline'}
-                size={24}
-                color={COLORS.PRIMARY_LIGHT}
-              />
-              <Text
-                style={[styles.addButtonText, { color: COLORS.PRIMARY_LIGHT }]}
-              >
-                {isAdding ? 'Cancel' : 'Add Category'}
-              </Text>
-            </TouchableOpacity>
+              accessibilityLabel={
+                isAdding ? 'Cancel adding category' : 'Add new category'
+              }
+            />
           </View>
 
           {isAdding && (
@@ -179,26 +164,12 @@ export default observer(
                 autoFocus
                 accessibilityLabel="Enter category name"
               />
-              <TouchableOpacity
-                style={[
-                  styles.saveButton,
-                  { backgroundColor: COLORS.PRIMARY_DARK },
-                  !newCategoryName.trim() && styles.disabledButton,
-                ]}
+              <AppButton
+                label="Save"
                 onPress={handleAddCategory}
                 disabled={!newCategoryName.trim()}
                 accessibilityLabel="Save new category"
-                accessibilityRole="button"
-              >
-                <Text
-                  style={[
-                    styles.saveButtonText,
-                    { color: COLORS.PRIMARY_LIGHT },
-                  ]}
-                >
-                  Save
-                </Text>
-              </TouchableOpacity>
+              />
             </View>
           )}
 
@@ -248,18 +219,13 @@ export default observer(
                         </Text>
                       </View>
                     </View>
-                    <TouchableOpacity
-                      style={styles.deleteButton}
-                      onPress={() => handleDeleteCategory(category)}
+                    <IconButton
+                      name="trash-outline"
+                      size={22}
+                      color={COLORS.ERROR}
                       accessibilityLabel={`Delete ${category} category`}
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="trash-outline"
-                        size={22}
-                        color={COLORS.ERROR || '#d32f2f'}
-                      />
-                    </TouchableOpacity>
+                      onPress={() => handleDeleteCategory(category)}
+                    />
                   </View>
                 );
               })
@@ -282,19 +248,6 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 6,
   },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
   addCategoryForm: {
     width: '100%',
     flexDirection: 'row',
@@ -309,19 +262,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
-  },
-  saveButton: {
-    borderRadius: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    justifyContent: 'center',
-  },
-  disabledButton: {
-    opacity: 0.5,
-  },
-  saveButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   scrollView: {
     flex: 1,
@@ -366,8 +306,5 @@ const styles = StyleSheet.create({
   categoryCount: {
     fontSize: 13,
     opacity: 0.7,
-  },
-  deleteButton: {
-    padding: 8,
   },
 });

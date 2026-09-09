@@ -5,14 +5,13 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 
 /**
@@ -31,7 +30,6 @@ import { usePantryStore } from '../../stores';
 export default observer(function PantryScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const pantry = usePantryStore();
-  const COLORS = useTheme();
 
   const categoryIcons: Record<string, string> = {
     'Canned Goods': 'flask-outline',
@@ -44,34 +42,24 @@ export default observer(function PantryScreen() {
     <ScreenBody>
       <SectionHeader>Pantry</SectionHeader>
       <View style={styles.pantryHeader}>
-        <TouchableOpacity
-          style={styles.pantryButton}
-          onPress={() => navigation.navigate('PantryAllItems')}
+        <IconButton
+          name="list-outline"
+          size={30}
           accessibilityLabel="View All Items"
-          accessibilityRole="button"
-        >
-          <Ionicons name="list-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.pantryButton}
-          onPress={() => navigation.navigate('PantryExpirationTracker')}
+          onPress={() => navigation.navigate('PantryAllItems')}
+        />
+        <IconButton
+          name="time-outline"
+          size={30}
           accessibilityLabel="Expiration Tracker"
-          accessibilityRole="button"
-        >
-          <Ionicons name="time-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.pantryButton}
-          onPress={() => navigation.navigate('ManagePantryCategories')}
+          onPress={() => navigation.navigate('PantryExpirationTracker')}
+        />
+        <IconButton
+          name="folder-open-outline"
+          size={30}
           accessibilityLabel="Manage Categories"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="folder-open-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={() => navigation.navigate('ManagePantryCategories')}
+        />
       </View>
       <HorizontalRule />
 
@@ -97,8 +85,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  pantryButton: {
-    paddingVertical: 6,
   },
 });
