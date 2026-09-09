@@ -33,7 +33,7 @@ function defaultTrackName(): string {
 
 /**
  * Store for managing recorded GPS tracks with SQLite persistence.
- * Tracks are saved to toast.db and persist across app restarts.
+ * Tracks are saved to coldboot.db and persist across app restarts.
  */
 export class TrackStore {
   tracks: Track[] = [];
@@ -44,7 +44,7 @@ export class TrackStore {
   }
 
   /**
-   * Initialises the tracks table in the shared toast.db and loads saved tracks.
+   * Initialises the tracks table in the shared coldboot.db and loads saved tracks.
    * Accepts the same SQLiteDatabase instance opened by CoreStore so all data
    * lives in a single file.
    */

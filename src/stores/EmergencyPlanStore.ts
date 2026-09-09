@@ -95,7 +95,7 @@ export class EmergencyPlanStore {
 
     try {
       this.db = await SQLite.openDatabase({
-        name: 'toast.db',
+        name: 'coldboot.db',
         location: 'default',
       });
       await this.createTables();

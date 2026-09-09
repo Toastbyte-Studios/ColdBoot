@@ -163,7 +163,7 @@ export class InventoryStore {
 
     try {
       const db = await SQLite.openDatabase({
-        name: 'toast.db',
+        name: 'coldboot.db',
         location: 'default',
       });
       this.inventoryDb = db;

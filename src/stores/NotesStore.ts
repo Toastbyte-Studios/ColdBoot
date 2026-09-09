@@ -543,7 +543,7 @@ export class NotesStore {
    * Initializes the notes database if it has not already been initialized.
    *
    * - Enables promise-based API for the SQLite plugin if available.
-   * - Opens (or creates) a SQLite database named 'toast.db' at the default location.
+   * - Opens (or creates) a SQLite database named 'coldboot.db' at the default location.
    * - Runs the notes migration set to create/update the notes and categories tables.
    * - Handles errors by logging them and setting `notesDb` to null if initialization fails.
    *
@@ -556,7 +556,7 @@ export class NotesStore {
     try {
       SQLite.enablePromise?.(true);
       const db = await SQLite.openDatabase({
-        name: 'toast.db',
+        name: 'coldboot.db',
         location: 'default',
       });
       this.notesDb = db;
