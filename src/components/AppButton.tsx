@@ -10,8 +10,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
-import { Text } from './ScaledText';
 import type { ThemeColors } from '../theme/colors';
+import { onColor, withAlpha } from '../theme/colorUtils';
+import { Text } from './ScaledText';
 
 /**
  * Button styles map to the platform's own button vocabulary rather than to
@@ -88,56 +89,6 @@ const METRICS = Platform.select({
     gap: 8,
   },
 })!;
-
-/* -------------------------------------------------------------------------- */
-/* Color helpers                                                               */
-/* -------------------------------------------------------------------------- */
-
-const HEX = /^#?([\da-f]{2})([\da-f]{2})([\da-f]{2})$/i;
-
-function channels(hex: string): [number, number, number] | null {
-  const match = HEX.exec(hex.trim());
-  if (!match) return null;
-  return [
-    parseInt(match[1], 16),
-    parseInt(match[2], 16),
-    parseInt(match[3], 16),
-  ];
-}
-
-function relativeLuminance(hex: string): number {
-  const rgb = channels(hex);
-  if (!rgb) return 0;
-  const [r, g, b] = rgb.map((value) => {
-    const c = value / 255;
-    return c <= 0.03928 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
-  });
-  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-}
-
-/**
- * Picks the label color for a filled button by measuring the fill instead of
- * assuming it. The previous implementation put near-black text on the amber
- * accent, which fell below 4.5:1 in light mode.
- */
-export function onColor(background: string): string {
-  const bg = relativeLuminance(background);
-  const ink = relativeLuminance('#101B24');
-  const white = 1;
-
-  const contrastWithInk =
-    (Math.max(bg, ink) + 0.05) / (Math.min(bg, ink) + 0.05);
-  const contrastWithWhite =
-    (Math.max(bg, white) + 0.05) / (Math.min(bg, white) + 0.05);
-
-  return contrastWithInk >= contrastWithWhite ? '#101B24' : '#FFFFFF';
-}
-
-function withAlpha(hex: string, alpha: number): string {
-  const rgb = channels(hex);
-  if (!rgb) return hex;
-  return `rgba(${rgb[0]}, ${rgb[1]}, ${rgb[2]}, ${alpha})`;
-}
 
 /* -------------------------------------------------------------------------- */
 /* Variant resolution                                                          */

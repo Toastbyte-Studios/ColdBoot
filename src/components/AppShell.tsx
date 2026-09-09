@@ -13,14 +13,12 @@ import React, {
 import {
   Animated,
   PanResponder,
+  Pressable,
   StyleSheet,
-  TouchableOpacity,
   View,
   Easing,
-  Text,
 } from 'react-native';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
 import { useSunShadow } from '../hooks/useSunShadow';
 import { useTheme } from '../hooks/useTheme';
@@ -33,8 +31,10 @@ import { FOOTER_HEIGHT } from '../theme';
 import Footer from './Footer/Footer';
 import { HelpModal } from './HelpModal';
 import { HorizontalRule } from './HorizontalRule';
+import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
+import { Text } from './ScaledText';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import TutorialModal from './TutorialModal';
@@ -91,7 +91,7 @@ export default function AppShell({ children }: Props) {
   >(undefined);
   const [spotlightLayout, setSpotlightLayout] =
     useState<SpotlightLayout | null>(null);
-  const logoRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
+  const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
   const [currentDate, setCurrentDate] = useState(() =>
@@ -278,43 +278,33 @@ export default function AppShell({ children }: Props) {
                 >
                   {currentDate}
                 </Text>
-                <TouchableOpacity
-                  style={styles.helpButton}
-                  onPress={() => setIsHelpVisible(true)}
+                <IconButton
+                  name="help-circle-outline"
+                  size={30}
                   accessibilityLabel="Help"
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={32}
-                    color={COLORS.PRIMARY_DARK}
-                  />
-                </TouchableOpacity>
+                  onPress={() => setIsHelpVisible(true)}
+                />
               </View>
 
-              <TouchableOpacity
-                style={styles.settingsButton}
-                onPress={() => setIsSettingsVisible(true)}
+              <IconButton
+                name="settings-outline"
+                size={26}
                 accessibilityLabel="Settings"
-                accessibilityRole="button"
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={26}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+                onPress={() => setIsSettingsVisible(true)}
+                style={styles.settingsButton}
+              />
 
-              <TouchableOpacity
+              <Pressable
                 ref={logoRef}
                 onPress={() => {
                   navigation.navigate('Home');
                 }}
                 accessibilityLabel="Go to home screen"
                 accessibilityRole="button"
+                style={({ pressed }) => (pressed ? styles.logoPressed : null)}
               >
                 <LogoHeader shadowStyle={sunShadow} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <View style={styles.content}>{children}</View>
@@ -448,15 +438,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
-  helpButton: {
-    padding: 6,
-  },
   settingsButton: {
     position: 'absolute',
     top: 50,
     right: 10,
     zIndex: 10,
-    padding: 6,
+  },
+  logoPressed: {
+    opacity: 0.7,
   },
   content: {
     flex: 1,
