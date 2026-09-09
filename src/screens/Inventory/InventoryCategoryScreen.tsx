@@ -2,12 +2,14 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
 import { HorizontalRule } from '../../components/HorizontalRule';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -69,17 +71,13 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
     <ScreenBody>
       <SectionHeader>{category}</SectionHeader>
       <View style={styles.actionBar}>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: COLORS.ACCENT }]}
+        <AppButton
+          label="Add item"
+          icon="add-outline"
+          fullWidth
           onPress={handleAddItem}
           accessibilityLabel="Add Item"
-          accessibilityRole="button"
-        >
-          <Ionicons name="add-outline" size={24} color={COLORS.PRIMARY_LIGHT} />
-          <Text style={[styles.addButtonText, { color: COLORS.PRIMARY_LIGHT }]}>
-            Add Item
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
       <HorizontalRule />
       <View style={styles.container}>
@@ -93,7 +91,7 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
             </Text>
           )}
           {sortedItems.map((item) => (
-            <TouchableOpacity
+            <Touchable
               key={item.id}
               style={[
                 styles.itemCard,
@@ -132,7 +130,7 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
                   </Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </Touchable>
           ))}
         </ScrollView>
       </View>
@@ -151,19 +149,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 12,
     paddingHorizontal: 6,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    gap: 8,
-  },
-  addButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   scrollView: {
     flex: 1,

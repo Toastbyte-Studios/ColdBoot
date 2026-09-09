@@ -2,12 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { HorizontalRule } from '../../components/HorizontalRule';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -52,7 +53,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
             </Text>
           )}
           {allItems.map((item) => (
-            <TouchableOpacity
+            <Touchable
               key={item.id}
               style={[
                 styles.itemCard,
@@ -103,7 +104,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
                   </Text>
                 )}
               </View>
-            </TouchableOpacity>
+            </Touchable>
           ))}
         </ScrollView>
       </View>

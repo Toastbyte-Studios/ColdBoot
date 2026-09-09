@@ -5,14 +5,13 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 
 /**
@@ -31,7 +30,6 @@ import { useInventoryStore } from '../../stores';
 export default observer(function InventoryScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const inventory = useInventoryStore();
-  const COLORS = useTheme();
 
   const categoryIcons: Record<string, string> = {
     'Home Base': 'home-outline',
@@ -42,26 +40,18 @@ export default observer(function InventoryScreen() {
     <ScreenBody>
       <SectionHeader>Inventory</SectionHeader>
       <View style={styles.inventoryHeader}>
-        <TouchableOpacity
-          style={styles.inventoryButton}
-          onPress={() => navigation.navigate('InventoryAllItems')}
+        <IconButton
+          name="list-outline"
+          size={30}
           accessibilityLabel="View All Items"
-          accessibilityRole="button"
-        >
-          <Ionicons name="list-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.inventoryButton}
-          onPress={() => navigation.navigate('ManageInventoryCategories')}
+          onPress={() => navigation.navigate('InventoryAllItems')}
+        />
+        <IconButton
+          name="folder-open-outline"
+          size={30}
           accessibilityLabel="Manage Categories"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="folder-open-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={() => navigation.navigate('ManageInventoryCategories')}
+        />
       </View>
       <HorizontalRule />
 
@@ -87,8 +77,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  inventoryButton: {
-    paddingVertical: 6,
   },
 });
