@@ -18,14 +18,17 @@ Every tappable thing should be one of these. Nothing new should reach for
 | `IconButton` | A bare glyph with no label. Header and toolbar chrome, row actions. | Borderless circular ripple / deeper dim        |
 | `Touchable`  | Tappable regions that are not buttons. List rows, cards, chips.     | Bounded ripple / dim                           |
 
-`Touchable` is also the escape hatch when a control needs a child the other
-two will not render — the map's record button pulses only its glyph, so the
-animation has to wrap the icon rather than the pressable.
+`Touchable` is also the escape hatch in two cases: when a control needs a
+child the other two will not render (the map's record button pulses only its
+glyph, so the animation has to wrap the icon rather than the pressable), and
+when it needs an accessibility role other than `button` (the checklist
+checkbox). `IconButton` hardcodes `accessibilityRole="button"`.
 
 ### Rules these encode
 
 - **Touch targets are 44pt on iOS, 48dp on Android.** `IconButton` enforces
-  this regardless of glyph size; the glyph and the target are separate.
+  this regardless of glyph size; the glyph and the target are separate. When
+  using `Touchable` for a small control, set the target by hand.
 - **Feedback is per-platform.** Android gets a ripple, iOS gets a dim. An
   opacity fade on both is the single clearest tell that a screen was not built
   natively.
@@ -108,9 +111,9 @@ which is the light palette resolved at module load. Those screens render the
 light scheme in both modes and do not respond to the dark-mode setting at all.
 
 Confirmed in the Notepad directory: `RecentNotesScreen`, `NoteEntryScreen`,
-`ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory
-and the Map components do not. Given the repo ships a full dark palette and a
-`useTheme` hook, this is likely widespread rather than local.
+`ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory,
+Checklist and the Map components do not. Given the repo ships a full dark
+palette and a `useTheme` hook, this is likely widespread rather than local.
 
 This constrains the sweep: in an affected file, the new components must be
 passed the static colors explicitly rather than falling back to the theme,
@@ -128,10 +131,11 @@ Related smaller instances:
 - `PantryExpirationTrackerScreen`'s `statusBorderColor` and
   `statusBackgroundColor` return hardcoded Material hexes, so the red/amber/
   green expiry coding is identical in both schemes.
-- `DownloadConfirmScreen`'s low-storage banner is a fixed amber
-  (`#FFF3CD` / `#664D03`), because the palette has no warning token. It has
-  `SUCCESS` and `ERROR` but nothing between them. Adding `WARNING` would let
-  this and the expiry coding above resolve properly.
+- The same fixed amber triple (`#FFF3CD` / `#FFCA2C` / `#664D03`) is
+  duplicated in `DownloadConfirmScreen`'s low-storage banner and
+  `MapScreen`'s simulated-offline banner, because the palette has no warning
+  token. It has `SUCCESS` and `ERROR` but nothing between them. Adding
+  `WARNING` would resolve both banners and the expiry coding above.
 - The map's record button used iOS system red (`#FF3B30`) while recording,
   a third red alongside `ERROR` and the expiry hexes. Now `ERROR`.
 - `DownloadProgressChip`'s chip and toast, and `MapPanel`'s recording HUD,
@@ -172,13 +176,14 @@ Widespread in the Map feature, and not confined to one folder:
 - `WaypointBottomSheet` — `✕` on the close button.
 - `MapPanel` — `⚑` on the waypoints FAB, `⌖` on locate-me, `⏺` / `⏹` on the
   record button, `⏱` and `📍` in the recording HUD.
+- `MapScreen` — `⚠️` and `✕` in the simulated-offline banner.
 
 This is worse than it looks. The glyphs resolve from whatever font happens to
 cover them, so they differ between iOS and Android and between OS versions;
 they do not match the Ionicons used everywhere else in the app; they scale
 with the text rather than staying a fixed icon size; and a screen reader
 announces the emoji by name, so the success toast read as "check mark button
-Offline map ready". All twelve are now Ionicons.
+Offline map ready". All fourteen are now Ionicons.
 
 Still worth grepping the rest of the codebase for the same pattern.
 
@@ -187,7 +192,8 @@ Still worth grepping the rest of the codebase for the same pattern.
 The sweep keeps turning up controls built at whatever size looked right:
 `WaypointBottomSheet`'s close button was a 32pt bordered circle, the Notepad
 and Pantry header icons were roughly 30-42pt, the row action buttons in
-`WaypointRow` and `TrackRow` were about 26pt tall.
+`WaypointRow` and `TrackRow` were about 26pt tall, the checklist checkbox was
+a bare 28pt glyph.
 
 Moving these onto the primitives fixes the target but changes the look,
 because the primitives will not render below 44/48. The bottom sheet's close
@@ -197,6 +203,22 @@ effect, but it does mean the diffs are not purely mechanical.
 
 The map FABs are the happy case: already 48pt circles, so they took
 `IconButton` without any change in size.
+
+### 9. Accessibility roles declared without their state — IN PROGRESS
+
+A recurring pattern: a control sets `accessibilityRole` correctly and then
+never reports the state that makes the role meaningful.
+
+- The checklist item checkbox used `accessibilityRole="checkbox"` with no
+  `accessibilityState.checked`, so a screen reader announced every item
+  identically whether ticked or not — the role made it worse than no role,
+  because it promises a state that is never supplied.
+- `PantryExpirationTrackerScreen`'s filter chips and `WaypointBottomSheet`'s
+  tabs had no `selected`, so all four chips read as identical buttons.
+
+Both are fixed. The primitives cannot catch this on their own — `Touchable`
+passes accessibility props straight through — so it is worth checking
+deliberately on every stateful control the sweep touches.
 
 ## Open decisions
 
@@ -235,19 +257,20 @@ Android. Same trade-off as the menu decision, lower stakes.
 
 ## Sweep progress
 
-22 of 63 files converted.
+25 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
       open decisions)
 - [x] `screens/Pantry` — 5 of 5
 - [x] `screens/Inventory` — 4 of 4
-- [ ] `screens/Map` — 8 of 9 (`MapScreen` remains)
+- [x] `screens/Map` — 9 of 9
+- [x] `screens/Checklist` — 2 of 2
 - [ ] `screens/EmergencyPlan` — 6 files
 - [ ] `screens/MorseCode` — 4 files
 - [ ] `screens/VoiceLog` — 3 files
 - [ ] `screens/RepeaterBook` — 3 files
-- [ ] `screens/Checklist`, `ScenarioCards` — 2 files each
+- [ ] `screens/ScenarioCards` — 2 files
 - [ ] `screens/` singles — `BarometricPressure`, `Common/SearchScreen`,
       `DepletionCalculator`, `GridReference`, `RadioFrequencies`,
       `Reference/Shared/EntryScreen`, `SeasonalOutlook`,
