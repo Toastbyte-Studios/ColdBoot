@@ -200,7 +200,9 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
                 style={styles.checkbox}
                 borderless
                 onPress={() => checklistStore.toggleChecklistItem(item.id)}
-                accessibilityLabel={item.checked ? 'Uncheck item' : 'Check item'}
+                accessibilityLabel={
+                  item.checked ? 'Uncheck item' : 'Check item'
+                }
                 accessibilityRole="checkbox"
                 accessibilityState={{ checked: item.checked }}
               >
