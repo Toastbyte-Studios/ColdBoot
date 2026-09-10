@@ -105,8 +105,8 @@ light scheme in both modes and do not respond to the dark-mode setting at all.
 
 Confirmed in the Notepad directory: `RecentNotesScreen`, `NoteEntryScreen`,
 `ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory
-and the Map offline components do not. Given the repo ships a full dark
-palette and a `useTheme` hook, this is likely widespread rather than local.
+and the Map components do not. Given the repo ships a full dark palette and a
+`useTheme` hook, this is likely widespread rather than local.
 
 This constrains the sweep: in an affected file, the new components must be
 passed the static colors explicitly rather than falling back to the theme,
@@ -114,7 +114,7 @@ because a theme-aware icon on a hardcoded light card turns pale-on-pale and
 disappears in dark mode. Fixing it properly means moving those
 `StyleSheet.create` calls inside the components. Worth its own pass.
 
-`DownloadConfirmScreen` shows the pattern to copy: a module-level
+The Map components show the pattern to copy: a module-level
 `makeStyles(colors)` factory called through `useMemo(() => makeStyles(COLORS),
 [COLORS])`. That keeps the stylesheet out of the render body while still
 reacting to the scheme.
@@ -161,16 +161,30 @@ variant — roughly 3:1, under the body-text floor.
 
 The offline download components drew their icons as text: `⬓` for the
 download FAB and the progress chip, `✅` in the success toast, `⚠️` in the
-error and low-storage banners.
+error and low-storage banners. `WaypointBottomSheet` used `✕` for its close
+button — so this is not confined to one folder.
 
 This is worse than it looks. The glyphs resolve from whatever font happens to
 cover them, so they differ between iOS and Android and between OS versions;
 they do not match the Ionicons used everywhere else in the app; they scale
 with the text rather than staying a fixed icon size; and a screen reader
 announces the emoji by name, so the toast read as "check mark button Offline
-map ready". All five are now Ionicons.
+map ready". All six are now Ionicons.
 
-Worth grepping the rest of the codebase for the same pattern.
+Still worth grepping the rest of the codebase for the same pattern.
+
+### 8. Undersized touch targets on custom chrome — IN PROGRESS
+
+The sweep keeps turning up controls built at whatever size looked right:
+`WaypointBottomSheet`'s close button was a 32pt bordered circle, the Notepad
+and Pantry header icons were roughly 30-42pt, the row action buttons in
+`WaypointRow` and `TrackRow` were about 26pt tall.
+
+Moving these onto the primitives fixes the target but changes the look,
+because the primitives will not render below 44/48. The bottom sheet's close
+button lost its bordered circle rather than growing into a 44pt one. Expect a
+small amount of this in every batch; it is the point rather than a side
+effect, but it does mean the diffs are not purely mechanical.
 
 ## Open decisions
 
@@ -194,17 +208,30 @@ equivalent for Android, so the options are:
 Until this is settled, those three files are held back from the sweep.
 Converting only their icon buttons would leave a confusing half-migrated diff.
 
+### Segmented controls — a second, smaller dependency call
+
+Separate from menus, several places are segmented controls in all but name:
+the Current Location / Manual Entry toggle in `AddWaypointForm`, the
+Waypoints / Tracks tabs in `WaypointBottomSheet`, the category filter chips in
+`PantryExpirationTrackerScreen`.
+
+They are converted to `Touchable` with `accessibilityState.selected` for now,
+which fixes the press feedback and the screen-reader announcement but leaves
+them looking hand-built. `@react-native-segmented-control/segmented-control`
+wraps the real `UISegmentedControl` on iOS and draws a Material equivalent on
+Android. Same trade-off as the menu decision, lower stakes.
+
 ## Sweep progress
 
-17 of 63 files converted.
+21 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
       open decisions)
 - [x] `screens/Pantry` — 5 of 5
 - [x] `screens/Inventory` — 4 of 4
-- [ ] `screens/Map` — 3 of 9 (`offline/` done; `MapScreen`, `MapPanel` and
-      `WaypointBottomSheet` remain)
+- [ ] `screens/Map` — 7 of 9 (`offline/` and `WaypointBottomSheet/` done;
+      `MapScreen` and `MapPanel` remain)
 - [ ] `screens/EmergencyPlan` — 6 files
 - [ ] `screens/MorseCode` — 4 files
 - [ ] `screens/VoiceLog` — 3 files

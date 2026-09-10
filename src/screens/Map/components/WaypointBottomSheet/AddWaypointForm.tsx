@@ -1,12 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import AppButton from '../../../../components/AppButton';
+import Touchable from '../../../../components/Touchable';
 import { useTheme } from '../../../../hooks/useTheme';
 
 type AddMode = 'location' | 'manual';
@@ -63,13 +58,15 @@ export default function AddWaypointForm({
     <View style={styles.form}>
       <Text style={styles.formTitle}>Add Waypoint</Text>
 
-      {/* Mode toggle */}
+      {/* Mode toggle. See docs/NATIVE_REDESIGN.md — this is a segmented
+          control, and wants to be a real one. */}
       <View style={styles.modeRow}>
-        <TouchableOpacity
+        <Touchable
           style={[styles.modeBtn, mode === 'location' && styles.modeBtnActive]}
           onPress={() => setMode('location')}
           accessibilityLabel="Add from current location"
           accessibilityRole="button"
+          accessibilityState={{ selected: mode === 'location' }}
         >
           <Text
             style={[
@@ -79,12 +76,13 @@ export default function AddWaypointForm({
           >
             Current Location
           </Text>
-        </TouchableOpacity>
-        <TouchableOpacity
+        </Touchable>
+        <Touchable
           style={[styles.modeBtn, mode === 'manual' && styles.modeBtnActive]}
           onPress={() => setMode('manual')}
           accessibilityLabel="Enter coordinates manually"
           accessibilityRole="button"
+          accessibilityState={{ selected: mode === 'manual' }}
         >
           <Text
             style={[
@@ -94,7 +92,7 @@ export default function AddWaypointForm({
           >
             Manual Entry
           </Text>
-        </TouchableOpacity>
+        </Touchable>
       </View>
 
       <TextInput
@@ -144,7 +142,7 @@ export default function AddWaypointForm({
         <AppButton
           label="Cancel"
           onPress={onCancel}
-          variant="secondary"
+          variant="tinted"
           accessibilityLabel="Cancel adding waypoint"
           style={styles.actionBtnFlex}
         />

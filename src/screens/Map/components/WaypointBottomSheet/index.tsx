@@ -18,9 +18,11 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import AppButton from '../../../../components/AppButton';
+import IconButton from '../../../../components/IconButton';
+import Touchable from '../../../../components/Touchable';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useSettingsStore } from '../../../../stores/StoreContext';
 import { Track } from '../../../../stores/TrackStore';
@@ -220,7 +222,7 @@ export default function WaypointBottomSheet({
       <View style={styles.header}>
         {/* Tabs */}
         <View style={styles.tabs} accessibilityRole="tablist">
-          <TouchableOpacity
+          <Touchable
             style={[styles.tab, activeTab === 'waypoints' && styles.tabActive]}
             onPress={handleTabWaypoints}
             accessibilityLabel="Waypoints tab"
@@ -235,8 +237,8 @@ export default function WaypointBottomSheet({
             >
               Waypoints
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
+          </Touchable>
+          <Touchable
             style={[styles.tab, activeTab === 'tracks' && styles.tabActive]}
             onPress={handleTabTracks}
             accessibilityLabel="Tracks tab"
@@ -251,29 +253,27 @@ export default function WaypointBottomSheet({
             >
               Tracks
             </Text>
-          </TouchableOpacity>
+          </Touchable>
         </View>
 
         <View style={styles.headerActions}>
           {activeTab === 'waypoints' && !showAddForm && (
-            <TouchableOpacity
+            <AppButton
+              label="Add"
+              icon="add-outline"
+              size="small"
+              tint={COLORS.SECONDARY_ACCENT}
               onPress={() => setShowAddForm(true)}
-              style={styles.headerBtn}
               accessibilityLabel="Add waypoint"
-              accessibilityRole="button"
-            >
-              <Text style={styles.headerBtnText}>+ Add</Text>
-            </TouchableOpacity>
+            />
           )}
           {!showAddForm && (
-            <TouchableOpacity
-              onPress={onClose}
-              style={styles.headerCloseBtn}
+            <IconButton
+              name="close"
+              size={20}
               accessibilityLabel="Close waypoints sheet"
-              accessibilityRole="button"
-            >
-              <Text style={styles.headerCloseBtnText}>✕</Text>
-            </TouchableOpacity>
+              onPress={onClose}
+            />
           )}
         </View>
       </View>
@@ -404,31 +404,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       flexDirection: 'row',
       alignItems: 'center',
       gap: 8,
-    },
-    headerBtn: {
-      paddingHorizontal: 12,
-      paddingVertical: 7,
-      borderRadius: 8,
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    headerBtnText: {
-      fontSize: 13,
-      fontWeight: '700',
-      color: colors.PRIMARY_LIGHT,
-    },
-    headerCloseBtn: {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      borderWidth: 1,
-      borderColor: colors.SECONDARY_ACCENT,
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    headerCloseBtnText: {
-      fontSize: 15,
-      color: colors.PRIMARY_DARK,
-      lineHeight: 18,
     },
     list: {
       flex: 1,
