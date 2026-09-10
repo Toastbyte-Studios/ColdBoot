@@ -18,6 +18,10 @@ Every tappable thing should be one of these. Nothing new should reach for
 | `IconButton` | A bare glyph with no label. Header and toolbar chrome, row actions. | Borderless circular ripple / deeper dim        |
 | `Touchable`  | Tappable regions that are not buttons. List rows, cards, chips.     | Bounded ripple / dim                           |
 
+`Touchable` is also the escape hatch when a control needs a child the other
+two will not render — the map's record button pulses only its glyph, so the
+animation has to wrap the icon rather than the pressable.
+
 ### Rules these encode
 
 - **Touch targets are 44pt on iOS, 48dp on Android.** `IconButton` enforces
@@ -128,11 +132,13 @@ Related smaller instances:
   (`#FFF3CD` / `#664D03`), because the palette has no warning token. It has
   `SUCCESS` and `ERROR` but nothing between them. Adding `WARNING` would let
   this and the expiry coding above resolve properly.
-- `DownloadProgressChip`'s chip and toast are fixed white on a dark scrim.
-  That one is defensible and deliberate — they float over map imagery, not
-  app chrome — and is now commented as such. The error banner in the same
-  file is not: its `rgba(255,255,255,0.95)` background stays white in dark
-  mode.
+- The map's record button used iOS system red (`#FF3B30`) while recording,
+  a third red alongside `ERROR` and the expiry hexes. Now `ERROR`.
+- `DownloadProgressChip`'s chip and toast, and `MapPanel`'s recording HUD,
+  are fixed white on a dark scrim. Those are defensible and deliberate — they
+  float over map imagery, not app chrome — and are commented as such. The
+  error banner in `DownloadProgressChip` is not: its `rgba(255,255,255,0.95)`
+  background stays white in dark mode.
 - The footer notification badge hardcodes `'#fff'`.
 - No `StatusBar` bar-style appears to be wired to the color scheme, so dark
   mode is likely rendering dark status text on a dark background.
@@ -159,17 +165,20 @@ variant — roughly 3:1, under the body-text floor.
 
 ### 7. Emoji and Unicode characters used as icons — PARTLY FIXED
 
-The offline download components drew their icons as text: `⬓` for the
-download FAB and the progress chip, `✅` in the success toast, `⚠️` in the
-error and low-storage banners. `WaypointBottomSheet` used `✕` for its close
-button — so this is not confined to one folder.
+Widespread in the Map feature, and not confined to one folder:
+
+- `offline/` — `⬓` on the download FAB and progress chip, `✅` in the success
+  toast, `⚠️` in the error and low-storage banners.
+- `WaypointBottomSheet` — `✕` on the close button.
+- `MapPanel` — `⚑` on the waypoints FAB, `⌖` on locate-me, `⏺` / `⏹` on the
+  record button, `⏱` and `📍` in the recording HUD.
 
 This is worse than it looks. The glyphs resolve from whatever font happens to
 cover them, so they differ between iOS and Android and between OS versions;
 they do not match the Ionicons used everywhere else in the app; they scale
 with the text rather than staying a fixed icon size; and a screen reader
-announces the emoji by name, so the toast read as "check mark button Offline
-map ready". All six are now Ionicons.
+announces the emoji by name, so the success toast read as "check mark button
+Offline map ready". All twelve are now Ionicons.
 
 Still worth grepping the rest of the codebase for the same pattern.
 
@@ -185,6 +194,9 @@ because the primitives will not render below 44/48. The bottom sheet's close
 button lost its bordered circle rather than growing into a 44pt one. Expect a
 small amount of this in every batch; it is the point rather than a side
 effect, but it does mean the diffs are not purely mechanical.
+
+The map FABs are the happy case: already 48pt circles, so they took
+`IconButton` without any change in size.
 
 ## Open decisions
 
@@ -223,15 +235,14 @@ Android. Same trade-off as the menu decision, lower stakes.
 
 ## Sweep progress
 
-21 of 63 files converted.
+22 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
       open decisions)
 - [x] `screens/Pantry` — 5 of 5
 - [x] `screens/Inventory` — 4 of 4
-- [ ] `screens/Map` — 7 of 9 (`offline/` and `WaypointBottomSheet/` done;
-      `MapScreen` and `MapPanel` remain)
+- [ ] `screens/Map` — 8 of 9 (`MapScreen` remains)
 - [ ] `screens/EmergencyPlan` — 6 files
 - [ ] `screens/MorseCode` — 4 files
 - [ ] `screens/VoiceLog` — 3 files
