@@ -5,11 +5,12 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -55,7 +56,7 @@ export default observer(function EmergencyPlanScreen() {
       <SectionHeader>Emergency Planner</SectionHeader>
       <View style={[styles.container, { paddingBottom: FOOTER_HEIGHT }]}>
         {sections.map((section) => (
-          <TouchableOpacity
+          <Touchable
             key={section.screen}
             style={[
               styles.card,
@@ -90,7 +91,7 @@ export default observer(function EmergencyPlanScreen() {
               size={20}
               color={COLORS.PRIMARY_DARK}
             />
-          </TouchableOpacity>
+          </Touchable>
         ))}
       </View>
     </ScreenBody>
