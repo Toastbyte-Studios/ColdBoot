@@ -63,11 +63,7 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
         style={[styles.toast, { opacity: toastOpacity }]}
         accessibilityLiveRegion="polite"
       >
-        <Icon
-          name="checkmark-circle"
-          size={16}
-          color={OVERLAY_FOREGROUND}
-        />
+        <Icon name="checkmark-circle" size={16} color={OVERLAY_FOREGROUND} />
         <Text style={styles.toastText}>
           Offline map ready — works in airplane mode
         </Text>

@@ -22,8 +22,8 @@ import {
   Text,
   View,
 } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import DeviceInfo from 'react-native-device-info';
+import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
 import {
