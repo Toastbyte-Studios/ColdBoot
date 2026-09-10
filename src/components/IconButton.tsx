@@ -34,6 +34,12 @@ export interface IconButtonProps {
   size?: number;
   /** Glyph color. Defaults to the theme foreground. */
   color?: string;
+  /**
+   * Glyph color while disabled. Defaults to the theme's muted color, which is
+   * right on a plain background and wrong on a tinted one — override it when
+   * the button sits on a filled surface that dims as a whole.
+   */
+  disabledColor?: string;
   disabled?: boolean;
   accessibilityHint?: string;
   /** Layout and positioning only; the target size is fixed. */
@@ -54,13 +60,16 @@ export default function IconButton({
   onPress,
   size = 24,
   color,
+  disabledColor,
   disabled = false,
   accessibilityHint,
   style,
   testID,
 }: IconButtonProps) {
   const COLORS = useTheme();
-  const tint = disabled ? COLORS.MUTED : (color ?? COLORS.PRIMARY_DARK);
+  const tint = disabled
+    ? (disabledColor ?? COLORS.MUTED)
+    : (color ?? COLORS.PRIMARY_DARK);
 
   return (
     <Pressable

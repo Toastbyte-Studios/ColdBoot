@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet } from 'react-native';
+import IconButton from '../../../../components/IconButton';
 import { useTheme } from '../../../../hooks/useTheme';
 
 type Props = {
@@ -18,35 +19,30 @@ export default function DownloadAreaButton({
 }: Props) {
   const COLORS = useTheme();
 
-  if (!permissionGranted) {
-    return (
-      <View
-        style={[
-          styles.button,
-          styles.buttonDisabled,
-          { backgroundColor: COLORS.SECONDARY_ACCENT },
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: true }}
-        accessibilityLabel="Download your area — enable location to use this feature"
-        accessibilityHint="Location permission is required to download an offline map"
-      >
-        <Text style={[styles.icon, { color: COLORS.PRIMARY_LIGHT }]}>⤓</Text>
-      </View>
-    );
-  }
-
   return (
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor: COLORS.SECONDARY_ACCENT }]}
+    <IconButton
+      name="download-outline"
+      size={22}
+      color={COLORS.PRIMARY_LIGHT}
+      disabledColor={COLORS.PRIMARY_LIGHT}
+      disabled={!permissionGranted}
       onPress={onPress}
-      activeOpacity={0.8}
-      accessibilityLabel="Download your area"
-      accessibilityHint="Downloads an offline map centred on your current location"
-      accessibilityRole="button"
-    >
-      <Text style={[styles.icon, { color: COLORS.PRIMARY_LIGHT }]}>⤓</Text>
-    </TouchableOpacity>
+      accessibilityLabel={
+        permissionGranted
+          ? 'Download your area'
+          : 'Download your area — enable location to use this feature'
+      }
+      accessibilityHint={
+        permissionGranted
+          ? 'Downloads an offline map centred on your current location'
+          : 'Location permission is required to download an offline map'
+      }
+      style={[
+        styles.button,
+        { backgroundColor: COLORS.SECONDARY_ACCENT },
+        !permissionGranted && styles.buttonDisabled,
+      ]}
+    />
   );
 }
 
@@ -68,9 +64,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
-  },
-  icon: {
-    fontSize: 22,
-    lineHeight: 26,
   },
 });

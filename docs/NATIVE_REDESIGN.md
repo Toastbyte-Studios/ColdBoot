@@ -43,6 +43,20 @@ tonal), `plain` (`.plain` / text button), `destructive`.
 `primary`, `secondary` and `success` are kept as aliases so the sweep didn't
 have to touch every call site at once. New code should use the real names.
 
+### Colour escape hatches
+
+Two props exist for buttons that sit on a surface the palette doesn't
+describe. Reach for them rarely; a call site that needs one is often a sign
+the palette is missing a token.
+
+- `AppButton` `tint` — overrides the variant's tint while keeping the style.
+  A `plain` button with a tint override is still a plain button in a different
+  colour. Used for the Dismiss inside the download error banner, which has to
+  be `ERROR` rather than `BRAND`.
+- `IconButton` `disabledColor` — the disabled glyph defaults to the theme's
+  muted colour, which is right on a plain background and invisible on a tinted
+  one. Used by the map's download FAB, which dims as a whole circle instead.
+
 ## Findings
 
 ### 1. The navigator is the biggest problem — OPEN
@@ -90,9 +104,9 @@ which is the light palette resolved at module load. Those screens render the
 light scheme in both modes and do not respond to the dark-mode setting at all.
 
 Confirmed in the Notepad directory: `RecentNotesScreen`, `NoteEntryScreen`,
-`ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry and Inventory
-do not. Given the repo ships a full dark palette and a `useTheme` hook, this
-is likely widespread rather than local.
+`ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory
+and the Map offline components do not. Given the repo ships a full dark
+palette and a `useTheme` hook, this is likely widespread rather than local.
 
 This constrains the sweep: in an affected file, the new components must be
 passed the static colors explicitly rather than falling back to the theme,
@@ -100,11 +114,25 @@ because a theme-aware icon on a hardcoded light card turns pale-on-pale and
 disappears in dark mode. Fixing it properly means moving those
 `StyleSheet.create` calls inside the components. Worth its own pass.
 
+`DownloadConfirmScreen` shows the pattern to copy: a module-level
+`makeStyles(colors)` factory called through `useMemo(() => makeStyles(COLORS),
+[COLORS])`. That keeps the stylesheet out of the render body while still
+reacting to the scheme.
+
 Related smaller instances:
 
 - `PantryExpirationTrackerScreen`'s `statusBorderColor` and
   `statusBackgroundColor` return hardcoded Material hexes, so the red/amber/
   green expiry coding is identical in both schemes.
+- `DownloadConfirmScreen`'s low-storage banner is a fixed amber
+  (`#FFF3CD` / `#664D03`), because the palette has no warning token. It has
+  `SUCCESS` and `ERROR` but nothing between them. Adding `WARNING` would let
+  this and the expiry coding above resolve properly.
+- `DownloadProgressChip`'s chip and toast are fixed white on a dark scrim.
+  That one is defensible and deliberate — they float over map imagery, not
+  app chrome — and is now commented as such. The error banner in the same
+  file is not: its `rgba(255,255,255,0.95)` background stays white in dark
+  mode.
 - The footer notification badge hardcodes `'#fff'`.
 - No `StatusBar` bar-style appears to be wired to the color scheme, so dark
   mode is likely rendering dark status text on a dark background.
@@ -128,6 +156,21 @@ schemes.
 
 The original `AppButton` also put `PRIMARY_DARK` on `ACCENT` for the `primary`
 variant — roughly 3:1, under the body-text floor.
+
+### 7. Emoji and Unicode characters used as icons — PARTLY FIXED
+
+The offline download components drew their icons as text: `⬓` for the
+download FAB and the progress chip, `✅` in the success toast, `⚠️` in the
+error and low-storage banners.
+
+This is worse than it looks. The glyphs resolve from whatever font happens to
+cover them, so they differ between iOS and Android and between OS versions;
+they do not match the Ionicons used everywhere else in the app; they scale
+with the text rather than staying a fixed icon size; and a screen reader
+announces the emoji by name, so the toast read as "check mark button Offline
+map ready". All five are now Ionicons.
+
+Worth grepping the rest of the codebase for the same pattern.
 
 ## Open decisions
 
@@ -153,14 +196,15 @@ Converting only their icon buttons would leave a confusing half-migrated diff.
 
 ## Sweep progress
 
-14 of 63 files converted.
+17 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
       open decisions)
 - [x] `screens/Pantry` — 5 of 5
 - [x] `screens/Inventory` — 4 of 4
-- [ ] `screens/Map` — 9 files
+- [ ] `screens/Map` — 3 of 9 (`offline/` done; `MapScreen`, `MapPanel` and
+      `WaypointBottomSheet` remain)
 - [ ] `screens/EmergencyPlan` — 6 files
 - [ ] `screens/MorseCode` — 4 files
 - [ ] `screens/VoiceLog` — 3 files

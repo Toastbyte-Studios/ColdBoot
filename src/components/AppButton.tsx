@@ -10,9 +10,9 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
+import type { ThemeColors } from '../theme/colors';
 import { onColor, withAlpha } from '../theme/colorUtils';
 import { Text } from './ScaledText';
-import type { ThemeColors } from '../theme/colors';
 
 /**
  * Button styles map to the platform's own button vocabulary rather than to
@@ -45,6 +45,13 @@ export interface AppButtonProps {
   variant?: ButtonVariant;
   /** @default 'medium' */
   size?: ButtonSize;
+  /**
+   * Overrides the variant's tint color. The button *style* is unchanged — a
+   * `plain` button with a tint override is still a plain button, just in a
+   * different color. Use for buttons that belong to a colored surface, like a
+   * Dismiss inside an error banner.
+   */
+  tint?: string;
   /** Ionicons name rendered before the label. */
   icon?: string;
   /** Overrides the size-derived icon size. */
@@ -125,6 +132,7 @@ export default function AppButton({
   onPress,
   variant = 'filled',
   size = 'medium',
+  tint: tintOverride,
   icon,
   iconSize,
   disabled = false,
@@ -139,7 +147,8 @@ export default function AppButton({
   const inactive = disabled || loading;
 
   const { container, contentColor, ripple } = useMemo(() => {
-    const { kind, tint } = resolveVariant(variant, COLORS);
+    const { kind, tint: variantTint } = resolveVariant(variant, COLORS);
+    const tint = tintOverride ?? variantTint;
 
     if (disabled) {
       return {
@@ -172,7 +181,7 @@ export default function AppButton({
           ripple: withAlpha(tint, 0.16),
         };
     }
-  }, [variant, disabled, COLORS]);
+  }, [variant, tintOverride, disabled, COLORS]);
 
   const resolvedIconSize = iconSize ?? METRICS.iconSize[size];
 

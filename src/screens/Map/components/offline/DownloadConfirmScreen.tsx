@@ -20,10 +20,11 @@ import {
   StyleSheet,
   Switch,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import DeviceInfo from 'react-native-device-info';
+import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
 import {
   DEFAULT_OFFLINE_ZOOM,
@@ -178,13 +179,13 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
       {/* Header */}
       <View style={styles.header}>
         <Text style={styles.title}>Download your area</Text>
-        <TouchableOpacity
+        <AppButton
+          label="Cancel"
+          variant="plain"
+          size="small"
+          tint={COLORS.SECONDARY_ACCENT}
           onPress={onDismiss}
-          accessibilityLabel="Cancel"
-          accessibilityRole="button"
-        >
-          <Text style={styles.cancelText}>Cancel</Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <ScrollView
@@ -199,12 +200,14 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
               {gpsTimedOut ? (
                 <>
                   <Text style={styles.gpsText}>GPS fix timed out</Text>
-                  <TouchableOpacity
+                  <AppButton
+                    label="Retry"
+                    variant="plain"
+                    size="small"
+                    tint={COLORS.SECONDARY_ACCENT}
                     onPress={startRetryTimer}
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.retryText}>Retry</Text>
-                  </TouchableOpacity>
+                    accessibilityLabel="Retry waiting for a GPS fix"
+                  />
                 </>
               ) : (
                 <>
@@ -249,8 +252,9 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
         {/* Storage pressure warning */}
         {storagePressure && (
           <View style={styles.warningBanner}>
+            <Icon name="warning-outline" size={16} color={WARNING_FOREGROUND} />
             <Text style={styles.warningText}>
-              ⚠️ Low storage — this download may not fit. Free up space before
+              Low storage — this download may not fit. Free up space before
               continuing.
             </Text>
           </View>
@@ -286,33 +290,29 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
         </Text>
 
         {/* Download button */}
-        <TouchableOpacity
-          style={[
-            styles.downloadBtn,
-            { backgroundColor: COLORS.SECONDARY_ACCENT },
-            (!gpsReady || starting) && styles.downloadBtnDisabled,
-          ]}
+        <AppButton
+          label="Download"
+          size="large"
+          tint={COLORS.SECONDARY_ACCENT}
+          fullWidth
+          disabled={!gpsReady}
+          loading={starting}
           onPress={handleDownload}
-          disabled={!gpsReady || starting}
           accessibilityLabel="Start download"
-          accessibilityRole="button"
-        >
-          {starting ? (
-            <ActivityIndicator color={COLORS.PRIMARY_LIGHT} />
-          ) : (
-            <Text
-              style={[styles.downloadBtnText, { color: COLORS.PRIMARY_LIGHT }]}
-            >
-              Download
-            </Text>
-          )}
-        </TouchableOpacity>
+          style={styles.downloadBtn}
+        />
       </ScrollView>
     </View>
   );
 }
 
 export default observer(DownloadConfirmScreen);
+
+/**
+ * The low-storage banner is a fixed amber warning rather than a theme color:
+ * there is no warning token in the palette. See docs/NATIVE_REDESIGN.md.
+ */
+const WARNING_FOREGROUND = '#664D03';
 
 function makeStyles(colors: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
@@ -334,10 +334,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       fontSize: 17,
       fontWeight: '700',
       color: colors.PRIMARY_DARK,
-    },
-    cancelText: {
-      fontSize: 15,
-      color: colors.SECONDARY_ACCENT,
     },
     scroll: {
       flex: 1,
@@ -366,21 +362,20 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       fontSize: 14,
       color: colors.PRIMARY_DARK,
     },
-    retryText: {
-      fontSize: 14,
-      color: colors.SECONDARY_ACCENT,
-      fontWeight: '600',
-    },
     warningBanner: {
       backgroundColor: '#FFF3CD',
       borderRadius: 8,
       padding: 12,
       borderWidth: 1,
       borderColor: '#FFCA2C',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
     },
     warningText: {
+      flex: 1,
       fontSize: 13,
-      color: '#664D03',
+      color: WARNING_FOREGROUND,
     },
     row: {
       flexDirection: 'row',
@@ -422,17 +417,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       textAlign: 'center',
     },
     downloadBtn: {
-      borderRadius: 12,
-      paddingVertical: 14,
-      alignItems: 'center',
       marginTop: 8,
-    },
-    downloadBtnDisabled: {
-      opacity: 0.5,
-    },
-    downloadBtnText: {
-      fontSize: 16,
-      fontWeight: '700',
     },
   });
 }
