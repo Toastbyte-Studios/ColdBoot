@@ -29,11 +29,12 @@ import {
   Platform,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import CompassHeading from 'react-native-compass-heading';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
+import Icon from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import { useTheme } from '../../hooks/useTheme';
@@ -118,6 +119,13 @@ const US_STATE_ABBR: Record<string, string> = {
 
 const NOMINATIM_USER_AGENT =
   'ColdBoot Survival App (toastbyte.studio, support@toastbyte.studio)';
+
+/**
+ * Dev-only simulated-offline banner colours. Same fixed amber as
+ * DownloadConfirmScreen's low-storage banner, because the palette has no
+ * warning token. See docs/NATIVE_REDESIGN.md.
+ */
+const WARNING_FOREGROUND = '#664D03';
 
 /**
  * Reverse geocodes a lat/lng via Nominatim and calls setName with the result.
@@ -321,7 +329,7 @@ export default observer(function MapScreen() {
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
 
-  // ── Recording state ──────────────────────────────────────────────────────────────
+  // ── Recording state ──────────────────────────────────────────────────────────
   /** Mutable ref so GPS callback closure always reads the latest value. */
   const recordingStateRef = useRef<RecordingState>('idle');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -339,7 +347,7 @@ export default observer(function MapScreen() {
   const [viewedTrack, setViewedTrack] = useState<Track | null>(null);
   /** Mirrors permissionStatus state so AppState callback can read it without deps. */
   const permissionStatusRef = useRef<LocationPermissionStatus>('undetermined');
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
 
   // Live GPS position from MapLibre LocationManager — drives coords display and locate-me.
   const mlPosition = useCurrentPosition();
@@ -545,7 +553,7 @@ export default observer(function MapScreen() {
     [waypointStore],
   );
 
-  // ── Recording handlers ─────────────────────────────────────────────────────────────────
+  // ── Recording handlers ────────────────────────────────────────────────────────
 
   const handleRecordPress = useCallback(() => {
     if (recordingStateRef.current === 'idle') {
@@ -704,7 +712,7 @@ export default observer(function MapScreen() {
     navigationRef.current?.navigate('DownloadArea' as never);
   }, []);
 
-  // ────────────────────────────────────────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────
 
   // Ring rotates opposite to heading so the needle appears fixed pointing up
   const ringSpin = needleRotation.interpolate({
@@ -779,17 +787,21 @@ export default observer(function MapScreen() {
             devToolsStore.simulatedOffline &&
             !offlineBannerDismissed && (
               <View style={styles.offlineBanner} pointerEvents="box-none">
+                <Icon
+                  name="warning-outline"
+                  size={16}
+                  color={WARNING_FOREGROUND}
+                />
                 <Text style={styles.offlineBannerText}>
-                  ⚠️ Simulated offline mode
+                  Simulated offline mode
                 </Text>
-                <TouchableOpacity
-                  onPress={() => setOfflineBannerDismissed(true)}
-                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                <IconButton
+                  name="close"
+                  size={18}
+                  color={WARNING_FOREGROUND}
                   accessibilityLabel="Dismiss simulated offline banner"
-                  accessibilityRole="button"
-                >
-                  <Text style={styles.offlineBannerDismiss}>✕</Text>
-                </TouchableOpacity>
+                  onPress={() => setOfflineBannerDismissed(true)}
+                />
               </View>
             )}
         </View>
@@ -837,7 +849,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       right: 8,
       flexDirection: 'row',
       alignItems: 'center',
-      justifyContent: 'space-between',
+      gap: 8,
       backgroundColor: '#FFF3CD',
       borderRadius: 8,
       borderWidth: 1,
@@ -849,13 +861,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       flex: 1,
       fontSize: 13,
       fontWeight: '700',
-      color: '#664D03',
-    },
-    offlineBannerDismiss: {
-      fontSize: 15,
-      fontWeight: '700',
-      color: '#664D03',
-      paddingHorizontal: 4,
+      color: WARNING_FOREGROUND,
     },
     compassContainer: {
       width: '90%',
