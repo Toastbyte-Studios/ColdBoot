@@ -87,7 +87,9 @@ export default observer(function NewEmergencyContactScreen() {
             color={COLORS.PRIMARY_DARK}
             style={localStyles.importIcon}
           />
-          <Text style={[localStyles.importText, { color: COLORS.PRIMARY_DARK }]}>
+          <Text
+            style={[localStyles.importText, { color: COLORS.PRIMARY_DARK }]}
+          >
             Import from Contacts
           </Text>
           <Ionicons
