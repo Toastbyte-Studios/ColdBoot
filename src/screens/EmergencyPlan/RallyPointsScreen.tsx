@@ -90,6 +90,7 @@ export default observer(function RallyPointsScreen() {
           size={20}
           color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Import rally points"
+          borderless={false}
           onPress={() => setImportVisible(true)}
           style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
         />
@@ -98,6 +99,7 @@ export default observer(function RallyPointsScreen() {
           size={20}
           color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Share rally points"
+          borderless={false}
           onPress={handleShare}
           style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
         />

@@ -338,7 +338,6 @@ export default function MapPanel({
                   recordingState === 'recording' && styles.recordButtonActive,
                   recordingState === 'stopped' && styles.recordButtonDisabled,
                 ]}
-                borderless
                 rippleColor={COLORS.PRIMARY_LIGHT}
                 onPress={
                   recordingState !== 'stopped' ? onRecordPress : undefined

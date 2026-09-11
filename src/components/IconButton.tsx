@@ -44,6 +44,8 @@ export interface IconButtonProps {
   accessibilityHint?: string;
   /** Layout and positioning only; the target size is fixed. */
   style?: StyleProp<ViewStyle>;
+  /** Unbounded ripple, for circular toolbar-style targets. @default true */
+  borderless?: boolean;
   testID?: string;
 }
 
@@ -64,6 +66,7 @@ export default function IconButton({
   disabled = false,
   accessibilityHint,
   style,
+  borderless = true,
   testID,
 }: IconButtonProps) {
   const COLORS = useTheme();
@@ -86,7 +89,7 @@ export default function IconButton({
           ? undefined
           : {
               color: withAlpha(tint, 0.16),
-              borderless: true,
+              borderless,
               radius: TARGET / 2,
             }
       }

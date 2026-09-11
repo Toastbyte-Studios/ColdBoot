@@ -100,20 +100,12 @@ const SOSTrigger = ({
     }
   };
 
-  // Shared activation logic used by both the long-press and accessibility paths
+  // Shared activation logic used by the hold timer and accessibility path
   const activateSOS = useCallback(() => {
     core.setSosWithTone(true);
     core.setFlashlightMode(FlashlightModes.SOS);
     Vibration.vibrate(200);
   }, [core]);
-
-  // Long-press fires after delayLongPress — mirrors the hold-timer path for
-  // keyboard / TV / switch-access users who cannot use press-and-hold
-  const handleLongPress = useCallback(() => {
-    activateSOS();
-    setIsSOSPressing(false);
-    sosProgressAnim.setValue(0);
-  }, [activateSOS, sosProgressAnim]);
 
   // Accessibility action handler — shows a confirmation dialog so assistive-
   // tech users can trigger SOS intentionally without a physical hold
@@ -158,8 +150,6 @@ const SOSTrigger = ({
     <Touchable
       onPressIn={handleSOSPressIn}
       onPressOut={handleSOSPressOut}
-      onLongPress={handleLongPress}
-      delayLongPress={1000}
       accessibilityLabel="Emergency SOS - Hold for 1 Second to Activate"
       accessibilityRole="button"
       accessibilityActions={[{ name: 'activate', label: 'Activate SOS' }]}

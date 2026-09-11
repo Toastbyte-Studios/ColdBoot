@@ -170,7 +170,7 @@ export default function ConversionCategoryScreen() {
         </View>
 
         {/* Unit Selection */}
-        <View style={styles.unitSelectorContainer} pointerEvents="box-only">
+        <View style={styles.unitSelectorContainer}>
           <ScrollView horizontal style={styles.unitSelector}>
             {category.units.map((unit, index) => (
               <Touchable

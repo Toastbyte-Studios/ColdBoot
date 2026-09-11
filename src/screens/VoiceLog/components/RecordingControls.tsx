@@ -49,12 +49,10 @@ export default function RecordingControls({
       )}
 
       {/* Not an IconButton: this is a 120pt circle, and IconButton pins its
-          borderless ripple radius to the 44/48 touch target, which would draw
-          a small ripple adrift in the middle of it. Touchable leaves the
-          radius unset so Android derives it from the view bounds. */}
+          ripple radius to the 44/48 touch target. Touchable leaves the radius
+          unset so Android derives it from the view bounds. */}
       <Touchable
         style={[styles.recordButton, isRecording && styles.recordButtonActive]}
-        borderless
         rippleColor={glyphColor}
         onPress={isRecording ? onStopRecording : onStartRecording}
         accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Recording'}

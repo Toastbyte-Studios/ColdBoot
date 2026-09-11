@@ -50,14 +50,15 @@ export default function MorseCodeCheatSheet() {
     <ScreenBody>
       <SectionHeader>Morse Code Cheat Sheet</SectionHeader>
       <View style={styles.container}>
-        <AppButton
-          label={`Sort: ${sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}`}
-          tint={COLORS.BRAND}
-          fullWidth
-          onPress={toggleSort}
-          accessibilityLabel={`Sorted ${sortType === 'alphabetical' ? 'alphabetically' : 'by pattern'}. Tap to change.`}
-          style={styles.sortButton}
-        />
+        <View style={styles.sortButton}>
+          <AppButton
+            label={`Sort: ${sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}`}
+            tint={COLORS.BRAND}
+            fullWidth
+            onPress={toggleSort}
+            accessibilityLabel={`Sorted ${sortType === 'alphabetical' ? 'alphabetically' : 'by pattern'}. Tap to change.`}
+          />
+        </View>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

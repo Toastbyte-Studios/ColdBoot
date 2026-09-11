@@ -6,6 +6,6 @@ import { View } from 'react-native';
  * control by `values` and fire `onChange` with a synthetic native event.
  */
 const SegmentedControl = (props: Record<string, unknown>) =>
-  React.createElement(View, props);
+  React.createElement(View, props as React.ComponentProps<typeof View>);
 
 export default SegmentedControl;

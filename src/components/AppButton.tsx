@@ -152,10 +152,7 @@ export default function AppButton({
 
     if (disabled) {
       return {
-        container:
-          kind === 'filled'
-            ? { backgroundColor: COLORS.BORDER }
-            : { backgroundColor: 'transparent' },
+        container: { backgroundColor: COLORS.BORDER },
         contentColor: COLORS.MUTED,
         ripple: 'transparent',
       };

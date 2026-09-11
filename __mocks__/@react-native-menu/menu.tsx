@@ -9,4 +9,8 @@ export const MenuView = ({
   children,
   ...props
 }: React.PropsWithChildren<Record<string, unknown>>) =>
-  React.createElement(View, props, children);
+  React.createElement(
+    View,
+    props as React.ComponentProps<typeof View>,
+    children,
+  );

@@ -796,7 +796,7 @@ export default observer(function MapScreen() {
                   Simulated offline mode
                 </Text>
                 <IconButton
-                  name="close"
+                  name="close-outline"
                   size={18}
                   color={WARNING_FOREGROUND}
                   accessibilityLabel="Dismiss simulated offline banner"
