@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
 import IconButton from '../../../../components/IconButton';
 import { useTheme } from '../../../../hooks/useTheme';
 
@@ -24,7 +24,17 @@ export default function DownloadAreaButton({
       name="download-outline"
       size={22}
       color={COLORS.PRIMARY_LIGHT}
-      onPress={onPress}
+      onPress={() => {
+        if (!permissionGranted) {
+          Alert.alert(
+            'Permission Required',
+            'Location permission is required to download an offline map.',
+          );
+          return;
+        }
+
+        onPress();
+      }}
       accessibilityLabel={
         permissionGranted
           ? 'Download your area'
