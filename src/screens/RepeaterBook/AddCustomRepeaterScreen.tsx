@@ -7,7 +7,6 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
@@ -15,6 +14,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -142,12 +142,13 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
             accessibilityLabel="PL Tone"
           />
 
-          {/* Mode picker */}
+          {/* Mode picker. See docs/NATIVE_REDESIGN.md — this is a menu, and
+              wants to be a real one. */}
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
               Mode *
             </Text>
-            <TouchableOpacity
+            <Touchable
               style={[
                 styles.pickerButton,
                 {
@@ -167,7 +168,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                 size={16}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           </View>
 
           <FormInput
@@ -202,9 +203,22 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
           <View style={styles.formGroup}>
             <View style={styles.switchRow}>
               <View style={styles.switchLabelGroup}>
-                <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-                  🚨 Emergency Comms
-                </Text>
+                <View style={styles.labelRow}>
+                  <Ionicons
+                    name="alert-circle"
+                    size={16}
+                    color={COLORS.ERROR}
+                  />
+                  <Text
+                    style={[
+                      styles.label,
+                      styles.labelInline,
+                      { color: COLORS.PRIMARY_DARK },
+                    ]}
+                  >
+                    Emergency Comms
+                  </Text>
+                </View>
                 <Text
                   style={[
                     styles.switchSubLabel,
@@ -243,7 +257,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
             <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
               Operational Status
             </Text>
-            <TouchableOpacity
+            <Touchable
               style={[
                 styles.pickerButton,
                 {
@@ -263,7 +277,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                 size={16}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           </View>
 
           <FormTextArea
@@ -308,7 +322,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                   Mode
                 </Text>
                 {MODES.map((m) => (
-                  <TouchableOpacity
+                  <Touchable
                     key={m}
                     onPress={() => {
                       setMode(m);
@@ -318,6 +332,9 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                       styles.modalOption,
                       m === mode && { backgroundColor: COLORS.ACCENT },
                     ]}
+                    accessibilityLabel={m}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: m === mode }}
                   >
                     <Text
                       style={[
@@ -336,7 +353,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                         color={COLORS.PRIMARY_LIGHT}
                       />
                     )}
-                  </TouchableOpacity>
+                  </Touchable>
                 ))}
               </View>
             </TouchableWithoutFeedback>
@@ -369,7 +386,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                   Operational Status
                 </Text>
                 {STATUSES.map((s) => (
-                  <TouchableOpacity
+                  <Touchable
                     key={s}
                     onPress={() => {
                       setOperationalStatus(s);
@@ -381,6 +398,9 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                         backgroundColor: COLORS.ACCENT,
                       },
                     ]}
+                    accessibilityLabel={s}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: s === operationalStatus }}
                   >
                     <Text
                       style={[
@@ -399,7 +419,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                         color={COLORS.PRIMARY_LIGHT}
                       />
                     )}
-                  </TouchableOpacity>
+                  </Touchable>
                 ))}
               </View>
             </TouchableWithoutFeedback>
@@ -451,10 +471,20 @@ const createStyles = (COLORS: ColorScheme) =>
       fontWeight: '600',
       marginBottom: 8,
     },
+    labelRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: 8,
+    },
+    labelInline: {
+      marginBottom: 0,
+    },
     pickerButton: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      minHeight: 48,
       borderWidth: 1,
       borderRadius: 8,
       paddingHorizontal: 12,
@@ -486,6 +516,7 @@ const createStyles = (COLORS: ColorScheme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
+      minHeight: 44,
       paddingVertical: 10,
       paddingHorizontal: 8,
       borderRadius: 8,
