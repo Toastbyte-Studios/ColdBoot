@@ -128,10 +128,14 @@ export default function RepeaterDetailScreen(): JSX.Element {
                   i % 2 === 1 && { backgroundColor: COLORS.BACKGROUND },
                 ]}
               >
-                <Text style={[styles.labelText, { color: COLORS.PRIMARY_DARK }]}>
+                <Text
+                  style={[styles.labelText, { color: COLORS.PRIMARY_DARK }]}
+                >
                   {row.label}
                 </Text>
-                <Text style={[styles.valueText, { color: COLORS.PRIMARY_DARK }]}>
+                <Text
+                  style={[styles.valueText, { color: COLORS.PRIMARY_DARK }]}
+                >
                   {row.value}
                 </Text>
               </View>
