@@ -50,6 +50,10 @@ tonal), `plain` (`.plain` / text button), `destructive`.
 `primary`, `secondary` and `success` are kept as aliases so the sweep didn't
 have to touch every call site at once. New code should use the real names.
 
+The screen-level "Add X" buttons were a mix of `PRIMARY_DARK` and `ACCENT`
+fills depending on who wrote them. The sweep standardises them all on the
+accent fill — Notepad, Pantry, Inventory, EmergencyPlan.
+
 ### Colour escape hatches
 
 Two props exist for buttons that sit on a surface the palette doesn't
@@ -96,13 +100,21 @@ touchable views with ad-hoc padding, which is why nothing felt consistent.
 
 See the sweep progress below.
 
-### 3. Five hand-built modals — OPEN
+### 3. Hand-built modals — OPEN, and there are more than first counted
 
-`SettingsModal` (32KB), `HelpModal`, `ManageOfflineMapsModal`, `TutorialModal`
-and `NotificationsModal` are all React Native `Modal`s rendered inline in
-`AppShell`, while the navigator only uses `presentation: 'modal'` for three
-actual routes. `SettingsModal` in particular is a grouped list pretending to
-be a modal; it wants to be a screen.
+The original count was five, from grepping `components/`: `SettingsModal`
+(32KB), `HelpModal`, `ManageOfflineMapsModal`, `TutorialModal` and
+`NotificationsModal`, all React Native `Modal`s rendered inline in `AppShell`.
+
+The EmergencyPlan sweep turned up two more that the grep missed because they
+live in a feature directory rather than `components/`: `ContactPickerModal`
+and `ImportModal`. Neither is a navigator route. So it is at least seven, and
+the real number is probably higher — worth grepping for `from 'react-native'`
+imports of `Modal` across `src/` rather than assuming.
+
+Meanwhile the navigator only uses `presentation: 'modal'` for three actual
+routes. `SettingsModal` in particular is a grouped list pretending to be a
+modal; it wants to be a screen.
 
 ### 4. Theming is inconsistently applied — OPEN
 
@@ -112,8 +124,9 @@ light scheme in both modes and do not respond to the dark-mode setting at all.
 
 Confirmed in the Notepad directory: `RecentNotesScreen`, `NoteEntryScreen`,
 `ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory,
-Checklist and the Map components do not. Given the repo ships a full dark
-palette and a `useTheme` hook, this is likely widespread rather than local.
+Checklist, EmergencyPlan and the Map components do not. Given the repo ships a
+full dark palette and a `useTheme` hook, this is likely widespread rather than
+local.
 
 This constrains the sweep: in an affected file, the new components must be
 passed the static colors explicitly rather than falling back to the theme,
@@ -147,13 +160,20 @@ Related smaller instances:
 - No `StatusBar` bar-style appears to be wired to the color scheme, so dark
   mode is likely rendering dark status text on a dark background.
 
-### 5. Header offsets were fixed pixels — FIXED
+### 5. Status-bar clearance as fixed pixels — PARTLY FIXED
 
-The date, settings button and logo sat at hardcoded offsets (30 / 50 / 80)
-tuned against a 44pt top inset. They now shift by the difference between the
-device's actual inset and that baseline, so a 44pt device is unchanged and
-everything else gets correct clearance. `SafeAreaProvider` was already mounted
-in `App.tsx`.
+`AppShell` positioned the date, settings button and logo at hardcoded offsets
+(30 / 50 / 80) tuned against a 44pt top inset. They now shift by the
+difference between the device's actual inset and that baseline, so a 44pt
+device is unchanged and everything else gets correct clearance.
+`SafeAreaProvider` was already mounted in `App.tsx`.
+
+`ContactPickerModal`'s header has the same problem — `paddingTop: 52` — and is
+deliberately left alone. It is a React Native `Modal`, which renders in its
+own window, and `useSafeAreaInsets` is unreliable inside one on Android
+without a second `SafeAreaProvider` mounted inside the modal. That needs
+testing on a device before changing. The other hand-built modals listed in
+finding 3 are worth checking for the same pattern.
 
 ### 6. `onColor` thresholded luminance — FIXED
 
@@ -169,23 +189,28 @@ variant — roughly 3:1, under the body-text floor.
 
 ### 7. Emoji and Unicode characters used as icons — PARTLY FIXED
 
-Widespread in the Map feature, and not confined to one folder:
+Fifteen instances so far, across two features:
 
-- `offline/` — `⬓` on the download FAB and progress chip, `✅` in the success
-  toast, `⚠️` in the error and low-storage banners.
-- `WaypointBottomSheet` — `✕` on the close button.
-- `MapPanel` — `⚑` on the waypoints FAB, `⌖` on locate-me, `⏺` / `⏹` on the
-  record button, `⏱` and `📍` in the recording HUD.
+- `Map/offline/` — `⬓` on the download FAB and progress chip, `✅` in the
+  success toast, `⚠️` in the error and low-storage banners.
+- `Map/WaypointBottomSheet` — `✕` on the close button.
+- `Map/MapPanel` — `⚑` on the waypoints FAB, `⌖` on locate-me, `⏺` / `⏹` on
+  the record button, `⏱` and `📍` in the recording HUD.
 - `MapScreen` — `⚠️` and `✕` in the simulated-offline banner.
+- `RallyPointsScreen` — `📍` inline inside a `Text`, prefixed to every rally
+  point's coordinates.
 
 This is worse than it looks. The glyphs resolve from whatever font happens to
 cover them, so they differ between iOS and Android and between OS versions;
 they do not match the Ionicons used everywhere else in the app; they scale
 with the text rather than staying a fixed icon size; and a screen reader
-announces the emoji by name, so the success toast read as "check mark button
-Offline map ready". All fourteen are now Ionicons.
+announces the emoji by name — the success toast read as "check mark button
+Offline map ready", and every rally point read as "round pushpin" before its
+coordinates. All fifteen are now Ionicons.
 
-Still worth grepping the rest of the codebase for the same pattern.
+The `RallyPointsScreen` case is the one to watch for elsewhere, because it was
+inline in a string rather than standing alone as a pseudo-icon. Worth grepping
+the rest of the codebase before assuming these are all of them.
 
 ### 8. Undersized touch targets on custom chrome — IN PROGRESS
 
@@ -193,13 +218,16 @@ The sweep keeps turning up controls built at whatever size looked right:
 `WaypointBottomSheet`'s close button was a 32pt bordered circle, the Notepad
 and Pantry header icons were roughly 30-42pt, the row action buttons in
 `WaypointRow` and `TrackRow` were about 26pt tall, the checklist checkbox was
-a bare 28pt glyph.
+a bare 28pt glyph, and the share/import buttons in `RallyPointsScreen` and
+`CommunicationPlanScreen` were 36pt bordered boxes.
 
 Moving these onto the primitives fixes the target but changes the look,
 because the primitives will not render below 44/48. The bottom sheet's close
-button lost its bordered circle rather than growing into a 44pt one. Expect a
-small amount of this in every batch; it is the point rather than a side
-effect, but it does mean the diffs are not purely mechanical.
+button lost its bordered circle rather than growing into a 44pt one; the
+share/import boxes grew instead, since their border comes from the passed
+style and their size from the component. Expect a small amount of this in
+every batch; it is the point rather than a side effect, but it does mean the
+diffs are not purely mechanical.
 
 The map FABs are the happy case: already 48pt circles, so they took
 `IconButton` without any change in size.
@@ -257,7 +285,7 @@ Android. Same trade-off as the menu decision, lower stakes.
 
 ## Sweep progress
 
-25 of 63 files converted.
+31 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
@@ -266,7 +294,7 @@ Android. Same trade-off as the menu decision, lower stakes.
 - [x] `screens/Inventory` — 4 of 4
 - [x] `screens/Map` — 9 of 9
 - [x] `screens/Checklist` — 2 of 2
-- [ ] `screens/EmergencyPlan` — 6 files
+- [x] `screens/EmergencyPlan` — 6 of 6
 - [ ] `screens/MorseCode` — 4 files
 - [ ] `screens/VoiceLog` — 3 files
 - [ ] `screens/RepeaterBook` — 3 files
@@ -283,3 +311,12 @@ Android. Same trade-off as the menu decision, lower stakes.
 Run `npm run cleanup` before pushing. The sweep removes local button styles as
 it goes, and `react-native/no-unused-styles` will catch any that are left
 behind.
+
+### Worth doing before the sweep finishes
+
+Three greps that would replace guesswork with a number, and that keep turning
+up instances one batch at a time:
+
+- `Modal` imported from `react-native` — finding 3.
+- Emoji and dingbat codepoints in `.tsx` — finding 7.
+- `from '../../theme'` importing `COLORS` — finding 4.
