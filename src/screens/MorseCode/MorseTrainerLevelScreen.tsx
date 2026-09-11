@@ -1,12 +1,14 @@
 import { useRoute, RouteProp } from '@react-navigation/native';
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import Sound from 'react-native-sound';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { COLORS } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { ColorScheme } from '../../theme/colors';
 import { textToMorse, morseCodeData } from '../../utils/morseCodeMapping';
 import { TrainerLevel } from './MorseTrainerScreen';
 
@@ -77,6 +79,8 @@ function generateChallenge(level: TrainerLevel): string {
 export default function MorseTrainerLevelScreen() {
   const route = useRoute<RouteProp<{ params: RouteParams }, 'params'>>();
   const level = route.params.level;
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
 
   const [challenge, setChallenge] = useState('');
   const [playedChallenge, setPlayedChallenge] = useState('');
@@ -344,10 +348,19 @@ export default function MorseTrainerLevelScreen() {
             isPlaying
               ? 'Playing...'
               : soundLoadError
-                ? '⚠ Audio Error'
+                ? 'Audio Error'
                 : !soundsLoaded
                   ? 'Loading Sounds...'
-                  : '▶ Play Morse Code'
+                  : 'Play Morse Code'
+          }
+          icon={
+            isPlaying
+              ? undefined
+              : soundLoadError
+                ? 'warning-outline'
+                : soundsLoaded
+                  ? 'play-outline'
+                  : undefined
           }
           onPress={playMorseCode}
           disabled={isPlaying || (!soundsLoaded && !soundLoadError)}
@@ -386,12 +399,23 @@ export default function MorseTrainerLevelScreen() {
                 : styles.incorrectFeedback,
             ]}
           >
+            <Ionicons
+              name={
+                feedback === 'correct'
+                  ? 'checkmark-circle-outline'
+                  : soundLoadError
+                    ? 'warning-outline'
+                    : 'close-circle-outline'
+              }
+              size={20}
+              color={feedback === 'correct' ? COLORS.SUCCESS : COLORS.ERROR}
+            />
             <Text style={styles.feedbackText}>
               {feedback === 'correct'
-                ? '✓ Correct!'
+                ? 'Correct!'
                 : soundLoadError
-                  ? '⚠ Failed to load audio files. Please restart the app.'
-                  : `✗ Incorrect. Answer was: ${playedChallenge}`}
+                  ? 'Failed to load audio files. Please restart the app.'
+                  : `Incorrect. Answer was: ${playedChallenge}`}
             </Text>
           </View>
         )}
@@ -429,86 +453,91 @@ export default function MorseTrainerLevelScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingHorizontal: 14,
-    paddingTop: 10,
-  },
-  scoreContainer: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 16,
-    alignItems: 'center',
-  },
-  scoreText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-  },
-  playButton: {
-    marginBottom: 20,
-  },
-  answerContainer: {
-    marginBottom: 16,
-  },
-  answerLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 6,
-  },
-  answerInput: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    color: COLORS.PRIMARY_DARK,
-  },
-  feedbackContainer: {
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 16,
-    borderWidth: 2,
-  },
-  correctFeedback: {
-    backgroundColor: COLORS.SUCCESS_LIGHT,
-    borderColor: COLORS.SUCCESS,
-  },
-  incorrectFeedback: {
-    backgroundColor: COLORS.ERROR_LIGHT,
-    borderColor: COLORS.ERROR,
-  },
-  feedbackText: {
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    color: COLORS.PRIMARY_DARK,
-  },
-  buttonContainer: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-  },
-  buttonFlex: {
-    flex: 1,
-  },
-  helpContainer: {
-    padding: 10,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.SECONDARY_ACCENT,
-  },
-  helpText: {
-    fontSize: 11,
-    color: COLORS.SECONDARY_ACCENT,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      width: '100%',
+      paddingHorizontal: 14,
+      paddingTop: 10,
+    },
+    scoreContainer: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+      borderRadius: 8,
+      padding: 12,
+      marginBottom: 16,
+      alignItems: 'center',
+    },
+    scoreText: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+    },
+    playButton: {
+      marginBottom: 20,
+    },
+    answerContainer: {
+      marginBottom: 16,
+    },
+    answerLabel: {
+      fontSize: 14,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 6,
+    },
+    answerInput: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+      borderRadius: 8,
+      padding: 12,
+      fontSize: 16,
+      color: COLORS.PRIMARY_DARK,
+    },
+    feedbackContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 8,
+      padding: 12,
+      borderRadius: 8,
+      marginBottom: 16,
+      borderWidth: 2,
+    },
+    correctFeedback: {
+      backgroundColor: COLORS.SUCCESS_LIGHT,
+      borderColor: COLORS.SUCCESS,
+    },
+    incorrectFeedback: {
+      backgroundColor: COLORS.ERROR_LIGHT,
+      borderColor: COLORS.ERROR,
+    },
+    feedbackText: {
+      fontSize: 14,
+      fontWeight: '600',
+      textAlign: 'center',
+      color: COLORS.PRIMARY_DARK,
+    },
+    buttonContainer: {
+      flexDirection: 'row',
+      gap: 8,
+      marginBottom: 16,
+    },
+    buttonFlex: {
+      flex: 1,
+    },
+    helpContainer: {
+      padding: 10,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: COLORS.SECONDARY_ACCENT,
+    },
+    helpText: {
+      fontSize: 11,
+      color: COLORS.SECONDARY_ACCENT,
+      textAlign: 'center',
+    },
+  });

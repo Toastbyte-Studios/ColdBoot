@@ -1,6 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+  useMemo,
+} from 'react';
 import {
   StyleSheet,
   View,
@@ -19,8 +25,10 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
-import { COLORS, FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
+import { FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import EmptyState from './components/EmptyState';
 import InfoBox from './components/InfoBox';
 import RecordingControls from './components/RecordingControls';
@@ -46,6 +54,8 @@ const MAX_DURATION_SECONDS = 12;
  * @returns A React element rendering the Voice Log screen.
  */
 export default observer(function VoiceLogScreen() {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation();
   const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
@@ -425,46 +435,47 @@ export default observer(function VoiceLogScreen() {
   );
 });
 
-const styles = StyleSheet.create({
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    flexGrow: 1,
-    paddingTop: SCROLL_PADDING,
-    paddingHorizontal: 16,
-    paddingBottom: FOOTER_HEIGHT + SCROLL_PADDING,
-  },
-  modeSelectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 30,
-    textAlign: 'center',
-  },
-  infoText: {
-    fontSize: 14,
-    color: COLORS.PRIMARY_DARK,
-    lineHeight: 20,
-  },
-  featuresTitle: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 12,
-  },
-  featureRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  featureText: {
-    fontSize: 14,
-    color: COLORS.PRIMARY_DARK,
-    marginLeft: 8,
-  },
-  voiceLogsList: {
-    width: '100%',
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    scrollView: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollContent: {
+      flexGrow: 1,
+      paddingTop: SCROLL_PADDING,
+      paddingHorizontal: 16,
+      paddingBottom: FOOTER_HEIGHT + SCROLL_PADDING,
+    },
+    modeSelectionTitle: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 30,
+      textAlign: 'center',
+    },
+    infoText: {
+      fontSize: 14,
+      color: COLORS.PRIMARY_DARK,
+      lineHeight: 20,
+    },
+    featuresTitle: {
+      fontSize: 14,
+      fontWeight: 'bold',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 12,
+    },
+    featureRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    featureText: {
+      fontSize: 14,
+      color: COLORS.PRIMARY_DARK,
+      marginLeft: 8,
+    },
+    voiceLogsList: {
+      width: '100%',
+    },
+  });

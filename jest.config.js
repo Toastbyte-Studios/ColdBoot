@@ -11,5 +11,9 @@ module.exports = {
     'react-native-fs': '<rootDir>/__mocks__/react-native-fs.ts',
     '@maplibre/maplibre-react-native':
       '<rootDir>/__mocks__/@maplibre/maplibre-react-native.tsx',
+    '@react-native-menu/menu':
+      '<rootDir>/__mocks__/@react-native-menu/menu.tsx',
+    '@react-native-segmented-control/segmented-control':
+      '<rootDir>/__mocks__/@react-native-segmented-control/segmented-control.tsx',
   },
 };

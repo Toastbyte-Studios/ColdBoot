@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
@@ -7,8 +7,10 @@ import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
-import { COLORS, FOOTER_HEIGHT } from '../../theme';
+import { FOOTER_HEIGHT } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 
 /**
  * Screen for managing note categories.
@@ -21,6 +23,8 @@ import { COLORS, FOOTER_HEIGHT } from '../../theme';
  * @returns {React.JSX.Element} The rendered manage categories screen component.
  */
 export default observer(function ManageCategoriesScreen(): React.JSX.Element {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const [newCategoryName, setNewCategoryName] = useState<string>('');
   const [isAdding, setIsAdding] = useState<boolean>(false);
@@ -152,7 +156,7 @@ export default observer(function ManageCategoriesScreen(): React.JSX.Element {
             <TextInput
               style={styles.input}
               placeholder="Category name..."
-              placeholderTextColor={COLORS.PRIMARY_DARK}
+              placeholderTextColor={COLORS.MUTED}
               value={newCategoryName}
               onChangeText={setNewCategoryName}
               autoFocus
@@ -209,82 +213,83 @@ export default observer(function ManageCategoriesScreen(): React.JSX.Element {
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  headerSection: {
-    width: '100%',
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-  },
-  addCategoryForm: {
-    width: '100%',
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 6,
-    paddingBottom: 12,
-  },
-  input: {
-    flex: 1,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    color: COLORS.PRIMARY_DARK,
-    fontSize: 16,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 6,
-    paddingBottom: 24,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.7,
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  categoryItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    marginBottom: 8,
-  },
-  categoryInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-  },
-  categoryIcon: {
-    marginRight: 12,
-  },
-  categoryTextContainer: {
-    flex: 1,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 2,
-  },
-  categoryCount: {
-    fontSize: 13,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.7,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      width: '100%',
+      paddingBottom: FOOTER_HEIGHT,
+    },
+    headerSection: {
+      width: '100%',
+      paddingVertical: 12,
+      paddingHorizontal: 6,
+    },
+    addCategoryForm: {
+      width: '100%',
+      flexDirection: 'row',
+      gap: 8,
+      paddingHorizontal: 6,
+      paddingBottom: 12,
+    },
+    input: {
+      flex: 1,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 8,
+      color: COLORS.PRIMARY_DARK,
+      fontSize: 16,
+    },
+    scrollView: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollContent: {
+      paddingHorizontal: 6,
+      paddingBottom: 24,
+    },
+    emptyText: {
+      fontSize: 16,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.7,
+      textAlign: 'center',
+      marginTop: 24,
+    },
+    categoryItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingVertical: 12,
+      paddingHorizontal: 12,
+      marginBottom: 8,
+    },
+    categoryInfo: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flex: 1,
+    },
+    categoryIcon: {
+      marginRight: 12,
+    },
+    categoryTextContainer: {
+      flex: 1,
+    },
+    categoryName: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 2,
+    },
+    categoryCount: {
+      fontSize: 13,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.7,
+    },
+  });

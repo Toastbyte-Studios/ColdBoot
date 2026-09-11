@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import * as SunCalc from 'suncalc';
+import MoonPhaseGlyph from '../../components/MoonPhaseGlyph';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -36,28 +37,11 @@ const isNewMoon = (phase: number): boolean => {
   return phase < 0.03 || phase > 0.97;
 };
 
-const getMoonEmoji = (phaseName: string): string => {
-  switch (phaseName) {
-    case 'New Moon':
-      return '🌑';
-    case 'Waxing Crescent':
-      return '🌒';
-    case 'First Quarter':
-      return '🌓';
-    case 'Waxing Gibbous':
-      return '🌔';
-    case 'Full Moon':
-      return '🌕';
-    case 'Waning Gibbous':
-      return '🌖';
-    case 'Last Quarter':
-      return '🌗';
-    case 'Waning Crescent':
-      return '🌘';
-    default:
-      return '🌙';
-  }
-};
+// suncalc phase values for the four named phases, used by the key-phase cards
+const PHASE_NEW = 0;
+const PHASE_FIRST_QUARTER = 0.25;
+const PHASE_FULL = 0.5;
+const PHASE_LAST_QUARTER = 0.75;
 
 // Formatting functions
 const formatDate = (date: Date): string => {
@@ -170,7 +154,7 @@ function LunarCyclesScreen() {
   const renderKeyPhaseCard = (
     label: string,
     phase: MoonPhase | null,
-    emoji: string,
+    phaseValue: number,
   ) => (
     <View
       style={[styles.keyCard, { borderColor: COLORS.SECONDARY_ACCENT }]}
@@ -183,7 +167,9 @@ function LunarCyclesScreen() {
         style={styles.cardBackground}
       />
       <View style={styles.keyCardContent}>
-        <Text style={styles.keyCardEmoji}>{emoji}</Text>
+        <View style={styles.keyCardGlyph}>
+          <MoonPhaseGlyph phase={phaseValue} size={40} />
+        </View>
         <View style={styles.keyCardText}>
           <Text style={[styles.keyLabel, { color: COLORS.PRIMARY_DARK }]}>
             {label}
@@ -217,7 +203,9 @@ function LunarCyclesScreen() {
         style={styles.cardBackground}
       />
       <View style={styles.dailyCardContent}>
-        <Text style={styles.dailyEmoji}>{getMoonEmoji(phase.phaseName)}</Text>
+        <View style={styles.dailyGlyph}>
+          <MoonPhaseGlyph phase={phase.phaseValue} size={28} />
+        </View>
         <View style={styles.dailyCardText}>
           <Text style={[styles.dailyDate, { color: COLORS.PRIMARY_DARK }]}>
             {formatDateTime(phase.date)}
@@ -264,9 +252,9 @@ function LunarCyclesScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.cardBackground}
                 />
-                <Text style={styles.currentEmoji}>
-                  {getMoonEmoji(currentPhase.phaseName)}
-                </Text>
+                <View style={styles.currentGlyph}>
+                  <MoonPhaseGlyph phase={currentPhase.phaseValue} size={64} />
+                </View>
                 <Text
                   style={[styles.currentPhase, { color: COLORS.PRIMARY_DARK }]}
                 >
@@ -290,13 +278,21 @@ function LunarCyclesScreen() {
               Upcoming Key Phases
             </Text>
             {nextNewMoon &&
-              renderKeyPhaseCard('Next New Moon', nextNewMoon, '🌑')}
+              renderKeyPhaseCard('Next New Moon', nextNewMoon, PHASE_NEW)}
             {nextFirstQuarter &&
-              renderKeyPhaseCard('Next First Quarter', nextFirstQuarter, '🌓')}
+              renderKeyPhaseCard(
+                'Next First Quarter',
+                nextFirstQuarter,
+                PHASE_FIRST_QUARTER,
+              )}
             {nextFullMoon &&
-              renderKeyPhaseCard('Next Full Moon', nextFullMoon, '🌕')}
+              renderKeyPhaseCard('Next Full Moon', nextFullMoon, PHASE_FULL)}
             {nextLastQuarter &&
-              renderKeyPhaseCard('Next Last Quarter', nextLastQuarter, '🌗')}
+              renderKeyPhaseCard(
+                'Next Last Quarter',
+                nextLastQuarter,
+                PHASE_LAST_QUARTER,
+              )}
           </View>
 
           {/* Daily Phases */}
@@ -349,8 +345,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     alignItems: 'center',
   },
-  currentEmoji: {
-    fontSize: 64,
+  currentGlyph: {
     marginBottom: 12,
   },
   currentPhase: {
@@ -373,8 +368,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  keyCardEmoji: {
-    fontSize: 40,
+  keyCardGlyph: {
     marginRight: 16,
   },
   keyCardText: {
@@ -404,8 +398,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  dailyEmoji: {
-    fontSize: 28,
+  dailyGlyph: {
     marginRight: 12,
   },
   dailyCardText: {

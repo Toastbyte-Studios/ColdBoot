@@ -6,18 +6,21 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { StyleSheet, View, ScrollView, Alert, Image } from 'react-native';
 import { HorizontalRule } from '../../../components/HorizontalRule';
 import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
+import { useTheme } from '../../../hooks/useTheme';
 import { useNotesStore } from '../../../stores';
 import { Note } from '../../../stores/NotesStore';
-import { COLORS, FOOTER_HEIGHT } from '../../../theme';
+import { FOOTER_HEIGHT } from '../../../theme';
+import { ColorScheme } from '../../../theme/colors';
+import { PAPER } from '../../../theme/fixedSurfaces';
 import { formatDateTime } from '../../../utils/timeFormat';
-import { noteListSharedStyles as shared } from '../noteListStyles';
+import { makeNoteListSharedStyles } from '../noteListStyles';
 
 type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
 
@@ -38,6 +41,9 @@ type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
  * - Voice logs should be accessed through the Voice Log feature instead
  */
 export default observer(function NoteEntryScreen(): React.JSX.Element {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const shared = useMemo(() => makeNoteListSharedStyles(COLORS), [COLORS]);
   const route = useRoute<NoteEntryRouteProp>();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const core = useNotesStore();
@@ -88,7 +94,9 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
           name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
           size={30}
           color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Bookmark note"
+          accessibilityLabel={
+            isBookmarked ? 'Remove bookmark' : 'Bookmark note'
+          }
           style={shared.noteButton}
           onPress={handleBookmarkPress}
         />
@@ -154,44 +162,48 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderWidth: 2,
-    borderRadius: 12,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    alignSelf: 'stretch',
-    marginTop: 12,
-    marginBottom: FOOTER_HEIGHT + 12,
-  },
-  noteHeader: {
-    width: '75%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingBottom: 24,
-  },
-  sketchView: {
-    width: '100%',
-    minHeight: 200,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderRadius: 8,
-    padding: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sketchImage: {
-    width: '100%',
-    height: 300,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      width: '100%',
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderWidth: 2,
+      borderRadius: 12,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      alignSelf: 'stretch',
+      marginTop: 12,
+      marginBottom: FOOTER_HEIGHT + 12,
+    },
+    noteHeader: {
+      width: '75%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    scrollView: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollContent: {
+      width: '100%',
+      paddingHorizontal: 16,
+      paddingBottom: 24,
+    },
+    // Sketches are saved as PNGs drawn dark-on-light by SketchCanvas, so their
+    // backdrop stays PAPER-coloured in both schemes rather than following the
+    // theme. See src/theme/fixedSurfaces.ts.
+    sketchView: {
+      width: '100%',
+      minHeight: 200,
+      backgroundColor: PAPER,
+      borderRadius: 8,
+      padding: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    sketchImage: {
+      width: '100%',
+      height: 300,
+    },
+  });

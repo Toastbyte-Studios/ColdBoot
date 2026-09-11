@@ -11,6 +11,13 @@ jest.mock('../src/hooks/useTheme', () => ({
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
+// HelpModal and TutorialModal render AppButton, whose label goes through
+// ScaledText. ScaledText is a mobx-react-lite observer reading the settings
+// store, which this suite does not provide; the plain Text is enough here.
+jest.mock('../src/components/ScaledText', () => ({
+  Text: require('react-native').Text,
+}));
+
 describe('Tutorial flow components', () => {
   test('TutorialModal advances through steps and completes', () => {
     const onComplete = jest.fn();

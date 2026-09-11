@@ -41,7 +41,6 @@ export function useAllNotifications(): AppNotification[] {
       key: `solar-${n.id}`,
       type: 'solar',
       icon: iconMap[n.eventType] ?? 'sunny-outline',
-      iconEmoji: null,
       iconColor: COLORS.ACCENT,
       message: solarStore.getNotificationMessage(n),
     });
@@ -54,7 +53,6 @@ export function useAllNotifications(): AppNotification[] {
       key: 'lunar-phase',
       type: 'solar',
       icon: 'moon-outline',
-      iconEmoji: null,
       iconColor: COLORS.ACCENT,
       message: `${lunar.phaseName} (${lunar.illumination}%)`,
     });
@@ -67,7 +65,6 @@ export function useAllNotifications(): AppNotification[] {
       key: 'weather-monthly-outlook',
       type: 'weather',
       icon: 'partly-sunny-outline',
-      iconEmoji: null,
       iconColor: COLORS.ACCENT,
       message: weatherSummary,
     });
@@ -79,8 +76,7 @@ export function useAllNotifications(): AppNotification[] {
     notifications.push({
       key: `astro-${nextAstro.id}`,
       type: 'astronomy',
-      icon: null,
-      iconEmoji: nextAstro.icon,
+      icon: nextAstro.icon,
       iconColor: COLORS.ACCENT,
       message: `${nextAstro.label} — ${formatDaysUntil(nextAstro.date)}`,
     });
@@ -93,7 +89,6 @@ export function useAllNotifications(): AppNotification[] {
       key: `pantry-${alert.item.id}-${alert.alertType}`,
       type: 'pantry',
       icon: 'nutrition-outline',
-      iconEmoji: null,
       iconColor: isExpired ? COLORS.ERROR : '#f9a825',
       message: isExpired
         ? `Must use today: ${alert.item.name} has expired`

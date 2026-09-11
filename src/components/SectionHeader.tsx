@@ -1,13 +1,14 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
-import { StyleSheet, TextProps, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, TextProps, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import { SPACING } from '../theme';
 import { LIGHT_COLORS } from '../theme/colors';
 import { HorizontalRule } from './HorizontalRule';
 import { Text } from './ScaledText';
+import Touchable from './Touchable';
 import { TutorialSpotlightContext } from './TutorialSpotlightContext';
 
 type Props = TextProps & {
@@ -73,10 +74,9 @@ export default function SectionHeader({
   return (
     <>
       {enableSearch ? (
-        <TouchableOpacity
+        <Touchable
           ref={sectionHeaderRef}
           onPress={handlePress}
-          activeOpacity={0.7}
           style={styles.searchBar}
           accessibilityRole="button"
           accessibilityLabel="Search"
@@ -92,7 +92,7 @@ export default function SectionHeader({
               accessible={false}
             />
           </View>
-        </TouchableOpacity>
+        </Touchable>
       ) : (
         <View ref={sectionHeaderRef}>{header}</View>
       )}

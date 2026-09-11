@@ -1,20 +1,12 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { JSX, useMemo, useState } from 'react';
-import {
-  Alert,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Switch,
-  TouchableWithoutFeedback,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import Touchable from '../../components/Touchable';
+import SelectMenu from '../../components/SelectMenu';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -29,6 +21,9 @@ type AddCustomRepeaterRouteProp = RouteProp<
 
 const MODES = ['FM', 'DMR', 'D-STAR', 'Fusion', 'P-25', 'NXDN', 'M17', 'TETRA'];
 const STATUSES = ['On-air', 'Off-air', 'Unknown'];
+
+const MODE_OPTIONS = MODES.map((m) => ({ value: m, label: m }));
+const STATUS_OPTIONS = STATUSES.map((s) => ({ value: s, label: s }));
 
 /**
  * Screen for adding or editing a user-created custom repeater entry.
@@ -59,9 +54,6 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
   const [operationalStatus, setOperationalStatus] = useState(
     existing?.operationalStatus ?? 'On-air',
   );
-
-  const [modePickerVisible, setModePickerVisible] = useState(false);
-  const [statusPickerVisible, setStatusPickerVisible] = useState(false);
 
   const isValid =
     frequency.trim() !== '' &&
@@ -142,33 +134,30 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
             accessibilityLabel="PL Tone"
           />
 
-          {/* Mode picker. See docs/NATIVE_REDESIGN.md — this is a menu, and
-              wants to be a real one. */}
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
               Mode *
             </Text>
-            <Touchable
-              style={[
-                styles.pickerButton,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.SECONDARY_ACCENT,
-                },
-              ]}
-              onPress={() => setModePickerVisible(true)}
-              accessibilityLabel={`Mode: ${mode}. Tap to change.`}
-              accessibilityRole="button"
+            <SelectMenu
+              title="Mode"
+              options={MODE_OPTIONS}
+              value={mode}
+              onSelect={setMode}
+              accessibilityLabel={`Mode: ${mode}`}
             >
-              <Text style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}>
-                {mode}
-              </Text>
-              <Ionicons
-                name="chevron-down-outline"
-                size={16}
-                color={COLORS.PRIMARY_DARK}
-              />
-            </Touchable>
+              <View style={styles.pickerField}>
+                <Text
+                  style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}
+                >
+                  {mode}
+                </Text>
+                <Ionicons
+                  name="chevron-down-outline"
+                  size={16}
+                  color={COLORS.PRIMARY_DARK}
+                />
+              </View>
+            </SelectMenu>
           </View>
 
           <FormInput
@@ -205,7 +194,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
               <View style={styles.switchLabelGroup}>
                 <View style={styles.labelRow}>
                   <Ionicons
-                    name="alert-circle"
+                    name="alert-circle-outline"
                     size={16}
                     color={COLORS.ERROR}
                   />
@@ -252,32 +241,30 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
             )}
           </View>
 
-          {/* Operational status picker */}
           <View style={styles.formGroup}>
             <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
               Operational Status
             </Text>
-            <Touchable
-              style={[
-                styles.pickerButton,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.SECONDARY_ACCENT,
-                },
-              ]}
-              onPress={() => setStatusPickerVisible(true)}
-              accessibilityLabel={`Operational status: ${operationalStatus}. Tap to change.`}
-              accessibilityRole="button"
+            <SelectMenu
+              title="Operational Status"
+              options={STATUS_OPTIONS}
+              value={operationalStatus}
+              onSelect={setOperationalStatus}
+              accessibilityLabel={`Operational status: ${operationalStatus}`}
             >
-              <Text style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}>
-                {operationalStatus}
-              </Text>
-              <Ionicons
-                name="chevron-down-outline"
-                size={16}
-                color={COLORS.PRIMARY_DARK}
-              />
-            </Touchable>
+              <View style={styles.pickerField}>
+                <Text
+                  style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}
+                >
+                  {operationalStatus}
+                </Text>
+                <Ionicons
+                  name="chevron-down-outline"
+                  size={16}
+                  color={COLORS.PRIMARY_DARK}
+                />
+              </View>
+            </SelectMenu>
           </View>
 
           <FormTextArea
@@ -296,136 +283,6 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
           />
         </ScrollView>
       </View>
-
-      {/* Mode picker modal */}
-      <Modal
-        visible={modePickerVisible}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setModePickerVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setModePickerVisible(false)}>
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalSheet,
-                  {
-                    backgroundColor: COLORS.PRIMARY_LIGHT,
-                    borderColor: COLORS.BRAND,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalTitle, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  Mode
-                </Text>
-                {MODES.map((m) => (
-                  <Touchable
-                    key={m}
-                    onPress={() => {
-                      setMode(m);
-                      setModePickerVisible(false);
-                    }}
-                    style={[
-                      styles.modalOption,
-                      m === mode && { backgroundColor: COLORS.ACCENT },
-                    ]}
-                    accessibilityLabel={m}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: m === mode }}
-                  >
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        m === mode
-                          ? styles.modalOptionSelected
-                          : { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {m}
-                    </Text>
-                    {m === mode && (
-                      <Ionicons
-                        name="checkmark-outline"
-                        size={16}
-                        color={COLORS.PRIMARY_LIGHT}
-                      />
-                    )}
-                  </Touchable>
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
-
-      {/* Status picker modal */}
-      <Modal
-        visible={statusPickerVisible}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setStatusPickerVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setStatusPickerVisible(false)}>
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalSheet,
-                  {
-                    backgroundColor: COLORS.PRIMARY_LIGHT,
-                    borderColor: COLORS.BRAND,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalTitle, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  Operational Status
-                </Text>
-                {STATUSES.map((s) => (
-                  <Touchable
-                    key={s}
-                    onPress={() => {
-                      setOperationalStatus(s);
-                      setStatusPickerVisible(false);
-                    }}
-                    style={[
-                      styles.modalOption,
-                      s === operationalStatus && {
-                        backgroundColor: COLORS.ACCENT,
-                      },
-                    ]}
-                    accessibilityLabel={s}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: s === operationalStatus }}
-                  >
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        s === operationalStatus
-                          ? styles.modalOptionSelected
-                          : { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {s}
-                    </Text>
-                    {s === operationalStatus && (
-                      <Ionicons
-                        name="checkmark-outline"
-                        size={16}
-                        color={COLORS.PRIMARY_LIGHT}
-                      />
-                    )}
-                  </Touchable>
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
     </ScreenBody>
   );
 });
@@ -480,7 +337,8 @@ const createStyles = (COLORS: ColorScheme) =>
     labelInline: {
       marginBottom: 0,
     },
-    pickerButton: {
+    // The menu trigger. A plain View, not a Touchable: SelectMenu owns the tap.
+    pickerField: {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -489,44 +347,11 @@ const createStyles = (COLORS: ColorScheme) =>
       borderRadius: 8,
       paddingHorizontal: 12,
       paddingVertical: 12,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
     },
     pickerText: {
       fontSize: 16,
-    },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 32,
-    },
-    modalSheet: {
-      width: '100%',
-      borderRadius: 16,
-      borderWidth: 1,
-      padding: 16,
-      gap: 4,
-    },
-    modalTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      marginBottom: 8,
-    },
-    modalOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      minHeight: 44,
-      paddingVertical: 10,
-      paddingHorizontal: 8,
-      borderRadius: 8,
-    },
-    modalOptionText: {
-      fontSize: 15,
-      fontWeight: '500',
-    },
-    modalOptionSelected: {
-      color: COLORS.PRIMARY_LIGHT,
     },
     switchRow: {
       flexDirection: 'row',

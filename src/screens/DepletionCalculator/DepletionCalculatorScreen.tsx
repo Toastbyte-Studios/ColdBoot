@@ -1,14 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React, { JSX, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -83,13 +78,13 @@ export default observer(function DepletionCalculatorScreen(): JSX.Element {
               How many people are you planning for?
             </Text>
             <View style={styles.stepper}>
-              <TouchableOpacity
+              <IconButton
+                name="remove-outline"
+                size={22}
                 style={styles.stepBtn}
                 onPress={() => setPeopleInput(String(Math.max(1, people - 1)))}
                 accessibilityLabel="Decrease people count"
-              >
-                <Ionicons name="remove" size={22} color={COLORS.PRIMARY_DARK} />
-              </TouchableOpacity>
+              />
               <TextInput
                 style={styles.stepInput}
                 value={peopleInput}
@@ -98,13 +93,13 @@ export default observer(function DepletionCalculatorScreen(): JSX.Element {
                 maxLength={3}
                 accessibilityLabel="Number of people"
               />
-              <TouchableOpacity
+              <IconButton
+                name="add-outline"
+                size={22}
                 style={styles.stepBtn}
                 onPress={() => setPeopleInput(String(people + 1))}
                 accessibilityLabel="Increase people count"
-              >
-                <Ionicons name="add" size={22} color={COLORS.PRIMARY_DARK} />
-              </TouchableOpacity>
+              />
             </View>
           </View>
 
@@ -231,13 +226,11 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
       gap: 16,
       marginTop: 4,
     },
+    // IconButton sets the 44/48 target; a 24 radius clamps to a circle at
+    // either size, matching the borderless ripple.
     stepBtn: {
-      width: 40,
-      height: 40,
-      borderRadius: 20,
+      borderRadius: 24,
       backgroundColor: COLORS.BACKGROUND,
-      alignItems: 'center',
-      justifyContent: 'center',
     },
     stepInput: {
       width: 60,

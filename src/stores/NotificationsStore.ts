@@ -13,10 +13,8 @@ export interface AppNotification {
   /** Stable key used to persist hidden state across sessions. */
   key: string;
   type: AppNotificationType;
-  /** Ionicons outline icon name, or null when iconEmoji is used. */
-  icon: string | null;
-  /** Emoji icon used instead of an Ionicons glyph (e.g., astronomy events). */
-  iconEmoji: string | null;
+  /** Ionicons outline icon name. */
+  icon: string;
   iconColor: string;
   message: string;
   /** Optional background highlight color (e.g., for expiring pantry items). */

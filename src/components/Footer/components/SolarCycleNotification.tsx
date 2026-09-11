@@ -197,7 +197,12 @@ const SolarCycleNotification = () => {
     const countdownText = formatDaysUntil(nextAstroEvent.date);
     return (
       <View style={styles.notificationContent}>
-        <Text style={styles.astroIcon}>{nextAstroEvent.icon}</Text>
+        <Ionicons
+          name={nextAstroEvent.icon}
+          size={20}
+          color={COLORS.ACCENT}
+          style={styles.notificationIcon}
+        />
         <Text
           style={[styles.notificationText, { color: COLORS.PRIMARY_DARK }]}
           numberOfLines={2}
@@ -260,10 +265,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   notificationIcon: {
-    flexShrink: 0,
-  },
-  astroIcon: {
-    fontSize: 18,
     flexShrink: 0,
   },
   notificationText: {

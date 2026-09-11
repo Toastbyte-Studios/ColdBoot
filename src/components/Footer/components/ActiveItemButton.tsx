@@ -1,11 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FlashlightModes } from '../../../../constants';
 import { useTheme } from '../../../hooks/useTheme';
 import { useSignalingStore } from '../../../stores/StoreContext';
+import { onColor } from '../../../theme/colorUtils';
+import Touchable from '../../Touchable';
 
 interface ActiveItem {
   icon: string;
@@ -60,6 +62,7 @@ const ActiveItemButton = () => {
   };
 
   const activeItem = getActiveItem();
+  const surface = activeItem ? COLORS.ACCENT : COLORS.PRIMARY_LIGHT;
 
   // Handle active item press (turn off or navigate to nightvision)
   const handlePress = () => {
@@ -80,14 +83,8 @@ const ActiveItemButton = () => {
   };
 
   return (
-    <Pressable
-      style={({ pressed }) => [
-        styles.container,
-        activeItem
-          ? { backgroundColor: COLORS.ACCENT }
-          : { backgroundColor: COLORS.PRIMARY_LIGHT },
-        pressed && styles.pressed,
-      ]}
+    <Touchable
+      style={[styles.container, { backgroundColor: surface }]}
       onPress={handlePress}
       accessibilityLabel={
         activeItem ? `Turn off ${activeItem.label}` : 'Nightvision'
@@ -97,9 +94,9 @@ const ActiveItemButton = () => {
       <Ionicons
         name={activeItem ? activeItem.icon : 'moon-outline'}
         size={24}
-        color={COLORS.PRIMARY_DARK}
+        color={activeItem ? onColor(surface) : COLORS.PRIMARY_DARK}
       />
-    </Pressable>
+    </Touchable>
   );
 };
 
@@ -113,8 +110,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
     marginHorizontal: 2,
-  },
-  pressed: {
-    opacity: 0.8,
   },
 });

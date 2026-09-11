@@ -149,7 +149,7 @@ describe('AstronomyEventStore', () => {
       supermoonEvents.forEach((event) => {
         expect(event.label).toBe('Supermoon');
         expect(event.detail).toMatch(/illuminated/);
-        expect(event.icon).toBe('🌕');
+        expect(event.icon).toBe('moon-outline');
       });
     });
 
@@ -157,7 +157,7 @@ describe('AstronomyEventStore', () => {
       const planetEvents = store.events.filter((e) => e.type === 'planet_rise');
       planetEvents.forEach((event) => {
         expect(event.label).toMatch(/Venus|Mars|Jupiter|Saturn/);
-        expect(event.icon).toMatch(/[♀♂♃♄]/);
+        expect(event.icon).toBe('planet-outline');
         expect(event.date).toBeInstanceOf(Date);
       });
     });

@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useRef, useState, useCallback } from 'react';
-import { StyleSheet, TouchableOpacity, View, Animated } from 'react-native';
+import { StyleSheet, View, Animated } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../hooks/useTheme';
 import {
@@ -8,7 +8,9 @@ import {
   useSignalingStore,
 } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
+import { onColor } from '../../theme/colorUtils';
 import { Text } from '../ScaledText';
+import Touchable from '../Touchable';
 import ActiveItemButton from './components/ActiveItemButton';
 import DecibelMeterVisualization from './components/DecibelMeterVisualization';
 import NotificationsModal from './components/NotificationsModal';
@@ -71,10 +73,9 @@ const FooterImpl = () => {
         style={[styles.footer, { paddingBottom: bottom + FOOTER_BASE_PADDING }]}
       >
         {/* Left section: Notifications (0%-50%) with fuse timer */}
-        <TouchableOpacity
+        <Touchable
           style={styles.notificationContainer}
           onPress={() => setIsNotificationsModalVisible(true)}
-          activeOpacity={0.7}
           accessibilityLabel={
             visibleNotificationCount > 0
               ? `${visibleNotificationCount} notification${visibleNotificationCount !== 1 ? 's' : ''}. Tap to view.`
@@ -117,14 +118,16 @@ const FooterImpl = () => {
           {/* Badge showing count of active notifications */}
           {visibleNotificationCount > 0 && (
             <View style={[styles.badge, { backgroundColor: COLORS.ACCENT }]}>
-              <Text style={styles.badgeText}>
+              <Text
+                style={[styles.badgeText, { color: onColor(COLORS.ACCENT) }]}
+              >
                 {visibleNotificationCount > 99
                   ? '99+'
                   : String(visibleNotificationCount)}
               </Text>
             </View>
           )}
-        </TouchableOpacity>
+        </Touchable>
 
         {/* Right middle section: Active item or Nightvision (50%-75%) */}
         <ActiveItemButton />
@@ -192,7 +195,6 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10,
     fontWeight: '700',
-    color: '#fff',
     lineHeight: 14,
   },
 });

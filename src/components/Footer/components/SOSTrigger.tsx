@@ -1,17 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  Pressable,
-  StyleSheet,
-  Vibration,
-} from 'react-native';
+import { Alert, Animated, StyleSheet, Vibration } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FlashlightModes } from '../../../../constants';
 import { useTheme } from '../../../hooks/useTheme';
 import { useSignalingStore } from '../../../stores/StoreContext';
+import { onColor } from '../../../theme/colorUtils';
 import { Text } from '../../ScaledText';
+import Touchable from '../../Touchable';
 
 interface SOSTriggerProps {
   /**
@@ -155,8 +151,11 @@ const SOSTrigger = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const surface = isSOSPressing ? COLORS.ACCENT : COLORS.ERROR;
+  const contentColor = onColor(surface);
+
   return (
-    <Pressable
+    <Touchable
       onPressIn={handleSOSPressIn}
       onPressOut={handleSOSPressOut}
       onLongPress={handleLongPress}
@@ -165,26 +164,12 @@ const SOSTrigger = ({
       accessibilityRole="button"
       accessibilityActions={[{ name: 'activate', label: 'Activate SOS' }]}
       onAccessibilityAction={handleAccessibilityAction}
-      style={({ pressed }) => [
-        styles.sosSection,
-        { backgroundColor: isSOSPressing ? COLORS.ACCENT : COLORS.ERROR },
-        pressed && styles.pressed,
-      ]}
+      rippleColor={contentColor}
+      style={[styles.sosSection, { backgroundColor: surface }]}
     >
-      <Ionicons
-        name="warning-outline"
-        size={24}
-        color={isSOSPressing ? COLORS.PRIMARY_DARK : COLORS.PRIMARY_LIGHT}
-      />
-      <Text
-        style={[
-          styles.sosText,
-          { color: isSOSPressing ? COLORS.PRIMARY_DARK : COLORS.PRIMARY_LIGHT },
-        ]}
-      >
-        SOS
-      </Text>
-    </Pressable>
+      <Ionicons name="warning-outline" size={24} color={contentColor} />
+      <Text style={[styles.sosText, { color: contentColor }]}>SOS</Text>
+    </Touchable>
   );
 };
 
@@ -198,9 +183,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
     gap: 2,
-  },
-  pressed: {
-    opacity: 0.8,
   },
   sosText: {
     fontSize: 12,

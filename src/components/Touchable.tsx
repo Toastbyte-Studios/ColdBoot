@@ -5,6 +5,7 @@ import {
   PressableProps,
   StyleProp,
   StyleSheet,
+  View,
   ViewStyle,
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
@@ -14,6 +15,12 @@ export interface TouchableProps extends Omit<
   PressableProps,
   'style' | 'android_ripple'
 > {
+  /**
+   * Forwarded to the underlying Pressable. React 19 passes `ref` to function
+   * components as an ordinary prop, so it arrives in `...rest`. Used by
+   * SectionHeader, whose header is a tutorial spotlight target.
+   */
+  ref?: React.Ref<View>;
   style?: StyleProp<ViewStyle>;
   /** Ripple tint on Android. Defaults to the theme foreground. */
   rippleColor?: string;

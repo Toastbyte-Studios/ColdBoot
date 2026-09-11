@@ -1,10 +1,15 @@
 import React, { useMemo, useState } from 'react';
 import { StyleSheet, Text, TextInput, View } from 'react-native';
 import AppButton from '../../../../components/AppButton';
-import Touchable from '../../../../components/Touchable';
+import SegmentedControl from '../../../../components/SegmentedControl';
 import { useTheme } from '../../../../hooks/useTheme';
 
 type AddMode = 'location' | 'manual';
+
+const MODE_OPTIONS: { value: AddMode; label: string }[] = [
+  { value: 'location', label: 'Current Location' },
+  { value: 'manual', label: 'Manual Entry' },
+];
 
 interface AddWaypointFormProps {
   hasLocation: boolean;
@@ -58,42 +63,16 @@ export default function AddWaypointForm({
     <View style={styles.form}>
       <Text style={styles.formTitle}>Add Waypoint</Text>
 
-      {/* Mode toggle. See docs/NATIVE_REDESIGN.md — this is a segmented
-          control, and wants to be a real one. */}
-      <View style={styles.modeRow}>
-        <Touchable
-          style={[styles.modeBtn, mode === 'location' && styles.modeBtnActive]}
-          onPress={() => setMode('location')}
-          accessibilityLabel="Add from current location"
-          accessibilityRole="button"
-          accessibilityState={{ selected: mode === 'location' }}
-        >
-          <Text
-            style={[
-              styles.modeBtnText,
-              mode === 'location' && styles.modeBtnTextActive,
-            ]}
-          >
-            Current Location
-          </Text>
-        </Touchable>
-        <Touchable
-          style={[styles.modeBtn, mode === 'manual' && styles.modeBtnActive]}
-          onPress={() => setMode('manual')}
-          accessibilityLabel="Enter coordinates manually"
-          accessibilityRole="button"
-          accessibilityState={{ selected: mode === 'manual' }}
-        >
-          <Text
-            style={[
-              styles.modeBtnText,
-              mode === 'manual' && styles.modeBtnTextActive,
-            ]}
-          >
-            Manual Entry
-          </Text>
-        </Touchable>
-      </View>
+      <SegmentedControl
+        options={MODE_OPTIONS}
+        value={mode}
+        onChange={(next) => {
+          setMode(next);
+          setError(null);
+        }}
+        accessibilityLabel="Waypoint source"
+        style={styles.modeControl}
+      />
 
       <TextInput
         style={styles.input}
@@ -169,29 +148,8 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       color: colors.PRIMARY_DARK,
       marginBottom: 12,
     },
-    modeRow: {
-      flexDirection: 'row',
+    modeControl: {
       marginBottom: 12,
-      gap: 8,
-    },
-    modeBtn: {
-      flex: 1,
-      paddingVertical: 8,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: colors.SECONDARY_ACCENT,
-      alignItems: 'center',
-    },
-    modeBtnActive: {
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    modeBtnText: {
-      fontSize: 13,
-      color: colors.SECONDARY_ACCENT,
-    },
-    modeBtnTextActive: {
-      color: colors.PRIMARY_LIGHT,
-      fontWeight: '600',
     },
     input: {
       borderWidth: 1,

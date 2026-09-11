@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../../components/ScaledText';
 import Touchable from '../../../components/Touchable';
-import { COLORS } from '../../../theme';
+import { useTheme } from '../../../hooks/useTheme';
+import { ColorScheme } from '../../../theme/colors';
 
 type VoiceLogModeButtonProps = {
   icon: string;
@@ -21,6 +22,9 @@ export default function VoiceLogModeButton({
   onPress,
   accessibilityLabel,
 }: VoiceLogModeButtonProps) {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+
   return (
     <Touchable
       style={styles.container}
@@ -47,32 +51,33 @@ export default function VoiceLogModeButton({
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    padding: 20,
-    marginBottom: 16,
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  icon: {
-    marginBottom: 12,
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.7,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      padding: 20,
+      marginBottom: 16,
+      alignItems: 'center',
+      overflow: 'hidden',
+    },
+    background: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    icon: {
+      marginBottom: 12,
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 4,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.7,
+    },
+  });

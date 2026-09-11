@@ -2,16 +2,15 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import {
   Modal,
-  Pressable,
   ScrollView,
   StyleSheet,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../../../hooks/useTheme';
 import { useNotificationsStore } from '../../../stores/StoreContext';
+import IconButton from '../../IconButton';
 import { Text } from '../../ScaledText';
 import { useAllNotifications } from '../useAllNotifications';
 
@@ -72,18 +71,12 @@ const NotificationsModal = observer(
                   >
                     NOTIFICATIONS
                   </Text>
-                  <TouchableOpacity
-                    style={styles.closeButton}
+                  <IconButton
+                    name="close-outline"
+                    size={28}
                     onPress={onClose}
                     accessibilityLabel="Close notifications"
-                    accessibilityRole="button"
-                  >
-                    <Ionicons
-                      name="close-outline"
-                      size={28}
-                      color={COLORS.PRIMARY_DARK}
-                    />
-                  </TouchableOpacity>
+                  />
                 </View>
 
                 {/* Body */}
@@ -123,17 +116,11 @@ const NotificationsModal = observer(
                       >
                         {/* Icon */}
                         <View style={styles.iconWrapper}>
-                          {notification.iconEmoji ? (
-                            <Text style={styles.emojiIcon}>
-                              {notification.iconEmoji}
-                            </Text>
-                          ) : notification.icon ? (
-                            <Ionicons
-                              name={notification.icon}
-                              size={22}
-                              color={notification.iconColor}
-                            />
-                          ) : null}
+                          <Ionicons
+                            name={notification.icon}
+                            size={22}
+                            color={notification.iconColor}
+                          />
                         </View>
 
                         {/* Message */}
@@ -147,7 +134,9 @@ const NotificationsModal = observer(
                         </Text>
 
                         {/* Dismiss button */}
-                        <Pressable
+                        <IconButton
+                          name="close-circle-outline"
+                          size={22}
                           onPress={() =>
                             notificationsStore.hideNotification(
                               notification.key,
@@ -155,15 +144,7 @@ const NotificationsModal = observer(
                           }
                           style={styles.dismissButton}
                           accessibilityLabel={`Dismiss notification: ${notification.message}`}
-                          accessibilityRole="button"
-                          hitSlop={8}
-                        >
-                          <Ionicons
-                            name="close-circle-outline"
-                            size={22}
-                            color={COLORS.PRIMARY_DARK}
-                          />
-                        </Pressable>
+                        />
                       </View>
                     ))}
                   </ScrollView>
@@ -208,9 +189,6 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     letterSpacing: 1,
   },
-  closeButton: {
-    padding: 4,
-  },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
@@ -242,9 +220,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flexShrink: 0,
   },
-  emojiIcon: {
-    fontSize: 18,
-  },
   notificationText: {
     flex: 1,
     fontSize: 14,
@@ -253,6 +228,5 @@ const styles = StyleSheet.create({
   },
   dismissButton: {
     flexShrink: 0,
-    padding: 2,
   },
 });

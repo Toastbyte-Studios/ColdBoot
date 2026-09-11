@@ -22,7 +22,7 @@ import {
 } from 'react-native';
 import AppButton from '../../../../components/AppButton';
 import IconButton from '../../../../components/IconButton';
-import Touchable from '../../../../components/Touchable';
+import SegmentedControl from '../../../../components/SegmentedControl';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useSettingsStore } from '../../../../stores/StoreContext';
 import { Track } from '../../../../stores/TrackStore';
@@ -41,6 +41,11 @@ const HANDLE_HEIGHT = 28;
 
 type SheetState = 'closed' | 'open';
 type ActiveTab = 'waypoints' | 'tracks';
+
+const TAB_OPTIONS: { value: ActiveTab; label: string }[] = [
+  { value: 'waypoints', label: 'Waypoints' },
+  { value: 'tracks', label: 'Tracks' },
+];
 
 interface Coords {
   latitude: number;
@@ -129,13 +134,8 @@ export default function WaypointBottomSheet({
     }).start();
   }, [translateY]);
 
-  const handleTabWaypoints = useCallback(() => {
-    setActiveTab('waypoints');
-    setShowAddForm(false);
-  }, []);
-
-  const handleTabTracks = useCallback(() => {
-    setActiveTab('tracks');
+  const handleTabChange = useCallback((tab: ActiveTab) => {
+    setActiveTab(tab);
     setShowAddForm(false);
   }, []);
 
@@ -220,41 +220,13 @@ export default function WaypointBottomSheet({
 
       {/* Header */}
       <View style={styles.header}>
-        {/* Tabs */}
-        <View style={styles.tabs} accessibilityRole="tablist">
-          <Touchable
-            style={[styles.tab, activeTab === 'waypoints' && styles.tabActive]}
-            onPress={handleTabWaypoints}
-            accessibilityLabel="Waypoints tab"
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'waypoints' }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'waypoints' && styles.tabTextActive,
-              ]}
-            >
-              Waypoints
-            </Text>
-          </Touchable>
-          <Touchable
-            style={[styles.tab, activeTab === 'tracks' && styles.tabActive]}
-            onPress={handleTabTracks}
-            accessibilityLabel="Tracks tab"
-            accessibilityRole="tab"
-            accessibilityState={{ selected: activeTab === 'tracks' }}
-          >
-            <Text
-              style={[
-                styles.tabText,
-                activeTab === 'tracks' && styles.tabTextActive,
-              ]}
-            >
-              Tracks
-            </Text>
-          </Touchable>
-        </View>
+        <SegmentedControl
+          options={TAB_OPTIONS}
+          value={activeTab}
+          onChange={handleTabChange}
+          accessibilityLabel="Show waypoints or tracks"
+          style={styles.tabs}
+        />
 
         <View style={styles.headerActions}>
           {activeTab === 'waypoints' && !showAddForm && (
@@ -269,7 +241,7 @@ export default function WaypointBottomSheet({
           )}
           {!showAddForm && (
             <IconButton
-              name="close"
+              name="close-outline"
               size={20}
               accessibilityLabel="Close waypoints sheet"
               onPress={onClose}
@@ -380,25 +352,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       paddingHorizontal: 16,
       paddingBottom: 8,
     },
+    // The segmented control has no intrinsic width; take the space the header
+    // actions leave.
     tabs: {
-      flexDirection: 'row',
-      gap: 4,
-    },
-    tab: {
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-      borderRadius: 8,
-    },
-    tabActive: {
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    tabText: {
-      fontSize: 14,
-      fontWeight: '600',
-      color: colors.SECONDARY_ACCENT,
-    },
-    tabTextActive: {
-      color: colors.PRIMARY_LIGHT,
+      flex: 1,
+      marginRight: 12,
     },
     headerActions: {
       flexDirection: 'row',

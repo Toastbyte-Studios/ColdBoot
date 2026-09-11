@@ -1,18 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useMemo, useState } from 'react';
 import {
-  ActivityIndicator,
   Alert,
   Modal,
   Pressable,
   StyleSheet,
   Switch,
-  TouchableOpacity,
   View,
   ScrollView,
   Text as RNText,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import {
   useChecklistStore,
@@ -36,6 +33,7 @@ import {
   MeasurementSystem,
   ThemeMode,
 } from '../stores/SettingsStore';
+import { onColor } from '../theme/colorUtils';
 import {
   BackupData,
   BackupPreview,
@@ -45,6 +43,10 @@ import {
   listBackupFiles,
   readBackupFile,
 } from '../utils/backupService';
+import AppButton from './AppButton';
+import IconButton from './IconButton';
+import SegmentedControl from './SegmentedControl';
+import Touchable from './Touchable';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -89,15 +91,9 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
       borderColor: COLORS.BRAND,
       backgroundColor: COLORS.BACKGROUND,
     },
-    buttonSelected: {
-      backgroundColor: COLORS.BRAND,
-      borderColor: COLORS.PRIMARY_DARK,
-    },
-    temperatureButtonDefault: {
-      flex: 1,
-      borderColor: COLORS.BRAND,
-      backgroundColor: COLORS.BACKGROUND,
-    },
+    // Label on a BRAND-filled selection. In dark mode BRAND is pale, so the
+    // theme foreground would be pale on pale; measure it instead.
+    selectedText: { color: onColor(COLORS.BRAND) },
     restorePanelThemed: {
       borderColor: COLORS.BRAND,
       backgroundColor: COLORS.SECONDARY_ACCENT,
@@ -145,8 +141,8 @@ export const SettingsModal = observer(
     ];
 
     const themeModeOptions: { value: ThemeMode; label: string }[] = [
-      { value: 'light', label: 'Light Mode' },
-      { value: 'dark', label: 'Dark Mode' },
+      { value: 'light', label: 'Light' },
+      { value: 'dark', label: 'Dark' },
       { value: 'system', label: 'System' },
     ];
 
@@ -154,8 +150,10 @@ export const SettingsModal = observer(
       value: MeasurementSystem;
       label: string;
     }[] = [
-      { value: 'imperial', label: 'Imperial (°F, ft, mph)' },
-      { value: 'metric', label: 'Metric (°C, m, km/h)' },
+      // Units are shown in a caption under the control; they do not fit in a
+      // segment.
+      { value: 'imperial', label: 'Imperial' },
+      { value: 'metric', label: 'Metric' },
     ];
 
     const handleExport = useCallback(async () => {
@@ -382,18 +380,12 @@ export const SettingsModal = observer(
               <RNText style={[styles.headerText, t.primaryText]}>
                 Settings
               </RNText>
-              <TouchableOpacity
+              <IconButton
+                name="close-outline"
+                size={28}
                 onPress={onClose}
-                style={styles.closeButton}
                 accessibilityLabel="Close settings"
-                accessibilityRole="button"
-              >
-                <Ionicons
-                  name="close-outline"
-                  size={28}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+              />
             </View>
 
             <ScrollView style={styles.content}>
@@ -402,33 +394,12 @@ export const SettingsModal = observer(
                 <RNText style={[styles.sectionTitle, t.primaryText]}>
                   Font Size
                 </RNText>
-                <View style={styles.optionsContainer}>
-                  {fontSizeOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.optionButton,
-                        t.buttonDefault,
-                        settingsStore.fontSize === option.value &&
-                          t.buttonSelected,
-                      ]}
-                      onPress={() => settingsStore.setFontSize(option.value)}
-                      accessibilityLabel={`Set font size to ${option.label}`}
-                      accessibilityRole="button"
-                    >
-                      <RNText
-                        style={[
-                          styles.optionText,
-                          t.primaryText,
-                          settingsStore.fontSize === option.value &&
-                            styles.optionTextSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </RNText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <SegmentedControl
+                  options={fontSizeOptions}
+                  value={settingsStore.fontSize}
+                  onChange={(size) => settingsStore.setFontSize(size)}
+                  accessibilityLabel="Font size"
+                />
               </View>
 
               {/* Theme Mode Section */}
@@ -436,33 +407,12 @@ export const SettingsModal = observer(
                 <RNText style={[styles.sectionTitle, t.primaryText]}>
                   Theme
                 </RNText>
-                <View style={styles.optionsContainer}>
-                  {themeModeOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.optionButton,
-                        t.buttonDefault,
-                        settingsStore.themeMode === option.value &&
-                          t.buttonSelected,
-                      ]}
-                      onPress={() => settingsStore.setThemeMode(option.value)}
-                      accessibilityLabel={`Set theme to ${option.label}`}
-                      accessibilityRole="button"
-                    >
-                      <RNText
-                        style={[
-                          styles.optionText,
-                          t.primaryText,
-                          settingsStore.themeMode === option.value &&
-                            styles.optionTextSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </RNText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <SegmentedControl
+                  options={themeModeOptions}
+                  value={settingsStore.themeMode}
+                  onChange={(mode) => settingsStore.setThemeMode(mode)}
+                  accessibilityLabel="Theme"
+                />
               </View>
 
               {/* Measurement System Section */}
@@ -470,37 +420,19 @@ export const SettingsModal = observer(
                 <RNText style={[styles.sectionTitle, t.primaryText]}>
                   Measurement System
                 </RNText>
-                <View
-                  style={[styles.optionsContainer, styles.optionsContainerRow]}
-                >
-                  {measurementSystemOptions.map((option) => (
-                    <TouchableOpacity
-                      key={option.value}
-                      style={[
-                        styles.optionButton,
-                        t.temperatureButtonDefault,
-                        settingsStore.measurementSystem === option.value &&
-                          t.buttonSelected,
-                      ]}
-                      onPress={() =>
-                        settingsStore.setMeasurementSystem(option.value)
-                      }
-                      accessibilityLabel={`Set measurement system to ${option.label}`}
-                      accessibilityRole="button"
-                    >
-                      <RNText
-                        style={[
-                          styles.optionText,
-                          t.primaryText,
-                          settingsStore.measurementSystem === option.value &&
-                            styles.optionTextSelected,
-                        ]}
-                      >
-                        {option.label}
-                      </RNText>
-                    </TouchableOpacity>
-                  ))}
-                </View>
+                <SegmentedControl
+                  options={measurementSystemOptions}
+                  value={settingsStore.measurementSystem}
+                  onChange={(system) =>
+                    settingsStore.setMeasurementSystem(system)
+                  }
+                  accessibilityLabel="Measurement system"
+                />
+                <RNText style={[styles.optionCaption, t.primaryText]}>
+                  {settingsStore.measurementSystem === 'imperial'
+                    ? '°F, ft, mph'
+                    : '°C, m, km/h'}
+                </RNText>
               </View>
 
               {/* Offline Maps Section */}
@@ -530,23 +462,14 @@ export const SettingsModal = observer(
                 </View>
 
                 {/* Manage offline maps entry */}
-                <TouchableOpacity
-                  style={[styles.actionButton, t.buttonDefault]}
+                <AppButton
+                  label="Manage offline maps"
+                  icon="map-outline"
+                  variant="tinted"
+                  fullWidth
                   onPress={handleManageOfflineMaps}
-                  accessibilityLabel="Manage offline maps"
-                  accessibilityRole="button"
-                >
-                  <View style={styles.actionButtonInner}>
-                    <Ionicons
-                      name="map-outline"
-                      size={20}
-                      color={COLORS.PRIMARY_DARK}
-                    />
-                    <RNText style={[styles.actionButtonText, t.primaryText]}>
-                      Manage offline maps
-                    </RNText>
-                  </View>
-                </TouchableOpacity>
+                  style={styles.actionButton}
+                />
               </View>
 
               {/* Data & Backup Section */}
@@ -563,50 +486,27 @@ export const SettingsModal = observer(
                 </RNText>
 
                 {/* Export Now button */}
-                <TouchableOpacity
-                  style={[styles.actionButton, t.buttonDefault]}
+                <AppButton
+                  label="Export Now"
+                  icon="share-outline"
+                  variant="tinted"
+                  fullWidth
+                  loading={isExporting}
                   onPress={handleExport}
-                  disabled={isExporting}
                   accessibilityLabel="Export backup now"
-                  accessibilityRole="button"
-                >
-                  {isExporting ? (
-                    <ActivityIndicator
-                      size="small"
-                      color={COLORS.PRIMARY_DARK}
-                    />
-                  ) : (
-                    <View style={styles.actionButtonInner}>
-                      <Ionicons
-                        name="share-outline"
-                        size={20}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                      <RNText style={[styles.actionButtonText, t.primaryText]}>
-                        Export Now
-                      </RNText>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                  style={styles.actionButton}
+                />
 
                 {/* Restore from Backup button */}
-                <TouchableOpacity
-                  style={[styles.actionButton, t.buttonDefault]}
+                <AppButton
+                  label="Restore from Backup"
+                  icon="cloud-download-outline"
+                  variant="tinted"
+                  fullWidth
                   onPress={handleOpenRestorePanel}
                   accessibilityLabel="Restore from backup"
-                  accessibilityRole="button"
-                >
-                  <View style={styles.actionButtonInner}>
-                    <Ionicons
-                      name="cloud-download-outline"
-                      size={20}
-                      color={COLORS.PRIMARY_DARK}
-                    />
-                    <RNText style={[styles.actionButtonText, t.primaryText]}>
-                      Restore from Backup
-                    </RNText>
-                  </View>
-                </TouchableOpacity>
+                  style={styles.actionButton}
+                />
 
                 {/* Restore panel — file list */}
                 {showFileList && (
@@ -615,7 +515,9 @@ export const SettingsModal = observer(
                       <RNText style={[styles.restorePanelTitle, t.primaryText]}>
                         Select a Backup File
                       </RNText>
-                      <TouchableOpacity
+                      <IconButton
+                        name="close-circle-outline"
+                        size={22}
                         onPress={() => {
                           setShowFileList(false);
                           setSelectedFilePath(null);
@@ -623,14 +525,7 @@ export const SettingsModal = observer(
                           setBackupPreview(null);
                         }}
                         accessibilityLabel="Close restore panel"
-                        accessibilityRole="button"
-                      >
-                        <Ionicons
-                          name="close-circle-outline"
-                          size={22}
-                          color={COLORS.PRIMARY_DARK}
-                        />
-                      </TouchableOpacity>
+                      />
                     </View>
 
                     {backupFiles.length === 0 ? (
@@ -639,24 +534,33 @@ export const SettingsModal = observer(
                         it to your Documents folder to restore.
                       </RNText>
                     ) : (
-                      backupFiles.map((file) => (
-                        <TouchableOpacity
-                          key={file.path}
-                          style={[
-                            styles.fileItem,
-                            t.buttonDefault,
-                            selectedFilePath === file.path &&
-                              t.fileItemSelected,
-                          ]}
-                          onPress={() => handleSelectFile(file.path)}
-                          accessibilityLabel={`Select backup file ${file.name}`}
-                          accessibilityRole="button"
-                        >
-                          <RNText style={[styles.fileName, t.primaryText]}>
-                            {file.name}
-                          </RNText>
-                        </TouchableOpacity>
-                      ))
+                      backupFiles.map((file) => {
+                        const selected = selectedFilePath === file.path;
+                        return (
+                          <Touchable
+                            key={file.path}
+                            style={[
+                              styles.fileItem,
+                              t.buttonDefault,
+                              selected && t.fileItemSelected,
+                            ]}
+                            onPress={() => handleSelectFile(file.path)}
+                            accessibilityLabel={`Select backup file ${file.name}`}
+                            accessibilityRole="button"
+                            accessibilityState={{ selected }}
+                          >
+                            <RNText
+                              style={[
+                                styles.fileName,
+                                t.primaryText,
+                                selected && t.selectedText,
+                              ]}
+                            >
+                              {file.name}
+                            </RNText>
+                          </Touchable>
+                        );
+                      })
                     )}
 
                     {/* Backup preview and restore options */}
@@ -680,60 +584,22 @@ export const SettingsModal = observer(
                           {backupPreview.customRepeaterCount} custom repeaters
                         </RNText>
                         <View style={styles.restoreButtons}>
-                          <TouchableOpacity
-                            style={[
-                              styles.restoreButton,
-                              t.buttonDefault,
-                              isRestoring && styles.restoreButtonDisabled,
-                            ]}
+                          <AppButton
+                            label="Replace"
+                            variant="tinted"
+                            loading={isRestoring}
                             onPress={() => confirmRestore('replace')}
-                            disabled={isRestoring}
                             accessibilityLabel="Replace all data with backup"
-                            accessibilityRole="button"
-                          >
-                            {isRestoring ? (
-                              <ActivityIndicator
-                                size="small"
-                                color={COLORS.PRIMARY_DARK}
-                              />
-                            ) : (
-                              <RNText
-                                style={[
-                                  styles.restoreButtonText,
-                                  t.primaryText,
-                                ]}
-                              >
-                                Replace
-                              </RNText>
-                            )}
-                          </TouchableOpacity>
-                          <TouchableOpacity
-                            style={[
-                              styles.restoreButton,
-                              t.buttonDefault,
-                              isRestoring && styles.restoreButtonDisabled,
-                            ]}
+                            style={styles.restoreButton}
+                          />
+                          <AppButton
+                            label="Merge"
+                            variant="tinted"
+                            loading={isRestoring}
                             onPress={() => confirmRestore('merge')}
-                            disabled={isRestoring}
                             accessibilityLabel="Merge backup with existing data"
-                            accessibilityRole="button"
-                          >
-                            {isRestoring ? (
-                              <ActivityIndicator
-                                size="small"
-                                color={COLORS.PRIMARY_DARK}
-                              />
-                            ) : (
-                              <RNText
-                                style={[
-                                  styles.restoreButtonText,
-                                  t.primaryText,
-                                ]}
-                              >
-                                Merge
-                              </RNText>
-                            )}
-                          </TouchableOpacity>
+                            style={styles.restoreButton}
+                          />
                         </View>
                       </View>
                     )}
@@ -818,9 +684,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
   },
-  closeButton: {
-    padding: 4,
-  },
   content: {
     padding: 20,
   },
@@ -832,25 +695,10 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 8,
   },
-  optionsContainer: {
-    gap: 12,
-  },
-  optionsContainerRow: {
-    flexDirection: 'row',
-  },
-  optionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  optionText: {
-    fontSize: 16,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  optionTextSelected: {
-    fontWeight: '800',
+  optionCaption: {
+    fontSize: 12,
+    opacity: 0.7,
+    marginTop: 6,
   },
   toggleRow: {
     flexDirection: 'row',
@@ -877,22 +725,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   actionButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 2,
     marginBottom: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionButtonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  actionButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
   },
   restorePanel: {
     borderWidth: 1,
@@ -916,6 +749,8 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   fileItem: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingVertical: 8,
     paddingHorizontal: 12,
     borderRadius: 6,
@@ -946,18 +781,6 @@ const styles = StyleSheet.create({
   },
   restoreButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 6,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  restoreButtonText: {
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  restoreButtonDisabled: {
-    opacity: 0.5,
   },
   attributionText: {
     fontSize: 13,

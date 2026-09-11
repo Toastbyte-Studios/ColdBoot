@@ -5,7 +5,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { JSX, useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Linking,
@@ -13,21 +13,22 @@ import {
   ScrollView,
   StyleSheet,
   Switch,
-  TouchableOpacity,
-  TouchableWithoutFeedback,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import SelectMenu from '../../components/SelectMenu';
+import Touchable from '../../components/Touchable';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
-import { ColorScheme } from '../../theme/colors';
 
 const DISCLAIMER_KEY = '@repeaterbook/disclaimer_dismissed';
 const hamData =
@@ -50,10 +51,8 @@ const gmrsData =
  */
 const RepeaterBookScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
-  const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
-  const [modePickerVisible, setModePickerVisible] = useState(false);
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
   useEffect(() => {
@@ -113,29 +112,36 @@ const RepeaterBookScreen = observer((): JSX.Element => {
       <View style={styles.container}>
         {/* Filter row: mode dropdown + on-air toggle */}
         <View style={styles.filterRow}>
-          {/* Mode dropdown */}
-          <TouchableOpacity
-            style={[
-              styles.dropdown,
-              {
-                backgroundColor: COLORS.PRIMARY_LIGHT,
-                borderColor: COLORS.BRAND,
-              },
-            ]}
-            onPress={() => setModePickerVisible(true)}
-            accessibilityLabel="Mode filter"
-            accessibilityHint={`Currently ${store.selectedMode}. Tap to change mode.`}
-            accessibilityRole="button"
+          {/* Mode filter */}
+          <SelectMenu
+            title="Mode"
+            options={store.modes.map((m) => ({ value: m, label: m }))}
+            value={store.selectedMode}
+            onSelect={(m) => store.setSelectedMode(m)}
+            accessibilityLabel={`Mode filter: ${store.selectedMode}`}
+            style={styles.dropdownMenu}
           >
-            <Text style={[styles.dropdownText, { color: COLORS.PRIMARY_DARK }]}>
-              {store.selectedMode}
-            </Text>
-            <Ionicons
-              name="chevron-down-outline"
-              size={14}
-              color={COLORS.PRIMARY_DARK}
-            />
-          </TouchableOpacity>
+            <View
+              style={[
+                styles.dropdown,
+                {
+                  backgroundColor: COLORS.PRIMARY_LIGHT,
+                  borderColor: COLORS.BRAND,
+                },
+              ]}
+            >
+              <Text
+                style={[styles.dropdownText, { color: COLORS.PRIMARY_DARK }]}
+              >
+                {store.selectedMode}
+              </Text>
+              <Ionicons
+                name="chevron-down-outline"
+                size={14}
+                color={COLORS.PRIMARY_DARK}
+              />
+            </View>
+          </SelectMenu>
 
           {/* Toggles column: On-air + Emergency stacked */}
           <View style={styles.toggleColumn}>
@@ -158,11 +164,12 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               />
             </View>
             <View style={styles.toggleGroup}>
-              <Text
-                style={[styles.toggleLabel, { color: COLORS.PRIMARY_DARK }]}
-              >
-                🚨
-              </Text>
+              <Ionicons
+                name="warning-outline"
+                size={18}
+                color={COLORS.ERROR}
+                accessible={false}
+              />
               <Switch
                 value={store.emergencyOnly}
                 onValueChange={(v) => store.setEmergencyOnly(v)}
@@ -179,30 +186,20 @@ const RepeaterBookScreen = observer((): JSX.Element => {
 
           {/* Icons column: license info + add repeater stacked */}
           <View style={styles.iconColumn}>
-            <TouchableOpacity
+            <IconButton
+              name="information-circle-outline"
+              size={28}
+              color={COLORS.ERROR}
               onPress={() => setDisclaimerVisible(true)}
               accessibilityLabel="View HAM and GMRS license requirements"
-              accessibilityRole="button"
-              style={styles.iconButton}
-            >
-              <Ionicons
-                name="information-circle-outline"
-                size={28}
-                color={COLORS.ERROR}
-              />
-            </TouchableOpacity>
-            <TouchableOpacity
+            />
+            <IconButton
+              name="add-circle-outline"
+              size={28}
+              color={COLORS.ACCENT}
               onPress={() => navigation.navigate('AddCustomRepeater')}
               accessibilityLabel="Add custom repeater"
-              accessibilityRole="button"
-              style={styles.iconButton}
-            >
-              <Ionicons
-                name="add-circle-outline"
-                size={28}
-                color={COLORS.ACCENT}
-              />
-            </TouchableOpacity>
+            />
           </View>
         </View>
 
@@ -256,9 +253,10 @@ const RepeaterBookScreen = observer((): JSX.Element => {
 
           {/* Repeater list */}
           {store.filteredRepeaters.map((repeater, index) => (
-            <TouchableOpacity
+            <Touchable
               key={repeater.id || index}
               onPress={() => handleRepeaterPress(repeater)}
+              accessibilityRole="button"
               style={[
                 styles.row,
                 {
@@ -350,10 +348,15 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                         { borderColor: COLORS.ERROR },
                       ]}
                     >
+                      <Ionicons
+                        name="warning-outline"
+                        size={11}
+                        color={COLORS.ERROR}
+                      />
                       <Text
                         style={[styles.emcommText, { color: COLORS.ERROR }]}
                       >
-                        🚨 {repeater.emcomm}
+                        {repeater.emcomm}
                       </Text>
                     </View>
                   ) : null}
@@ -368,7 +371,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                   </Text>
                 </View>
               </View>
-            </TouchableOpacity>
+            </Touchable>
           ))}
 
           {/* Background refresh indicator */}
@@ -384,10 +387,11 @@ const RepeaterBookScreen = observer((): JSX.Element => {
           )}
 
           {/* Data source disclaimer */}
-          <TouchableOpacity
+          <Touchable
             onPress={() => Linking.openURL('https://www.repeaterbook.com')}
             accessibilityRole="link"
             accessibilityLabel="Open RepeaterBook.com"
+            style={styles.disclaimerLinkTarget}
           >
             <Text
               style={[styles.disclaimerText, { color: COLORS.PRIMARY_DARK }]}
@@ -395,84 +399,30 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               Data sourced from{' '}
               <Text style={styles.disclaimerLink}>RepeaterBook.com</Text>
             </Text>
-          </TouchableOpacity>
+          </Touchable>
 
           {/* Cache / live data status */}
           {(store.lastUpdated || store.isCachedData) && (
-            <Text
-              style={[styles.cacheStatusText, { color: COLORS.PRIMARY_DARK }]}
-            >
-              {store.isCachedData ? '📦 Cached data' : '✅ Live data'}
-              {store.lastUpdated
-                ? `  ·  Updated ${formatLastUpdated(store.lastUpdated)}`
-                : ''}
-            </Text>
+            <View style={styles.cacheStatusRow}>
+              <Ionicons
+                name={
+                  store.isCachedData ? 'archive-outline' : 'cloud-done-outline'
+                }
+                size={12}
+                color={COLORS.PRIMARY_DARK}
+              />
+              <Text
+                style={[styles.cacheStatusText, { color: COLORS.PRIMARY_DARK }]}
+              >
+                {store.isCachedData ? 'Cached data' : 'Live data'}
+                {store.lastUpdated
+                  ? `  ·  Updated ${formatLastUpdated(store.lastUpdated)}`
+                  : ''}
+              </Text>
+            </View>
           )}
         </ScrollView>
       </View>
-
-      {/* Mode picker modal */}
-      <Modal
-        visible={modePickerVisible}
-        animationType="fade"
-        transparent
-        onRequestClose={() => setModePickerVisible(false)}
-      >
-        <TouchableWithoutFeedback onPress={() => setModePickerVisible(false)}>
-          <View style={styles.modalBackdrop}>
-            <TouchableWithoutFeedback>
-              <View
-                style={[
-                  styles.modalSheet,
-                  {
-                    backgroundColor: COLORS.PRIMARY_LIGHT,
-                    borderColor: COLORS.BRAND,
-                  },
-                ]}
-              >
-                <Text
-                  style={[styles.modalTitle, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  Mode
-                </Text>
-                {store.modes.map((mode) => (
-                  <TouchableOpacity
-                    key={mode}
-                    onPress={() => {
-                      store.setSelectedMode(mode);
-                      setModePickerVisible(false);
-                    }}
-                    style={[
-                      styles.modalOption,
-                      mode === store.selectedMode && {
-                        backgroundColor: COLORS.ACCENT,
-                      },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.modalOptionText,
-                        mode === store.selectedMode
-                          ? styles.modalOptionTextSelected
-                          : styles.modalOptionTextUnselected,
-                      ]}
-                    >
-                      {mode}
-                    </Text>
-                    {mode === store.selectedMode && (
-                      <Ionicons
-                        name="checkmark-outline"
-                        size={16}
-                        color={COLORS.PRIMARY_LIGHT}
-                      />
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
-      </Modal>
 
       {/* HAM & GMRS license disclaimer modal */}
       <Modal
@@ -524,17 +474,12 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                 {gmrsData.licenseInfo}
               </Text>
             </View>
-            <TouchableOpacity
+            <AppButton
+              label="Understood"
               onPress={handleDismissDisclaimer}
-              style={[
-                styles.modalDismissButton,
-                { backgroundColor: COLORS.ACCENT },
-              ]}
               accessibilityLabel="Dismiss disclaimer"
-              accessibilityRole="button"
-            >
-              <Text style={styles.modalDismissText}>Understood</Text>
-            </TouchableOpacity>
+              style={styles.modalDismissButton}
+            />
           </View>
         </View>
       </Modal>
@@ -544,260 +489,248 @@ const RepeaterBookScreen = observer((): JSX.Element => {
 
 export default RepeaterBookScreen;
 
-const createStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      alignSelf: 'stretch',
-      paddingBottom: FOOTER_HEIGHT,
-    },
-    filterRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      marginHorizontal: 14,
-      marginTop: 10,
-      gap: 12,
-    },
-    dropdown: {
-      flex: 1,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-    },
-    dropdownText: {
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    toggleColumn: {
-      flexDirection: 'column',
-      alignItems: 'flex-end',
-      gap: 6,
-    },
-    toggleGroup: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 6,
-    },
-    toggleLabel: {
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    iconColumn: {
-      flexDirection: 'column',
-      alignItems: 'center',
-      gap: 4,
-    },
-    iconButton: {
-      padding: 2,
-    },
-    ruleWrap: {
-      marginTop: 10,
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-      paddingTop: 8,
-    },
-    scrollContent: {
-      paddingHorizontal: 14,
-      paddingBottom: 24,
-    },
-    centered: {
-      paddingTop: 40,
-      alignItems: 'center',
-      gap: 12,
-    },
-    helperText: {
-      fontSize: 15,
-      opacity: 0.8,
-      textAlign: 'center',
-    },
-    errorCard: {
-      borderWidth: 1,
-      borderRadius: 12,
-      padding: 14,
-      marginTop: 12,
-      gap: 6,
-    },
-    errorText: {
-      fontSize: 14,
-      fontWeight: '600',
-    },
-    row: {
-      flexDirection: 'row',
-      alignItems: 'flex-start',
-      borderWidth: 1,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 8,
-      gap: 10,
-    },
-    statusDot: {
-      width: 10,
-      height: 10,
-      borderRadius: 5,
-      marginTop: 5,
-    },
-    rowBody: {
-      flex: 1,
-      gap: 4,
-    },
-    rowTop: {
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-    },
-    callSign: {
-      fontSize: 16,
-      fontWeight: '700',
-    },
-    distance: {
-      fontSize: 13,
-      opacity: 0.7,
-    },
-    rowMeta: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-    },
-    metaText: {
-      fontSize: 13,
-      fontWeight: '500',
-    },
-    rowBottom: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
-      marginTop: 2,
-    },
-    modeBadge: {
-      borderWidth: 1,
-      borderRadius: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-    },
-    modeText: {
-      fontSize: 11,
-      fontWeight: '700',
-    },
-    emcommBadge: {
-      borderWidth: 1,
-      borderRadius: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-    },
-    emcommText: {
-      fontSize: 11,
-      fontWeight: '700',
-    },
-    customBadge: {
-      borderWidth: 1,
-      borderRadius: 4,
-      paddingHorizontal: 6,
-      paddingVertical: 2,
-    },
-    customBadgeText: {
-      fontSize: 11,
-      fontWeight: '700',
-    },
-    locationText: {
-      fontSize: 12,
-      opacity: 0.7,
-      flex: 1,
-    },
-    refreshRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      paddingVertical: 12,
-      gap: 8,
-    },
-    refreshText: {
-      fontSize: 13,
-      opacity: 0.7,
-    },
-    disclaimerText: {
-      fontSize: 12,
-      opacity: 0.65,
-      textAlign: 'center',
-      marginTop: 4,
-      marginBottom: 2,
-    },
-    disclaimerLink: {
-      textDecorationLine: 'underline',
-    },
-    cacheStatusText: {
-      fontSize: 12,
-      opacity: 0.65,
-      textAlign: 'center',
-      marginTop: 2,
-      marginBottom: 8,
-    },
-    modalBackdrop: {
-      flex: 1,
-      backgroundColor: 'rgba(0,0,0,0.4)',
-      justifyContent: 'center',
-      alignItems: 'center',
-      paddingHorizontal: 32,
-    },
-    modalSheet: {
-      width: '100%',
-      borderRadius: 16,
-      borderWidth: 1,
-      padding: 16,
-      gap: 4,
-    },
-    modalTitle: {
-      fontSize: 16,
-      fontWeight: '700',
-      marginBottom: 8,
-    },
-    modalOption: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      paddingVertical: 10,
-      paddingHorizontal: 8,
-      borderRadius: 8,
-    },
-    modalOptionText: {
-      fontSize: 15,
-      fontWeight: '500',
-    },
-    modalOptionTextSelected: {
-      color: COLORS.PRIMARY_LIGHT,
-    },
-    modalOptionTextUnselected: {
-      color: COLORS.PRIMARY_DARK,
-    },
-    licenseCard: {
-      borderWidth: 2,
-      borderRadius: 12,
-      padding: 12,
-      marginBottom: 8,
-    },
-    licenseText: {
-      fontSize: 14,
-      fontWeight: '600',
-      lineHeight: 20,
-    },
-    modalDismissButton: {
-      borderRadius: 8,
-      paddingVertical: 10,
-      alignItems: 'center',
-      marginTop: 4,
-    },
-    modalDismissText: {
-      color: '#fff',
-      fontSize: 15,
-      fontWeight: '700',
-    },
-  });
+// Static: every colour here is applied inline from useTheme at render time.
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'stretch',
+    paddingBottom: FOOTER_HEIGHT,
+  },
+  filterRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginHorizontal: 14,
+    marginTop: 10,
+    gap: 12,
+  },
+  dropdownMenu: {
+    flex: 1,
+  },
+  // The menu trigger. A plain View, not a Touchable: SelectMenu owns the tap.
+  dropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderWidth: 1,
+    borderRadius: 8,
+    minHeight: 44,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  dropdownText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  toggleColumn: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    gap: 6,
+  },
+  toggleGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  toggleLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  iconColumn: {
+    flexDirection: 'column',
+    alignItems: 'center',
+  },
+  ruleWrap: {
+    marginTop: 10,
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+    paddingTop: 8,
+  },
+  scrollContent: {
+    paddingHorizontal: 14,
+    paddingBottom: 24,
+  },
+  centered: {
+    paddingTop: 40,
+    alignItems: 'center',
+    gap: 12,
+  },
+  helperText: {
+    fontSize: 15,
+    opacity: 0.8,
+    textAlign: 'center',
+  },
+  errorCard: {
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 14,
+    marginTop: 12,
+    gap: 6,
+  },
+  errorText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    borderWidth: 1,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+    gap: 10,
+  },
+  statusDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginTop: 5,
+  },
+  rowBody: {
+    flex: 1,
+    gap: 4,
+  },
+  rowTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  callSign: {
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  distance: {
+    fontSize: 13,
+    opacity: 0.7,
+  },
+  rowMeta: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+  },
+  metaText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  rowBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 2,
+  },
+  modeBadge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  modeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  emcommBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  emcommText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  customBadge: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  customBadgeText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  locationText: {
+    fontSize: 12,
+    opacity: 0.7,
+    flex: 1,
+  },
+  refreshRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    gap: 8,
+  },
+  refreshText: {
+    fontSize: 13,
+    opacity: 0.7,
+  },
+  disclaimerText: {
+    fontSize: 12,
+    opacity: 0.65,
+    textAlign: 'center',
+    marginTop: 4,
+    marginBottom: 2,
+  },
+  disclaimerLink: {
+    textDecorationLine: 'underline',
+  },
+  disclaimerLinkTarget: {
+    minHeight: 44,
+    justifyContent: 'center',
+  },
+  cacheStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    opacity: 0.65,
+    marginTop: 2,
+    marginBottom: 8,
+  },
+  cacheStatusText: {
+    fontSize: 12,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+  },
+  modalSheet: {
+    width: '100%',
+    borderRadius: 16,
+    borderWidth: 1,
+    padding: 16,
+    gap: 4,
+  },
+  modalTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  licenseCard: {
+    borderWidth: 2,
+    borderRadius: 12,
+    padding: 12,
+    marginBottom: 8,
+  },
+  licenseText: {
+    fontSize: 14,
+    fontWeight: '600',
+    lineHeight: 20,
+  },
+  modalDismissButton: {
+    marginTop: 4,
+  },
+});
 
 // Re-export route param type for AppNavigator
 export type RepeaterBookScreenParams = undefined;

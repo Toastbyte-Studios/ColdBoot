@@ -15,6 +15,9 @@
  *   background.
  * - `KnotStepCarousel` shows knot diagrams sourced from Wikimedia, which are
  *   dark line art on transparency. On a dark card they disappear.
+ * - `MoonPhaseGlyph` draws the physical moon: the lit side is `PAPER` and the
+ *   shadowed side `INK`, so a waxing crescent reads the same way round in
+ *   both schemes. Following the scheme would invert the phase.
  *
  * The values match the light scheme's `PRIMARY_LIGHT` and `PRIMARY_DARK`, so
  * nothing changes visually today. They are duplicated rather than imported

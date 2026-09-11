@@ -1,13 +1,9 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  TouchableOpacity,
-  View,
-  Text as RNText,
-} from 'react-native';
+import { StyleSheet, View, Text as RNText } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../theme/constants';
+import AppButton from './AppButton';
 import { TutorialSpotlightTarget } from './TutorialSpotlightContext';
 
 interface TutorialModalProps {
@@ -127,17 +123,13 @@ export default function TutorialModal({
         >
           {!isLastStep && (
             <View style={styles.skipRow}>
-              <TouchableOpacity
+              <AppButton
+                label="Skip"
+                variant="plain"
+                size="small"
                 onPress={onSkip}
                 accessibilityLabel="Skip tutorial"
-                accessibilityRole="button"
-              >
-                <RNText
-                  style={[styles.skipText, { color: COLORS.SECONDARY_ACCENT }]}
-                >
-                  Skip
-                </RNText>
-              </TouchableOpacity>
+              />
             </View>
           )}
 
@@ -161,7 +153,9 @@ export default function TutorialModal({
               {currentStep + 1} / {TUTORIAL_STEPS.length}
             </RNText>
             <View style={styles.dots}>{dots}</View>
-            <TouchableOpacity
+            <AppButton
+              label={isLastStep ? 'Done' : 'Next'}
+              size="large"
               onPress={() => {
                 if (isLastStep) {
                   onComplete();
@@ -169,24 +163,11 @@ export default function TutorialModal({
                 }
                 setCurrentStep((prev) => prev + 1);
               }}
-              style={[
-                styles.primaryButton,
-                { backgroundColor: COLORS.SECONDARY_ACCENT },
-              ]}
               accessibilityLabel={
                 isLastStep ? 'Finish tutorial' : 'Next tutorial step'
               }
-              accessibilityRole="button"
-            >
-              <RNText
-                style={[
-                  styles.primaryButtonText,
-                  { color: COLORS.PRIMARY_DARK },
-                ]}
-              >
-                {isLastStep ? 'Done' : 'Next'}
-              </RNText>
-            </TouchableOpacity>
+              style={styles.primaryButton}
+            />
           </View>
         </View>
       </View>
@@ -221,10 +202,6 @@ const styles = StyleSheet.create({
   },
   skipRow: {
     alignItems: 'flex-end',
-  },
-  skipText: {
-    fontSize: 16,
-    fontWeight: '700',
   },
   content: {
     flex: 1,
@@ -270,13 +247,5 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     minWidth: 132,
-    paddingHorizontal: 18,
-    paddingVertical: 12,
-    borderRadius: 10,
-  },
-  primaryButtonText: {
-    fontSize: 18,
-    fontWeight: '800',
-    textAlign: 'center',
   },
 });

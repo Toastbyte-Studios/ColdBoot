@@ -1,7 +1,7 @@
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View, Switch } from 'react-native';
 import { FlashlightModes } from '../../../constants';
 import CardTopic from '../../components/CardTopic';
@@ -9,8 +9,9 @@ import Grid from '../../components/Grid';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
-import { COLORS } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import { FlashlightModeType } from '../../types/common-types';
 
 /**
@@ -29,6 +30,8 @@ import { FlashlightModeType } from '../../types/common-types';
  * @returns A React element rendering the flashlight mode grid and any applicable controls.
  */
 const FlashlightScreenImpl = () => {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useSignalingStore();
   const navigation = useNavigation();
   const mode = core.flashlightMode;
@@ -123,31 +126,32 @@ const FlashlightScreenImpl = () => {
 
 export default observer(FlashlightScreenImpl);
 
-const styles = StyleSheet.create({
-  activeCard: {
-    borderColor: COLORS.ACCENT,
-    borderWidth: 3,
-  },
-  controlsContainer: {
-    width: '100%',
-    paddingHorizontal: 10,
-  },
-  slider: {
-    width: '100%',
-    height: 40,
-  },
-  sectionContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    width: '100%',
-  },
-  sectionText: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: COLORS.PRIMARY_DARK,
-  },
-  switchContainer: {
-    paddingHorizontal: 20,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    activeCard: {
+      borderColor: COLORS.ACCENT,
+      borderWidth: 3,
+    },
+    controlsContainer: {
+      width: '100%',
+      paddingHorizontal: 10,
+    },
+    slider: {
+      width: '100%',
+      height: 40,
+    },
+    sectionContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      width: '100%',
+    },
+    sectionText: {
+      fontSize: 20,
+      fontWeight: '800',
+      color: COLORS.PRIMARY_DARK,
+    },
+    switchContainer: {
+      paddingHorizontal: 20,
+    },
+  });

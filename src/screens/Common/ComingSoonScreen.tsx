@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { COLORS } from '../../theme';
+import { useTheme } from '../../hooks/useTheme';
+import { ColorScheme } from '../../theme/colors';
 
 type ComingSoonParams = {
   title?: string;
@@ -26,6 +27,8 @@ type Props = {
  * @returns A React element rendering the "Coming Soon" UI.
  */
 export default function ComingSoonScreen({ route }: Props) {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const title = route?.params?.title ?? 'Coming Soon';
   const icon = route?.params?.icon ?? 'construct-outline';
   const message =
@@ -48,30 +51,31 @@ export default function ComingSoonScreen({ route }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  card: {
-    width: '100%',
-    alignItems: 'center',
-    backgroundColor: COLORS.SECONDARY_ACCENT,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-    paddingVertical: 40,
-    paddingHorizontal: 16,
-    marginTop: 20,
-  },
-  icon: {
-    marginBottom: 10,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 8,
-  },
-  message: {
-    fontSize: 16,
-    color: COLORS.PRIMARY_DARK,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    card: {
+      width: '100%',
+      alignItems: 'center',
+      backgroundColor: COLORS.SECONDARY_ACCENT,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+      paddingVertical: 40,
+      paddingHorizontal: 16,
+      marginTop: 20,
+    },
+    icon: {
+      marginBottom: 10,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '800',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 8,
+    },
+    message: {
+      fontSize: 16,
+      color: COLORS.PRIMARY_DARK,
+      textAlign: 'center',
+    },
+  });

@@ -1,16 +1,12 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import SegmentedControl from '../../components/SegmentedControl';
 import { useBarometricPressure } from '../../hooks/useBarometricPressure';
 import { useTheme } from '../../hooks/useTheme';
 import { useSettingsStore } from '../../stores';
@@ -28,11 +24,15 @@ import { displayPressure } from '../../utils/unitConversions';
 /** Available history window options in hours */
 const WINDOW_OPTIONS = [1, 3, 6, 12, 24] as const;
 type WindowHours = (typeof WINDOW_OPTIONS)[number];
+const WINDOW_SEGMENTS = WINDOW_OPTIONS.map((hours) => ({
+  value: String(hours),
+  label: `${hours}h`,
+}));
 
-const TREND_ARROW: Record<PressureTrend, string> = {
-  Rising: '↑',
-  Steady: '→',
-  Falling: '↓',
+const TREND_ICON: Record<PressureTrend, string> = {
+  Rising: 'arrow-up-outline',
+  Steady: 'arrow-forward-outline',
+  Falling: 'arrow-down-outline',
 };
 
 /**
@@ -106,29 +106,6 @@ function BarometricPressureScreen() {
       : '';
   const pressureUnitStr =
     pressure !== null ? (isImperial ? 'inHg' : 'hPa') : '';
-
-  const renderWindowButton = (hours: WindowHours) => {
-    const isActive = hours === windowHours;
-    const buttonBorder = { borderColor: COLORS.SECONDARY_ACCENT };
-    const buttonBg = isActive
-      ? { backgroundColor: COLORS.SECONDARY_ACCENT }
-      : styles.windowButtonInactive;
-    const textColor = {
-      color: isActive ? COLORS.PRIMARY_LIGHT : COLORS.PRIMARY_DARK,
-    };
-    return (
-      <TouchableOpacity
-        key={hours}
-        style={[styles.windowButton, buttonBorder, buttonBg]}
-        onPress={() => setWindowHours(hours)}
-        accessibilityRole="button"
-        accessibilityLabel={`${hours} hour window`}
-        accessibilityState={{ selected: isActive }}
-      >
-        <Text style={[styles.windowButtonText, textColor]}>{hours}h</Text>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <ScreenBody>
@@ -208,9 +185,14 @@ function BarometricPressureScreen() {
               >
                 Trend Window
               </Text>
-              <View style={styles.windowRow}>
-                {WINDOW_OPTIONS.map(renderWindowButton)}
-              </View>
+              <SegmentedControl
+                options={WINDOW_SEGMENTS}
+                value={String(windowHours)}
+                onChange={(hours) =>
+                  setWindowHours(Number(hours) as WindowHours)
+                }
+                accessibilityLabel="Trend window in hours"
+              />
             </View>
 
             {/* Trend Indicator */}
@@ -231,15 +213,26 @@ function BarometricPressureScreen() {
                 />
                 {sufficientData ? (
                   <>
-                    <Text
-                      style={[
-                        styles.trendLabel,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
+                    <View
+                      style={styles.trendRow}
+                      accessible={true}
                       accessibilityLabel={`Pressure trend: ${trend}`}
                     >
-                      {TREND_ARROW[trend]} {trend}
-                    </Text>
+                      <Ionicons
+                        name={TREND_ICON[trend]}
+                        size={24}
+                        color={COLORS.PRIMARY_DARK}
+                      />
+                      <Text
+                        style={[
+                          styles.trendLabel,
+                          styles.trendLabelInRow,
+                          { color: COLORS.PRIMARY_DARK },
+                        ]}
+                      >
+                        {trend}
+                      </Text>
+                    </View>
                     <Text
                       style={[
                         styles.trendInterpretation,
@@ -362,27 +355,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
     opacity: 0.8,
   },
-  windowRow: {
+  trendRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
-  },
-  windowButton: {
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  windowButtonInactive: {
-    backgroundColor: 'transparent',
-  },
-  windowButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
+    marginBottom: 10,
   },
   trendLabel: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  trendLabelInRow: {
+    marginBottom: 0,
   },
   trendInterpretation: {
     fontSize: 14,
