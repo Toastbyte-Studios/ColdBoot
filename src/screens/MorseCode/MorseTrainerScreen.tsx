@@ -1,9 +1,10 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { COLORS } from '../../theme';
 
 export type TrainerLevel = 'easy' | 'medium' | 'hard';
@@ -34,34 +35,40 @@ export default function MorseTrainerScreen() {
         </Text>
 
         <View style={styles.levelContainer}>
-          <TouchableOpacity
+          <Touchable
             style={[styles.levelButton, styles.easyButton]}
+            rippleColor={COLORS.PRIMARY_DARK}
             onPress={() => handleLevelSelect('easy')}
             accessibilityLabel="Easy level - single character"
+            accessibilityRole="button"
           >
             <Text style={styles.levelTitle}>EASY</Text>
             <Text style={styles.levelDescription}>
               Single character recognition
             </Text>
-          </TouchableOpacity>
+          </Touchable>
 
-          <TouchableOpacity
+          <Touchable
             style={[styles.levelButton, styles.mediumButton]}
+            rippleColor={COLORS.PRIMARY_DARK}
             onPress={() => handleLevelSelect('medium')}
             accessibilityLabel="Medium level - word"
+            accessibilityRole="button"
           >
             <Text style={styles.levelTitle}>MEDIUM</Text>
             <Text style={styles.levelDescription}>Word recognition</Text>
-          </TouchableOpacity>
+          </Touchable>
 
-          <TouchableOpacity
+          <Touchable
             style={[styles.levelButton, styles.hardButton]}
+            rippleColor={COLORS.PRIMARY_DARK}
             onPress={() => handleLevelSelect('hard')}
             accessibilityLabel="Hard level - sentence"
+            accessibilityRole="button"
           >
             <Text style={styles.levelTitle}>HARD</Text>
             <Text style={styles.levelDescription}>Sentence recognition</Text>
-          </TouchableOpacity>
+          </Touchable>
         </View>
       </View>
     </ScreenBody>

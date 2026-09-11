@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { COLORS, FOOTER_HEIGHT } from '../../theme';
 import { morseToText } from '../../utils/morseCodeMapping';
 
@@ -84,63 +85,77 @@ const MorseToAlphaScreen = () => {
           </View>
         </View>
 
-        {/* Input Buttons */}
+        {/* Input keypad.
+            The glyphs on these keys are deliberately left as text rather than
+            converted to Ionicons: the keypad is a legend of literal morse
+            characters (. - /), and the space and backspace symbols belong to
+            that same typographic set. Swapping only two of the six for icons
+            would break the set. See docs/NATIVE_REDESIGN.md finding 7. */}
         <View style={styles.buttonGrid}>
           <View style={styles.buttonRow}>
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.primaryButton]}
+              rippleColor={COLORS.PRIMARY_LIGHT}
               onPress={handleDot}
               accessibilityLabel="Add dot"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryButtonText}>.</Text>
               <Text style={styles.buttonLabel}>DOT</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.primaryButton]}
+              rippleColor={COLORS.PRIMARY_LIGHT}
               onPress={handleDash}
               accessibilityLabel="Add dash"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryButtonText}>-</Text>
               <Text style={styles.buttonLabel}>DASH</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleSpace}
               accessibilityLabel="Add space between characters"
+              accessibilityRole="button"
             >
-              <Text style={styles.secondaryButtonText}>⎵</Text>
+              <Text style={styles.secondaryButtonText}>␣</Text>
               <Text style={styles.buttonLabel}>SPACE</Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleWordSeparator}
               accessibilityLabel="Add word separator"
+              accessibilityRole="button"
             >
               <Text style={styles.secondaryButtonText}>/</Text>
               <Text style={styles.buttonLabel}>WORD</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleBackspace}
               accessibilityLabel="Delete last character"
+              accessibilityRole="button"
             >
               <Text style={styles.secondaryButtonText}>⌫</Text>
               <Text style={styles.buttonLabel}>BACK</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.clearButton]}
+              rippleColor={COLORS.PRIMARY_LIGHT}
               onPress={handleClear}
               accessibilityLabel="Clear all input"
+              accessibilityRole="button"
             >
               <Text style={styles.clearButtonText}>CLEAR</Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
         </View>
 
@@ -206,6 +221,7 @@ const styles = StyleSheet.create({
   },
   button: {
     flex: 1,
+    minHeight: 48,
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',

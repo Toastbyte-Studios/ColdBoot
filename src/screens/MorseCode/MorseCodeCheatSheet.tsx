@@ -1,5 +1,7 @@
 import React, { useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
+import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -44,11 +46,14 @@ export default function MorseCodeCheatSheet() {
     <ScreenBody>
       <SectionHeader>Morse Code Cheat Sheet</SectionHeader>
       <View style={styles.container}>
-        <TouchableOpacity style={styles.sortButton} onPress={toggleSort}>
-          <Text style={styles.sortButtonText}>
-            Sort: {sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}
-          </Text>
-        </TouchableOpacity>
+        <AppButton
+          label={`Sort: ${sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}`}
+          tint={COLORS.BRAND}
+          fullWidth
+          onPress={toggleSort}
+          accessibilityLabel={`Sorted ${sortType === 'alphabetical' ? 'alphabetically' : 'by pattern'}. Tap to change.`}
+          style={styles.sortButton}
+        />
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -56,9 +61,19 @@ export default function MorseCodeCheatSheet() {
           {sortedData.map((item) => (
             <View key={item.char} style={styles.card}>
               <Text style={styles.char}>{item.char}</Text>
-              <Text style={styles.separator}>➡️</Text>
+              <Ionicons
+                name="arrow-forward"
+                size={18}
+                color={COLORS.PRIMARY_DARK}
+                style={styles.separator}
+              />
               <Text style={styles.morse}>{item.morse}</Text>
-              <Text style={styles.separator}>➡️</Text>
+              <Ionicons
+                name="arrow-forward"
+                size={18}
+                color={COLORS.PRIMARY_DARK}
+                style={styles.separator}
+              />
               <Text style={styles.spellOut}>{item.spellOut}</Text>
             </View>
           ))}
@@ -76,19 +91,9 @@ const styles = StyleSheet.create({
     paddingBottom: FOOTER_HEIGHT,
   },
   sortButton: {
-    backgroundColor: COLORS.BRAND,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
     marginHorizontal: 14,
     marginTop: 8,
     marginBottom: 8,
-    alignItems: 'center',
-  },
-  sortButtonText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_LIGHT,
   },
   scrollView: {
     flex: 1,
@@ -116,8 +121,6 @@ const styles = StyleSheet.create({
     width: 40,
   },
   separator: {
-    fontSize: 20,
-    color: COLORS.PRIMARY_DARK,
     marginHorizontal: 5,
   },
   morse: {

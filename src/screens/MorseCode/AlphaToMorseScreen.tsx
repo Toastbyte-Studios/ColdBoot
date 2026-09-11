@@ -1,12 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  TextInput,
-  TouchableOpacity,
-  Switch,
-} from 'react-native';
+import { StyleSheet, View, TextInput, Switch } from 'react-native';
+import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -86,27 +81,25 @@ const AlphaToMorseScreenImpl = () => {
           </View>
         </View>
 
-        <TouchableOpacity
-          style={[
-            styles.submitButton,
-            (message.trim().length === 0 || isTransmitting) &&
-              styles.submitButtonDisabled,
-          ]}
-          onPress={handleSubmit}
+        <AppButton
+          label={isTransmitting ? 'Transmitting…' : 'Submit'}
+          size="large"
+          tint={COLORS.ACCENT}
+          fullWidth
           disabled={message.trim().length === 0 || isTransmitting}
-        >
-          <Text style={styles.submitButtonText}>
-            {isTransmitting ? 'Transmitting...' : 'Submit'}
-          </Text>
-        </TouchableOpacity>
+          onPress={handleSubmit}
+          style={styles.submitButton}
+        />
 
         {isTransmitting && (
-          <TouchableOpacity
-            style={styles.stopButton}
+          <AppButton
+            label="Stop"
+            size="large"
+            tint={COLORS.BRAND}
+            fullWidth
             onPress={() => core.stopMorseTransmission()}
-          >
-            <Text style={styles.stopButtonText}>Stop</Text>
-          </TouchableOpacity>
+            accessibilityLabel="Stop transmission"
+          />
         )}
       </View>
     </ScreenBody>
@@ -163,32 +156,6 @@ const styles = StyleSheet.create({
     color: COLORS.PRIMARY_DARK,
   },
   submitButton: {
-    backgroundColor: COLORS.ACCENT,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
     marginBottom: 12,
-  },
-  submitButtonDisabled: {
-    backgroundColor: COLORS.SECONDARY_ACCENT,
-    opacity: 0.6,
-  },
-  submitButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  stopButton: {
-    backgroundColor: COLORS.BRAND,
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  stopButtonText: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: COLORS.PRIMARY_LIGHT,
   },
 });
