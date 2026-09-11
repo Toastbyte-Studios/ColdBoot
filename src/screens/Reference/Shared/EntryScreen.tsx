@@ -6,14 +6,16 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import React, { JSX, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import referenceImages from '../../../assets/referenceImages';
 import { HorizontalRule } from '../../../components/HorizontalRule';
+import IconButton from '../../../components/IconButton';
 import KnotStepCarousel from '../../../components/KnotStepCarousel';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
+import Touchable from '../../../components/Touchable';
 import {
   addBookmark,
   removeBookmark,
@@ -113,13 +115,16 @@ export default function EntryScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{resolvedEntry.title}</SectionHeader>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={toggleBookmark} style={styles.actionBtn}>
-          <Ionicons
-            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={22}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+        <IconButton
+          name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={22}
+          color={COLORS.PRIMARY_DARK}
+          accessibilityLabel={
+            bookmarked ? 'Remove bookmark' : 'Bookmark this topic'
+          }
+          onPress={toggleBookmark}
+          style={styles.actionBtn}
+        />
       </View>
       <HorizontalRule />
       <View style={styles.container}>
@@ -181,9 +186,13 @@ export default function EntryScreen(): JSX.Element {
           )}
           {/* Related Screen Link */}
           {!!resolvedEntry.related_screen && (
-            <TouchableOpacity
+            <Touchable
               style={styles.relatedScreenBtn}
               onPress={() => navigation.navigate(resolvedEntry.related_screen!)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                resolvedEntry.related_screen_label ?? 'Open Reference Tool'
+              }
             >
               <Ionicons
                 name="open-outline"
@@ -199,7 +208,7 @@ export default function EntryScreen(): JSX.Element {
                 size={16}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           )}
         </ScrollView>
       </View>
@@ -233,8 +242,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.BRAND,
     borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
     backgroundColor: COLORS.PRIMARY_LIGHT,
   },
   missingWrap: {
