@@ -24,8 +24,6 @@ export default function DownloadAreaButton({
       name="download-outline"
       size={22}
       color={COLORS.PRIMARY_LIGHT}
-      disabledColor={COLORS.PRIMARY_LIGHT}
-      disabled={!permissionGranted}
       onPress={onPress}
       accessibilityLabel={
         permissionGranted
