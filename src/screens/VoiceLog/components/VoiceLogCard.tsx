@@ -1,7 +1,7 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import { COLORS } from '../../../theme';
 import { formatDateTime } from '../../../utils/timeFormat';
@@ -39,9 +39,9 @@ export default function VoiceLogCard({
         <View style={styles.info}>
           <Text style={styles.title}>{title || 'Voice Log'}</Text>
           <Text style={styles.time}>{formatDateTime(new Date(createdAt))}</Text>
-          {duration && (
+          {duration ? (
             <Text style={styles.duration}>Duration: {duration}s</Text>
-          )}
+          ) : null}
           {isPlaying && (
             <View style={styles.playingIndicator}>
               <View style={styles.playingDot} />
@@ -51,27 +51,23 @@ export default function VoiceLogCard({
         </View>
         <View style={styles.actions}>
           {audioUri && (
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={onPlay}
+            <IconButton
+              name={isPlaying ? 'pause' : 'play'}
+              size={24}
+              color={COLORS.SECONDARY_ACCENT}
               accessibilityLabel={isPlaying ? 'Stop playing' : 'Play voice log'}
-              accessibilityRole="button"
-            >
-              <Icon
-                name={isPlaying ? 'pause' : 'play'}
-                size={24}
-                color={COLORS.SECONDARY_ACCENT}
-              />
-            </TouchableOpacity>
+              onPress={onPlay}
+              style={styles.actionButton}
+            />
           )}
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={onDelete}
+          <IconButton
+            name="trash-outline"
+            size={24}
+            color={COLORS.ERROR}
             accessibilityLabel="Delete voice log"
-            accessibilityRole="button"
-          >
-            <Icon name="trash-outline" size={24} color={COLORS.ERROR} />
-          </TouchableOpacity>
+            onPress={onDelete}
+            style={styles.actionButton}
+          />
         </View>
       </View>
     </View>
@@ -141,7 +137,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   actionButton: {
-    padding: 8,
     marginLeft: 8,
   },
 });

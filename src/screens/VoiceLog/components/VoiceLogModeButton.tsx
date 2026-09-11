@@ -1,8 +1,9 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity } from 'react-native';
+import { StyleSheet } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../../components/ScaledText';
+import Touchable from '../../../components/Touchable';
 import { COLORS } from '../../../theme';
 
 type VoiceLogModeButtonProps = {
@@ -21,8 +22,9 @@ export default function VoiceLogModeButton({
   accessibilityLabel,
 }: VoiceLogModeButtonProps) {
   return (
-    <TouchableOpacity
+    <Touchable
       style={styles.container}
+      rippleColor={COLORS.PRIMARY_DARK}
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
@@ -41,7 +43,7 @@ export default function VoiceLogModeButton({
       />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
-    </TouchableOpacity>
+    </Touchable>
   );
 }
 

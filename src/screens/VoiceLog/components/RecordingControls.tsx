@@ -1,7 +1,8 @@
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../../components/ScaledText';
+import Touchable from '../../../components/Touchable';
 import { COLORS } from '../../../theme';
 
 type RecordingControlsProps = {
@@ -39,8 +40,14 @@ export default function RecordingControls({
         </>
       )}
 
-      <TouchableOpacity
+      {/* Not an IconButton: this is a 120pt circle, and IconButton pins its
+          borderless ripple radius to the 44/48 touch target, which would draw
+          a small ripple adrift in the middle of it. Touchable leaves the
+          radius unset so Android derives it from the view bounds. */}
+      <Touchable
         style={[styles.recordButton, isRecording && styles.recordButtonActive]}
+        borderless
+        rippleColor={COLORS.PRIMARY_LIGHT}
         onPress={isRecording ? onStopRecording : onStartRecording}
         accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Recording'}
         accessibilityRole="button"
@@ -50,7 +57,7 @@ export default function RecordingControls({
           size={60}
           color={COLORS.PRIMARY_LIGHT}
         />
-      </TouchableOpacity>
+      </Touchable>
 
       {!isRecording && (
         <Text style={styles.instruction}>Tap to start recording</Text>
