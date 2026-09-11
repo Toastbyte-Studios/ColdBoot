@@ -1,17 +1,12 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { FormButtonRow, FormInput, FormTextArea } from '../Shared/Prepper';
@@ -74,7 +69,7 @@ export default observer(function NewEmergencyContactScreen() {
 
       {/* Import from device contacts — only shown when native module is available */}
       {contactsAvailable && (
-        <TouchableOpacity
+        <Touchable
           style={[
             localStyles.importBanner,
             {
@@ -92,9 +87,7 @@ export default observer(function NewEmergencyContactScreen() {
             color={COLORS.PRIMARY_DARK}
             style={localStyles.importIcon}
           />
-          <Text
-            style={[localStyles.importText, { color: COLORS.PRIMARY_DARK }]}
-          >
+          <Text style={[localStyles.importText, { color: COLORS.PRIMARY_DARK }]}>
             Import from Contacts
           </Text>
           <Ionicons
@@ -102,7 +95,7 @@ export default observer(function NewEmergencyContactScreen() {
             size={16}
             color={COLORS.PRIMARY_DARK}
           />
-        </TouchableOpacity>
+        </Touchable>
       )}
 
       <View style={styles.container}>

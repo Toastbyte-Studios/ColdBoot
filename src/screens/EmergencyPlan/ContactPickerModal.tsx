@@ -7,11 +7,12 @@ import {
   PermissionsAndroid,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 
 interface RawContact {
@@ -147,7 +148,8 @@ export function ContactPickerModal({
       testID="contact-picker-modal"
     >
       <View style={[styles.container, { backgroundColor: COLORS.BACKGROUND }]}>
-        {/* Header */}
+        {/* Header. paddingTop is a hardcoded status-bar clearance rather than a
+            safe-area inset — see docs/NATIVE_REDESIGN.md finding 5. */}
         <View
           style={[
             styles.header,
@@ -160,17 +162,13 @@ export function ContactPickerModal({
           <Text style={[styles.title, { color: COLORS.PRIMARY_DARK }]}>
             Select Contact
           </Text>
-          <TouchableOpacity
-            onPress={onClose}
+          <IconButton
+            name="close-outline"
+            size={28}
+            color={COLORS.PRIMARY_DARK}
             accessibilityLabel="Close"
-            accessibilityRole="button"
-          >
-            <Ionicons
-              name="close-outline"
-              size={28}
-              color={COLORS.PRIMARY_DARK}
-            />
-          </TouchableOpacity>
+            onPress={onClose}
+          />
         </View>
 
         {/* Search */}
@@ -215,7 +213,7 @@ export function ContactPickerModal({
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.listContent}
             renderItem={({ item }) => (
-              <TouchableOpacity
+              <Touchable
                 style={[
                   styles.item,
                   {
@@ -246,7 +244,7 @@ export function ContactPickerModal({
                     {item.phone}
                   </Text>
                 </View>
-              </TouchableOpacity>
+              </Touchable>
             )}
             ListEmptyComponent={
               <Text
