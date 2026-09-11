@@ -17,6 +17,20 @@ interface ErrorBoundaryState {
  * otherwise crash the app silently on Android release builds.  In DEV mode
  * it still logs to the console so the red-screen overlay can pick it up; in
  * production it shows a minimal crash screen instead of a blank close.
+ *
+ * @remarks
+ * This component deliberately imports the static `COLORS` palette rather than
+ * reading the theme, so it renders the light scheme in both modes. That is an
+ * exception to docs/NATIVE_REDESIGN.md finding 4, not an oversight:
+ *
+ * - It is a class component, so it cannot call `useTheme` directly.
+ * - More importantly, a crash screen must not depend on context it cannot
+ *   guarantee. If the thing that threw was the theme provider or anything
+ *   above it, a themed error boundary would throw while rendering the error,
+ *   and the user would get the blank close this component exists to prevent.
+ *
+ * If it ever does need to follow the scheme, read the colour scheme from
+ * `Appearance.getColorScheme()` directly rather than from React context.
  */
 export default class ErrorBoundary extends Component<
   ErrorBoundaryProps,
