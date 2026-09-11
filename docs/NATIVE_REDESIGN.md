@@ -7,6 +7,10 @@ all"; the button work surfaced a lot more.
 This file is a living log. Add findings as they turn up, even the ones nobody
 is going to fix this quarter — the point is that they stop being rediscovered.
 
+**State of play:** the primitives exist and are stable, 45 of 63 files are
+converted, and the remaining work is listed at the bottom with a
+recommendation to do it locally rather than through whole-file rewrites.
+
 ## The three primitives
 
 Every tappable thing should be one of these. Nothing new should reach for
@@ -32,7 +36,7 @@ Every tappable thing should be one of these. Nothing new should reach for
 
 - **Touch targets are 44pt on iOS, 48dp on Android.** `IconButton` enforces
   this regardless of glyph size; the glyph and the target are separate. When
-  using `Touchable` for a small control, set the target by hand.
+  using `Touchable`, set the target by hand — see finding 8 for how.
 - **Feedback is per-platform.** Android gets a ripple, iOS gets a dim. An
   opacity fade on both is the single clearest tell that a screen was not built
   natively.
@@ -40,7 +44,7 @@ Every tappable thing should be one of these. Nothing new should reach for
   type size, weight and tracking from a `Platform.select` block. iOS gets
   44pt / 10 radius / 16-17pt semibold with negative tracking; Android gets
   48dp / pill radius / medium weight with positive tracking.
-- **Label color on a filled surface is measured, not assumed.** `onColor()`
+- **Label colour on a filled surface is measured, not assumed.** `onColor()`
   in `theme/colorUtils` compares contrast ratios and returns ink or white.
 - **`accessibilityLabel` is required on `IconButton`.** An icon carries no
   text for a screen reader, so there is no sensible default.
@@ -67,6 +71,10 @@ the palette is missing a token.
 - `AppButton` `tint` — overrides the variant's tint while keeping the style.
 - `IconButton` `disabledColor` — the disabled glyph defaults to the theme's
   muted colour, which is invisible on a tinted surface that dims as a whole.
+
+Separately, `src/theme/fixedSurfaces.ts` exports `PAPER` and `INK` for
+surfaces that must **not** follow the colour scheme. Those are not a styling
+convenience — see finding 4.
 
 ## Findings
 
@@ -122,27 +130,43 @@ Meanwhile the navigator uses `presentation: 'modal'` for only three actual
 routes. `SettingsModal` in particular is a grouped list pretending to be a
 modal; it wants to be a screen.
 
-### 4. Theming is inconsistently applied — OPEN. Twenty-seven files.
+### 4. Theming is inconsistently applied — OPEN. Twenty-seven candidate files.
 
-Some screens call `useTheme()`; others `import { COLORS } from '../../theme'`,
-which is the light palette resolved at module load. Those files render the
-light scheme in both modes and do not respond to the dark-mode setting at all.
+Some files call `useTheme()`; others `import { COLORS } from '../../theme'`,
+which is the light palette resolved at module load.
+
+**Read that list as candidates, not defects.** Of the five shared components
+worked through so far, only two were bugs. Three were correct to be static,
+for reasons that had nothing to do with styling:
+
+- `ErrorBoundary` — a crash screen must not depend on context it cannot
+  guarantee. If the thing that threw was the theme provider or anything above
+  it, a themed error boundary would throw while rendering the error and
+  produce the blank close it exists to prevent. Use
+  `Appearance.getColorScheme()` if it ever needs the scheme.
+- `SketchCanvas` — pen and pad colours are baked into a base64 PNG on every
+  save. A theme-aware canvas would produce two incompatible kinds of sketch,
+  and every existing one would replay onto the wrong background. The artefact
+  would outlive the scheme change, because it is in the saved data.
+- `KnotStepCarousel` — the Wikimedia knot diagrams are dark line art on
+  transparency. On a dark card they disappear.
+
+The last two now pull `PAPER` and `INK` from `src/theme/fixedSurfaces.ts`
+rather than importing the light palette, so the intent is legible and nobody
+converts them to theme lookups by mistake. Chrome around fixed content —
+borders, the carousel's indicator dots — does follow the scheme.
+
+So the job on the remaining candidates is triage: decide whether each one is
+light-locked by accident or on purpose, and either theme it or move it onto a
+named fixed surface with the reason recorded.
 
 The clusters: MorseCode (6), VoiceLog (6), Notepad (5), plus
 `Reference/Shared/EntryScreen`, `ScenarioDetailScreen`, `ComingSoonScreen`,
-`FlashlightScreen`.
+`FlashlightScreen`. `noteListStyles.ts` is a genuine exception — a
+module-scope stylesheet cannot be reactive regardless.
 
-**The five in `components/` matter most**: `HorizontalRule`,
-`SectionSubHeader`, `ErrorBoundary`, `KnotStepCarousel`, `SketchCanvas`. These
-are shared, so they are light-locked on every screen that renders them —
-including screens this sweep has already converted and signed off as clean.
-`HorizontalRule` is in `AppShell`, so it is on essentially every screen.
-
-`noteListStyles.ts` is a genuine exception: a module-scope stylesheet cannot
-be reactive regardless.
-
-To find the files that are actually broken rather than the ones that merely
-import both:
+To find files that are actually light-locked rather than merely importing
+both:
 
 ```sh
 comm -23 \
@@ -150,18 +174,17 @@ comm -23 \
   <(rg -l 'useTheme' src/ | sort)
 ```
 
-This constrains the sweep: in an affected file, the new components must be
-passed static colours explicitly rather than falling back to the theme,
-because a theme-aware icon on a hardcoded light card turns pale-on-pale and
-disappears in dark mode.
+Where a file is genuinely light-locked, the primitives must be passed static
+colours explicitly rather than left to fall back to the theme, or a
+theme-aware icon lands on a hardcoded light card and turns pale-on-pale.
 
-It also leaks the other way. `AppButton` resolves its **disabled** colours
+It also leaks the other way: `AppButton` resolves its **disabled** colours
 through `useTheme` internally, so a disabled button in a light-locked file
 (`AlphaToMorseScreen`, the Notepad forms) paints with the dark-mode `BORDER`
-colour in dark mode. That artifact is created by the sweep and disappears when
-those screens move to `useTheme`.
+colour in dark mode. That artefact was created by the sweep and disappears
+when those screens move to `useTheme`.
 
-The Map components show the pattern to copy: a module-level
+The Map components show the pattern to copy for a real fix: a module-level
 `makeStyles(colors)` factory called through `useMemo(() => makeStyles(COLORS),
 [COLORS])`.
 
@@ -178,11 +201,12 @@ Related hardcoded-colour instances:
 - The map's record button used iOS system red (`#FF3B30`) while recording, a
   third red alongside `ERROR` and the expiry hexes. Now `ERROR`.
 - `DownloadProgressChip`'s chip and toast, and `MapPanel`'s recording HUD, are
-  fixed white on a dark scrim. Those are deliberate — they float over map
-  imagery, not app chrome — and are commented as such. The error banner in
+  fixed white on a dark scrim. Deliberate — they float over map imagery, not
+  app chrome — and commented as such. The error banner in
   `DownloadProgressChip` is not: its `rgba(255,255,255,0.95)` background stays
   white in dark mode.
-- The footer notification badge hardcodes `'#fff'`.
+- `SeasonalOutlookScreen`'s risk-flag chips hardcode `'#fff'`, as does the
+  footer notification badge.
 - No `StatusBar` bar-style appears to be wired to the colour scheme, so dark
   mode is likely rendering dark status text on a dark background.
 
@@ -215,9 +239,9 @@ variant — roughly 3:1, under the body-text floor.
 
 ### 7. Emoji and Unicode characters used as icons — PARTLY FIXED
 
-Sixteen instances converted so far, all within files the sweep touched: the
-Map feature (twelve), `RallyPointsScreen`, `MapScreen`, `MorseCodeCheatSheet`
-(two arrows per row across 36 rows), and `AddCustomRepeaterScreen`.
+Sixteen instances converted, all in files the sweep touched: the Map feature
+(twelve), `RallyPointsScreen`, `MapScreen`, `MorseCodeCheatSheet` (two arrows
+per row across 36 rows), and `AddCustomRepeaterScreen`.
 
 The glyphs resolve from whatever font happens to cover them, so they differ
 between iOS and Android and between OS versions; they do not match the
@@ -262,29 +286,41 @@ Both are commented in place so they don't read as oversights.
 
 ### 8. Undersized touch targets on custom chrome — IN PROGRESS
 
-Controls built at whatever size looked right, found so far:
-`WaypointBottomSheet`'s close button (32pt bordered circle), the Notepad and
-Pantry header icons (~30-42pt), `WaypointRow` and `TrackRow` action buttons
-(~26pt), the checklist checkbox (bare 28pt glyph), the share/import boxes in
-`RallyPointsScreen` and `CommunicationPlanScreen` (36pt), the picker fields
-and option rows in `AddCustomRepeaterScreen` (~40pt and ~38pt), the
-RepeaterBook attribution link (a 12pt line of text), and the
-`ScenarioDetailScreen` bookmark toggle (~36pt).
+Controls built at whatever size looked right: `WaypointBottomSheet`'s close
+button (32pt bordered circle), the Notepad and Pantry header icons (~30-42pt),
+`WaypointRow` and `TrackRow` action buttons (~26pt), the checklist checkbox
+(bare 28pt glyph), the share/import boxes in `RallyPointsScreen` and
+`CommunicationPlanScreen` (36pt), the picker fields and option rows in
+`AddCustomRepeaterScreen` (~40pt and ~38pt), the RepeaterBook attribution link
+(a 12pt line of text), the `ScenarioDetailScreen` and `EntryScreen` bookmark
+toggles (~36pt), and `SearchScreen`'s jump pill and send button (~28pt and
+30pt).
 
-Moving these onto the primitives fixes the target but changes the look,
-because the primitives will not render below 44/48. The bottom sheet's close
-button lost its bordered circle rather than growing into a 44pt one; the
-share/import boxes grew instead. Expect a small amount of this in every batch;
-it is the point rather than a side effect, but it does mean the diffs are not
-purely mechanical.
+**There are three ways to resolve one, and picking the right one matters.**
+
+1. **Grow the control.** Right when it has room — list rows, standalone
+   buttons. `IconButton` does this automatically; with `Touchable` set
+   `minHeight: 44`.
+2. **Drop the chrome and let the primitive size it.** Right when the existing
+   decoration only made sense at the smaller size. `WaypointBottomSheet`'s
+   close button lost its 32pt bordered circle rather than inflating it into a
+   44pt one.
+3. **Leave the visual size and extend the touch area with `hitSlop`.** Right
+   when the control's size is set by its container rather than by itself.
+   `SearchScreen`'s send button is sized to fit inside the input row's height,
+   and its jump pill sits inside a result card — growing either would push the
+   surrounding layout around. Both use `hitSlop` and stay visually unchanged.
+
+Option 1 is the default. Reach for 3 in dense layouts, and comment it, since
+it is the one that looks like nothing was done.
 
 The map FABs are the happy case: already 48pt circles, so they took
 `IconButton` with no change in size.
 
 ### 9. Accessibility roles and state — IN PROGRESS
 
-A recurring pattern: a control declares part of its accessibility contract and
-omits the part that makes it meaningful.
+A control declares part of its accessibility contract and omits the part that
+makes it meaningful.
 
 - The checklist item checkbox had `accessibilityRole="checkbox"` with no
   `accessibilityState.checked`, so a screen reader announced every item
@@ -293,26 +329,32 @@ omits the part that makes it meaningful.
   tabs had no `selected`.
 - `AddCustomRepeaterScreen`'s picker option rows had neither role nor state —
   eight unlabelled rows in the Mode list with no indication of the active one.
-- `ScenarioDetailScreen`'s bookmark toggle had no `accessibilityLabel` at all,
-  on a control whose entire meaning is its state.
+- `SeasonalOutlookScreen`'s month cards had no `expanded`. The label said
+  "collapse" or "expand", so the information was there in prose but not in a
+  form a screen reader could act on.
+- `ScenarioDetailScreen` and `EntryScreen`'s bookmark toggles had no
+  `accessibilityLabel` at all, on controls whose entire meaning is their
+  state. Of the three bookmark toggles in the app, two were unlabelled —
+  icon-only toggles are where this defect concentrates, presumably because
+  whoever wrote them could see what the icon meant.
+- `FormPickerButton` had no label, so the inventory month and year pickers
+  announced their current value with no indication they were tappable.
 
 All fixed. The primitives cannot catch this — `Touchable` passes accessibility
 props straight through — so it needs checking by hand on every stateful
-control the sweep touches.
+control.
 
 ### 10. `IconButton` cannot do large circles — OPEN
 
 `IconButton` pins its borderless ripple radius to `TARGET / 2`, i.e. 22 or
 24pt. On a large circular button that draws a small ripple adrift in the
-middle. Two call sites have had to fall back to `Touchable` for this reason:
-`MapPanel`'s record FAB and `RecordingControls`' 120pt record button. Both are
-commented.
+middle. Two call sites fall back to `Touchable` for this reason: `MapPanel`'s
+record FAB and `RecordingControls`' 120pt record button. Both are commented.
 
-Two instances is enough to call it a gap rather than a coincidence. The fix is
-either an optional `rippleRadius` prop or deriving the radius from a width in
-the resolved style. Not done yet — `IconButton` has already gained two props
-during this work and it is worth deciding whether it is accumulating too many
-knobs before adding a third.
+The fix is either an optional `rippleRadius` prop or deriving the radius from
+a width in the resolved style. Not done — `IconButton` has already gained two
+props during this work and it is worth deciding whether it is accumulating too
+many knobs before adding a third.
 
 ## Open decisions
 
@@ -326,6 +368,7 @@ Instances found so far:
   touchable header plus an absolutely-positioned menu.
 - `AddCustomRepeaterScreen` has two: a touchable field plus a transparent
   `Modal` holding a list of options.
+- `FormPickerButton` backs the inventory month and year pickers — two more.
 
 React Native ships `ActionSheetIOS` and nothing equivalent for Android, so:
 
@@ -337,9 +380,9 @@ React Native ships `ActionSheetIOS` and nothing equivalent for Android, so:
 
 `NoteSortSelector`, `NewNoteScreen` and `EditNoteScreen` are held back from
 the sweep until this is settled, because converting only their icon buttons
-would leave a half-migrated diff. `AddCustomRepeaterScreen` was converted,
-because its pickers were the file's only `TouchableOpacity` usage — so
-converting them is the whole file rather than half of it, and the modal is
+would leave a half-migrated diff. `AddCustomRepeaterScreen` and
+`FormPickerButton` were converted, because their pickers were the whole of
+those files' `TouchableOpacity` usage rather than half of it, and the modal is
 untouched either way.
 
 ### Segmented controls — a second, smaller dependency call
@@ -355,7 +398,7 @@ hand-built. `@react-native-segmented-control/segmented-control` wraps the real
 
 ## Sweep progress
 
-42 of 63 files converted.
+45 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
 - [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held)
@@ -367,33 +410,53 @@ hand-built. `@react-native-segmented-control/segmented-control` wraps the real
 - [x] `screens/MorseCode` — 4 of 4
 - [x] `screens/VoiceLog` — 3 of 3
 - [x] `screens/ScenarioCards` — 2 of 2
-- [ ] `screens/RepeaterBook` — 2 of 3 (`RepeaterBookScreen` remains)
+- [x] `screens/Shared/Prepper/FormPickerButton.tsx`
+- [x] `screens/Reference/Shared/EntryScreen.tsx`
+- [x] `screens/Common/SearchScreen.tsx`
+- [x] `screens/SeasonalOutlook/SeasonalOutlookScreen.tsx`
+- [ ] `screens/RepeaterBook/RepeaterBookScreen.tsx`
+- [ ] `screens/` singles — `BarometricPressure`, `DepletionCalculator`,
+      `GridReference`, `RadioFrequencies`, `UnitConversion/ConversionCategory`
 - [ ] `components/` — `Footer`, `NotificationsModal`, `HelpModal`,
       `ManageOfflineMapsModal`, `NoteSortSelector`, `SectionHeader`,
       `SettingsModal`, `TutorialModal`
-- [ ] `screens/` singles — `BarometricPressure`, `Common/SearchScreen`,
-      `DepletionCalculator`, `GridReference`, `RadioFrequencies`,
-      `Reference/Shared/EntryScreen`, `SeasonalOutlook`,
-      `Shared/Prepper/FormPickerButton`, `UnitConversion/ConversionCategory`
 - [ ] `modules/Reference/ReferenceModule.tsx`
+
+Separately, the five shared `components/` files from finding 4 are done: two
+themed (`HorizontalRule`, `SectionSubHeader`), one documented exception
+(`ErrorBoundary`), two rehoused onto `fixedSurfaces` (`SketchCanvas`,
+`KnotStepCarousel`). Those are theming fixes, so they are not in the count
+above.
 
 Run `npm run cleanup` before pushing. The sweep removes local button styles as
 it goes, and `react-native/no-unused-styles` will catch any left behind.
 
-### A note on the two large files
+## Finishing this locally
 
-`RepeaterBookScreen` (23KB) and `SettingsModal` (32KB) are better done in a
-local editor than through whole-file rewrites. The rest of this sweep was
-driven through the GitHub contents API, which has no patch operation — every
-change means reproducing the entire file, and at that size the odds of
-silently dropping a line stop being negligible. Everything under ~10KB was
-safe; those two are not.
+The remaining eighteen files are better done in an editor than through the
+GitHub contents API, which has no patch operation — every change means
+reproducing the whole file, and the odds of silently dropping a line stop
+being negligible somewhere around 15KB. `SettingsModal` is 32KB,
+`RepeaterBookScreen` 23KB, and the remaining singles run 15-20KB each.
 
-### Suggested order for the rest
+The transformation itself is mechanical at this point:
 
-1. The five shared `components/` files in finding 4. Small diff, app-wide
-   reach, and it unblocks the dark-mode claim for screens already converted.
-2. The nine single screens — same shape as everything done so far.
-3. The emoji pass from finding 7, which is independent of the sweep.
-4. The two large files, locally.
+1. `TouchableOpacity` → `Touchable`, or `IconButton` for a bare glyph, or
+   `AppButton` for anything with a text label.
+2. Give it a 44pt target by one of the three routes in finding 8.
+3. Check `accessibilityRole`, `accessibilityLabel` and `accessibilityState`
+   on anything with a toggled or selected state — finding 9.
+4. Delete the local button styles the primitive now owns, and run
+   `npm run cleanup`.
+
+Suggested order for what is left:
+
+1. The five remaining singles and `ReferenceModule` — same shape as
+   everything done so far.
+2. The emoji pass from finding 7, which is independent of the sweep and
+   reaches files the sweep never touches.
+3. Triage the finding 4 candidate list — theme it, or move it onto a named
+   fixed surface with the reason recorded.
+4. The `components/` group. Four of the eight are modals, so this overlaps
+   finding 3 and may be worth doing as part of it rather than before it.
 5. Findings 1 and 3, each as its own piece of work.
