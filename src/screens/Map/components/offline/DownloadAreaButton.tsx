@@ -38,12 +38,12 @@ export default function DownloadAreaButton({
       accessibilityLabel={
         permissionGranted
           ? 'Download your area'
-          : 'Download your area — enable location to use this feature'
+          : 'Download your area unavailable — shows location requirement'
       }
       accessibilityHint={
         permissionGranted
           ? 'Downloads an offline map centred on your current location'
-          : 'Location permission is required to download an offline map'
+          : 'Shows a message explaining that location permission is required before downloading an offline map'
       }
       style={[
         styles.button,
