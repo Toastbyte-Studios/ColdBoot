@@ -1,107 +1,237 @@
-import React from 'react';
-import { Pressable, StyleProp, StyleSheet, ViewStyle } from 'react-native';
+import React, { useMemo } from 'react';
+import {
+  ActivityIndicator,
+  Platform,
+  Pressable,
+  StyleProp,
+  StyleSheet,
+  TextStyle,
+  ViewStyle,
+} from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
+import { onColor, withAlpha } from '../theme/colorUtils';
 import { Text } from './ScaledText';
-
-export type ButtonVariant = 'primary' | 'secondary' | 'destructive' | 'success';
-
-export interface AppButtonProps {
-  /** Button label text */
-  label: string;
-  /** Called when the button is pressed */
-  onPress: () => void;
-  /**
-   * Visual variant of the button.
-   * - `primary`     — brand accent (orange) background
-   * - `secondary`   — bordered, light background
-   * - `destructive` — error/red background
-   * - `success`     — green background
-   * @default 'primary'
-   */
-  variant?: ButtonVariant;
-  /** Optional Ionicons icon name to display before the label */
-  icon?: string;
-  /** Size for the icon. @default 20 */
-  iconSize?: number;
-  /** When true, the button is non-interactive and visually dimmed */
-  disabled?: boolean;
-  /** Additional layout/positioning styles applied to the button container */
-  style?: StyleProp<ViewStyle>;
-  /** Accessibility label; falls back to `label` if omitted */
-  accessibilityLabel?: string;
-}
+import type { ThemeColors } from '../theme/colors';
 
 /**
- * Canonical action button used throughout the app.
+ * Button styles map to the platform's own button vocabulary rather than to
+ * brand roles:
  *
- * Provides four consistent variants (primary, secondary, destructive, success)
- * with a uniform border-radius, padding, and typography so that all action
- * buttons share the same visual identity regardless of screen.
+ * - `filled`      — solid tint, white/ink label. iOS `.filled`, Android filled.
+ * - `tinted`      — 12% tint wash, tint-colored label. iOS `.tinted`, Android tonal.
+ * - `plain`       — no chrome, tint-colored label. iOS `.plain`, Android text button.
+ * - `destructive` — filled with the error tint.
  *
- * @example
- * ```tsx
- * <AppButton label="Save" onPress={handleSave} />
- * <AppButton label="Cancel" onPress={handleCancel} variant="secondary" />
- * <AppButton label="Delete" onPress={handleDelete} variant="destructive" icon="trash-outline" />
- * <AppButton label="Start" onPress={handleStart} variant="success" icon="play" />
- * ```
+ * `primary` / `secondary` / `success` are kept as aliases so existing call
+ * sites keep working while screens are migrated.
  */
+export type ButtonVariant =
+  | 'filled'
+  | 'tinted'
+  | 'plain'
+  | 'destructive'
+  | 'primary'
+  | 'secondary'
+  | 'success';
+
+export type ButtonSize = 'small' | 'medium' | 'large';
+
+export interface AppButtonProps {
+  /** Button label. Use a verb that matches what happens: "Save changes", not "Submit". */
+  label: string;
+  onPress: () => void;
+  /** @default 'filled' */
+  variant?: ButtonVariant;
+  /** @default 'medium' */
+  size?: ButtonSize;
+  /**
+   * Overrides the variant's tint color. The button *style* is unchanged — a
+   * `plain` button with a tint override is still a plain button, just in a
+   * different color. Use for buttons that belong to a colored surface, like a
+   * Dismiss inside an error banner.
+   */
+  tint?: string;
+  /** Ionicons name rendered before the label. */
+  icon?: string;
+  /** Overrides the size-derived icon size. */
+  iconSize?: number;
+  /** Non-interactive and visually recessed. */
+  disabled?: boolean;
+  /** Swaps the label for a spinner and blocks presses. */
+  loading?: boolean;
+  /** Stretches to the full width of the parent. */
+  fullWidth?: boolean;
+  style?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
+  /** Falls back to `label`. */
+  accessibilityLabel?: string;
+  testID?: string;
+}
+
+/* -------------------------------------------------------------------------- */
+/* Platform metrics                                                            */
+/* -------------------------------------------------------------------------- */
+
+const METRICS = Platform.select({
+  ios: {
+    radius: { small: 8, medium: 10, large: 12 },
+    minHeight: { small: 34, medium: 44, large: 50 },
+    paddingX: { small: 12, medium: 16, large: 20 },
+    fontSize: { small: 14, medium: 16, large: 17 },
+    iconSize: { small: 16, medium: 19, large: 21 },
+    fontWeight: '600' as TextStyle['fontWeight'],
+    letterSpacing: -0.4,
+    gap: 6,
+  },
+  default: {
+    // Material 3: pill-shaped, 48dp target, medium weight, positive tracking.
+    radius: { small: 18, medium: 24, large: 28 },
+    minHeight: { small: 36, medium: 48, large: 56 },
+    paddingX: { small: 16, medium: 24, large: 28 },
+    fontSize: { small: 14, medium: 15, large: 16 },
+    iconSize: { small: 18, medium: 20, large: 22 },
+    fontWeight: '500' as TextStyle['fontWeight'],
+    letterSpacing: 0.1,
+    gap: 8,
+  },
+})!;
+
+/* -------------------------------------------------------------------------- */
+/* Variant resolution                                                          */
+/* -------------------------------------------------------------------------- */
+
+type ResolvedStyle = 'filled' | 'tinted' | 'plain';
+
+function resolveVariant(
+  variant: ButtonVariant,
+  colors: ThemeColors,
+): { kind: ResolvedStyle; tint: string } {
+  switch (variant) {
+    case 'primary':
+    case 'filled':
+      return { kind: 'filled', tint: colors.ACCENT };
+    case 'success':
+      return { kind: 'filled', tint: colors.SUCCESS };
+    case 'destructive':
+      return { kind: 'filled', tint: colors.ERROR };
+    case 'secondary':
+    case 'tinted':
+      return { kind: 'tinted', tint: colors.BRAND };
+    case 'plain':
+      return { kind: 'plain', tint: colors.BRAND };
+  }
+}
+
+/* -------------------------------------------------------------------------- */
+/* Component                                                                   */
+/* -------------------------------------------------------------------------- */
+
 export default function AppButton({
   label,
   onPress,
-  variant = 'primary',
+  variant = 'filled',
+  size = 'medium',
+  tint: tintOverride,
   icon,
-  iconSize = 20,
+  iconSize,
   disabled = false,
+  loading = false,
+  fullWidth = false,
   style,
+  labelStyle,
   accessibilityLabel,
+  testID,
 }: AppButtonProps) {
   const COLORS = useTheme();
+  const inactive = disabled || loading;
 
-  const containerStyle = (() => {
-    switch (variant) {
-      case 'primary':
-        return { backgroundColor: COLORS.ACCENT };
-      case 'secondary':
-        return { backgroundColor: COLORS.PRIMARY_LIGHT };
-      case 'destructive':
-        return { backgroundColor: COLORS.ERROR };
-      case 'success':
-        return { backgroundColor: COLORS.SUCCESS };
-    }
-  })();
+  const { container, contentColor, ripple } = useMemo(() => {
+    const { kind, tint: variantTint } = resolveVariant(variant, COLORS);
+    const tint = tintOverride ?? variantTint;
 
-  const textColor = (() => {
-    switch (variant) {
-      case 'primary':
-        return COLORS.PRIMARY_DARK;
-      case 'secondary':
-        return COLORS.PRIMARY_DARK;
-      case 'destructive':
-        return COLORS.PRIMARY_LIGHT;
-      case 'success':
-        return COLORS.PRIMARY_LIGHT;
+    if (disabled) {
+      return {
+        container: { backgroundColor: COLORS.BORDER },
+        contentColor: COLORS.MUTED,
+        ripple: 'transparent',
+      };
     }
-  })();
+
+    switch (kind) {
+      case 'filled':
+        return {
+          container: { backgroundColor: tint },
+          contentColor: onColor(tint),
+          ripple: withAlpha(onColor(tint), 0.16),
+        };
+      case 'tinted':
+        return {
+          container: { backgroundColor: withAlpha(tint, 0.12) },
+          contentColor: tint,
+          ripple: withAlpha(tint, 0.16),
+        };
+      case 'plain':
+        return {
+          container: { backgroundColor: 'transparent' },
+          contentColor: tint,
+          ripple: withAlpha(tint, 0.16),
+        };
+    }
+  }, [variant, tintOverride, disabled, COLORS]);
+
+  const resolvedIconSize = iconSize ?? METRICS.iconSize[size];
 
   return (
     <Pressable
-      style={({ pressed }) => [
-        styles.base,
-        containerStyle,
-        disabled && styles.disabled,
-        pressed && !disabled && styles.pressed,
-        style,
-      ]}
+      testID={testID}
       onPress={onPress}
-      disabled={disabled}
+      disabled={inactive}
+      android_ripple={
+        inactive ? undefined : { color: ripple, foreground: true }
+      }
       accessibilityLabel={accessibilityLabel ?? label}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
+      accessibilityState={{ disabled: inactive, busy: loading }}
+      hitSlop={8}
+      style={({ pressed }) => [
+        styles.base,
+        {
+          minHeight: METRICS.minHeight[size],
+          borderRadius: METRICS.radius[size],
+          paddingHorizontal: METRICS.paddingX[size],
+          gap: METRICS.gap,
+        },
+        container,
+        fullWidth && styles.fullWidth,
+        // iOS dims on press; Android uses the ripple above and stays put.
+        Platform.OS === 'ios' && pressed && !inactive && styles.pressed,
+        style,
+      ]}
     >
-      {icon ? <Icon name={icon} size={iconSize} color={textColor} /> : null}
-      <Text style={[styles.label, { color: textColor }]}>{label}</Text>
+      {loading ? (
+        <ActivityIndicator size="small" color={contentColor} />
+      ) : (
+        <>
+          {icon ? (
+            <Icon name={icon} size={resolvedIconSize} color={contentColor} />
+          ) : null}
+          <Text
+            numberOfLines={1}
+            style={[
+              {
+                color: contentColor,
+                fontSize: METRICS.fontSize[size],
+                fontWeight: METRICS.fontWeight,
+                letterSpacing: METRICS.letterSpacing,
+              },
+              labelStyle,
+            ]}
+          >
+            {label}
+          </Text>
+        </>
+      )}
     </Pressable>
   );
 }
@@ -111,19 +241,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    borderRadius: 12,
-    paddingVertical: 14,
-    paddingHorizontal: 20,
+    paddingVertical: 8,
+    // Required on Android so the ripple is clipped to the corner radius.
+    overflow: 'hidden',
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  disabled: {
-    opacity: 0.5,
+  fullWidth: {
+    alignSelf: 'stretch',
+    width: '100%',
   },
   pressed: {
-    opacity: 0.8,
+    opacity: 0.6,
   },
 });

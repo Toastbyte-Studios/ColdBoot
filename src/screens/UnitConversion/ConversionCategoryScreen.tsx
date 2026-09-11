@@ -1,11 +1,13 @@
 import { RouteProp, useRoute, useFocusEffect } from '@react-navigation/native';
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
 import {
@@ -168,11 +170,13 @@ export default function ConversionCategoryScreen() {
         </View>
 
         {/* Unit Selection */}
-        <View style={styles.unitSelectorContainer} pointerEvents="box-only">
+        <View style={styles.unitSelectorContainer}>
           <ScrollView horizontal style={styles.unitSelector}>
             {category.units.map((unit, index) => (
-              <TouchableOpacity
+              <Touchable
                 key={unit.id}
+                accessibilityRole="button"
+                accessibilityState={{ selected: selectedUnitIndex === index }}
                 style={[
                   styles.unitButton,
                   {
@@ -202,7 +206,7 @@ export default function ConversionCategoryScreen() {
                 >
                   {unit.name}
                 </Text>
-              </TouchableOpacity>
+              </Touchable>
             ))}
           </ScrollView>
         </View>
@@ -218,13 +222,14 @@ export default function ConversionCategoryScreen() {
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.swapButton} onPress={handleSwap}>
-            <Ionicons
-              name="swap-vertical-outline"
-              size={32}
-              color={COLORS.ACCENT}
-            />
-          </TouchableOpacity>
+          <IconButton
+            name="swap-vertical-outline"
+            size={32}
+            color={COLORS.ACCENT}
+            onPress={handleSwap}
+            accessibilityLabel="Swap conversion direction"
+            style={styles.swapButton}
+          />
 
           <View style={getValueContainerStyle()}>
             <Text style={[styles.valueLabel, { color: COLORS.PRIMARY_DARK }]}>
@@ -239,7 +244,8 @@ export default function ConversionCategoryScreen() {
         {/* Numeric Keypad */}
         <View style={styles.keypad}>
           <View style={styles.keypadRow}>
-            <TouchableOpacity
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('7')}
             >
@@ -251,8 +257,9 @@ export default function ConversionCategoryScreen() {
               >
                 7
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('8')}
             >
@@ -264,8 +271,9 @@ export default function ConversionCategoryScreen() {
               >
                 8
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('9')}
             >
@@ -277,10 +285,11 @@ export default function ConversionCategoryScreen() {
               >
                 9
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
           <View style={styles.keypadRow}>
-            <TouchableOpacity
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('4')}
             >
@@ -292,8 +301,9 @@ export default function ConversionCategoryScreen() {
               >
                 4
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('5')}
             >
@@ -305,8 +315,9 @@ export default function ConversionCategoryScreen() {
               >
                 5
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('6')}
             >
@@ -318,10 +329,11 @@ export default function ConversionCategoryScreen() {
               >
                 6
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
           <View style={styles.keypadRow}>
-            <TouchableOpacity
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('1')}
             >
@@ -333,8 +345,9 @@ export default function ConversionCategoryScreen() {
               >
                 1
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('2')}
             >
@@ -346,8 +359,9 @@ export default function ConversionCategoryScreen() {
               >
                 2
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('3')}
             >
@@ -359,13 +373,17 @@ export default function ConversionCategoryScreen() {
               >
                 3
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
           <View style={styles.keypadRow}>
-            <TouchableOpacity
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={handleToggleSign}
+              accessibilityLabel="Toggle sign"
             >
+              {/* Keycap text, not an icon: it belongs to the same set as the
+                  digit and decimal keys. See docs/NATIVE_REDESIGN.md finding 7. */}
               <Text
                 style={[
                   styles.keypadButtonText,
@@ -374,8 +392,9 @@ export default function ConversionCategoryScreen() {
               >
                 +/−
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={() => handleNumberPress('0')}
             >
@@ -387,10 +406,12 @@ export default function ConversionCategoryScreen() {
               >
                 0
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
               style={getKeypadButtonStyle()}
               onPress={handleDecimalPress}
+              accessibilityLabel="Decimal point"
             >
               <Text
                 style={[
@@ -400,10 +421,11 @@ export default function ConversionCategoryScreen() {
               >
                 .
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
           <View style={styles.keypadRow}>
-            <TouchableOpacity
+            <Touchable
+              accessibilityRole="button"
               style={[
                 styles.keypadButton,
                 styles.clearButton,
@@ -422,8 +444,10 @@ export default function ConversionCategoryScreen() {
               >
                 Clear
               </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
+            </Touchable>
+            <Touchable
+              accessibilityRole="button"
+              accessibilityLabel="Backspace"
               style={[
                 styles.keypadButton,
                 styles.backspaceButton,
@@ -439,7 +463,7 @@ export default function ConversionCategoryScreen() {
                 size={28}
                 color={COLORS.PRIMARY_LIGHT}
               />
-            </TouchableOpacity>
+            </Touchable>
           </View>
         </View>
       </ScreenBody>
@@ -473,6 +497,8 @@ const styles = StyleSheet.create({
     maxHeight: 50,
   },
   unitButton: {
+    minHeight: 44,
+    justifyContent: 'center',
     paddingHorizontal: 16,
     paddingVertical: 10,
     marginHorizontal: 4,
@@ -507,7 +533,6 @@ const styles = StyleSheet.create({
   },
   swapButton: {
     alignSelf: 'center',
-    padding: 8,
   },
   keypad: {
     width: '90%',

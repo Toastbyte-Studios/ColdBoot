@@ -2,18 +2,13 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useState, useCallback } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { ExpirationStatus, PantryItem } from '../../stores/PantryStore';
@@ -190,7 +185,7 @@ export default observer(
           style={styles.filterRow}
           contentContainerStyle={styles.filterContent}
         >
-          <TouchableOpacity
+          <Touchable
             style={[
               styles.filterChip,
               {
@@ -207,6 +202,7 @@ export default observer(
             onPress={() => setSelectedCategory(null)}
             accessibilityLabel="Show all categories"
             accessibilityRole="button"
+            accessibilityState={{ selected: selectedCategory === null }}
           >
             <Text
               style={[
@@ -221,9 +217,9 @@ export default observer(
             >
               All
             </Text>
-          </TouchableOpacity>
+          </Touchable>
           {pantry.categories.map((cat) => (
-            <TouchableOpacity
+            <Touchable
               key={cat}
               style={[
                 styles.filterChip,
@@ -243,6 +239,7 @@ export default observer(
               }
               accessibilityLabel={`Filter by ${cat}`}
               accessibilityRole="button"
+              accessibilityState={{ selected: selectedCategory === cat }}
             >
               <Text
                 style={[
@@ -257,7 +254,7 @@ export default observer(
               >
                 {cat}
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           ))}
         </ScrollView>
 
@@ -283,7 +280,7 @@ export default observer(
               const bgColor = statusBackgroundColor(status);
 
               return (
-                <TouchableOpacity
+                <Touchable
                   key={item.id}
                   style={[
                     styles.itemCard,
@@ -346,24 +343,22 @@ export default observer(
                     </View>
 
                     {/* Used/Rotated quick action */}
-                    <TouchableOpacity
+                    <IconButton
+                      name="checkmark-circle-outline"
+                      size={28}
+                      color={COLORS.PRIMARY_DARK}
+                      accessibilityLabel={`Mark ${item.name} as used`}
                       style={[
                         styles.usedButton,
                         { borderColor: COLORS.SECONDARY_ACCENT },
                       ]}
-                      onPress={() => handleMarkUsed(item)}
-                      accessibilityLabel={`Mark ${item.name} as used`}
-                      accessibilityRole="button"
-                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                    >
-                      <Ionicons
-                        name="checkmark-circle-outline"
-                        size={28}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
+                      onPress={(e) => {
+                        e.stopPropagation();
+                        handleMarkUsed(item);
+                      }}
+                    />
                   </View>
-                </TouchableOpacity>
+                </Touchable>
               );
             })}
           </ScrollView>
@@ -458,10 +453,7 @@ const styles = StyleSheet.create({
     opacity: 0.75,
   },
   usedButton: {
-    padding: 4,
     borderRadius: 6,
     borderWidth: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
 });

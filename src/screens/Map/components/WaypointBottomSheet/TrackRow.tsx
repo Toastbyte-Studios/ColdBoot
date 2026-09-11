@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
 import { Track } from '../../../../stores/TrackStore';
 import { formatDistance } from './waypointGeometry';
@@ -76,22 +77,22 @@ export default function TrackRow({
           {formatDuration(track.durationSeconds)}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.actionBtn}
+      <AppButton
+        label="View"
+        size="small"
+        tint={COLORS.SECONDARY_ACCENT}
         onPress={() => onView(track)}
         accessibilityLabel={`View track ${track.name} on map`}
-        accessibilityRole="button"
-      >
-        <Text style={styles.actionBtnText}>View</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.actionBtn, styles.deleteBtn]}
+        style={styles.action}
+      />
+      <AppButton
+        label="Delete"
+        size="small"
+        variant="destructive"
         onPress={confirmDelete}
         accessibilityLabel={`Delete track ${track.name}`}
-        accessibilityRole="button"
-      >
-        <Text style={styles.deleteBtnText}>Delete</Text>
-      </TouchableOpacity>
+        style={styles.action}
+      />
     </View>
   );
 }
@@ -120,25 +121,8 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       color: colors.SECONDARY_ACCENT,
       marginTop: 2,
     },
-    actionBtn: {
-      backgroundColor: colors.SECONDARY_ACCENT,
-      borderRadius: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+    action: {
       marginLeft: 6,
-    },
-    actionBtnText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.PRIMARY_LIGHT,
-    },
-    deleteBtn: {
-      backgroundColor: colors.ERROR,
-    },
-    deleteBtnText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.PRIMARY_LIGHT,
     },
   });
 }

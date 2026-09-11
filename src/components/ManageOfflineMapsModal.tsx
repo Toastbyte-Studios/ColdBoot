@@ -9,10 +9,8 @@ import {
   ScrollView,
   StyleSheet,
   Text as RNText,
-  TouchableOpacity,
   View,
 } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import {
   DEFAULT_OFFLINE_ZOOM,
@@ -23,6 +21,8 @@ import {
 import { boundsFromRadius } from '../navigation/utils/boundsFromRadius';
 import { formatBytes } from '../navigation/utils/formatBytes';
 import { useSettingsStore } from '../stores';
+import AppButton from './AppButton';
+import IconButton from './IconButton';
 
 interface ManageOfflineMapsModalProps {
   visible: boolean;
@@ -103,17 +103,9 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
       borderColor: COLORS.BRAND,
       backgroundColor: COLORS.BACKGROUND,
     },
-    buttonDefault: {
-      borderColor: COLORS.BRAND,
-      backgroundColor: COLORS.BACKGROUND,
-    },
     emptyCardThemed: {
       borderColor: COLORS.BRAND,
       backgroundColor: COLORS.SECONDARY_ACCENT,
-    },
-    ctaThemed: {
-      backgroundColor: COLORS.BRAND,
-      borderColor: COLORS.PRIMARY_DARK,
     },
   });
 }
@@ -291,18 +283,12 @@ export const ManageOfflineMapsModal = observer(
               <RNText style={[styles.headerText, t.primaryText]}>
                 Manage Offline Maps
               </RNText>
-              <TouchableOpacity
+              <IconButton
+                name="close-outline"
+                size={28}
                 onPress={onClose}
-                style={styles.closeButton}
                 accessibilityLabel="Close manage offline maps"
-                accessibilityRole="button"
-              >
-                <Ionicons
-                  name="close-outline"
-                  size={28}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+              />
             </View>
 
             <ScrollView
@@ -340,14 +326,11 @@ export const ManageOfflineMapsModal = observer(
                     — handy in the backcountry or during an outage.
                   </RNText>
                   {onDownloadArea && (
-                    <TouchableOpacity
-                      style={[styles.cta, t.ctaThemed]}
+                    <AppButton
+                      label="Download your area"
+                      icon="download-outline"
                       onPress={handleDownloadCta}
-                      accessibilityLabel="Download your area"
-                      accessibilityRole="button"
-                    >
-                      <RNText style={styles.ctaText}>Download your area</RNText>
-                    </TouchableOpacity>
+                    />
                   )}
                 </View>
               ) : (
@@ -381,51 +364,25 @@ export const ManageOfflineMapsModal = observer(
                       </View>
 
                       <View style={styles.actionsRow}>
-                        <TouchableOpacity
-                          style={[styles.actionButton, t.buttonDefault]}
+                        <AppButton
+                          label="Refresh"
+                          icon="refresh-outline"
+                          variant="tinted"
                           onPress={() => confirmRefresh(pack)}
                           disabled={isAnyBusy}
+                          loading={isBusy}
                           accessibilityLabel={`Refresh ${pack.metadata.name}`}
-                          accessibilityRole="button"
-                        >
-                          {isBusy ? (
-                            <ActivityIndicator
-                              size="small"
-                              color={COLORS.PRIMARY_DARK}
-                            />
-                          ) : (
-                            <View style={styles.actionButtonInner}>
-                              <Ionicons
-                                name="refresh-outline"
-                                size={18}
-                                color={COLORS.PRIMARY_DARK}
-                              />
-                              <RNText
-                                style={[styles.actionText, t.primaryText]}
-                              >
-                                Refresh
-                              </RNText>
-                            </View>
-                          )}
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={[styles.actionButton, t.buttonDefault]}
+                          style={styles.actionButton}
+                        />
+                        <AppButton
+                          label="Delete"
+                          icon="trash-outline"
+                          variant="tinted"
                           onPress={() => confirmDelete(pack)}
                           disabled={isAnyBusy}
                           accessibilityLabel={`Delete ${pack.metadata.name}`}
-                          accessibilityRole="button"
-                        >
-                          <View style={styles.actionButtonInner}>
-                            <Ionicons
-                              name="trash-outline"
-                              size={18}
-                              color={COLORS.PRIMARY_DARK}
-                            />
-                            <RNText style={[styles.actionText, t.primaryText]}>
-                              Delete
-                            </RNText>
-                          </View>
-                        </TouchableOpacity>
+                          style={styles.actionButton}
+                        />
                       </View>
                     </View>
                   );
@@ -465,9 +422,6 @@ const styles = StyleSheet.create({
   headerText: {
     fontSize: 22,
     fontWeight: '800',
-  },
-  closeButton: {
-    padding: 4,
   },
   content: {
     padding: 20,
@@ -511,17 +465,6 @@ const styles = StyleSheet.create({
     opacity: 0.85,
     marginBottom: 16,
   },
-  cta: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-    borderWidth: 2,
-  },
-  ctaText: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
   packCard: {
     borderRadius: 12,
     borderWidth: 2,
@@ -559,19 +502,5 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     flex: 1,
-    paddingVertical: 10,
-    borderRadius: 8,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  actionButtonInner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  actionText: {
-    fontSize: 14,
-    fontWeight: '700',
   },
 });

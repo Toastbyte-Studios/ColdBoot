@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet, Text, View } from 'react-native';
+import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
 import { Waypoint } from '../../../../stores/WaypointStore';
 import {
@@ -81,22 +82,22 @@ export default function WaypointRow({
           {distanceLabel} · {bearingLabel}
         </Text>
       </View>
-      <TouchableOpacity
-        style={styles.actionBtn}
+      <AppButton
+        label="Navigate"
+        size="small"
+        tint={COLORS.SECONDARY_ACCENT}
         onPress={() => onNavigate(waypoint.id)}
         accessibilityLabel={`Navigate to ${waypoint.name}`}
-        accessibilityRole="button"
-      >
-        <Text style={styles.actionBtnText}>Navigate</Text>
-      </TouchableOpacity>
-      <TouchableOpacity
-        style={[styles.actionBtn, styles.deleteBtn]}
+        style={styles.action}
+      />
+      <AppButton
+        label="Delete"
+        size="small"
+        variant="destructive"
         onPress={confirmDelete}
         accessibilityLabel={`Delete ${waypoint.name}`}
-        accessibilityRole="button"
-      >
-        <Text style={styles.deleteBtnText}>Delete</Text>
-      </TouchableOpacity>
+        style={styles.action}
+      />
     </View>
   );
 }
@@ -125,25 +126,8 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       color: colors.SECONDARY_ACCENT,
       marginTop: 2,
     },
-    actionBtn: {
-      backgroundColor: colors.SECONDARY_ACCENT,
-      borderRadius: 6,
-      paddingHorizontal: 10,
-      paddingVertical: 6,
+    action: {
       marginLeft: 6,
-    },
-    actionBtnText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.PRIMARY_LIGHT,
-    },
-    deleteBtn: {
-      backgroundColor: colors.ERROR,
-    },
-    deleteBtnText: {
-      fontSize: 12,
-      fontWeight: '600',
-      color: colors.PRIMARY_LIGHT,
     },
   });
 }

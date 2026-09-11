@@ -1,17 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import {
-  Alert,
-  Animated,
-  Pressable,
-  StyleSheet,
-  Vibration,
-} from 'react-native';
+import { Alert, Animated, StyleSheet, Vibration } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FlashlightModes } from '../../../../constants';
 import { useTheme } from '../../../hooks/useTheme';
 import { useSignalingStore } from '../../../stores/StoreContext';
+import { onColor } from '../../../theme/colorUtils';
 import { Text } from '../../ScaledText';
+import Touchable from '../../Touchable';
 
 interface SOSTriggerProps {
   /**
@@ -104,20 +100,12 @@ const SOSTrigger = ({
     }
   };
 
-  // Shared activation logic used by both the long-press and accessibility paths
+  // Shared activation logic used by the hold timer and accessibility path
   const activateSOS = useCallback(() => {
     core.setSosWithTone(true);
     core.setFlashlightMode(FlashlightModes.SOS);
     Vibration.vibrate(200);
   }, [core]);
-
-  // Long-press fires after delayLongPress — mirrors the hold-timer path for
-  // keyboard / TV / switch-access users who cannot use press-and-hold
-  const handleLongPress = useCallback(() => {
-    activateSOS();
-    setIsSOSPressing(false);
-    sosProgressAnim.setValue(0);
-  }, [activateSOS, sosProgressAnim]);
 
   // Accessibility action handler — shows a confirmation dialog so assistive-
   // tech users can trigger SOS intentionally without a physical hold
@@ -155,36 +143,23 @@ const SOSTrigger = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  const surface = isSOSPressing ? COLORS.ACCENT : COLORS.ERROR;
+  const contentColor = onColor(surface);
+
   return (
-    <Pressable
+    <Touchable
       onPressIn={handleSOSPressIn}
       onPressOut={handleSOSPressOut}
-      onLongPress={handleLongPress}
-      delayLongPress={1000}
       accessibilityLabel="Emergency SOS - Hold for 1 Second to Activate"
       accessibilityRole="button"
       accessibilityActions={[{ name: 'activate', label: 'Activate SOS' }]}
       onAccessibilityAction={handleAccessibilityAction}
-      style={({ pressed }) => [
-        styles.sosSection,
-        { backgroundColor: isSOSPressing ? COLORS.ACCENT : COLORS.ERROR },
-        pressed && styles.pressed,
-      ]}
+      rippleColor={contentColor}
+      style={[styles.sosSection, { backgroundColor: surface }]}
     >
-      <Ionicons
-        name="warning-outline"
-        size={24}
-        color={isSOSPressing ? COLORS.PRIMARY_DARK : COLORS.PRIMARY_LIGHT}
-      />
-      <Text
-        style={[
-          styles.sosText,
-          { color: isSOSPressing ? COLORS.PRIMARY_DARK : COLORS.PRIMARY_LIGHT },
-        ]}
-      >
-        SOS
-      </Text>
-    </Pressable>
+      <Ionicons name="warning-outline" size={24} color={contentColor} />
+      <Text style={[styles.sosText, { color: contentColor }]}>SOS</Text>
+    </Touchable>
   );
 };
 
@@ -198,9 +173,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderRadius: 12,
     gap: 2,
-  },
-  pressed: {
-    opacity: 0.8,
   },
   sosText: {
     fontSize: 12,

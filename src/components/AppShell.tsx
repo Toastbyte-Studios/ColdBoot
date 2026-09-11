@@ -13,14 +13,13 @@ import React, {
 import {
   Animated,
   PanResponder,
+  Pressable,
   StyleSheet,
-  TouchableOpacity,
   View,
   Easing,
-  Text,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
 import { useSunShadow } from '../hooks/useSunShadow';
 import { useTheme } from '../hooks/useTheme';
@@ -33,8 +32,10 @@ import { FOOTER_HEIGHT } from '../theme';
 import Footer from './Footer/Footer';
 import { HelpModal } from './HelpModal';
 import { HorizontalRule } from './HorizontalRule';
+import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
+import { Text } from './ScaledText';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import TutorialModal from './TutorialModal';
@@ -53,6 +54,18 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
 
 const DATE_FORMAT = 'dddd, MMMM D, YYYY';
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
+
+/**
+ * The header's vertical offsets were hand-tuned as fixed pixel values against
+ * a device with a 44pt top inset. Rather than re-tune them blind, we keep the
+ * tuned spacing and shift the whole group by however far this device's inset
+ * differs: identical layout on a 44pt device, correct clearance on a Dynamic
+ * Island phone (59pt) or an Android status bar (~24pt).
+ */
+const BASELINE_TOP_INSET = 44;
+const DATE_TOP = 30;
+const SETTINGS_TOP = 50;
+const HEADER_PADDING_TOP = 80;
 
 /**
  * Root layout wrapper for the app.
@@ -81,6 +94,7 @@ export default function AppShell({ children }: Props) {
   const navigationHistory = useNavigationHistory();
   const { disableGestureNavigation } = useGestureNavigation();
   const { isKeyboardVisible, keyboardHeight } = useKeyboardStatus();
+  const insets = useSafeAreaInsets();
   const translateYRef = useRef(new Animated.Value(0)).current;
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isManageOfflineVisible, setIsManageOfflineVisible] = useState(false);
@@ -91,7 +105,7 @@ export default function AppShell({ children }: Props) {
   >(undefined);
   const [spotlightLayout, setSpotlightLayout] =
     useState<SpotlightLayout | null>(null);
-  const logoRef = useRef<React.ElementRef<typeof TouchableOpacity>>(null);
+  const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
   const [currentDate, setCurrentDate] = useState(() =>
@@ -100,6 +114,8 @@ export default function AppShell({ children }: Props) {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const COLORS = useTheme();
   const sunShadow = useSunShadow();
+
+  const insetShift = insets.top - BASELINE_TOP_INSET;
 
   const markTutorialComplete = () => {
     AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true')
@@ -270,51 +286,54 @@ export default function AppShell({ children }: Props) {
               { transform: [{ translateY: translateYRef }] },
             ]}
           >
-            <View style={styles.header}>
-              <View style={styles.dateAndHelpContainer}>
+            <View
+              style={[
+                styles.header,
+                { paddingTop: Math.max(24, HEADER_PADDING_TOP + insetShift) },
+              ]}
+            >
+              <View
+                style={[
+                  styles.dateAndHelpContainer,
+                  { top: Math.max(8, DATE_TOP + insetShift) },
+                ]}
+              >
                 <Text
                   style={[styles.dateText, { color: COLORS.PRIMARY_DARK }]}
                   accessibilityLabel={`Current date: ${currentDate}`}
                 >
                   {currentDate}
                 </Text>
-                <TouchableOpacity
-                  style={styles.helpButton}
-                  onPress={() => setIsHelpVisible(true)}
+                <IconButton
+                  name="help-circle-outline"
+                  size={30}
                   accessibilityLabel="Help"
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name="help-circle-outline"
-                    size={32}
-                    color={COLORS.PRIMARY_DARK}
-                  />
-                </TouchableOpacity>
+                  onPress={() => setIsHelpVisible(true)}
+                />
               </View>
 
-              <TouchableOpacity
-                style={styles.settingsButton}
-                onPress={() => setIsSettingsVisible(true)}
+              <IconButton
+                name="settings-outline"
+                size={26}
                 accessibilityLabel="Settings"
-                accessibilityRole="button"
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={26}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+                onPress={() => setIsSettingsVisible(true)}
+                style={[
+                  styles.settingsButton,
+                  { top: Math.max(8, SETTINGS_TOP + insetShift) },
+                ]}
+              />
 
-              <TouchableOpacity
+              <Pressable
                 ref={logoRef}
                 onPress={() => {
                   navigation.navigate('Home');
                 }}
                 accessibilityLabel="Go to home screen"
                 accessibilityRole="button"
+                style={({ pressed }) => (pressed ? styles.logoPressed : null)}
               >
                 <LogoHeader shadowStyle={sunShadow} />
-              </TouchableOpacity>
+              </Pressable>
             </View>
 
             <View style={styles.content}>{children}</View>
@@ -434,11 +453,9 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    paddingTop: 80,
   },
   dateAndHelpContainer: {
     position: 'absolute',
-    top: 30,
     left: 10,
     zIndex: 10,
     alignItems: 'flex-start',
@@ -448,15 +465,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
-  helpButton: {
-    padding: 6,
-  },
   settingsButton: {
     position: 'absolute',
-    top: 50,
     right: 10,
     zIndex: 10,
-    padding: 6,
+  },
+  logoPressed: {
+    opacity: 0.7,
   },
   content: {
     flex: 1,

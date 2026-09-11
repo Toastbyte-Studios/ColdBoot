@@ -5,14 +5,13 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { useTheme } from '../../hooks/useTheme';
 import { useChecklistStore } from '../../stores';
 
 /**
@@ -30,7 +29,6 @@ import { useChecklistStore } from '../../stores';
 export default observer(function ChecklistScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const checklistStore = useChecklistStore();
-  const COLORS = useTheme();
 
   const checklistIcons: Record<string, string> = {
     'Bug-out bag': 'bag-outline',
@@ -42,18 +40,12 @@ export default observer(function ChecklistScreen() {
     <ScreenBody>
       <SectionHeader>Checklists</SectionHeader>
       <View style={styles.checklistHeader}>
-        <TouchableOpacity
-          style={styles.checklistButton}
-          onPress={() => navigation.navigate('ComingSoon')}
+        <IconButton
+          name="add-circle-outline"
+          size={30}
           accessibilityLabel="New Checklist"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="add-circle-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={() => navigation.navigate('ComingSoon')}
+        />
       </View>
       <HorizontalRule />
 
@@ -77,8 +69,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  checklistButton: {
-    paddingVertical: 6,
   },
 });

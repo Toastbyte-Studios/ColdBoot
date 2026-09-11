@@ -29,6 +29,11 @@ export interface AstronomyEvent {
   date: Date;
   label: string;
   detail: string;
+  /**
+   * Ionicons outline glyph name. Not an emoji: these render in SkyEvents, the
+   * footer ticker and the notifications list, and emoji differ per platform
+   * and are announced by name. See docs/NATIVE_REDESIGN.md finding 7.
+   */
   icon: string;
   visibleFromLocation?: boolean;
 }
@@ -58,10 +63,10 @@ const LUNAR_ECLIPSE_LABELS: Record<number, string> = {
 };
 
 const PLANET_DATA = [
-  { name: 'Venus', symbol: '♀', vsop: vsopVenus },
-  { name: 'Mars', symbol: '♂', vsop: vsopMars },
-  { name: 'Jupiter', symbol: '♃', vsop: vsopJupiter },
-  { name: 'Saturn', symbol: '♄', vsop: vsopSaturn },
+  { name: 'Venus', vsop: vsopVenus },
+  { name: 'Mars', vsop: vsopMars },
+  { name: 'Jupiter', vsop: vsopJupiter },
+  { name: 'Saturn', vsop: vsopSaturn },
 ] as const;
 
 /**
@@ -274,7 +279,7 @@ export class AstronomyEventStore {
         key: 'march',
         type: 'equinox',
         label: 'Spring Equinox',
-        icon: '🌸',
+        icon: 'flower-outline',
         detail:
           'Day and night are equal; spring begins in the Northern Hemisphere',
       },
@@ -283,7 +288,7 @@ export class AstronomyEventStore {
         key: 'june',
         type: 'solstice',
         label: 'Summer Solstice',
-        icon: '☀️',
+        icon: 'sunny-outline',
         detail: 'Longest day of the year in the Northern Hemisphere',
       },
       {
@@ -291,7 +296,7 @@ export class AstronomyEventStore {
         key: 'september',
         type: 'equinox',
         label: 'Autumn Equinox',
-        icon: '🍂',
+        icon: 'leaf-outline',
         detail:
           'Day and night are equal; autumn begins in the Northern Hemisphere',
       },
@@ -300,7 +305,7 @@ export class AstronomyEventStore {
         key: 'december',
         type: 'solstice',
         label: 'Winter Solstice',
-        icon: '❄️',
+        icon: 'snow-outline',
         detail: 'Shortest day of the year in the Northern Hemisphere',
       },
     ];
@@ -359,7 +364,7 @@ export class AstronomyEventStore {
                 detail: sol.central
                   ? 'Central eclipse — path of totality crosses Earth'
                   : 'Eclipse visible from parts of Earth',
-                icon: '🌑',
+                icon: 'contrast-outline',
               });
             }
           }
@@ -384,7 +389,7 @@ export class AstronomyEventStore {
                 date,
                 label,
                 detail: `Eclipse magnitude: ${lun.magnitude?.toFixed(2) ?? 'N/A'}`,
-                icon: '🌕',
+                icon: 'contrast-outline',
               });
             }
           }
@@ -429,7 +434,7 @@ export class AstronomyEventStore {
             date,
             label: 'Supermoon',
             detail: `Full moon at closest approach — ${Math.round(moonIllum.fraction * 100)}% illuminated`,
-            icon: '🌕',
+            icon: 'moon-outline',
           });
         }
       } catch {
@@ -509,7 +514,7 @@ export class AstronomyEventStore {
                 detail: isTonight
                   ? `${planet.name} rises tonight at ${timeStr}`
                   : `${planet.name} rises on ${targetDate.toLocaleDateString([], { month: 'short', day: 'numeric' })} at ${timeStr}`,
-                icon: planet.symbol,
+                icon: 'planet-outline',
               });
               break; // Found the next favorable night for this planet
             }

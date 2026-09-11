@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import constellationImages from '../../assets/constellationImages';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
@@ -88,7 +89,12 @@ function StarMapScreen() {
         style={styles.cardBackground}
       />
       <View style={styles.starCardHeader}>
-        <Text style={styles.starEmoji}>★</Text>
+        <Ionicons
+          name="star-outline"
+          size={28}
+          color={COLORS.ACCENT}
+          style={styles.starIcon}
+        />
         <View style={styles.starCardTitles}>
           <Text style={[styles.starName, { color: COLORS.PRIMARY_DARK }]}>
             {star.name}
@@ -173,14 +179,22 @@ function StarMapScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.cardBackground}
             />
-            <Text style={[styles.contextText, { color: COLORS.PRIMARY_DARK }]}>
-              🌍{' '}
-              {hemisphere === 'northern'
-                ? 'Northern Hemisphere'
-                : 'Southern Hemisphere'}
-              {'  '}·{'  '}
-              {season}
-            </Text>
+            <View style={styles.contextRow}>
+              <Ionicons
+                name="earth-outline"
+                size={18}
+                color={COLORS.PRIMARY_DARK}
+              />
+              <Text
+                style={[styles.contextText, { color: COLORS.PRIMARY_DARK }]}
+              >
+                {hemisphere === 'northern'
+                  ? 'Northern Hemisphere'
+                  : 'Southern Hemisphere'}
+                {'  '}·{'  '}
+                {season}
+              </Text>
+            </View>
             {!core.lastFix && (
               <Text
                 style={[styles.contextNote, { color: COLORS.PRIMARY_DARK }]}
@@ -265,9 +279,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 8,
   },
+  contextRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
   contextText: {
     fontSize: 16,
     fontWeight: '700',
+    flexShrink: 1,
   },
   contextNote: {
     fontSize: 12,
@@ -298,10 +318,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 8,
   },
-  starEmoji: {
-    fontSize: 28,
+  starIcon: {
     marginRight: 12,
-    color: '#FFD700',
   },
   starCardTitles: {
     flex: 1,

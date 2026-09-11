@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Modal,
   StyleSheet,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   View,
   ScrollView,
@@ -11,6 +10,9 @@ import {
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
+import AppButton from './AppButton';
+import IconButton from './IconButton';
+import Touchable from './Touchable';
 
 interface HelpModalProps {
   visible: boolean;
@@ -202,18 +204,12 @@ export const HelpModal = ({
                 >
                   Help
                 </RNText>
-                <TouchableOpacity
+                <IconButton
+                  name="close-outline"
+                  size={28}
                   onPress={onClose}
-                  style={styles.closeButton}
                   accessibilityLabel="Close help"
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name="close-outline"
-                    size={28}
-                    color={COLORS.PRIMARY_DARK}
-                  />
-                </TouchableOpacity>
+                />
               </View>
 
               <ScrollView style={styles.content}>
@@ -223,7 +219,10 @@ export const HelpModal = ({
 
                   return (
                     <View key={section.id} style={styles.accordionItem}>
-                      <TouchableOpacity
+                      <Touchable
+                        accessibilityState={{
+                          expanded: expandedSection === section.id,
+                        }}
                         style={[
                           styles.accordionHeader,
                           {
@@ -263,7 +262,7 @@ export const HelpModal = ({
                           size={24}
                           color={COLORS.PRIMARY_DARK}
                         />
-                      </TouchableOpacity>
+                      </Touchable>
                       {expandedSection === section.id && (
                         <View
                           style={[
@@ -284,26 +283,14 @@ export const HelpModal = ({
                           </RNText>
                           {shouldShowTutorialActions &&
                             hasTutorialActionHandlers && (
-                              <TouchableOpacity
-                                style={[
-                                  styles.tutorialActionButton,
-                                  {
-                                    backgroundColor: COLORS.SECONDARY_ACCENT,
-                                  },
-                                ]}
-                                onPress={onLaunchTutorial}
+                              <AppButton
+                                label="Replay Tutorial"
+                                icon="play-outline"
+                                variant="tinted"
+                                onPress={() => onLaunchTutorial?.()}
                                 accessibilityLabel="Replay tutorial now"
-                                accessibilityRole="button"
-                              >
-                                <RNText
-                                  style={[
-                                    styles.tutorialActionButtonText,
-                                    { color: COLORS.PRIMARY_DARK },
-                                  ]}
-                                >
-                                  Replay Tutorial
-                                </RNText>
-                              </TouchableOpacity>
+                                style={styles.tutorialActionButton}
+                              />
                             )}
                         </View>
                       )}
@@ -347,9 +334,6 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '800',
   },
-  closeButton: {
-    padding: 4,
-  },
   content: {
     flex: 1,
     padding: 20,
@@ -387,13 +371,5 @@ const styles = StyleSheet.create({
   },
   tutorialActionButton: {
     marginTop: 12,
-    borderRadius: 8,
-    paddingVertical: 10,
-    paddingHorizontal: 14,
-  },
-  tutorialActionButtonText: {
-    fontSize: 14,
-    fontWeight: '800',
-    textAlign: 'center',
   },
 });

@@ -1,9 +1,11 @@
-import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
+import React, { useMemo } from 'react';
+import { StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
-import Icon from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
-import { COLORS } from '../../../theme';
+import { useTheme } from '../../../hooks/useTheme';
+import { ColorScheme } from '../../../theme/colors';
+import { onColor } from '../../../theme/colorUtils';
 import { formatDateTime } from '../../../utils/timeFormat';
 
 type VoiceLogCardProps = {
@@ -25,6 +27,12 @@ export default function VoiceLogCard({
   onPlay,
   onDelete,
 }: VoiceLogCardProps) {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  // While playing the card fills with ACCENT, so its content colour is
+  // measured against that fill rather than assumed.
+  const onPlaying = isPlaying ? { color: onColor(COLORS.ACCENT) } : null;
+
   return (
     <View style={[styles.container, isPlaying && styles.containerPlaying]}>
       <LinearGradient
@@ -37,111 +45,118 @@ export default function VoiceLogCard({
       />
       <View style={styles.content}>
         <View style={styles.info}>
-          <Text style={styles.title}>{title || 'Voice Log'}</Text>
-          <Text style={styles.time}>{formatDateTime(new Date(createdAt))}</Text>
-          {duration && (
-            <Text style={styles.duration}>Duration: {duration}s</Text>
-          )}
+          <Text style={[styles.title, onPlaying]}>{title || 'Voice Log'}</Text>
+          <Text style={[styles.time, onPlaying]}>
+            {formatDateTime(new Date(createdAt))}
+          </Text>
+          {duration ? (
+            <Text style={[styles.duration, onPlaying]}>
+              Duration: {duration}s
+            </Text>
+          ) : null}
           {isPlaying && (
             <View style={styles.playingIndicator}>
-              <View style={styles.playingDot} />
-              <Text style={styles.playingText}>Playing...</Text>
+              <View
+                style={[
+                  styles.playingDot,
+                  { backgroundColor: onColor(COLORS.ACCENT) },
+                ]}
+              />
+              <Text style={[styles.playingText, onPlaying]}>Playing...</Text>
             </View>
           )}
         </View>
         <View style={styles.actions}>
           {audioUri && (
-            <TouchableOpacity
-              style={styles.actionButton}
-              onPress={onPlay}
+            <IconButton
+              name={isPlaying ? 'pause-outline' : 'play-outline'}
+              size={24}
+              color={
+                isPlaying ? onColor(COLORS.ACCENT) : COLORS.SECONDARY_ACCENT
+              }
               accessibilityLabel={isPlaying ? 'Stop playing' : 'Play voice log'}
-              accessibilityRole="button"
-            >
-              <Icon
-                name={isPlaying ? 'pause' : 'play'}
-                size={24}
-                color={COLORS.SECONDARY_ACCENT}
-              />
-            </TouchableOpacity>
+              onPress={onPlay}
+              style={styles.actionButton}
+            />
           )}
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={onDelete}
+          <IconButton
+            name="trash-outline"
+            size={24}
+            color={isPlaying ? onColor(COLORS.ACCENT) : COLORS.ERROR}
             accessibilityLabel="Delete voice log"
-            accessibilityRole="button"
-          >
-            <Icon name="trash-outline" size={24} color={COLORS.ERROR} />
-          </TouchableOpacity>
+            onPress={onDelete}
+            style={styles.actionButton}
+          />
         </View>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  containerPlaying: {
-    borderColor: COLORS.ACCENT,
-  },
-  background: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  content: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
-  },
-  info: {
-    flex: 1,
-  },
-  title: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 4,
-  },
-  time: {
-    fontSize: 12,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  duration: {
-    fontSize: 12,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.7,
-    marginBottom: 4,
-  },
-  playingIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  playingDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: COLORS.SECONDARY_ACCENT,
-    marginRight: 6,
-  },
-  playingText: {
-    fontSize: 12,
-    color: COLORS.SECONDARY_ACCENT,
-    fontWeight: '600',
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  actionButton: {
-    padding: 8,
-    marginLeft: 8,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      marginBottom: 12,
+      overflow: 'hidden',
+    },
+    containerPlaying: {
+      borderColor: COLORS.ACCENT,
+    },
+    background: {
+      ...StyleSheet.absoluteFillObject,
+    },
+    content: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: 12,
+    },
+    info: {
+      flex: 1,
+    },
+    title: {
+      fontSize: 16,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 4,
+    },
+    time: {
+      fontSize: 12,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.7,
+      marginBottom: 4,
+    },
+    duration: {
+      fontSize: 12,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.7,
+      marginBottom: 4,
+    },
+    playingIndicator: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginTop: 4,
+    },
+    playingDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: COLORS.SECONDARY_ACCENT,
+      marginRight: 6,
+    },
+    playingText: {
+      fontSize: 12,
+      color: COLORS.SECONDARY_ACCENT,
+      fontWeight: '600',
+    },
+    actions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+    },
+    actionButton: {
+      marginLeft: 8,
+    },
+  });

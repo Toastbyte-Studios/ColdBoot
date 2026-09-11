@@ -1,9 +1,13 @@
-import React, { useState } from 'react';
-import { StyleSheet, View, TouchableOpacity } from 'react-native';
+import React, { useMemo, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
-import { COLORS, FOOTER_HEIGHT } from '../../theme';
+import Touchable from '../../components/Touchable';
+import { useTheme } from '../../hooks/useTheme';
+import { FOOTER_HEIGHT } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
+import { onColor } from '../../theme/colorUtils';
 import { morseToText } from '../../utils/morseCodeMapping';
 
 /**
@@ -16,6 +20,8 @@ import { morseToText } from '../../utils/morseCodeMapping';
  * - Shows both morse code input and translated text output
  */
 const MorseToAlphaScreen = () => {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [morseInput, setMorseInput] = useState('');
 
   // Compute translation directly from morse input
@@ -84,63 +90,77 @@ const MorseToAlphaScreen = () => {
           </View>
         </View>
 
-        {/* Input Buttons */}
+        {/* Input keypad.
+            The glyphs on these keys are deliberately left as text rather than
+            converted to Ionicons: the keypad is a legend of literal morse
+            characters (. - /), and the space and backspace symbols belong to
+            that same typographic set. Swapping only two of the six for icons
+            would break the set. See docs/NATIVE_REDESIGN.md finding 7. */}
         <View style={styles.buttonGrid}>
           <View style={styles.buttonRow}>
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.primaryButton]}
+              rippleColor={onColor(COLORS.ACCENT)}
               onPress={handleDot}
               accessibilityLabel="Add dot"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryButtonText}>.</Text>
-              <Text style={styles.buttonLabel}>DOT</Text>
-            </TouchableOpacity>
+              <Text style={[styles.buttonLabel, styles.onPrimary]}>DOT</Text>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.primaryButton]}
+              rippleColor={onColor(COLORS.ACCENT)}
               onPress={handleDash}
               accessibilityLabel="Add dash"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryButtonText}>-</Text>
-              <Text style={styles.buttonLabel}>DASH</Text>
-            </TouchableOpacity>
+              <Text style={[styles.buttonLabel, styles.onPrimary]}>DASH</Text>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleSpace}
               accessibilityLabel="Add space between characters"
+              accessibilityRole="button"
             >
-              <Text style={styles.secondaryButtonText}>⎵</Text>
+              <Text style={styles.secondaryButtonText}>␣</Text>
               <Text style={styles.buttonLabel}>SPACE</Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
 
           <View style={styles.buttonRow}>
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleWordSeparator}
               accessibilityLabel="Add word separator"
+              accessibilityRole="button"
             >
               <Text style={styles.secondaryButtonText}>/</Text>
               <Text style={styles.buttonLabel}>WORD</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.secondaryButton]}
               onPress={handleBackspace}
               accessibilityLabel="Delete last character"
+              accessibilityRole="button"
             >
               <Text style={styles.secondaryButtonText}>⌫</Text>
               <Text style={styles.buttonLabel}>BACK</Text>
-            </TouchableOpacity>
+            </Touchable>
 
-            <TouchableOpacity
+            <Touchable
               style={[styles.button, styles.clearButton]}
+              rippleColor={onColor(COLORS.BRAND)}
               onPress={handleClear}
               accessibilityLabel="Clear all input"
+              accessibilityRole="button"
             >
               <Text style={styles.clearButtonText}>CLEAR</Text>
-            </TouchableOpacity>
+            </Touchable>
           </View>
         </View>
 
@@ -158,104 +178,109 @@ const MorseToAlphaScreen = () => {
 
 export default MorseToAlphaScreen;
 
-const styles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingHorizontal: 14,
-    paddingTop: 8,
-    paddingBottom: FOOTER_HEIGHT + 10,
-  },
-  displayContainer: {
-    width: '100%',
-    marginBottom: 10,
-  },
-  displayLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginBottom: 5,
-  },
-  displayBox: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-    borderRadius: 8,
-    padding: 10,
-    minHeight: 50,
-    justifyContent: 'center',
-  },
-  displayText: {
-    fontSize: 16,
-    color: COLORS.PRIMARY_DARK,
-    fontFamily: 'monospace',
-  },
-  translatedText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: COLORS.ACCENT,
-  },
-  buttonGrid: {
-    width: '100%',
-    marginTop: 4,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
-    gap: 8,
-  },
-  button: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  primaryButton: {
-    backgroundColor: COLORS.ACCENT,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-  },
-  primaryButtonText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  secondaryButton: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderWidth: 2,
-    borderColor: COLORS.BRAND,
-  },
-  secondaryButtonText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-  },
-  buttonLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    color: COLORS.PRIMARY_DARK,
-    marginTop: 2,
-  },
-  clearButton: {
-    backgroundColor: COLORS.BRAND,
-  },
-  clearButtonText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  helpContainer: {
-    marginTop: 10,
-    padding: 8,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.SECONDARY_ACCENT,
-  },
-  helpText: {
-    fontSize: 11,
-    color: COLORS.SECONDARY_ACCENT,
-    textAlign: 'center',
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      width: '100%',
+      paddingHorizontal: 14,
+      paddingTop: 8,
+      paddingBottom: FOOTER_HEIGHT + 10,
+    },
+    displayContainer: {
+      width: '100%',
+      marginBottom: 10,
+    },
+    displayLabel: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginBottom: 5,
+    },
+    displayBox: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+      borderRadius: 8,
+      padding: 10,
+      minHeight: 50,
+      justifyContent: 'center',
+    },
+    displayText: {
+      fontSize: 16,
+      color: COLORS.PRIMARY_DARK,
+      fontFamily: 'monospace',
+    },
+    translatedText: {
+      fontSize: 18,
+      fontWeight: '600',
+      color: COLORS.ACCENT,
+    },
+    buttonGrid: {
+      width: '100%',
+      marginTop: 4,
+    },
+    buttonRow: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      marginBottom: 8,
+      gap: 8,
+    },
+    button: {
+      flex: 1,
+      minHeight: 48,
+      paddingVertical: 12,
+      borderRadius: 8,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    primaryButton: {
+      backgroundColor: COLORS.ACCENT,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+    },
+    primaryButtonText: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: onColor(COLORS.ACCENT),
+    },
+    onPrimary: {
+      color: onColor(COLORS.ACCENT),
+    },
+    secondaryButton: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderWidth: 2,
+      borderColor: COLORS.BRAND,
+    },
+    secondaryButtonText: {
+      fontSize: 20,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+    },
+    buttonLabel: {
+      fontSize: 10,
+      fontWeight: '600',
+      color: COLORS.PRIMARY_DARK,
+      marginTop: 2,
+    },
+    clearButton: {
+      backgroundColor: COLORS.BRAND,
+    },
+    clearButtonText: {
+      fontSize: 13,
+      fontWeight: '700',
+      color: onColor(COLORS.BRAND),
+    },
+    helpContainer: {
+      marginTop: 10,
+      padding: 8,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: COLORS.SECONDARY_ACCENT,
+    },
+    helpText: {
+      fontSize: 11,
+      color: COLORS.SECONDARY_ACCENT,
+      textAlign: 'center',
+    },
+  });

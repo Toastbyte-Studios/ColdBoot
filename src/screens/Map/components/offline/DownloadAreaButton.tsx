@@ -1,5 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, StyleSheet } from 'react-native';
+import IconButton from '../../../../components/IconButton';
 import { useTheme } from '../../../../hooks/useTheme';
 
 type Props = {
@@ -18,35 +19,38 @@ export default function DownloadAreaButton({
 }: Props) {
   const COLORS = useTheme();
 
-  if (!permissionGranted) {
-    return (
-      <View
-        style={[
-          styles.button,
-          styles.buttonDisabled,
-          { backgroundColor: COLORS.SECONDARY_ACCENT },
-        ]}
-        accessibilityRole="button"
-        accessibilityState={{ disabled: true }}
-        accessibilityLabel="Download your area — enable location to use this feature"
-        accessibilityHint="Location permission is required to download an offline map"
-      >
-        <Text style={[styles.icon, { color: COLORS.PRIMARY_LIGHT }]}>⤓</Text>
-      </View>
-    );
-  }
-
   return (
-    <TouchableOpacity
-      style={[styles.button, { backgroundColor: COLORS.SECONDARY_ACCENT }]}
-      onPress={onPress}
-      activeOpacity={0.8}
-      accessibilityLabel="Download your area"
-      accessibilityHint="Downloads an offline map centred on your current location"
-      accessibilityRole="button"
-    >
-      <Text style={[styles.icon, { color: COLORS.PRIMARY_LIGHT }]}>⤓</Text>
-    </TouchableOpacity>
+    <IconButton
+      name="download-outline"
+      size={22}
+      color={COLORS.PRIMARY_LIGHT}
+      onPress={() => {
+        if (!permissionGranted) {
+          Alert.alert(
+            'Permission Required',
+            'Location permission is required to download an offline map.',
+          );
+          return;
+        }
+
+        onPress();
+      }}
+      accessibilityLabel={
+        permissionGranted
+          ? 'Download your area'
+          : 'Download your area unavailable — shows location requirement'
+      }
+      accessibilityHint={
+        permissionGranted
+          ? 'Downloads an offline map centred on your current location'
+          : 'Shows a message explaining that location permission is required before downloading an offline map'
+      }
+      style={[
+        styles.button,
+        { backgroundColor: COLORS.SECONDARY_ACCENT },
+        !permissionGranted && styles.buttonDisabled,
+      ]}
+    />
   );
 }
 
@@ -68,9 +72,5 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: {
     opacity: 0.4,
-  },
-  icon: {
-    fontSize: 22,
-    lineHeight: 26,
   },
 });

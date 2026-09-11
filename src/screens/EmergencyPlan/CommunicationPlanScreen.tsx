@@ -1,14 +1,8 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -118,30 +112,22 @@ export default observer(function CommunicationPlanScreen() {
 
       {/* Share / Import toolbar */}
       <View style={styles.toolbar}>
-        <TouchableOpacity
-          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-          onPress={() => setImportVisible(true)}
+        <IconButton
+          name="download-outline"
+          size={20}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Import communication plan"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="download-outline"
-            size={20}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
+          onPress={() => setImportVisible(true)}
           style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-          onPress={handleShare}
+        />
+        <IconButton
+          name="share-outline"
+          size={20}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Share communication plan"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="share-outline"
-            size={20}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={handleShare}
+          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
+        />
       </View>
 
       <View style={[styles.container, { paddingBottom: FOOTER_HEIGHT }]}>
@@ -219,7 +205,6 @@ const styles = StyleSheet.create({
   iconButton: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 8,
   },
   container: {
     flex: 1,

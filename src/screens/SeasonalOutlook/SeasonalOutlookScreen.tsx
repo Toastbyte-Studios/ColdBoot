@@ -1,18 +1,13 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import {
   useCoreStore,
@@ -215,10 +210,11 @@ function SeasonalOutlookScreen() {
               {weatherStore.outlook.months.map((entry) => {
                 const isExpanded = expandedMonth === entry.month;
                 return (
-                  <TouchableOpacity
+                  <Touchable
                     key={entry.month}
                     onPress={() => toggleMonth(entry.month)}
                     accessibilityRole="button"
+                    accessibilityState={{ expanded: isExpanded }}
                     accessibilityLabel={`${formatMonthLabel(entry.month)} outlook, ${isExpanded ? 'collapse' : 'expand'}`}
                     style={[
                       styles.card,
@@ -399,7 +395,7 @@ function SeasonalOutlookScreen() {
                         </View>
                       </View>
                     )}
-                  </TouchableOpacity>
+                  </Touchable>
                 );
               })}
             </ScrollView>

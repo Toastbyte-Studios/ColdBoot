@@ -5,11 +5,13 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -28,17 +30,13 @@ export default observer(function EmergencyContactsScreen() {
     <ScreenBody>
       <SectionHeader>Emergency Contacts</SectionHeader>
       <View style={styles.addRow}>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: COLORS.PRIMARY_DARK }]}
+        <AppButton
+          label="Add contact"
+          icon="add-outline"
+          size="small"
           onPress={() => navigation.navigate('NewEmergencyContact')}
           accessibilityLabel="Add Contact"
-          accessibilityRole="button"
-        >
-          <Ionicons name="add-outline" size={22} color={COLORS.PRIMARY_LIGHT} />
-          <Text style={[styles.addButtonText, { color: COLORS.PRIMARY_LIGHT }]}>
-            Add Contact
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <View style={styles.container}>
@@ -52,7 +50,7 @@ export default observer(function EmergencyContactsScreen() {
             </Text>
           )}
           {store.contacts.map((contact) => (
-            <TouchableOpacity
+            <Touchable
               key={contact.id}
               style={[
                 styles.card,
@@ -90,7 +88,7 @@ export default observer(function EmergencyContactsScreen() {
                 size={20}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           ))}
         </ScrollView>
       </View>
@@ -105,18 +103,6 @@ const styles = StyleSheet.create({
     paddingBottom: 4,
     width: '100%',
     alignItems: 'flex-end',
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    gap: 4,
-  },
-  addButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   container: {
     flex: 1,

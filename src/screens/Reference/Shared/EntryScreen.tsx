@@ -6,20 +6,24 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import React, { JSX, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import referenceImages from '../../../assets/referenceImages';
 import { HorizontalRule } from '../../../components/HorizontalRule';
+import IconButton from '../../../components/IconButton';
 import KnotStepCarousel from '../../../components/KnotStepCarousel';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
+import Touchable from '../../../components/Touchable';
+import { useTheme } from '../../../hooks/useTheme';
 import {
   addBookmark,
   removeBookmark,
   isBookmarked,
 } from '../../../stores/BookmarksStore';
-import { COLORS, FOOTER_HEIGHT } from '../../../theme';
+import { FOOTER_HEIGHT } from '../../../theme';
+import { ColorScheme } from '../../../theme/colors';
 import ReferenceEntryType from '../../../types/data-type';
 
 type EntryScreenRouteProp = RouteProp<
@@ -41,6 +45,8 @@ type EntryScreenRouteProp = RouteProp<
  * @returns {JSX.Element} The rendered EntryScreen component.
  */
 export default function EntryScreen(): JSX.Element {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const route = useRoute<EntryScreenRouteProp>();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const { entry: routeEntry } = route.params || {};
@@ -113,13 +119,16 @@ export default function EntryScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{resolvedEntry.title}</SectionHeader>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={toggleBookmark} style={styles.actionBtn}>
-          <Ionicons
-            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={22}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+        <IconButton
+          name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={22}
+          color={COLORS.PRIMARY_DARK}
+          accessibilityLabel={
+            bookmarked ? 'Remove bookmark' : 'Bookmark this topic'
+          }
+          onPress={toggleBookmark}
+          style={styles.actionBtn}
+        />
       </View>
       <HorizontalRule />
       <View style={styles.container}>
@@ -181,9 +190,13 @@ export default function EntryScreen(): JSX.Element {
           )}
           {/* Related Screen Link */}
           {!!resolvedEntry.related_screen && (
-            <TouchableOpacity
+            <Touchable
               style={styles.relatedScreenBtn}
               onPress={() => navigation.navigate(resolvedEntry.related_screen!)}
+              accessibilityRole="button"
+              accessibilityLabel={
+                resolvedEntry.related_screen_label ?? 'Open Reference Tool'
+              }
             >
               <Ionicons
                 name="open-outline"
@@ -195,11 +208,11 @@ export default function EntryScreen(): JSX.Element {
                 {resolvedEntry.related_screen_label ?? 'Open Reference Tool'}
               </Text>
               <Ionicons
-                name="chevron-forward"
+                name="chevron-forward-outline"
                 size={16}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           )}
         </ScrollView>
       </View>
@@ -207,91 +220,90 @@ export default function EntryScreen(): JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingTop: 8,
-    paddingHorizontal: 14,
-    paddingBottom: 24,
-  },
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-  },
-  actionBtn: {
-    borderWidth: 1,
-    borderColor: COLORS.BRAND,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-  },
-  missingWrap: {
-    paddingHorizontal: 14,
-    paddingVertical: 20,
-  },
-  helperText: {
-    fontSize: 16,
-    opacity: 0.8,
-  },
-  imageCard: {
-    borderWidth: 1,
-    borderColor: COLORS.BRAND,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    alignItems: 'center',
-  },
-  card: {
-    borderWidth: 1,
-    borderColor: COLORS.BRAND,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-  },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
-  },
-  cardBody: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  listItem: {
-    fontSize: 15,
-    lineHeight: 20,
-    marginBottom: 6,
-  },
-  relatedScreenBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: COLORS.BRAND,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 12,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-  },
-  relatedScreenIcon: {
-    marginRight: 8,
-  },
-  relatedScreenLabel: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      width: '100%',
+      alignSelf: 'stretch',
+      paddingBottom: FOOTER_HEIGHT,
+    },
+    scrollView: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollContent: {
+      paddingTop: 8,
+      paddingHorizontal: 14,
+      paddingBottom: 24,
+    },
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+    },
+    actionBtn: {
+      borderWidth: 1,
+      borderColor: COLORS.BRAND,
+      borderRadius: 8,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+    },
+    missingWrap: {
+      paddingHorizontal: 14,
+      paddingVertical: 20,
+    },
+    helperText: {
+      fontSize: 16,
+      opacity: 0.8,
+    },
+    imageCard: {
+      borderWidth: 1,
+      borderColor: COLORS.BRAND,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      alignItems: 'center',
+    },
+    card: {
+      borderWidth: 1,
+      borderColor: COLORS.BRAND,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+    },
+    cardTitle: {
+      fontSize: 18,
+      fontWeight: '700',
+      marginBottom: 8,
+    },
+    cardBody: {
+      fontSize: 15,
+      lineHeight: 20,
+    },
+    listItem: {
+      fontSize: 15,
+      lineHeight: 20,
+      marginBottom: 6,
+    },
+    relatedScreenBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: COLORS.BRAND,
+      borderRadius: 12,
+      padding: 12,
+      marginBottom: 12,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+    },
+    relatedScreenIcon: {
+      marginRight: 8,
+    },
+    relatedScreenLabel: {
+      flex: 1,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+  });

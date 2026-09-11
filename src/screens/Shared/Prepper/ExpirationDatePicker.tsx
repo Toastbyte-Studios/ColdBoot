@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Alert } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '../../../components/ScaledText';
 import { useTheme } from '../../../hooks/useTheme';
 import { inventoryFormStyles as styles } from '../../Inventory/inventoryFormStyles';
@@ -18,6 +18,14 @@ const MONTHS = [
   { label: 'October', value: 10 },
   { label: 'November', value: 11 },
   { label: 'December', value: 12 },
+];
+
+/** Menu value for "no month/year set". Menu ids are strings. */
+const NONE = '';
+
+const MONTH_OPTIONS = [
+  { value: NONE, label: 'None' },
+  ...MONTHS.map((m) => ({ value: String(m.value), label: m.label })),
 ];
 
 interface ExpirationDatePickerProps {
@@ -39,49 +47,16 @@ export function ExpirationDatePicker({
   const COLORS = useTheme();
 
   const currentYear = new Date().getFullYear();
-  const years = Array.from(
-    { length: 2099 - currentYear + 1 },
-    (_, i) => currentYear + i,
-  );
+  const yearOptions = [
+    { value: NONE, label: 'None' },
+    ...Array.from({ length: 2099 - currentYear + 1 }, (_, i) => {
+      const y = String(currentYear + i);
+      return { value: y, label: y };
+    }),
+  ];
 
-  const showMonthPicker = () => {
-    const options = ['None', ...MONTHS.map((m) => m.label)];
-    Alert.alert('Select Month', '', [
-      ...options.map((option, index) => ({
-        text: option,
-        onPress: () => {
-          if (index === 0) {
-            onMonthChange(undefined);
-          } else {
-            onMonthChange(MONTHS[index - 1].value);
-          }
-        },
-      })),
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
-  };
-
-  const showYearPicker = () => {
-    const options = ['None', ...years.map((y) => y.toString())];
-    Alert.alert('Select Year', '', [
-      ...options.map((option, index) => ({
-        text: option,
-        onPress: () => {
-          if (index === 0) {
-            onYearChange(undefined);
-          } else {
-            onYearChange(years[index - 1]);
-          }
-        },
-      })),
-      { text: 'Cancel', style: 'cancel' as const },
-    ]);
-  };
-
-  const getMonthLabel = () => {
-    if (!month) return 'Select Month';
-    return MONTHS.find((m) => m.value === month)?.label || 'Select Month';
-  };
+  const monthLabel =
+    MONTHS.find((m) => m.value === month)?.label ?? 'Select Month';
 
   return (
     <View style={styles.formGroup}>
@@ -89,10 +64,19 @@ export function ExpirationDatePicker({
         Expiration Date (optional)
       </Text>
       <View style={styles.row}>
-        <FormPickerButton label={getMonthLabel()} onPress={showMonthPicker} />
         <FormPickerButton
+          title="Month"
+          label={monthLabel}
+          options={MONTH_OPTIONS}
+          value={month ? String(month) : NONE}
+          onSelect={(v) => onMonthChange(v === NONE ? undefined : Number(v))}
+        />
+        <FormPickerButton
+          title="Year"
           label={year?.toString() || 'Select Year'}
-          onPress={showYearPicker}
+          options={yearOptions}
+          value={year ? String(year) : NONE}
+          onSelect={(v) => onYearChange(v === NONE ? undefined : Number(v))}
         />
       </View>
     </View>

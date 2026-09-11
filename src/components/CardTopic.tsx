@@ -83,8 +83,13 @@ export default function CardTopic({
   };
 
   return (
-    <TouchableWithoutFeedback onPress={bounce}>
-      <View style={[styles.shadow, containerStyle]}>
+    <TouchableWithoutFeedback onPress={bounce} accessible={false}>
+      <View
+        style={[styles.shadow, containerStyle]}
+        accessible
+        accessibilityRole="button"
+        accessibilityLabel={title}
+      >
         <Animated.View
           style={[styles.animatedWrapper, { transform: [{ scale }], opacity }]}
         >

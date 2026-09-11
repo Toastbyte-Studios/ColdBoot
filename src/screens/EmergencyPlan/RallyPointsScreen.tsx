@@ -5,17 +5,14 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -88,42 +85,31 @@ export default observer(function RallyPointsScreen() {
     <ScreenBody>
       <SectionHeader>Rally Points</SectionHeader>
       <View style={styles.addRow}>
-        {/* Share and Import icon buttons */}
-        <TouchableOpacity
-          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-          onPress={() => setImportVisible(true)}
+        <IconButton
+          name="download-outline"
+          size={20}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Import rally points"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="download-outline"
-            size={20}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
+          borderless={false}
+          onPress={() => setImportVisible(true)}
           style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-          onPress={handleShare}
+        />
+        <IconButton
+          name="share-outline"
+          size={20}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Share rally points"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="share-outline"
-            size={20}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.addButton, { backgroundColor: COLORS.PRIMARY_DARK }]}
+          borderless={false}
+          onPress={handleShare}
+          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
+        />
+        <AppButton
+          label="Add location"
+          icon="add-outline"
+          size="small"
           onPress={() => navigation.navigate('NewRallyPoint')}
           accessibilityLabel="Add Rally Point"
-          accessibilityRole="button"
-        >
-          <Ionicons name="add-outline" size={22} color={COLORS.PRIMARY_LIGHT} />
-          <Text style={[styles.addButtonText, { color: COLORS.PRIMARY_LIGHT }]}>
-            Add Location
-          </Text>
-        </TouchableOpacity>
+        />
       </View>
 
       <View style={styles.container}>
@@ -137,7 +123,7 @@ export default observer(function RallyPointsScreen() {
             </Text>
           )}
           {store.rallyPoints.map((point) => (
-            <TouchableOpacity
+            <Touchable
               key={point.id}
               style={[
                 styles.card,
@@ -162,11 +148,21 @@ export default observer(function RallyPointsScreen() {
                   {point.description}
                 </Text>
                 {point.coordinates ? (
-                  <Text
-                    style={[styles.coordinates, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    📍 {point.coordinates}
-                  </Text>
+                  <View style={styles.coordinatesRow}>
+                    <Ionicons
+                      name="location-outline"
+                      size={13}
+                      color={COLORS.PRIMARY_DARK}
+                    />
+                    <Text
+                      style={[
+                        styles.coordinates,
+                        { color: COLORS.PRIMARY_DARK },
+                      ]}
+                    >
+                      {point.coordinates}
+                    </Text>
+                  </View>
                 ) : null}
               </View>
               <Ionicons
@@ -174,7 +170,7 @@ export default observer(function RallyPointsScreen() {
                 size={20}
                 color={COLORS.PRIMARY_DARK}
               />
-            </TouchableOpacity>
+            </Touchable>
           ))}
         </ScrollView>
       </View>
@@ -204,19 +200,6 @@ const styles = StyleSheet.create({
   iconButton: {
     borderWidth: 1,
     borderRadius: 8,
-    padding: 8,
-  },
-  addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
-    gap: 4,
-  },
-  addButtonText: {
-    fontSize: 15,
-    fontWeight: '600',
   },
   container: {
     flex: 1,
@@ -257,9 +240,14 @@ const styles = StyleSheet.create({
     opacity: 0.8,
     marginBottom: 2,
   },
+  coordinatesRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
   coordinates: {
     fontSize: 13,
     opacity: 0.65,
-    marginTop: 4,
   },
 });

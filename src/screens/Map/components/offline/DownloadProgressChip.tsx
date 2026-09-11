@@ -1,14 +1,17 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  Animated,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Animated, StyleSheet, Text, View } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
 import type { OfflineDownloadStore } from '../../../../stores/OfflineDownloadStore';
+
+/**
+ * The chip and toast float over map tiles, so their foreground is fixed white
+ * on a dark scrim rather than theme-derived — the surface underneath is
+ * imagery, not app chrome, and it does not change with the color scheme.
+ */
+const OVERLAY_FOREGROUND = '#FFFFFF';
 
 type Props = {
   store: OfflineDownloadStore;
@@ -24,7 +27,7 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
 }: Props) {
   const COLORS = useTheme();
 
-  // ── Success toast ──────────────────────────────────────────────────────────────
+  // ── Success toast ──────────────────────────────────────────────────────────
   const [showToast, setShowToast] = useState(false);
   const toastOpacity = useRef(new Animated.Value(0)).current;
   const prevStateRef = useRef(store.state);
@@ -52,7 +55,7 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
     prevStateRef.current = store.state;
   }, [store.state, store, toastOpacity]);
 
-  // ── Render ──────────────────────────────────────────────────────────────────────
+  // ── Render ──────────────────────────────────────────────────────────────
 
   if (showToast) {
     return (
@@ -60,8 +63,13 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
         style={[styles.toast, { opacity: toastOpacity }]}
         accessibilityLiveRegion="polite"
       >
+        <Icon
+          name="checkmark-circle-outline"
+          size={16}
+          color={OVERLAY_FOREGROUND}
+        />
         <Text style={styles.toastText}>
-          ✅ Offline map ready — works in airplane mode
+          Offline map ready — works in airplane mode
         </Text>
       </Animated.View>
     );
@@ -88,8 +96,13 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
       accessibilityLiveRegion="polite"
       accessibilityLabel={`Downloading map: ${store.percentage}%`}
     >
+      <Icon
+        name="arrow-down-circle-outline"
+        size={14}
+        color={OVERLAY_FOREGROUND}
+      />
       <Text style={styles.chipText}>
-        ⤓ Downloading map: {store.percentage}%
+        Downloading map: {store.percentage}%
         {store.completedResourceCount > 0 ? ` · ${store.completedMB} MB` : ''}
       </Text>
     </View>
@@ -98,7 +111,7 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
 
 export default DownloadProgressChip;
 
-// ── DownloadErrorBanner ──────────────────────────────────────────────────────────────
+// ── DownloadErrorBanner ─────────────────────────────────────────────────────
 
 function classifyError(message: string): string {
   const lower = message.toLowerCase();
@@ -139,19 +152,21 @@ function DownloadErrorBanner({ message, onRetry, COLORS }: BannerProps) {
       style={[styles.errorBanner, { borderColor: COLORS.ERROR }]}
       accessibilityLiveRegion="assertive"
     >
+      <Icon name="warning-outline" size={16} color={COLORS.ERROR} />
       <Text
         style={[styles.errorText, { color: COLORS.ERROR }]}
         numberOfLines={2}
       >
-        ⚠️ {classifyError(message)}
+        {classifyError(message)}
       </Text>
-      <TouchableOpacity
+      <AppButton
+        label="Dismiss"
+        variant="plain"
+        size="small"
+        tint={COLORS.ERROR}
         onPress={onRetry}
         accessibilityLabel="Dismiss download error"
-        accessibilityRole="button"
-      >
-        <Text style={[styles.retryText, { color: COLORS.ERROR }]}>Dismiss</Text>
-      </TouchableOpacity>
+      />
     </View>
   );
 }
@@ -166,11 +181,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 6,
     maxWidth: '80%',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   chipText: {
     fontSize: 12,
     fontWeight: '700',
-    color: '#FFFFFF',
+    color: OVERLAY_FOREGROUND,
     letterSpacing: 0.3,
   },
   toast: {
@@ -182,12 +200,15 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   toastText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#FFFFFF',
+    color: OVERLAY_FOREGROUND,
     textAlign: 'center',
   },
   errorBanner: {
@@ -213,9 +234,5 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 12,
     fontWeight: '600',
-  },
-  retryText: {
-    fontSize: 12,
-    fontWeight: '700',
   },
 });

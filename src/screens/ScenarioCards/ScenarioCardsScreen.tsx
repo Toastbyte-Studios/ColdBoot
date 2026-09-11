@@ -4,14 +4,13 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, { JSX } from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import CategoryList from '../../components/CategoryList';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import data from '../../data/scenarioCards.json';
-import { useTheme } from '../../hooks/useTheme';
 
 const categoryMap: Record<string, string> = {
   'Power & Infrastructure': 'Power & Infrastructure',
@@ -90,24 +89,17 @@ const scenarioCategories = [
 export default function ScenarioCardsScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const disclaimer: string = data?.metadata?.disclaimer ?? '';
-  const COLORS = useTheme();
 
   return (
     <ScreenBody>
       <SectionHeader>Scenario Cards</SectionHeader>
       <View style={styles.actionBar}>
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => navigation.navigate('ScenarioBookmarks')}
+        <IconButton
+          name="bookmark-outline"
+          size={30}
           accessibilityLabel="Bookmarked Scenarios"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="bookmark-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+          onPress={() => navigation.navigate('ScenarioBookmarks')}
+        />
       </View>
       <HorizontalRule />
       <CategoryList
@@ -125,8 +117,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  actionButton: {
-    paddingVertical: 6,
   },
 });

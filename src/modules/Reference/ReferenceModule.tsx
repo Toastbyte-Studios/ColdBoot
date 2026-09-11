@@ -4,14 +4,13 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React from 'react';
-import { StyleSheet, TouchableOpacity, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View } from 'react-native';
 import { REFERENCE_TOOLS } from '../../../constants';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import ToolList from '../../components/ToolList';
-import { useTheme } from '../../hooks/useTheme';
 
 /**
  * Renders the Reference screen.
@@ -23,24 +22,17 @@ import { useTheme } from '../../hooks/useTheme';
  */
 export default function ReferenceModule() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const COLORS = useTheme();
 
   return (
     <ScreenBody>
       <SectionHeader>Reference</SectionHeader>
       <View style={styles.actionBar}>
-        <TouchableOpacity
-          style={styles.actionButton}
+        <IconButton
+          name="bookmark-outline"
+          size={30}
           onPress={() => navigation.navigate('Bookmark')}
           accessibilityLabel="Bookmarks"
-          accessibilityRole="button"
-        >
-          <Ionicons
-            name="bookmark-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
+        />
       </View>
       <HorizontalRule />
       <ToolList tools={REFERENCE_TOOLS} />
@@ -54,8 +46,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
-  },
-  actionButton: {
-    paddingVertical: 6,
   },
 });

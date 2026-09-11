@@ -1,15 +1,11 @@
 import Clipboard from '@react-native-clipboard/clipboard';
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  ScrollView,
-  StyleSheet,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import SegmentedControl from '../../components/SegmentedControl';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import {
@@ -27,6 +23,10 @@ const FORMAT_LABELS: Record<InputFormat, string> = {
   DMS: 'Deg Min Sec',
   MGRS: 'MGRS',
 };
+
+const FORMAT_OPTIONS = (Object.keys(FORMAT_LABELS) as InputFormat[]).map(
+  (fmt) => ({ value: fmt, label: fmt }),
+);
 
 const FORMAT_PLACEHOLDERS: Record<InputFormat, string> = {
   DD: 'e.g. 36.1716, -115.1391',
@@ -154,38 +154,12 @@ export default function GridReferenceScreen() {
           <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
             Input Format
           </Text>
-          <View style={styles.segmentRow}>
-            {(Object.keys(FORMAT_LABELS) as InputFormat[]).map((fmt) => {
-              const isActive = fmt === inputFormat;
-              return (
-                <TouchableOpacity
-                  key={fmt}
-                  style={[
-                    styles.segmentButton,
-                    { borderColor: COLORS.SECONDARY_ACCENT },
-                    isActive && { backgroundColor: COLORS.SECONDARY_ACCENT },
-                  ]}
-                  onPress={() => handleFormatChange(fmt)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Select ${FORMAT_LABELS[fmt]} input format`}
-                  accessibilityState={{ selected: isActive }}
-                >
-                  <Text
-                    style={[
-                      styles.segmentText,
-                      {
-                        color: isActive
-                          ? COLORS.PRIMARY_LIGHT
-                          : COLORS.PRIMARY_DARK,
-                      },
-                    ]}
-                  >
-                    {fmt}
-                  </Text>
-                </TouchableOpacity>
-              );
-            })}
-          </View>
+          <SegmentedControl
+            options={FORMAT_OPTIONS}
+            value={inputFormat}
+            onChange={handleFormatChange}
+            accessibilityLabel="Input format"
+          />
         </View>
 
         {/* Input Field */}
@@ -257,31 +231,18 @@ export default function GridReferenceScreen() {
                       {value}
                     </Text>
                   </View>
-                  <TouchableOpacity
-                    style={[
-                      styles.copyButton,
-                      { borderColor: COLORS.SECONDARY_ACCENT },
-                      isCopied && {
-                        backgroundColor: COLORS.SECONDARY_ACCENT,
-                      },
-                    ]}
+                  <AppButton
+                    label={isCopied ? 'Copied' : 'Copy'}
+                    icon={isCopied ? 'checkmark-outline' : 'copy-outline'}
+                    variant="tinted"
+                    size="small"
                     onPress={() => handleCopy(fmt, value)}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Copy ${FORMAT_LABELS[fmt]} result`}
-                  >
-                    <Text
-                      style={[
-                        styles.copyButtonText,
-                        {
-                          color: isCopied
-                            ? COLORS.PRIMARY_LIGHT
-                            : COLORS.PRIMARY_DARK,
-                        },
-                      ]}
-                    >
-                      {isCopied ? '✓' : 'Copy'}
-                    </Text>
-                  </TouchableOpacity>
+                    accessibilityLabel={
+                      isCopied
+                        ? `${FORMAT_LABELS[fmt]} result copied`
+                        : `Copy ${FORMAT_LABELS[fmt]} result`
+                    }
+                  />
                 </View>
               );
             })}
@@ -310,22 +271,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 8,
-  },
-  segmentRow: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  segmentButton: {
-    flex: 1,
-    paddingVertical: 10,
-    paddingHorizontal: 8,
-    borderRadius: 8,
-    borderWidth: 1,
-    alignItems: 'center',
-  },
-  segmentText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
   input: {
     borderWidth: 1.5,
@@ -361,17 +306,5 @@ const styles = StyleSheet.create({
   outputValue: {
     fontSize: 14,
     fontFamily: 'monospace',
-  },
-  copyButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 6,
-    borderWidth: 1,
-    minWidth: 52,
-    alignItems: 'center',
-  },
-  copyButtonText: {
-    fontSize: 13,
-    fontWeight: '600',
   },
 });

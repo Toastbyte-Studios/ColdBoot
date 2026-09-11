@@ -1,24 +1,20 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  FlatList,
-  TouchableOpacity,
-  Alert,
-} from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, View, FlatList, Alert } from 'react-native';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
+import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../stores';
-import { COLORS } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import { sortNotes } from '../../utils/noteSorting';
 import { formatDateTime } from '../../utils/timeFormat';
 import { MAX_TITLE_LENGTH } from './constants';
-import { noteListSharedStyles as shared } from './noteListStyles';
+import { makeNoteListSharedStyles } from './noteListStyles';
 
 /**
  * Displays the 20 most recently created notes in a scrollable list with expand/collapse behavior.
@@ -39,6 +35,9 @@ import { noteListSharedStyles as shared } from './noteListStyles';
  * @returns The Recent Notes screen content.
  */
 export default observer(function RecentNotesScreen() {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const shared = useMemo(() => makeNoteListSharedStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const settings = useSettingsStore();
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -61,8 +60,9 @@ export default observer(function RecentNotesScreen() {
             const previewTitle = item.title || '(Untitled)';
             const previewText = item.text || '';
             return (
-              <TouchableOpacity
+              <Touchable
                 accessibilityRole="button"
+                accessibilityState={{ expanded: isExpanded }}
                 onPress={() =>
                   setExpandedId((prev) => (prev === item.id ? null : item.id))
                 }
@@ -100,9 +100,11 @@ export default observer(function RecentNotesScreen() {
                       {item.category}
                     </Text>
                     {/* DELETE */}
-                    <TouchableOpacity
+                    <IconButton
+                      name="trash-outline"
+                      size={18}
+                      color={COLORS.PRIMARY_DARK}
                       accessibilityLabel="Delete note"
-                      accessibilityRole="button"
                       style={shared.noteButton}
                       onPress={(e) => {
                         e.stopPropagation();
@@ -119,16 +121,10 @@ export default observer(function RecentNotesScreen() {
                           ],
                         );
                       }}
-                    >
-                      <Icon
-                        name="trash-outline"
-                        size={18}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
+                    />
                   </View>
                 </View>
-              </TouchableOpacity>
+              </Touchable>
             );
           }}
           ListEmptyComponent={<Text style={shared.value}>No notes yet.</Text>}
@@ -138,20 +134,21 @@ export default observer(function RecentNotesScreen() {
   );
 });
 
-const styles = StyleSheet.create({
-  card: {
-    width: '100%',
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 112,
-    flex: 1,
-  },
-  list: {
-    flex: 1,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    card: {
+      width: '100%',
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      marginTop: 12,
+      marginBottom: 112,
+      flex: 1,
+    },
+    list: {
+      flex: 1,
+    },
+  });

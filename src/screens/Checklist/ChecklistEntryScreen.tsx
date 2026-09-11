@@ -1,19 +1,14 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  TextInput,
-} from 'react-native';
+import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useChecklistStore } from '../../stores';
 import { Checklist } from '../../stores/ChecklistStore';
@@ -107,26 +102,20 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
     <ScreenBody>
       <SectionHeader>{checklistName}</SectionHeader>
       <View style={styles.checklistHeader}>
-        <TouchableOpacity
+        <IconButton
+          name="add-circle-outline"
+          size={30}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Add item"
-          accessibilityRole="button"
-          style={styles.headerButton}
           onPress={() => setIsAddingItem(true)}
-        >
-          <Icon
-            name="add-circle-outline"
-            size={30}
-            color={COLORS.PRIMARY_DARK}
-          />
-        </TouchableOpacity>
-        <TouchableOpacity
+        />
+        <IconButton
+          name="trash-outline"
+          size={30}
+          color={COLORS.PRIMARY_DARK}
           accessibilityLabel="Delete checklist"
-          accessibilityRole="button"
-          style={styles.headerButton}
           onPress={handleDeleteChecklist}
-        >
-          <Icon name="trash-outline" size={30} color={COLORS.PRIMARY_DARK} />
-        </TouchableOpacity>
+        />
       </View>
       <HorizontalRule />
       <View style={[styles.container, containerThemeStyle]}>
@@ -178,33 +167,24 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
                 autoFocus
                 onSubmitEditing={handleAddItem}
               />
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={handleAddItem}
+              <IconButton
+                name="checkmark-circle-outline"
+                size={30}
+                color={COLORS.PRIMARY_DARK}
                 accessibilityLabel="Save item"
-                accessibilityRole="button"
-              >
-                <Icon
-                  name="checkmark-circle-outline"
-                  size={30}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={styles.cancelButton}
+                onPress={handleAddItem}
+                style={styles.addButton}
+              />
+              <IconButton
+                name="close-circle-outline"
+                size={30}
+                color={COLORS.PRIMARY_DARK}
+                accessibilityLabel="Cancel"
                 onPress={() => {
                   setNewItemText('');
                   setIsAddingItem(false);
                 }}
-                accessibilityLabel="Cancel"
-                accessibilityRole="button"
-              >
-                <Icon
-                  name="close-circle-outline"
-                  size={30}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+              />
             </View>
           )}
 
@@ -216,20 +196,22 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
                 { borderBottomColor: COLORS.SECONDARY_ACCENT + '40' },
               ]}
             >
-              <TouchableOpacity
+              <Touchable
                 style={styles.checkbox}
+                borderless
                 onPress={() => checklistStore.toggleChecklistItem(item.id)}
                 accessibilityLabel={
                   item.checked ? 'Uncheck item' : 'Check item'
                 }
                 accessibilityRole="checkbox"
+                accessibilityState={{ checked: item.checked }}
               >
                 <Icon
                   name={item.checked ? 'checkbox-outline' : 'square-outline'}
                   size={28}
                   color={COLORS.PRIMARY_DARK}
                 />
-              </TouchableOpacity>
+              </Touchable>
               <Text
                 style={[
                   styles.itemText,
@@ -242,18 +224,13 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
               >
                 {item.text}
               </Text>
-              <TouchableOpacity
-                style={styles.deleteButton}
-                onPress={() => handleDeleteItem(item.id)}
+              <IconButton
+                name="close-circle-outline"
+                size={24}
+                color={COLORS.PRIMARY_DARK}
                 accessibilityLabel="Delete item"
-                accessibilityRole="button"
-              >
-                <Icon
-                  name="close-circle-outline"
-                  size={24}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </TouchableOpacity>
+                onPress={() => handleDeleteItem(item.id)}
+              />
             </View>
           ))}
         </ScrollView>
@@ -277,9 +254,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-  },
-  headerButton: {
-    paddingVertical: 6,
   },
   scrollView: {
     flex: 1,
@@ -312,11 +286,15 @@ const styles = StyleSheet.create({
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   checkbox: {
-    marginRight: 12,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 4,
   },
   itemText: {
     flex: 1,
@@ -325,13 +303,10 @@ const styles = StyleSheet.create({
   itemTextChecked: {
     textDecorationLine: 'line-through',
   },
-  deleteButton: {
-    marginLeft: 8,
-  },
   addItemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
+    paddingVertical: 8,
     borderBottomWidth: 1,
   },
   input: {
@@ -343,9 +318,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   addButton: {
-    marginLeft: 8,
-  },
-  cancelButton: {
     marginLeft: 4,
   },
 });

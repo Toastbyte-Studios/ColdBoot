@@ -1,14 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { JSX, useCallback, useEffect, useState } from 'react';
-import {
-  Modal,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { Modal, ScrollView, StyleSheet, View } from 'react-native';
+import AppButton from '../../components/AppButton';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -108,20 +103,15 @@ export default function RadioFrequencyDetailScreen(): JSX.Element {
       <View style={styles.container}>
         {/* License info icon row */}
         <View style={styles.infoRow}>
-          <TouchableOpacity
+          <IconButton
+            name="information-circle-outline"
+            size={22}
+            color={
+              frequencyData.requiresLicense ? COLORS.ERROR : COLORS.SUCCESS
+            }
             onPress={() => setDisclaimerVisible(true)}
             accessibilityLabel="View license information"
-            accessibilityRole="button"
-            style={styles.infoButton}
-          >
-            <Ionicons
-              name="information-circle-outline"
-              size={22}
-              color={
-                frequencyData.requiresLicense ? COLORS.ERROR : COLORS.SUCCESS
-              }
-            />
-          </TouchableOpacity>
+          />
         </View>
 
         <ScrollView
@@ -285,17 +275,12 @@ export default function RadioFrequencyDetailScreen(): JSX.Element {
                 {frequencyData.licenseInfo}
               </Text>
             </View>
-            <TouchableOpacity
+            <AppButton
+              label="Understood"
               onPress={handleDismissDisclaimer}
-              style={[
-                styles.modalDismissButton,
-                { backgroundColor: COLORS.ACCENT },
-              ]}
               accessibilityLabel="Dismiss license information"
-              accessibilityRole="button"
-            >
-              <Text style={styles.modalDismissText}>Understood</Text>
-            </TouchableOpacity>
+              style={styles.modalDismissButton}
+            />
           </View>
         </View>
       </Modal>
@@ -396,10 +381,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'flex-end',
     paddingHorizontal: 14,
-    paddingVertical: 4,
-  },
-  infoButton: {
-    padding: 2,
   },
   modalBackdrop: {
     flex: 1,
@@ -421,14 +402,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalDismissButton: {
-    borderRadius: 8,
-    paddingVertical: 10,
-    alignItems: 'center',
     marginTop: 4,
-  },
-  modalDismissText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '700',
   },
 });

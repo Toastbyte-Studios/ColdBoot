@@ -6,7 +6,6 @@ import {
   StyleSheet,
   View,
   TextInput,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   Keyboard,
   KeyboardAvoidingView,
@@ -18,15 +17,21 @@ import {
   ScrollView,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import SelectMenu from '../../components/SelectMenu';
 import SketchCanvas, {
   SketchCanvasHandle,
 } from '../../components/SketchCanvas';
+import Touchable from '../../components/Touchable';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
+import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, Note } from '../../stores';
-import { COLORS, FOOTER_HEIGHT } from '../../theme';
+import { FOOTER_HEIGHT } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
+import { withAlpha } from '../../theme/colorUtils';
 import { pickPhoto } from '../../utils/photoPicker';
 import { MAX_TITLE_LENGTH } from './constants';
 
@@ -60,6 +65,8 @@ type EditNoteScreenNavigationProp = NativeStackNavigationProp<
  * @returns A React element rendering the "Edit Note" screen.
  */
 export default observer(function EditNoteScreen() {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation<EditNoteScreenNavigationProp>();
   const route = useRoute<EditNoteScreenRouteProp>();
@@ -80,7 +87,6 @@ export default observer(function EditNoteScreen() {
     note?.category || core.categories[0] || 'General',
   );
   const [photoUris, setPhotoUris] = useState<string[]>(note?.photoUris || []);
-  const [showCategoryMenu, setShowCategoryMenu] = useState(false);
   const { isKeyboardVisible } = useKeyboardStatus();
   const noteType = note?.type || 'text';
   const hasContent: boolean =
@@ -88,6 +94,7 @@ export default observer(function EditNoteScreen() {
       ? text.trim().length > 0
       : hasDrawn && title.trim().length > 0;
   const animatedHeight = useMemo(() => new Animated.Value(250), []);
+  const disabledIcon = withAlpha(COLORS.PRIMARY_DARK, 0.3);
 
   // Update local state when the note changes in the store
   useEffect(() => {
@@ -140,52 +147,103 @@ export default observer(function EditNoteScreen() {
     );
   }
 
+  const handleSave = async () => {
+    try {
+      let sketchData = sketchDataUri;
+
+      // For sketch notes, read the signature first and wait for the callback
+      if (noteType === 'sketch') {
+        sketchData = await new Promise<string>((resolve) => {
+          sketchSaveResolveRef.current = resolve;
+          sketchCanvasRef.current?.readSignature();
+
+          // Fallback timeout in case callback doesn't fire
+          setTimeout(() => {
+            if (sketchSaveResolveRef.current) {
+              sketchSaveResolveRef.current(sketchDataUri || '');
+              sketchSaveResolveRef.current = null;
+            }
+          }, 1000);
+        });
+      }
+
+      const updateParams: {
+        title: string;
+        text?: string;
+        sketchDataUri?: string;
+        category: string;
+        photoUris?: string[];
+      } = {
+        title,
+        category,
+        photoUris,
+      };
+
+      if (noteType === 'text') {
+        updateParams.text = text;
+      } else {
+        updateParams.sketchDataUri = sketchData;
+      }
+
+      await core.updateNoteContent(note.id, updateParams);
+      // Return to previous screen
+      navigation.goBack();
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save note. Please try again.');
+      console.error('Failed to update note:', error);
+    }
+  };
+
+  const cancelButton = (
+    <IconButton
+      name="close-outline"
+      size={30}
+      onPress={() => {
+        navigation.goBack();
+      }}
+      accessibilityLabel="Cancel"
+    />
+  );
+
   return (
     <ScreenBody>
       <KeyboardAvoidingView
         style={styles.container}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
+        {/* Not a button: a tap-anywhere surface that dismisses the keyboard,
+            hidden from accessibility. */}
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={styles.innerContainer}>
             <SectionHeader>Edit Note</SectionHeader>
             <View style={styles.card}>
               <View style={styles.inlineCenter}>
-                <View style={styles.dropdown}>
-                  <TouchableOpacity
-                    style={styles.dropdownHeader}
-                    onPress={() => setShowCategoryMenu((v) => !v)}
-                    accessibilityLabel={`Category: ${category}`}
-                    accessibilityHint="Opens category selection menu"
-                    accessibilityRole="button"
-                  >
-                    <Text style={styles.dropdownHeaderText}>{category}</Text>
+                <SelectMenu
+                  title="Category"
+                  options={core.categories.map((cat) => ({
+                    value: cat,
+                    label: cat,
+                  }))}
+                  value={category}
+                  onSelect={setCategory}
+                  accessibilityLabel={`Category: ${category}`}
+                  style={styles.dropdown}
+                >
+                  <View style={styles.dropdownHeader}>
+                    <Text style={styles.dropdownHeaderText} numberOfLines={1}>
+                      {category}
+                    </Text>
                     <Icon
                       name="chevron-down-outline"
                       size={18}
                       color={COLORS.PRIMARY_DARK}
                     />
-                  </TouchableOpacity>
-                  {showCategoryMenu && (
-                    <View style={styles.dropdownMenu}>
-                      {core.categories.map((cat) => (
-                        <TouchableOpacity
-                          key={cat}
-                          style={styles.dropdownItem}
-                          onPress={() => {
-                            setCategory(cat);
-                            setShowCategoryMenu(false);
-                          }}
-                        >
-                          <Text style={styles.dropdownItemText}>{cat}</Text>
-                        </TouchableOpacity>
-                      ))}
-                    </View>
-                  )}
-                </View>
+                  </View>
+                </SelectMenu>
 
-                <TouchableOpacity
-                  style={styles.iconButton}
+                <IconButton
+                  name="camera-outline"
+                  size={22}
                   onPress={async () => {
                     const uri = await pickPhoto();
                     if (uri) {
@@ -194,176 +252,55 @@ export default observer(function EditNoteScreen() {
                   }}
                   accessibilityLabel="Attach photo"
                   accessibilityHint="Choose from camera or photo library to attach a photo to your note"
-                  accessibilityRole="button"
-                >
-                  <Icon
-                    name="camera-outline"
-                    size={22}
-                    color={COLORS.PRIMARY_DARK}
-                  />
-                </TouchableOpacity>
+                />
               </View>
 
               <View style={styles.inline}>
-                <TouchableOpacity
-                  style={[
-                    styles.iconButton,
-                    !hasContent && styles.iconButtonDisabled,
-                  ]}
+                <IconButton
+                  name="checkmark-outline"
+                  size={30}
                   disabled={!hasContent}
-                  onPress={async () => {
-                    if (!note) {
-                      Alert.alert('Error', 'Note not found.');
-                      return;
-                    }
-                    try {
-                      let sketchData = sketchDataUri;
-
-                      // For sketch notes, read the signature first and wait for the callback
-                      if (noteType === 'sketch') {
-                        sketchData = await new Promise<string>((resolve) => {
-                          sketchSaveResolveRef.current = resolve;
-                          sketchCanvasRef.current?.readSignature();
-
-                          // Fallback timeout in case callback doesn't fire
-                          setTimeout(() => {
-                            if (sketchSaveResolveRef.current) {
-                              sketchSaveResolveRef.current(sketchDataUri || '');
-                              sketchSaveResolveRef.current = null;
-                            }
-                          }, 1000);
-                        });
-                      }
-
-                      const updateParams: {
-                        title: string;
-                        text?: string;
-                        sketchDataUri?: string;
-                        category: string;
-                        photoUris?: string[];
-                      } = {
-                        title,
-                        category,
-                        photoUris,
-                      };
-
-                      if (noteType === 'text') {
-                        updateParams.text = text;
-                      } else {
-                        updateParams.sketchDataUri = sketchData;
-                      }
-
-                      await core.updateNoteContent(note.id, updateParams);
-                      // Return to previous screen
-                      navigation.goBack();
-                    } catch (error) {
-                      Alert.alert(
-                        'Error',
-                        'Failed to save note. Please try again.',
-                      );
-                      console.error('Failed to update note:', error);
-                    }
-                  }}
+                  disabledColor={disabledIcon}
+                  onPress={handleSave}
                   accessibilityLabel="Save note"
-                  accessibilityRole="button"
-                >
-                  <Icon
-                    name="checkmark-outline"
-                    size={30}
-                    color={
-                      !hasContent
-                        ? COLORS.PRIMARY_DARK + '40'
-                        : COLORS.PRIMARY_DARK
-                    }
-                  />
-                </TouchableOpacity>
+                />
                 <View style={styles.spacer} />
                 {noteType === 'sketch' ? (
                   <View style={styles.sketchControls}>
-                    <TouchableOpacity
-                      style={styles.iconButton}
+                    <IconButton
+                      name="arrow-undo-outline"
+                      size={30}
                       onPress={() => {
                         sketchCanvasRef.current?.undo();
                       }}
                       accessibilityLabel="Undo last stroke"
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="arrow-undo-outline"
-                        size={30}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.iconButton}
+                    />
+                    <IconButton
+                      name="trash-outline"
+                      size={30}
                       onPress={() => {
                         sketchCanvasRef.current?.clearSignature();
                         setSketchDataUri(undefined);
                         setHasDrawn(false);
                       }}
                       accessibilityLabel="Clear sketch"
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="trash-outline"
-                        size={30}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={() => {
-                        navigation.goBack();
-                      }}
-                      accessibilityLabel="Cancel"
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="close-outline"
-                        size={30}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
+                    />
+                    {cancelButton}
                   </View>
                 ) : (
-                  <>
-                    <TouchableOpacity
-                      style={[
-                        styles.iconButton,
-                        !hasContent && styles.iconButtonDisabled,
-                      ]}
+                  <View style={styles.sketchControls}>
+                    <IconButton
+                      name="trash-outline"
+                      size={30}
                       disabled={!hasContent}
+                      disabledColor={disabledIcon}
                       onPress={() => {
                         setText('');
                       }}
                       accessibilityLabel="Clear note"
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="trash-outline"
-                        size={30}
-                        color={
-                          !hasContent
-                            ? COLORS.PRIMARY_DARK + '40'
-                            : COLORS.PRIMARY_DARK
-                        }
-                      />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                      style={styles.iconButton}
-                      onPress={() => {
-                        navigation.goBack();
-                      }}
-                      accessibilityLabel="Cancel"
-                      accessibilityRole="button"
-                    >
-                      <Icon
-                        name="close-outline"
-                        size={30}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                    </TouchableOpacity>
-                  </>
+                    />
+                    {cancelButton}
+                  </View>
                 )}
               </View>
 
@@ -374,7 +311,7 @@ export default observer(function EditNoteScreen() {
                     ? 'Title (required)'
                     : 'Title (optional)'
                 }
-                placeholderTextColor={COLORS.PRIMARY_DARK}
+                placeholderTextColor={COLORS.MUTED}
                 value={title}
                 onChangeText={setTitle}
                 maxLength={MAX_TITLE_LENGTH}
@@ -391,8 +328,13 @@ export default observer(function EditNoteScreen() {
                     {photoUris.map((uri, index) => (
                       <View key={`${uri}-${index}`} style={styles.photoWrapper}>
                         <Image source={{ uri }} style={styles.photoThumb} />
-                        <TouchableOpacity
+                        {/* Kept at 24pt and extended with hitSlop: it sits on
+                            the thumbnail's corner, and a 44pt circle would
+                            cover most of an 80pt photo. Finding 8, route 3. */}
+                        <Touchable
                           style={styles.removePhotoButton}
+                          borderless
+                          hitSlop={10}
                           onPress={() => {
                             setPhotoUris((prev) =>
                               prev.filter((_, i) => i !== index),
@@ -402,11 +344,11 @@ export default observer(function EditNoteScreen() {
                           accessibilityRole="button"
                         >
                           <Icon
-                            name="close-circle"
+                            name="close-circle-outline"
                             size={24}
                             color={COLORS.PRIMARY_DARK}
                           />
-                        </TouchableOpacity>
+                        </Touchable>
                       </View>
                     ))}
                   </ScrollView>
@@ -426,7 +368,7 @@ export default observer(function EditNoteScreen() {
                   <TextInput
                     style={styles.textInput}
                     placeholder="Type your note..."
-                    placeholderTextColor={COLORS.PRIMARY_DARK}
+                    placeholderTextColor={COLORS.MUTED}
                     multiline
                     value={text}
                     onChangeText={setText}
@@ -461,161 +403,131 @@ export default observer(function EditNoteScreen() {
   );
 });
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  innerContainer: {
-    flex: 1,
-    width: '100%',
-  },
-  card: {
-    flex: 1 - FOOTER_HEIGHT,
-    width: '100%',
-    backgroundColor: COLORS.BRAND,
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
-    marginTop: 6,
-    marginBottom: FOOTER_HEIGHT + 6,
-  },
-  label: {
-    fontSize: 14,
-    color: COLORS.PRIMARY_DARK,
-    opacity: 0.9,
-    marginBottom: 6,
-    fontWeight: '700',
-  },
-  value: {
-    fontSize: 16,
-    color: COLORS.PRIMARY_DARK,
-  },
-  titleInput: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 12,
-    color: COLORS.PRIMARY_DARK,
-    fontSize: 14,
-  },
-  inline: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  spacer: {
-    flex: 1,
-  },
-  sketchControls: {
-    flexDirection: 'row',
-    gap: 16,
-    alignItems: 'center',
-  },
-  inlineCenter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 12,
-  },
-  animatedInputContainer: {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 8,
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  textInput: {
-    flex: 1,
-    color: COLORS.PRIMARY_DARK,
-  },
-  sketchContainer: {
-    height: 250,
-    marginBottom: 12,
-  },
-  dropdown: {
-    flex: 1,
-    position: 'relative',
-  },
-  dropdownHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  dropdownHeaderText: {
-    color: COLORS.PRIMARY_DARK,
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  dropdownMenu: {
-    position: 'absolute',
-    top: 40,
-    left: 0,
-    right: 0,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-    borderWidth: 1,
-    borderRadius: 8,
-    zIndex: 10,
-    shadowColor: '#000',
-    shadowOpacity: 0.1,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  dropdownItem: {
-    paddingHorizontal: 10,
-    paddingVertical: 10,
-    borderBottomColor: 'rgba(0,0,0,0.06)',
-    borderBottomWidth: 1,
-  },
-  dropdownItemText: {
-    color: COLORS.PRIMARY_DARK,
-    fontSize: 14,
-  },
-  iconButton: {
-    paddingHorizontal: 10,
-    paddingVertical: 8,
-  },
-  iconButtonDisabled: {
-    opacity: 0.3,
-  },
-  photosContainer: {
-    marginBottom: 12,
-  },
-  photosScroll: {
-    maxHeight: 100,
-  },
-  photoWrapper: {
-    marginRight: 8,
-    position: 'relative',
-  },
-  photoThumb: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: COLORS.SECONDARY_ACCENT,
-  },
-  removePhotoButton: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderRadius: 12,
-  },
-});
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      width: '100%',
+      flexDirection: 'column',
+      alignItems: 'center',
+    },
+    innerContainer: {
+      flex: 1,
+      width: '100%',
+    },
+    card: {
+      flex: 1 - FOOTER_HEIGHT,
+      width: '100%',
+      backgroundColor: COLORS.BRAND,
+      borderRadius: 12,
+      borderWidth: 2,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      paddingVertical: 16,
+      paddingHorizontal: 16,
+      marginTop: 6,
+      marginBottom: FOOTER_HEIGHT + 6,
+    },
+    label: {
+      fontSize: 14,
+      color: COLORS.PRIMARY_DARK,
+      opacity: 0.9,
+      marginBottom: 6,
+      fontWeight: '700',
+    },
+    value: {
+      fontSize: 16,
+      color: COLORS.PRIMARY_DARK,
+    },
+    titleInput: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 12,
+      color: COLORS.PRIMARY_DARK,
+      fontSize: 14,
+    },
+    inline: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      marginBottom: 8,
+    },
+    spacer: {
+      flex: 1,
+    },
+    sketchControls: {
+      flexDirection: 'row',
+      gap: 8,
+      alignItems: 'center',
+    },
+    inlineCenter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 12,
+    },
+    animatedInputContainer: {
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      borderWidth: 1,
+      borderRadius: 8,
+      padding: 8,
+      marginBottom: 12,
+      overflow: 'hidden',
+    },
+    textInput: {
+      flex: 1,
+      color: COLORS.PRIMARY_DARK,
+    },
+    sketchContainer: {
+      height: 250,
+      marginBottom: 12,
+    },
+    dropdown: {
+      flex: 1,
+    },
+    // The menu trigger. A plain View, not a Touchable: SelectMenu owns the tap.
+    dropdownHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      minHeight: 44,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderColor: COLORS.SECONDARY_ACCENT,
+      borderWidth: 1,
+      borderRadius: 8,
+      paddingHorizontal: 10,
+    },
+    dropdownHeaderText: {
+      flexShrink: 1,
+      color: COLORS.PRIMARY_DARK,
+      fontSize: 14,
+      fontWeight: '600',
+    },
+    photosContainer: {
+      marginBottom: 12,
+    },
+    photosScroll: {
+      maxHeight: 100,
+    },
+    photoWrapper: {
+      marginRight: 8,
+      position: 'relative',
+    },
+    photoThumb: {
+      width: 80,
+      height: 80,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: COLORS.SECONDARY_ACCENT,
+    },
+    removePhotoButton: {
+      position: 'absolute',
+      top: -8,
+      right: -8,
+      backgroundColor: COLORS.PRIMARY_LIGHT,
+      borderRadius: 12,
+    },
+  });

@@ -1,17 +1,19 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { JSX, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useTheme } from '../../hooks/useTheme';
 import {
   addBookmark,
   removeBookmark,
   isBookmarked,
 } from '../../stores/BookmarksStore';
-import { COLORS, FOOTER_HEIGHT } from '../../theme';
+import { FOOTER_HEIGHT } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import { ScenarioCardType } from '../../types/data-type';
 
 type ScenarioDetailScreenRouteProp = RouteProp<
@@ -33,6 +35,8 @@ type ScenarioDetailScreenRouteProp = RouteProp<
  * @returns {JSX.Element} The rendered ScenarioDetailScreen component.
  */
 export default function ScenarioDetailScreen(): JSX.Element {
+  const COLORS = useTheme();
+  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const route = useRoute<ScenarioDetailScreenRouteProp>();
   const { scenario: routeScenario } = route.params || {};
 
@@ -97,13 +101,15 @@ export default function ScenarioDetailScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{resolvedScenario.title}</SectionHeader>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={toggleBookmark} style={styles.actionBtn}>
-          <Ionicons
-            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={28}
-            color={COLORS.PRIMARY_LIGHT}
-          />
-        </TouchableOpacity>
+        <IconButton
+          name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={28}
+          color={COLORS.PRIMARY_DARK}
+          accessibilityLabel={
+            bookmarked ? 'Remove bookmark' : 'Bookmark this scenario'
+          }
+          onPress={toggleBookmark}
+        />
       </View>
       <View style={styles.bodyWrap}>
         <ScrollView
@@ -178,7 +184,13 @@ export default function ScenarioDetailScreen(): JSX.Element {
 
           <HorizontalRule />
 
-          {/* Watch For */}
+          {/* Watch For.
+              The ⚠ and ℹ markers below stay as text rather than becoming
+              Ionicons: they belong to the same bullet-marker set as the "•"
+              and the numbered steps above, all rendered through styles.bullet.
+              Converting only two of the four would break the column. Same
+              exception as the morse keypad — see docs/NATIVE_REDESIGN.md
+              finding 7. */}
           {resolvedScenario.watch_for &&
             resolvedScenario.watch_for.length > 0 && (
               <View style={styles.section}>
@@ -210,72 +222,72 @@ export default function ScenarioDetailScreen(): JSX.Element {
   );
 }
 
-const styles = StyleSheet.create({
-  actions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
-    width: '100%',
-    paddingHorizontal: 12,
-    marginBottom: 8,
-  },
-  actionBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  bodyWrap: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scroll: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 12,
-    paddingBottom: 32,
-  },
-  section: {
-    marginBottom: 20,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '700',
-    marginBottom: 10,
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  bodyText: {
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  bulletWrap: {
-    flexDirection: 'row',
-    marginBottom: 8,
-    paddingLeft: 4,
-  },
-  bullet: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginRight: 8,
-    color: COLORS.PRIMARY_LIGHT,
-    minWidth: 20,
-  },
-  bulletText: {
-    flex: 1,
-    fontSize: 16,
-    lineHeight: 24,
-    color: COLORS.PRIMARY_LIGHT,
-  },
-  missingWrap: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  helperText: {
-    fontSize: 16,
-    opacity: 0.8,
-    textAlign: 'center',
-  },
-});
+// Body text was PRIMARY_LIGHT — near-white — which is unreadable on the pale
+// light-scheme background. It now uses the theme foreground like the sibling
+// ScenarioCards screens. See docs/NATIVE_REDESIGN.md finding 4.
+const makeStyles = (COLORS: ColorScheme) =>
+  StyleSheet.create({
+    actions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      width: '100%',
+      paddingHorizontal: 12,
+      marginBottom: 8,
+    },
+    bodyWrap: {
+      flex: 1,
+      width: '100%',
+      paddingBottom: FOOTER_HEIGHT,
+    },
+    scroll: {
+      flex: 1,
+      width: '100%',
+    },
+    scrollContent: {
+      paddingHorizontal: 12,
+      paddingBottom: 32,
+    },
+    section: {
+      marginBottom: 20,
+    },
+    sectionTitle: {
+      fontSize: 20,
+      fontWeight: '700',
+      marginBottom: 10,
+      color: COLORS.PRIMARY_DARK,
+    },
+    bodyText: {
+      fontSize: 16,
+      lineHeight: 24,
+      color: COLORS.PRIMARY_DARK,
+    },
+    bulletWrap: {
+      flexDirection: 'row',
+      marginBottom: 8,
+      paddingLeft: 4,
+    },
+    bullet: {
+      fontSize: 16,
+      fontWeight: '600',
+      marginRight: 8,
+      color: COLORS.PRIMARY_DARK,
+      minWidth: 20,
+    },
+    bulletText: {
+      flex: 1,
+      fontSize: 16,
+      lineHeight: 24,
+      color: COLORS.PRIMARY_DARK,
+    },
+    missingWrap: {
+      flex: 1,
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    helperText: {
+      fontSize: 16,
+      opacity: 0.8,
+      textAlign: 'center',
+    },
+  });

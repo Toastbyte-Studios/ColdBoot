@@ -6,18 +6,12 @@ import {
   useRoute,
 } from '@react-navigation/native';
 import React, { JSX } from 'react';
-import {
-  Alert,
-  Linking,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -220,7 +214,8 @@ export default function RepeaterDetailScreen(): JSX.Element {
 
           {/* Data source disclaimer */}
           {!repeater.isCustom && (
-            <TouchableOpacity
+            <Touchable
+              style={styles.disclaimer}
               onPress={() => Linking.openURL('https://www.repeaterbook.com')}
               accessibilityRole="link"
               accessibilityLabel="Open RepeaterBook.com"
@@ -231,7 +226,7 @@ export default function RepeaterDetailScreen(): JSX.Element {
                 Data sourced from{' '}
                 <Text style={styles.disclaimerLink}>RepeaterBook.com</Text>
               </Text>
-            </TouchableOpacity>
+            </Touchable>
           )}
         </ScrollView>
       </View>
@@ -314,6 +309,10 @@ const styles = StyleSheet.create({
   },
   actionButtonSpacing: {
     marginBottom: 10,
+  },
+  disclaimer: {
+    minHeight: 44,
+    justifyContent: 'center',
   },
   disclaimerText: {
     fontSize: 12,

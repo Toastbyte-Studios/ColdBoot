@@ -3,7 +3,8 @@ import { StyleSheet, View, PanResponder } from 'react-native';
 import SignatureCanvas, {
   SignatureViewRef,
 } from 'react-native-signature-canvas';
-import { COLORS } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { INK, PAPER } from '../theme/fixedSurfaces';
 
 interface SketchCanvasProps {
   onSketchSave: (dataUri: string) => void;
@@ -27,6 +28,13 @@ export interface SketchCanvasHandle {
  * - Saves sketch as base64 data URI
  * - Prevents gesture navigation during drawing
  *
+ * @remarks
+ * The pad and pen colours are deliberately fixed rather than themed. A sketch
+ * is saved as a base64 PNG with whatever pen and background were active when
+ * it was drawn, so a theme-aware canvas would produce two incompatible kinds
+ * of sketch: every one drawn in light mode would replay onto a dark pad, and
+ * vice versa. The surrounding border is chrome, so it follows the scheme.
+ *
  * @param onSketchSave - Callback invoked with base64 data URI when sketch is saved
  * @param initialSketch - Optional base64 data URI to load an existing sketch
  * @param onClear - Optional callback when clear button is pressed
@@ -35,6 +43,7 @@ export interface SketchCanvasHandle {
  */
 const SketchCanvas = forwardRef<SketchCanvasHandle, SketchCanvasProps>(
   ({ onSketchSave, initialSketch, onClear, onBegin }, forwardedRef) => {
+    const COLORS = useTheme();
     const ref = useRef<SignatureViewRef | null>(null);
 
     useImperativeHandle(forwardedRef, () => ({
@@ -78,7 +87,7 @@ const SketchCanvas = forwardRef<SketchCanvasHandle, SketchCanvasProps>(
     const webStyle = `.m-signature-pad {
     box-shadow: none;
     border: none;
-    background-color: ${COLORS.PRIMARY_LIGHT};
+    background-color: ${PAPER};
   }
   .m-signature-pad--body {
     border: none;
@@ -93,7 +102,7 @@ const SketchCanvas = forwardRef<SketchCanvasHandle, SketchCanvasProps>(
 
     return (
       <View
-        style={styles.container}
+        style={[styles.container, { borderColor: COLORS.SECONDARY_ACCENT }]}
         collapsable={false}
         {...panResponder.panHandlers}
       >
@@ -103,8 +112,8 @@ const SketchCanvas = forwardRef<SketchCanvasHandle, SketchCanvasProps>(
           onBegin={handleBegin}
           descriptionText=""
           webStyle={webStyle}
-          backgroundColor={COLORS.PRIMARY_LIGHT}
-          penColor={COLORS.PRIMARY_DARK}
+          backgroundColor={PAPER}
+          penColor={INK}
           dataURL={initialSketch}
           webviewContainerStyle={styles.webviewContainer}
           scrollable={false}
@@ -121,8 +130,7 @@ export default SketchCanvas;
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
+    backgroundColor: PAPER,
     borderWidth: 1,
     borderRadius: 8,
     overflow: 'hidden',

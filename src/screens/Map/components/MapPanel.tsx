@@ -15,9 +15,12 @@ import {
   StyleSheet,
   Text,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../../components/AppButton';
+import IconButton from '../../../components/IconButton';
+import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
 import DownloadAreaButton from './offline/DownloadAreaButton';
@@ -30,6 +33,13 @@ export const DELTA = { latitudeDelta: 0.05, longitudeDelta: 0.05 };
 
 /** MapLibre vector tile style URL (OpenFreeMap Liberty). */
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+/**
+ * The recording HUD floats over map tiles, so its foreground is fixed white on
+ * a dark scrim rather than theme-derived. Same reasoning as
+ * DownloadProgressChip: the surface underneath is imagery, not app chrome.
+ */
+const OVERLAY_FOREGROUND = '#FFFFFF';
 
 /**
  * Converts a latitudeDelta (degrees of latitude visible) to a MapLibre zoom level.
@@ -261,9 +271,22 @@ export default function MapPanel({
 
           {recordingState === 'recording' && (
             <View style={styles.hud}>
+              <Icon
+                name="stopwatch-outline"
+                size={14}
+                color={OVERLAY_FOREGROUND}
+              />
               <Text style={styles.hudText}>
-                ⏱ {formatElapsed(recordingElapsed)}
-                {'   '}📍 {formatDistance(recordingDistance, measurementSystem)}
+                {formatElapsed(recordingElapsed)}
+              </Text>
+              <Icon
+                name="navigate-outline"
+                size={14}
+                color={OVERLAY_FOREGROUND}
+                style={styles.hudSecondIcon}
+              />
+              <Text style={styles.hudText}>
+                {formatDistance(recordingDistance, measurementSystem)}
               </Text>
             </View>
           )}
@@ -278,47 +301,47 @@ export default function MapPanel({
                 onChangeText={setSaveName}
                 accessibilityLabel="Track name input"
               />
-              <TouchableOpacity
-                style={[styles.saveToolbarBtn, styles.saveBtn]}
+              <AppButton
+                label="Save"
+                size="small"
+                tint={COLORS.SECONDARY_ACCENT}
                 onPress={handleSave}
                 accessibilityLabel="Save track"
-                accessibilityRole="button"
-              >
-                <Text style={styles.saveToolbarBtnText}>Save</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.saveToolbarBtn, styles.discardBtn]}
+              />
+              <AppButton
+                label="Discard"
+                size="small"
+                variant="destructive"
                 onPress={handleDiscard}
                 accessibilityLabel="Discard track"
-                accessibilityRole="button"
-              >
-                <Text style={styles.saveToolbarBtnText}>Discard</Text>
-              </TouchableOpacity>
+              />
             </View>
           )}
 
           {permissionStatus === 'granted' && (
             <>
-              <TouchableOpacity
-                style={styles.waypointsButton}
-                onPress={onWaypointsPress}
-                activeOpacity={0.8}
+              <IconButton
+                name="flag"
+                size={22}
+                color={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Open waypoints"
-                accessibilityRole="button"
-              >
-                <Text style={styles.waypointsText}>⚑</Text>
-              </TouchableOpacity>
+                onPress={onWaypointsPress}
+                style={styles.waypointsButton}
+              />
 
-              <TouchableOpacity
+              {/* Not an IconButton: only the glyph pulses while recording, not
+                  the whole circle, so the animation has to wrap the icon
+                  rather than the pressable. */}
+              <Touchable
                 style={[
                   styles.recordButton,
                   recordingState === 'recording' && styles.recordButtonActive,
                   recordingState === 'stopped' && styles.recordButtonDisabled,
                 ]}
+                rippleColor={COLORS.PRIMARY_LIGHT}
                 onPress={
                   recordingState !== 'stopped' ? onRecordPress : undefined
                 }
-                activeOpacity={0.8}
                 disabled={recordingState === 'stopped'}
                 accessibilityLabel={
                   recordingState === 'recording'
@@ -327,25 +350,29 @@ export default function MapPanel({
                 }
                 accessibilityRole="button"
               >
-                <Animated.Text
-                  style={[
-                    styles.recordText,
-                    recordingState === 'recording' && { opacity: pulseAnim },
-                  ]}
+                <Animated.View
+                  style={
+                    recordingState === 'recording'
+                      ? { opacity: pulseAnim }
+                      : undefined
+                  }
                 >
-                  {recordingState === 'recording' ? '⏹' : '⏺'}
-                </Animated.Text>
-              </TouchableOpacity>
+                  <Icon
+                    name={recordingState === 'recording' ? 'square' : 'ellipse'}
+                    size={20}
+                    color={COLORS.PRIMARY_LIGHT}
+                  />
+                </Animated.View>
+              </Touchable>
 
-              <TouchableOpacity
-                style={styles.locateMeButton}
-                onPress={onLocateMe}
-                activeOpacity={0.8}
+              <IconButton
+                name="locate"
+                size={24}
+                color={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Center map on my location"
-                accessibilityRole="button"
-              >
-                <Text style={styles.locateMeText}>⌖</Text>
-              </TouchableOpacity>
+                onPress={onLocateMe}
+                style={styles.locateMeButton}
+              />
             </>
           )}
 
@@ -399,12 +426,18 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       borderRadius: 8,
       paddingHorizontal: 14,
       paddingVertical: 6,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 5,
     },
     hudText: {
       fontSize: 13,
       fontWeight: '700',
-      color: '#FFFFFF',
+      color: OVERLAY_FOREGROUND,
       letterSpacing: 0.5,
+    },
+    hudSecondIcon: {
+      marginLeft: 8,
     },
     saveToolbar: {
       position: 'absolute',
@@ -432,22 +465,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       color: colors.PRIMARY_DARK,
       paddingVertical: 4,
     },
-    saveToolbarBtn: {
-      borderRadius: 6,
-      paddingHorizontal: 12,
-      paddingVertical: 6,
-    },
-    saveBtn: {
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    discardBtn: {
-      backgroundColor: colors.ERROR,
-    },
-    saveToolbarBtnText: {
-      fontSize: 12,
-      fontWeight: '700',
-      color: colors.PRIMARY_LIGHT,
-    },
     locateMeButton: {
       position: 'absolute',
       bottom: 24,
@@ -463,11 +480,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       shadowOpacity: 0.25,
       shadowRadius: 4,
       backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    locateMeText: {
-      fontSize: 24,
-      lineHeight: 28,
-      color: colors.PRIMARY_LIGHT,
     },
     recordButton: {
       position: 'absolute',
@@ -486,15 +498,10 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       backgroundColor: colors.SECONDARY_ACCENT,
     },
     recordButtonActive: {
-      backgroundColor: '#FF3B30',
+      backgroundColor: colors.ERROR,
     },
     recordButtonDisabled: {
       opacity: 0.4,
-    },
-    recordText: {
-      fontSize: 20,
-      lineHeight: 24,
-      color: colors.PRIMARY_LIGHT,
     },
     waypointsButton: {
       position: 'absolute',
@@ -511,11 +518,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       shadowOpacity: 0.25,
       shadowRadius: 4,
       backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    waypointsText: {
-      fontSize: 22,
-      lineHeight: 26,
-      color: colors.PRIMARY_LIGHT,
     },
     markerDot: {
       width: 16,

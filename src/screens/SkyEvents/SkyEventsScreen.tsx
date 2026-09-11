@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -88,7 +89,12 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
         style={styles.cardBackground}
       />
       <View style={styles.cardRow}>
-        <Text style={styles.eventIcon}>{event.icon}</Text>
+        <Ionicons
+          name={event.icon}
+          size={32}
+          color={COLORS.PRIMARY_DARK}
+          style={styles.eventIcon}
+        />
         <View style={styles.cardContent}>
           <View style={styles.cardHeader}>
             <Text style={styles.eventLabel}>{event.label}</Text>
@@ -152,9 +158,16 @@ function SkyEventsScreen() {
                 end={{ x: 1, y: 0 }}
                 style={styles.cardBackground}
               />
-              <Text style={styles.locationBannerText}>
-                📍 Enable location for planet rise times
-              </Text>
+              <View style={styles.locationBannerRow}>
+                <Ionicons
+                  name="location-outline"
+                  size={14}
+                  color={COLORS.PRIMARY_DARK}
+                />
+                <Text style={styles.locationBannerText}>
+                  Enable location for planet rise times
+                </Text>
+              </View>
             </View>
           )}
 
@@ -218,11 +231,18 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
       marginBottom: 12,
       overflow: 'hidden',
     },
+    locationBannerRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+    },
     locationBannerText: {
       fontSize: 13,
       fontWeight: '500',
       textAlign: 'center',
       color: COLORS.PRIMARY_DARK,
+      flexShrink: 1,
     },
     eventCard: {
       width: '80%',
@@ -242,9 +262,7 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
       alignItems: 'center',
     },
     eventIcon: {
-      fontSize: 32,
       marginRight: 12,
-      textAlignVertical: 'center',
     },
     cardContent: {
       flex: 1,
