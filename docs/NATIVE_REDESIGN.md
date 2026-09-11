@@ -18,11 +18,15 @@ Every tappable thing should be one of these. Nothing new should reach for
 | `IconButton` | A bare glyph with no label. Header and toolbar chrome, row actions. | Borderless circular ripple / deeper dim        |
 | `Touchable`  | Tappable regions that are not buttons. List rows, cards, chips.     | Bounded ripple / dim                           |
 
-`Touchable` is also the escape hatch in two cases: when a control needs a
-child the other two will not render (the map's record button pulses only its
-glyph, so the animation has to wrap the icon rather than the pressable), and
-when it needs an accessibility role other than `button` (the checklist
-checkbox). `IconButton` hardcodes `accessibilityRole="button"`.
+`Touchable` is also the escape hatch in three cases:
+
+- The control needs a child the other two will not render. The map's record
+  button pulses only its glyph, so the animation has to wrap the icon rather
+  than the pressable.
+- The control needs an accessibility role other than `button`. `IconButton`
+  hardcodes `accessibilityRole="button"`, so the checklist checkbox and the
+  RepeaterBook attribution link use `Touchable`.
+- The control is a large custom circle. See finding 10.
 
 ### Rules these encode
 
@@ -61,12 +65,8 @@ describe. Reach for them rarely; a call site that needs one is often a sign
 the palette is missing a token.
 
 - `AppButton` `tint` — overrides the variant's tint while keeping the style.
-  A `plain` button with a tint override is still a plain button in a different
-  colour. Used for the Dismiss inside the download error banner, which has to
-  be `ERROR` rather than `BRAND`.
 - `IconButton` `disabledColor` — the disabled glyph defaults to the theme's
-  muted colour, which is right on a plain background and invisible on a tinted
-  one. Used by the map's download FAB, which dims as a whole circle instead.
+  muted colour, which is invisible on a tinted surface that dims as a whole.
 
 ## Findings
 
@@ -100,64 +100,90 @@ touchable views with ad-hoc padding, which is why nothing felt consistent.
 
 See the sweep progress below.
 
-### 3. Hand-built modals — OPEN, and there are more than first counted
+### 3. Hand-built modals — OPEN. Nine files.
 
-The original count was five, from grepping `components/`: `SettingsModal`
-(32KB), `HelpModal`, `ManageOfflineMapsModal`, `TutorialModal` and
-`NotificationsModal`, all React Native `Modal`s rendered inline in `AppShell`.
+`rg -l '<Modal\b' src/` gives the real list:
 
-The EmergencyPlan sweep turned up two more that the grep missed because they
-live in a feature directory rather than `components/`: `ContactPickerModal`
-and `ImportModal`. Neither is a navigator route. So it is at least seven, and
-the real number is probably higher — worth grepping for `from 'react-native'`
-imports of `Modal` across `src/` rather than assuming.
+- `components/` (4): `SettingsModal`, `HelpModal`, `ManageOfflineMapsModal`,
+  `Footer/components/NotificationsModal`.
+- Modal components in feature directories (2): `EmergencyPlan/ImportModal`,
+  `EmergencyPlan/ContactPickerModal`.
+- **Screens with a modal inlined into them (3)**: `RepeaterBookScreen`,
+  `AddCustomRepeaterScreen`, `RadioFrequencyDetailScreen`. This category was
+  not on anyone's radar — the assumption was that a modal meant a file named
+  `*Modal.tsx`.
 
-Meanwhile the navigator only uses `presentation: 'modal'` for three actual
+Two corrections to earlier versions of this note. The original count of five
+came from grepping `components/` only. And `TutorialModal` is **not** a
+`Modal` despite the name — it is an absolutely-positioned overlay, which it
+has to be in order to coexist with the SVG spotlight backdrop in `AppShell`.
+
+Meanwhile the navigator uses `presentation: 'modal'` for only three actual
 routes. `SettingsModal` in particular is a grouped list pretending to be a
 modal; it wants to be a screen.
 
-### 4. Theming is inconsistently applied — OPEN
+### 4. Theming is inconsistently applied — OPEN. Twenty-seven files.
 
 Some screens call `useTheme()`; others `import { COLORS } from '../../theme'`,
-which is the light palette resolved at module load. Those screens render the
+which is the light palette resolved at module load. Those files render the
 light scheme in both modes and do not respond to the dark-mode setting at all.
 
-Confirmed in the Notepad directory: `RecentNotesScreen`, `NoteEntryScreen`,
-`ManageCategoriesScreen` and `NewNoteScreen` all do this. Pantry, Inventory,
-Checklist, EmergencyPlan and the Map components do not. Given the repo ships a
-full dark palette and a `useTheme` hook, this is likely widespread rather than
-local.
+The clusters: MorseCode (6), VoiceLog (6), Notepad (5), plus
+`Reference/Shared/EntryScreen`, `ScenarioDetailScreen`, `ComingSoonScreen`,
+`FlashlightScreen`.
+
+**The five in `components/` matter most**: `HorizontalRule`,
+`SectionSubHeader`, `ErrorBoundary`, `KnotStepCarousel`, `SketchCanvas`. These
+are shared, so they are light-locked on every screen that renders them —
+including screens this sweep has already converted and signed off as clean.
+`HorizontalRule` is in `AppShell`, so it is on essentially every screen.
+
+`noteListStyles.ts` is a genuine exception: a module-scope stylesheet cannot
+be reactive regardless.
+
+To find the files that are actually broken rather than the ones that merely
+import both:
+
+```sh
+comm -23 \
+  <(rg -l "^import \{[^}]*\bCOLORS\b[^}]*\} from '.*theme'" src/ | sort) \
+  <(rg -l 'useTheme' src/ | sort)
+```
 
 This constrains the sweep: in an affected file, the new components must be
-passed the static colors explicitly rather than falling back to the theme,
+passed static colours explicitly rather than falling back to the theme,
 because a theme-aware icon on a hardcoded light card turns pale-on-pale and
-disappears in dark mode. Fixing it properly means moving those
-`StyleSheet.create` calls inside the components. Worth its own pass.
+disappears in dark mode.
+
+It also leaks the other way. `AppButton` resolves its **disabled** colours
+through `useTheme` internally, so a disabled button in a light-locked file
+(`AlphaToMorseScreen`, the Notepad forms) paints with the dark-mode `BORDER`
+colour in dark mode. That artifact is created by the sweep and disappears when
+those screens move to `useTheme`.
 
 The Map components show the pattern to copy: a module-level
 `makeStyles(colors)` factory called through `useMemo(() => makeStyles(COLORS),
-[COLORS])`. That keeps the stylesheet out of the render body while still
-reacting to the scheme.
+[COLORS])`.
 
-Related smaller instances:
+Related hardcoded-colour instances:
 
 - `PantryExpirationTrackerScreen`'s `statusBorderColor` and
   `statusBackgroundColor` return hardcoded Material hexes, so the red/amber/
   green expiry coding is identical in both schemes.
 - The same fixed amber triple (`#FFF3CD` / `#FFCA2C` / `#664D03`) is
-  duplicated in `DownloadConfirmScreen`'s low-storage banner and
-  `MapScreen`'s simulated-offline banner, because the palette has no warning
-  token. It has `SUCCESS` and `ERROR` but nothing between them. Adding
-  `WARNING` would resolve both banners and the expiry coding above.
-- The map's record button used iOS system red (`#FF3B30`) while recording,
-  a third red alongside `ERROR` and the expiry hexes. Now `ERROR`.
-- `DownloadProgressChip`'s chip and toast, and `MapPanel`'s recording HUD,
-  are fixed white on a dark scrim. Those are defensible and deliberate — they
-  float over map imagery, not app chrome — and are commented as such. The
-  error banner in `DownloadProgressChip` is not: its `rgba(255,255,255,0.95)`
-  background stays white in dark mode.
+  duplicated in `DownloadConfirmScreen`'s low-storage banner and `MapScreen`'s
+  simulated-offline banner, because the palette has no warning token. It has
+  `SUCCESS` and `ERROR` but nothing between them. Adding `WARNING` would
+  resolve both banners and the expiry coding above.
+- The map's record button used iOS system red (`#FF3B30`) while recording, a
+  third red alongside `ERROR` and the expiry hexes. Now `ERROR`.
+- `DownloadProgressChip`'s chip and toast, and `MapPanel`'s recording HUD, are
+  fixed white on a dark scrim. Those are deliberate — they float over map
+  imagery, not app chrome — and are commented as such. The error banner in
+  `DownloadProgressChip` is not: its `rgba(255,255,255,0.95)` background stays
+  white in dark mode.
 - The footer notification badge hardcodes `'#fff'`.
-- No `StatusBar` bar-style appears to be wired to the color scheme, so dark
+- No `StatusBar` bar-style appears to be wired to the colour scheme, so dark
   mode is likely rendering dark status text on a dark background.
 
 ### 5. Status-bar clearance as fixed pixels — PARTLY FIXED
@@ -172,12 +198,12 @@ device is unchanged and everything else gets correct clearance.
 deliberately left alone. It is a React Native `Modal`, which renders in its
 own window, and `useSafeAreaInsets` is unreliable inside one on Android
 without a second `SafeAreaProvider` mounted inside the modal. That needs
-testing on a device before changing. The other hand-built modals listed in
-finding 3 are worth checking for the same pattern.
+testing on a device before changing. The other eight modals in finding 3 are
+worth checking for the same pattern.
 
 ### 6. `onColor` thresholded luminance — FIXED
 
-The first version of `onColor` picked a label color by thresholding relative
+The first version of `onColor` picked a label colour by thresholding relative
 luminance at 0.45. That gets mid-luminance tints wrong: dark mode's `SUCCESS`
 (`#4CA891`) sits just under the cutoff and would have received a white label
 at 2.9:1, when ink gives it 6.1:1. It now compares actual contrast ratios.
@@ -189,134 +215,185 @@ variant — roughly 3:1, under the body-text floor.
 
 ### 7. Emoji and Unicode characters used as icons — PARTLY FIXED
 
-Fifteen instances so far, across two features:
+Sixteen instances converted so far, all within files the sweep touched: the
+Map feature (twelve), `RallyPointsScreen`, `MapScreen`, `MorseCodeCheatSheet`
+(two arrows per row across 36 rows), and `AddCustomRepeaterScreen`.
 
-- `Map/offline/` — `⬓` on the download FAB and progress chip, `✅` in the
-  success toast, `⚠️` in the error and low-storage banners.
-- `Map/WaypointBottomSheet` — `✕` on the close button.
-- `Map/MapPanel` — `⚑` on the waypoints FAB, `⌖` on locate-me, `⏺` / `⏹` on
-  the record button, `⏱` and `📍` in the recording HUD.
-- `MapScreen` — `⚠️` and `✕` in the simulated-offline banner.
-- `RallyPointsScreen` — `📍` inline inside a `Text`, prefixed to every rally
-  point's coordinates.
+The glyphs resolve from whatever font happens to cover them, so they differ
+between iOS and Android and between OS versions; they do not match the
+Ionicons used everywhere else; they scale with the text rather than staying a
+fixed icon size; and a screen reader announces them by name — the download
+toast read as "check mark button Offline map ready", and every rally point
+read "round pushpin" before its coordinates.
 
-This is worse than it looks. The glyphs resolve from whatever font happens to
-cover them, so they differ between iOS and Android and between OS versions;
-they do not match the Ionicons used everywhere else in the app; they scale
-with the text rather than staying a fixed icon size; and a screen reader
-announces the emoji by name — the success toast read as "check mark button
-Offline map ready", and every rally point read as "round pushpin" before its
-coordinates. All fifteen are now Ionicons.
+**This finding is not a subset of the sweep.** A codepoint grep turns up
+instances in files that never used `TouchableOpacity` and so were never on the
+sweep list:
 
-The `RallyPointsScreen` case is the one to watch for elsewhere, because it was
-inline in a string rather than standing alone as a pseudo-icon. Worth grepping
-the rest of the codebase before assuming these are all of them.
+- `LunarCyclesScreen` — nine moon-phase emoji driving a card helper.
+- `StarMapScreen` — `★`, in a style literally named `starEmoji`.
+- `SkyEventsScreen` — `📍`.
+- `RepeaterBookScreen` — `🚨` twice, plus `📦 Cached data` / `✅ Live data`.
+- `MorseTrainerLevelScreen` — `⚠ ▶ ✓ ✗` as its whole feedback vocabulary.
+- `GridReferenceScreen` — `✓` on copy.
+- `BarometricPressureScreen` — `↑ → ↓` for trend states.
+
+Finishing the sweep will not finish this. It needs its own pass.
+
+```sh
+rg -n '[\x{2190}-\x{24FF}\x{2580}-\x{2BFF}\x{FE0F}\x{1F000}-\x{1FAFF}]' -g '*.tsx' src/
+```
+
+(Box-drawing `\x{2500}-\x{257F}` is excluded on purpose — the codebase uses `─`
+in comment dividers, which would bury the real hits. Arrows in JSDoc prose
+will still show up, so the output needs an eyeball rather than a count.)
+
+#### Deliberate exceptions
+
+Two places keep their glyphs, both for the same reason: the character belongs
+to a typographic **set**, and converting part of the set would break it.
+
+- `MorseToAlphaScreen` — the `␣` and `⌫` keycaps sit in a keypad whose other
+  keys show literal `.`, `-`, `/` and `CLEAR`.
+- `ScenarioDetailScreen` — the `⚠` and `ℹ` bullet markers share a column with
+  `•` and numbered steps, all rendered through `styles.bullet`.
+
+Both are commented in place so they don't read as oversights.
 
 ### 8. Undersized touch targets on custom chrome — IN PROGRESS
 
-The sweep keeps turning up controls built at whatever size looked right:
-`WaypointBottomSheet`'s close button was a 32pt bordered circle, the Notepad
-and Pantry header icons were roughly 30-42pt, the row action buttons in
-`WaypointRow` and `TrackRow` were about 26pt tall, the checklist checkbox was
-a bare 28pt glyph, and the share/import buttons in `RallyPointsScreen` and
-`CommunicationPlanScreen` were 36pt bordered boxes.
+Controls built at whatever size looked right, found so far:
+`WaypointBottomSheet`'s close button (32pt bordered circle), the Notepad and
+Pantry header icons (~30-42pt), `WaypointRow` and `TrackRow` action buttons
+(~26pt), the checklist checkbox (bare 28pt glyph), the share/import boxes in
+`RallyPointsScreen` and `CommunicationPlanScreen` (36pt), the picker fields
+and option rows in `AddCustomRepeaterScreen` (~40pt and ~38pt), the
+RepeaterBook attribution link (a 12pt line of text), and the
+`ScenarioDetailScreen` bookmark toggle (~36pt).
 
 Moving these onto the primitives fixes the target but changes the look,
 because the primitives will not render below 44/48. The bottom sheet's close
 button lost its bordered circle rather than growing into a 44pt one; the
-share/import boxes grew instead, since their border comes from the passed
-style and their size from the component. Expect a small amount of this in
-every batch; it is the point rather than a side effect, but it does mean the
-diffs are not purely mechanical.
+share/import boxes grew instead. Expect a small amount of this in every batch;
+it is the point rather than a side effect, but it does mean the diffs are not
+purely mechanical.
 
 The map FABs are the happy case: already 48pt circles, so they took
-`IconButton` without any change in size.
+`IconButton` with no change in size.
 
-### 9. Accessibility roles declared without their state — IN PROGRESS
+### 9. Accessibility roles and state — IN PROGRESS
 
-A recurring pattern: a control sets `accessibilityRole` correctly and then
-never reports the state that makes the role meaningful.
+A recurring pattern: a control declares part of its accessibility contract and
+omits the part that makes it meaningful.
 
-- The checklist item checkbox used `accessibilityRole="checkbox"` with no
+- The checklist item checkbox had `accessibilityRole="checkbox"` with no
   `accessibilityState.checked`, so a screen reader announced every item
-  identically whether ticked or not — the role made it worse than no role,
-  because it promises a state that is never supplied.
+  identically whether ticked or not. The role made it worse than no role.
 - `PantryExpirationTrackerScreen`'s filter chips and `WaypointBottomSheet`'s
-  tabs had no `selected`, so all four chips read as identical buttons.
+  tabs had no `selected`.
+- `AddCustomRepeaterScreen`'s picker option rows had neither role nor state —
+  eight unlabelled rows in the Mode list with no indication of the active one.
+- `ScenarioDetailScreen`'s bookmark toggle had no `accessibilityLabel` at all,
+  on a control whose entire meaning is its state.
 
-Both are fixed. The primitives cannot catch this on their own — `Touchable`
-passes accessibility props straight through — so it is worth checking
-deliberately on every stateful control the sweep touches.
+All fixed. The primitives cannot catch this — `Touchable` passes accessibility
+props straight through — so it needs checking by hand on every stateful
+control the sweep touches.
+
+### 10. `IconButton` cannot do large circles — OPEN
+
+`IconButton` pins its borderless ripple radius to `TARGET / 2`, i.e. 22 or
+24pt. On a large circular button that draws a small ripple adrift in the
+middle. Two call sites have had to fall back to `Touchable` for this reason:
+`MapPanel`'s record FAB and `RecordingControls`' 120pt record button. Both are
+commented.
+
+Two instances is enough to call it a gap rather than a coincidence. The fix is
+either an optional `rippleRadius` prop or deriving the radius from a width in
+the resolved style. Not done yet — `IconButton` has already gained two props
+during this work and it is worth deciding whether it is accumulating too many
+knobs before adding a third.
 
 ## Open decisions
 
 ### Native menus — needs a dependency call
 
-`NoteSortSelector` cycles through four sort orders on tap: you cannot see the
-options, and reaching Z-A takes three taps. `NewNoteScreen` and
-`EditNoteScreen` each contain a hand-rolled dropdown (a touchable header plus
-an absolutely-positioned menu).
+Instances found so far:
 
-Both want a real menu. React Native ships `ActionSheetIOS` and nothing
-equivalent for Android, so the options are:
+- `NoteSortSelector` cycles through four sort orders on tap. You cannot see
+  the options, and reaching Z-A takes three taps.
+- `NewNoteScreen` and `EditNoteScreen` each contain a hand-rolled dropdown — a
+  touchable header plus an absolutely-positioned menu.
+- `AddCustomRepeaterScreen` has two: a touchable field plus a transparent
+  `Modal` holding a list of options.
+
+React Native ships `ActionSheetIOS` and nothing equivalent for Android, so:
 
 1. Add `@react-native-menu/menu` — wraps `UIMenu` and Android's `PopupMenu`.
-   Real native menus, but it's a native module, so it needs a pod install and
-   a Gradle sync.
-2. `ActionSheetIOS` on iOS plus a hand-built Android popup — no new
-   dependency, but it means writing exactly the kind of custom component this
-   effort is trying to delete.
+   Real native menus, but a native module, so pod install and Gradle sync.
+2. `ActionSheetIOS` plus a hand-built Android popup — no new dependency, but
+   it means writing exactly the kind of custom component this effort is trying
+   to delete.
 
-Until this is settled, those three files are held back from the sweep.
-Converting only their icon buttons would leave a confusing half-migrated diff.
+`NoteSortSelector`, `NewNoteScreen` and `EditNoteScreen` are held back from
+the sweep until this is settled, because converting only their icon buttons
+would leave a half-migrated diff. `AddCustomRepeaterScreen` was converted,
+because its pickers were the file's only `TouchableOpacity` usage — so
+converting them is the whole file rather than half of it, and the modal is
+untouched either way.
 
 ### Segmented controls — a second, smaller dependency call
 
-Separate from menus, several places are segmented controls in all but name:
-the Current Location / Manual Entry toggle in `AddWaypointForm`, the
-Waypoints / Tracks tabs in `WaypointBottomSheet`, the category filter chips in
-`PantryExpirationTrackerScreen`.
+Segmented controls in all but name: the Current Location / Manual Entry toggle
+in `AddWaypointForm`, the Waypoints / Tracks tabs in `WaypointBottomSheet`,
+the category filter chips in `PantryExpirationTrackerScreen`.
 
-They are converted to `Touchable` with `accessibilityState.selected` for now,
-which fixes the press feedback and the screen-reader announcement but leaves
-them looking hand-built. `@react-native-segmented-control/segmented-control`
-wraps the real `UISegmentedControl` on iOS and draws a Material equivalent on
-Android. Same trade-off as the menu decision, lower stakes.
+They are `Touchable` with `accessibilityState.selected` for now, which fixes
+the press feedback and the screen-reader announcement but leaves them looking
+hand-built. `@react-native-segmented-control/segmented-control` wraps the real
+`UISegmentedControl`. Same trade-off as menus, lower stakes.
 
 ## Sweep progress
 
-31 of 63 files converted.
+42 of 63 files converted.
 
 - [x] `components/AppShell.tsx`
-- [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held, see
-      open decisions)
+- [x] `screens/Notepad` — 4 of 6 (`NewNoteScreen`, `EditNoteScreen` held)
 - [x] `screens/Pantry` — 5 of 5
 - [x] `screens/Inventory` — 4 of 4
 - [x] `screens/Map` — 9 of 9
 - [x] `screens/Checklist` — 2 of 2
 - [x] `screens/EmergencyPlan` — 6 of 6
-- [ ] `screens/MorseCode` — 4 files
-- [ ] `screens/VoiceLog` — 3 files
-- [ ] `screens/RepeaterBook` — 3 files
-- [ ] `screens/ScenarioCards` — 2 files
+- [x] `screens/MorseCode` — 4 of 4
+- [x] `screens/VoiceLog` — 3 of 3
+- [x] `screens/ScenarioCards` — 2 of 2
+- [ ] `screens/RepeaterBook` — 2 of 3 (`RepeaterBookScreen` remains)
+- [ ] `components/` — `Footer`, `NotificationsModal`, `HelpModal`,
+      `ManageOfflineMapsModal`, `NoteSortSelector`, `SectionHeader`,
+      `SettingsModal`, `TutorialModal`
 - [ ] `screens/` singles — `BarometricPressure`, `Common/SearchScreen`,
       `DepletionCalculator`, `GridReference`, `RadioFrequencies`,
       `Reference/Shared/EntryScreen`, `SeasonalOutlook`,
       `Shared/Prepper/FormPickerButton`, `UnitConversion/ConversionCategory`
-- [ ] `components/` — `Footer`, `NotificationsModal`, `HelpModal`,
-      `ManageOfflineMapsModal`, `NoteSortSelector`, `SectionHeader`,
-      `SettingsModal`, `TutorialModal`
 - [ ] `modules/Reference/ReferenceModule.tsx`
 
 Run `npm run cleanup` before pushing. The sweep removes local button styles as
-it goes, and `react-native/no-unused-styles` will catch any that are left
-behind.
+it goes, and `react-native/no-unused-styles` will catch any left behind.
 
-### Worth doing before the sweep finishes
+### A note on the two large files
 
-Three greps that would replace guesswork with a number, and that keep turning
-up instances one batch at a time:
+`RepeaterBookScreen` (23KB) and `SettingsModal` (32KB) are better done in a
+local editor than through whole-file rewrites. The rest of this sweep was
+driven through the GitHub contents API, which has no patch operation — every
+change means reproducing the entire file, and at that size the odds of
+silently dropping a line stop being negligible. Everything under ~10KB was
+safe; those two are not.
 
-- `Modal` imported from `react-native` — finding 3.
-- Emoji and dingbat codepoints in `.tsx` — finding 7.
-- `from '../../theme'` importing `COLORS` — finding 4.
+### Suggested order for the rest
+
+1. The five shared `components/` files in finding 4. Small diff, app-wide
+   reach, and it unblocks the dark-mode claim for screens already converted.
+2. The nine single screens — same shape as everything done so far.
+3. The emoji pass from finding 7, which is independent of the sweep.
+4. The two large files, locally.
+5. Findings 1 and 3, each as its own piece of work.
