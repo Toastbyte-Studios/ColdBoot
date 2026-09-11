@@ -1,8 +1,8 @@
 import { RouteProp, useRoute } from '@react-navigation/native';
 import React, { JSX, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View, TouchableOpacity } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { StyleSheet, ScrollView, View } from 'react-native';
 import { HorizontalRule } from '../../components/HorizontalRule';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -97,13 +97,15 @@ export default function ScenarioDetailScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{resolvedScenario.title}</SectionHeader>
       <View style={styles.actions}>
-        <TouchableOpacity onPress={toggleBookmark} style={styles.actionBtn}>
-          <Ionicons
-            name={bookmarked ? 'bookmark' : 'bookmark-outline'}
-            size={28}
-            color={COLORS.PRIMARY_LIGHT}
-          />
-        </TouchableOpacity>
+        <IconButton
+          name={bookmarked ? 'bookmark' : 'bookmark-outline'}
+          size={28}
+          color={COLORS.PRIMARY_LIGHT}
+          accessibilityLabel={
+            bookmarked ? 'Remove bookmark' : 'Bookmark this scenario'
+          }
+          onPress={toggleBookmark}
+        />
       </View>
       <View style={styles.bodyWrap}>
         <ScrollView
@@ -178,7 +180,13 @@ export default function ScenarioDetailScreen(): JSX.Element {
 
           <HorizontalRule />
 
-          {/* Watch For */}
+          {/* Watch For.
+              The ⚠ and ℹ markers below stay as text rather than becoming
+              Ionicons: they belong to the same bullet-marker set as the "•"
+              and the numbered steps above, all rendered through styles.bullet.
+              Converting only two of the four would break the column. Same
+              exception as the morse keypad — see docs/NATIVE_REDESIGN.md
+              finding 7. */}
           {resolvedScenario.watch_for &&
             resolvedScenario.watch_for.length > 0 && (
               <View style={styles.section}>
@@ -217,10 +225,6 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingHorizontal: 12,
     marginBottom: 8,
-  },
-  actionBtn: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
   },
   bodyWrap: {
     flex: 1,
