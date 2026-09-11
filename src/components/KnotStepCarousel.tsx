@@ -10,7 +10,8 @@ import {
 } from 'react-native';
 import { SvgProps } from 'react-native-svg';
 import { getKnotImage } from '../assets/referenceImages';
-import { COLORS } from '../theme';
+import { useTheme } from '../hooks/useTheme';
+import { PAPER } from '../theme/fixedSurfaces';
 
 interface KnotStepCarouselProps {
   images: string[];
@@ -31,12 +32,19 @@ const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
  * If a key has no corresponding image in the asset registry, that entry is
  * skipped gracefully. If no images resolve, the carousel renders nothing.
  *
+ * @remarks
+ * The card background is deliberately fixed to `PAPER` rather than following
+ * the colour scheme: the diagrams are dark line art on transparency and would
+ * vanish on a dark card. The border and indicator dots are chrome, so those do
+ * follow the scheme.
+ *
  * @param images - Array of referenceImages keys.
  * @returns {JSX.Element | null} The rendered carousel, or null if no images resolve.
  */
 export default function KnotStepCarousel({
   images,
 }: KnotStepCarouselProps): JSX.Element | null {
+  const COLORS = useTheme();
   const { width: screenWidth } = useWindowDimensions();
   const itemWidth = screenWidth - CARD_PADDING;
   const [activeIndex, setActiveIndex] = useState(0);
@@ -87,7 +95,7 @@ export default function KnotStepCarousel({
   };
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { borderColor: COLORS.BRAND }]}>
       <FlatList
         ref={flatListRef}
         data={resolvedKeys}
@@ -113,7 +121,11 @@ export default function KnotStepCarousel({
           {resolvedKeys.map((_, idx) => (
             <View
               key={idx}
-              style={[styles.dot, idx === activeIndex && styles.dotActive]}
+              style={[
+                styles.dot,
+                { backgroundColor: COLORS.BRAND },
+                idx === activeIndex && styles.dotActive,
+              ]}
               accessibilityLabel={`Image ${idx + 1}${idx === activeIndex ? ', current' : ''}`}
             />
           ))}
@@ -126,11 +138,10 @@ export default function KnotStepCarousel({
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: COLORS.BRAND,
     borderRadius: 12,
     paddingVertical: 12,
     marginBottom: 12,
-    backgroundColor: COLORS.PRIMARY_LIGHT,
+    backgroundColor: PAPER,
     alignItems: 'center',
     overflow: 'hidden',
   },
@@ -152,7 +163,6 @@ const styles = StyleSheet.create({
     width: 7,
     height: 7,
     borderRadius: 4,
-    backgroundColor: COLORS.BRAND,
     opacity: 0.35,
   },
   dotActive: {
