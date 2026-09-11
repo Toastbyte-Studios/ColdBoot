@@ -9,13 +9,13 @@ import {
   ScrollView,
   StyleSheet,
   TextInput,
-  TouchableOpacity,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { HorizontalRule } from '../../components/HorizontalRule';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
+import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import {
   type Checklist,
@@ -309,8 +309,13 @@ export default observer(function SearchScreen(): JSX.Element {
         >
           {result.excerpt}
         </Text>
-        <TouchableOpacity
+        {/* hitSlop rather than a 44pt minimum: this pill sits inside a result
+            card and growing it would push the card layout around. See
+            docs/NATIVE_REDESIGN.md finding 8. */}
+        <Touchable
           style={[styles.jumpButton, { backgroundColor: COLORS.BRAND }]}
+          rippleColor={COLORS.PRIMARY_LIGHT}
+          hitSlop={8}
           onPress={() => handleJumpToEntry(result.entry)}
           accessibilityLabel={`Jump to full section: ${result.entry.title}`}
           accessibilityRole="button"
@@ -325,7 +330,7 @@ export default observer(function SearchScreen(): JSX.Element {
           >
             {result.entry.related_screen_label ?? 'Jump to full section'}
           </Text>
-        </TouchableOpacity>
+        </Touchable>
       </View>
     ),
     [COLORS, handleJumpToEntry],
@@ -333,7 +338,7 @@ export default observer(function SearchScreen(): JSX.Element {
 
   const renderUserDataResult = useCallback(
     (item: SearchableItem) => (
-      <TouchableOpacity
+      <Touchable
         key={item.id}
         style={[
           styles.userDataItem,
@@ -363,7 +368,7 @@ export default observer(function SearchScreen(): JSX.Element {
           size={14}
           color={COLORS.PRIMARY_DARK}
         />
-      </TouchableOpacity>
+      </Touchable>
     ),
     [COLORS, handleItemPress],
   );
@@ -485,8 +490,13 @@ export default observer(function SearchScreen(): JSX.Element {
                 accessibilityLabel="Search or ask a question"
               />
               {hasQuery && (
-                <TouchableOpacity
+                /* Also hitSlop rather than a 44pt minimum — the send button is
+                   sized to fit inside the input row's height. */
+                <Touchable
                   style={[styles.sendButton, { backgroundColor: COLORS.BRAND }]}
+                  borderless
+                  rippleColor={COLORS.PRIMARY_LIGHT}
+                  hitSlop={10}
                   onPress={handleSend}
                   disabled={isSearching}
                   accessibilityLabel="Send"
@@ -497,7 +507,7 @@ export default observer(function SearchScreen(): JSX.Element {
                     size={16}
                     color={COLORS.PRIMARY_LIGHT}
                   />
-                </TouchableOpacity>
+                </Touchable>
               )}
             </View>
           </View>
@@ -692,6 +702,7 @@ const styles = StyleSheet.create({
   userDataItem: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: 44,
     paddingHorizontal: 12,
     paddingVertical: 10,
     gap: 8,
