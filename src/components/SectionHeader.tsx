@@ -54,21 +54,23 @@ export default function SectionHeader({
   const { sectionHeaderRef } = React.useContext(TutorialSpotlightContext);
 
   return (
-    <View ref={sectionHeaderRef} style={styles.container}>
+    <View style={styles.container}>
       <View style={styles.row}>
         {leading}
         <View style={styles.labels}>
-          <Text
-            {...rest}
-            style={[styles.title, { color: COLORS.PRIMARY_DARK }, style]}
-          >
-            {title ?? children}
-          </Text>
-          {subtitle ? (
-            <Text style={[styles.subtitle, { color: COLORS.MUTED }]}>
-              {subtitle}
+          <View ref={sectionHeaderRef} style={styles.labelContent}>
+            <Text
+              {...rest}
+              style={[styles.title, { color: COLORS.PRIMARY_DARK }, style]}
+            >
+              {title ?? children}
             </Text>
-          ) : null}
+            {subtitle ? (
+              <Text style={[styles.subtitle, { color: COLORS.MUTED }]}>
+                {subtitle}
+              </Text>
+            ) : null}
+          </View>
         </View>
         {trailing}
       </View>
@@ -89,6 +91,9 @@ const styles = StyleSheet.create({
   },
   labels: {
     flex: 1,
+  },
+  labelContent: {
+    alignSelf: 'flex-start',
     gap: 3,
   },
   title: {

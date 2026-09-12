@@ -69,32 +69,38 @@ const TabBar = observer(
     // navigator instead of sitting inside it — `useNavigationState` requires a
     // navigator above it and throws here, while the container ref is reachable
     // from anywhere under NavigationContainer.
-    const [activeRoute, setActiveRoute] = useState<string | undefined>(() =>
+    const [routeStack, setRouteStack] = useState<string[]>(() =>
       navigationRef.isReady()
-        ? navigationRef.getCurrentRoute()?.name
-        : undefined,
+        ? (navigationRef.getRootState()?.routes.map((route) => route.name) ??
+          [])
+        : [],
     );
 
     useEffect(() => {
-      const syncActiveRoute = () => {
-        setActiveRoute(
-          navigationRef.isReady()
-            ? navigationRef.getCurrentRoute()?.name
-            : undefined,
+      const syncRouteStack = () => {
+        if (!navigationRef.isReady()) {
+          setRouteStack([]);
+          return;
+        }
+        setRouteStack(
+          navigationRef.getRootState()?.routes.map((route) => route.name) ?? [],
         );
       };
 
       // The container may not be ready on the first render; sync once now to
       // catch the case where it already is.
-      syncActiveRoute();
-      return navigationRef.addListener('state', syncActiveRoute);
+      syncRouteStack();
+      return navigationRef.addListener('state', syncRouteStack);
     }, []);
 
+    const lastTabRoute = [...routeStack]
+      .reverse()
+      .find((route) => route === 'Home' || route === 'Modules');
     const activeKey: TabKey | undefined = alertsActive
       ? 'alerts'
-      : activeRoute === 'Home'
+      : lastTabRoute === 'Home'
         ? 'home'
-        : activeRoute && activeRoute !== 'Search'
+        : lastTabRoute === 'Modules'
           ? 'modules'
           : undefined;
 

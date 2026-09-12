@@ -116,35 +116,43 @@ const ActiveToolCard = observer(() => {
   };
 
   return (
-    <Pressable
-      onPress={() =>
-        activeTool.screen && navigation.navigate(activeTool.screen)
-      }
-      accessibilityRole="button"
-      accessibilityLabel={`${activeTool.label}. ${status}. Opens the tool.`}
-      style={({ pressed }) => [
+    <View
+      style={[
         styles.card,
         { backgroundColor: COLORS.SURFACE, borderColor: COLORS.BORDER },
-        Platform.OS === 'ios' && pressed && styles.pressed,
       ]}
     >
-      <View
-        style={[styles.tile, { backgroundColor: COLORS.ACCENT }]}
-        accessible={false}
+      <Pressable
+        onPress={() =>
+          activeTool.screen && navigation.navigate(activeTool.screen)
+        }
+        accessibilityRole="button"
+        accessibilityLabel={`${activeTool.label}. ${status}. Opens the tool.`}
+        style={({ pressed }) => [
+          styles.cardButton,
+          Platform.OS === 'ios' && pressed && styles.pressed,
+        ]}
       >
-        <Ionicons
-          name={activeTool.icon}
-          size={20}
-          color={onColor(COLORS.ACCENT)}
-        />
-      </View>
+        <View
+          style={[styles.tile, { backgroundColor: COLORS.ACCENT }]}
+          accessible={false}
+        >
+          <Ionicons
+            name={activeTool.icon}
+            size={20}
+            color={onColor(COLORS.ACCENT)}
+          />
+        </View>
 
-      <View style={styles.labels} accessible={false}>
-        <Text style={[styles.title, { color: COLORS.PRIMARY_DARK }]}>
-          {activeTool.label}
-        </Text>
-        <Text style={[styles.status, { color: COLORS.ACCENT }]}>{status}</Text>
-      </View>
+        <View style={styles.labels} accessible={false}>
+          <Text style={[styles.title, { color: COLORS.PRIMARY_DARK }]}>
+            {activeTool.label}
+          </Text>
+          <Text style={[styles.status, { color: COLORS.ACCENT }]}>
+            {status}
+          </Text>
+        </View>
+      </Pressable>
 
       <Switch
         value
@@ -152,7 +160,7 @@ const ActiveToolCard = observer(() => {
         trackColor={{ true: COLORS.ACCENT }}
         accessibilityLabel={`Stop ${activeTool.label}`}
       />
-    </Pressable>
+    </View>
   );
 });
 
@@ -168,6 +176,12 @@ const styles = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 15,
     marginBottom: SPACING.lg,
+  },
+  cardButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
   },
   pressed: {
     opacity: 0.6,
