@@ -43,8 +43,8 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
   );
 
   const clearAll = () => {
-    dismissibleNotifications.forEach((n) =>
-      notificationsStore.hideNotification(n.key),
+    notificationsStore.hideNotifications(
+      dismissibleNotifications.map((notification) => notification.key),
     );
   };
 

@@ -1,6 +1,6 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { MODULES } from '../../../constants';
 import GroupContainer from '../../components/GroupContainer';
@@ -16,17 +16,12 @@ import { MODULE_SUBTITLES } from './moduleSubtitles';
  * The app's landing screen: pick a module, and see the one time-critical fact
  * — the next solar event — without navigating anywhere.
  *
- * The module list is sorted alphabetically, matching how tools are ordered
- * inside each module.
+ * The module list preserves the long-standing module order from `MODULES`, so
+ * the redesigned shell still opens in the sequence users already know.
  */
 const HomeScreen = observer(() => {
   const navigation = useNavigation<{ navigate: (route: string) => void }>();
   const footerClearance = useFooterClearance();
-
-  const modules = useMemo(
-    () => [...MODULES].sort((a, b) => a.name.localeCompare(b.name)),
-    [],
-  );
 
   return (
     <ScreenBody>
@@ -41,13 +36,13 @@ const HomeScreen = observer(() => {
 
         <SectionEyebrow>Modules</SectionEyebrow>
         <GroupContainer>
-          {modules.map((module, index) => (
+          {MODULES.map((module, index) => (
             <ModuleRow
               key={module.id}
               title={module.name}
               icon={module.icon}
               subtitle={MODULE_SUBTITLES[module.id]}
-              showSeparator={index < modules.length - 1}
+              showSeparator={index < MODULES.length - 1}
               onPress={() => navigation.navigate(module.screen)}
             />
           ))}

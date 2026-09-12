@@ -96,6 +96,17 @@ export class NotificationsStore {
     this._persist();
   }
 
+  hideNotifications(keys: string[]): void {
+    const nextKeys = keys.filter((key) => !this.hiddenKeys.has(key));
+    if (nextKeys.length === 0) {
+      return;
+    }
+    runInAction(() => {
+      this.hiddenKeys = new Set([...this.hiddenKeys, ...nextKeys]);
+    });
+    this._persist();
+  }
+
   /**
    * Restore a previously hidden notification (un-dismiss it).
    */

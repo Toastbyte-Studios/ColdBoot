@@ -126,6 +126,8 @@ const MODULE_ROUTES = new Set([
 type Props = {
   /** Opens the alerts sheet. Owned by the host so the sheet outlives tab changes. */
   onAlertsPress: () => void;
+  /** Closes the alerts sheet when another tab is selected. */
+  onAlertsClose: () => void;
   /** Whether the alerts sheet is currently open. */
   alertsActive: boolean;
 };
@@ -142,128 +144,135 @@ type Props = {
  * flat fallback, so the bar is painted at full opacity instead. Swapping in a
  * `BlurView` behind `styles.bar` is the only change that would be needed.
  */
-const TabBar = observer(({ onAlertsPress, alertsActive }: Props) => {
-  const COLORS = useTheme();
-  const insets = useSafeAreaInsets();
-  const navigation = useNavigation<{ navigate: (route: string) => void }>();
-  const notificationCount = useVisibleNotificationCount();
+const TabBar = observer(
+  ({ onAlertsPress, onAlertsClose, alertsActive }: Props) => {
+    const COLORS = useTheme();
+    const insets = useSafeAreaInsets();
+    const navigation = useNavigation<{ navigate: (route: string) => void }>();
+    const notificationCount = useVisibleNotificationCount();
 
-  // The active route comes from the container ref rather than
-  // `useNavigationState`. The tab bar is rendered by AppShell, which wraps the
-  // navigator instead of sitting inside it — `useNavigationState` requires a
-  // navigator above it and throws here, while the container ref is reachable
-  // from anywhere under NavigationContainer.
-  const [activeRoute, setActiveRoute] = useState<string | undefined>(() =>
-    navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined,
-  );
+    // The active route comes from the container ref rather than
+    // `useNavigationState`. The tab bar is rendered by AppShell, which wraps the
+    // navigator instead of sitting inside it — `useNavigationState` requires a
+    // navigator above it and throws here, while the container ref is reachable
+    // from anywhere under NavigationContainer.
+    const [activeRoute, setActiveRoute] = useState<string | undefined>(() =>
+      navigationRef.isReady()
+        ? navigationRef.getCurrentRoute()?.name
+        : undefined,
+    );
 
-  useEffect(() => {
-    const syncActiveRoute = () => {
-      setActiveRoute(
-        navigationRef.isReady()
-          ? navigationRef.getCurrentRoute()?.name
-          : undefined,
-      );
+    useEffect(() => {
+      const syncActiveRoute = () => {
+        setActiveRoute(
+          navigationRef.isReady()
+            ? navigationRef.getCurrentRoute()?.name
+            : undefined,
+        );
+      };
+
+      // The container may not be ready on the first render; sync once now to
+      // catch the case where it already is.
+      syncActiveRoute();
+      return navigationRef.addListener('state', syncActiveRoute);
+    }, []);
+
+    const activeKey: TabKey | undefined = alertsActive
+      ? 'alerts'
+      : activeRoute === 'Home'
+        ? 'home'
+        : activeRoute && MODULE_ROUTES.has(activeRoute)
+          ? 'modules'
+          : undefined;
+
+    const handlePress = (tab: TabDefinition) => {
+      if (tab.key === 'alerts') {
+        onAlertsPress();
+        return;
+      }
+      onAlertsClose();
+      if (tab.route) {
+        navigation.navigate(tab.route);
+      }
     };
 
-    // The container may not be ready on the first render; sync once now to
-    // catch the case where it already is.
-    syncActiveRoute();
-    return navigationRef.addListener('state', syncActiveRoute);
-  }, []);
+    return (
+      <View
+        style={[
+          styles.bar,
+          {
+            height: FOOTER_HEIGHT + insets.bottom,
+            paddingBottom: insets.bottom,
+            backgroundColor: COLORS.SURFACE,
+            borderTopColor: withAlpha(COLORS.BRAND, 0.2),
+          },
+        ]}
+      >
+        {TABS.map((tab) => {
+          const isActive = activeKey === tab.key;
+          const tint = isActive ? COLORS.BRAND : COLORS.MUTED;
+          const showBadge = tab.key === 'alerts' && notificationCount > 0;
 
-  const activeKey: TabKey | undefined = alertsActive
-    ? 'alerts'
-    : activeRoute === 'Home'
-      ? 'home'
-      : activeRoute && MODULE_ROUTES.has(activeRoute)
-        ? 'modules'
-        : undefined;
-
-  const handlePress = (tab: TabDefinition) => {
-    if (tab.key === 'alerts') {
-      onAlertsPress();
-      return;
-    }
-    if (tab.route) {
-      navigation.navigate(tab.route);
-    }
-  };
-
-  return (
-    <View
-      style={[
-        styles.bar,
-        {
-          height: FOOTER_HEIGHT + insets.bottom,
-          paddingBottom: insets.bottom,
-          backgroundColor: COLORS.SURFACE,
-          borderTopColor: withAlpha(COLORS.BRAND, 0.2),
-        },
-      ]}
-    >
-      {TABS.map((tab) => {
-        const isActive = activeKey === tab.key;
-        const tint = isActive ? COLORS.BRAND : COLORS.MUTED;
-        const showBadge = tab.key === 'alerts' && notificationCount > 0;
-
-        return (
-          <Pressable
-            key={tab.key}
-            onPress={() => handlePress(tab)}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isActive }}
-            accessibilityLabel={
-              showBadge
-                ? `${tab.label}, ${notificationCount} notification${
-                    notificationCount === 1 ? '' : 's'
-                  }`
-                : tab.label
-            }
-            android_ripple={{
-              color: withAlpha(COLORS.BRAND, 0.12),
-              borderless: true,
-            }}
-            style={({ pressed }) => [
-              styles.tab,
-              Platform.OS === 'ios' && pressed && styles.pressed,
-            ]}
-          >
-            <View>
-              <Ionicons name={tab.icon} size={25} color={tint} />
-              {showBadge ? (
-                <View
-                  style={[styles.badge, { backgroundColor: COLORS.ACCENT }]}
-                >
-                  <Text
-                    style={[
-                      styles.badgeText,
-                      { color: onColor(COLORS.ACCENT) },
-                    ]}
-                  >
-                    {notificationCount > 99 ? '99+' : String(notificationCount)}
-                  </Text>
-                </View>
-              ) : null}
-            </View>
-            <Text
-              style={[
-                styles.label,
-                isActive ? styles.labelActive : styles.labelInactive,
-                { color: tint },
+          return (
+            <Pressable
+              key={tab.key}
+              onPress={() => handlePress(tab)}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isActive }}
+              accessibilityLabel={
+                showBadge
+                  ? `${tab.label}, ${notificationCount} notification${
+                      notificationCount === 1 ? '' : 's'
+                    }`
+                  : tab.label
+              }
+              android_ripple={{
+                color: withAlpha(COLORS.BRAND, 0.12),
+                borderless: true,
+              }}
+              style={({ pressed }) => [
+                styles.tab,
+                Platform.OS === 'ios' && pressed && styles.pressed,
               ]}
             >
-              {tab.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+              <View>
+                <Ionicons name={tab.icon} size={25} color={tint} />
+                {showBadge ? (
+                  <View
+                    style={[styles.badge, { backgroundColor: COLORS.ACCENT }]}
+                  >
+                    <Text
+                      style={[
+                        styles.badgeText,
+                        { color: onColor(COLORS.ACCENT) },
+                      ]}
+                    >
+                      {notificationCount > 99
+                        ? '99+'
+                        : String(notificationCount)}
+                    </Text>
+                  </View>
+                ) : null}
+              </View>
+              <Text
+                style={[
+                  styles.label,
+                  isActive ? styles.labelActive : styles.labelInactive,
+                  { color: tint },
+                ]}
+              >
+                {tab.label}
+              </Text>
+            </Pressable>
+          );
+        })}
 
-      {/* Keeps the trailing tab clear of the floating SOS button. */}
-      <View style={styles.sosReserve} />
-    </View>
-  );
-});
+        {/* Keeps the trailing tab clear of the floating SOS button. */}
+        <View style={styles.sosReserve} />
+      </View>
+    );
+  },
+);
 
 export default TabBar;
 

@@ -426,6 +426,7 @@ export default function AppShell({ children }: Props) {
           >
             <TabBar
               onAlertsPress={() => setIsAlertsVisible(true)}
+              onAlertsClose={() => setIsAlertsVisible(false)}
               alertsActive={isAlertsVisible}
             />
             <SOSFab />
