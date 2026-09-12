@@ -1,136 +1,101 @@
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React from 'react';
 import { StyleSheet, TextProps, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import { SPACING } from '../theme';
-import { LIGHT_COLORS } from '../theme/colors';
-import { HorizontalRule } from './HorizontalRule';
 import { Text } from './ScaledText';
-import Touchable from './Touchable';
 import { TutorialSpotlightContext } from './TutorialSpotlightContext';
 
 type Props = TextProps & {
   title?: string;
+  /** Secondary line under the title, e.g. "Six tools · all offline". */
+  subtitle?: string;
+  /** Rendered at the trailing edge of the title row — a module glyph, an action. */
+  trailing?: React.ReactNode;
+  /**
+   * @deprecated The teal header bar is gone; titles no longer carry a rule.
+   * Accepted so existing call sites keep compiling.
+   */
   isShowHr?: boolean;
+  /**
+   * @deprecated Search moved to the nav bar, where it is reachable from every
+   * screen rather than only from those that render a header. Accepted so
+   * existing call sites keep compiling.
+   */
   enableSearch?: boolean;
 };
 
-type SectionHeaderNavigationProp = NativeStackNavigationProp<{
-  Search: undefined;
-}>;
-
 /**
- * Renders a section header using a `Text` component.
+ * A screen's large title.
  *
- * Displays either the provided `title` prop or the `children` as the header content.
- * Additional styles can be applied via the `style` prop, and other props are spread onto the `Text` component.
+ * This was a full-width teal bar that doubled as the search affordance — a
+ * control that looked like a heading, so the app's title and its search entry
+ * point were the same tap target. Search is now an explicit icon button in the
+ * nav bar, and this is just a title.
  *
- * @param title - The text to display as the section header. If not provided, `children` will be used.
- * @param children - Alternative content to display if `title` is not specified.
- * @param style - Custom styles to apply to the header.
- * @param isShowHr - Whether to show the horizontal rule below the header. Default is true.
- * @param enableSearch - Whether clicking the header opens the search screen. Default is true.
- * @param rest - Additional props to pass to the `Text` component.
+ * The `enableSearch` and `isShowHr` props are retained as no-ops: roughly 84
+ * screens render this component, and a signature change would be an 84-file
+ * edit for no behavioural gain.
  */
 export default function SectionHeader({
   title,
+  subtitle,
+  trailing,
   children,
   style,
-  isShowHr = true,
-  enableSearch = true,
+  // Accepted and ignored — see the prop docs above.
+  isShowHr: _isShowHr,
+  enableSearch: _enableSearch,
   ...rest
 }: Props) {
-  const navigation = useNavigation<SectionHeaderNavigationProp>();
   const COLORS = useTheme();
   const { sectionHeaderRef } = React.useContext(TutorialSpotlightContext);
 
-  const handlePress = () => {
-    navigation.navigate('Search');
-  };
-
-  const header = (
-    <Text
-      {...rest}
-      numberOfLines={
-        enableSearch ? (rest.numberOfLines ?? 1) : rest.numberOfLines
-      }
-      style={[
-        styles.header,
-        enableSearch && styles.headerWithSearch,
-        {
-          color: LIGHT_COLORS.PRIMARY_DARK,
-          backgroundColor: COLORS.SECONDARY_ACCENT,
-          borderColor: COLORS.BRAND,
-        },
-        style,
-      ]}
-    >
-      {title ?? children}
-    </Text>
-  );
-
   return (
-    <>
-      {enableSearch ? (
-        <Touchable
-          ref={sectionHeaderRef}
-          onPress={handlePress}
-          style={styles.searchBar}
-          accessibilityRole="button"
-          accessibilityLabel="Search"
-          accessibilityHint="Double tap to open search screen"
-        >
-          <View style={styles.headerRow}>
-            {header}
-            <Ionicons
-              name="search-outline"
-              size={16}
-              color={LIGHT_COLORS.PRIMARY_DARK}
-              style={styles.searchIcon}
-              accessible={false}
-            />
-          </View>
-        </Touchable>
-      ) : (
-        <View ref={sectionHeaderRef}>{header}</View>
-      )}
-      {isShowHr && <HorizontalRule />}
-    </>
+    <View ref={sectionHeaderRef} style={styles.container}>
+      <View style={styles.row}>
+        <View style={styles.labels}>
+          <Text
+            {...rest}
+            style={[styles.title, { color: COLORS.PRIMARY_DARK }, style]}
+          >
+            {title ?? children}
+          </Text>
+          {subtitle ? (
+            <Text style={[styles.subtitle, { color: COLORS.MUTED }]}>
+              {subtitle}
+            </Text>
+          ) : null}
+        </View>
+        {trailing}
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    fontSize: 20,
-    fontFamily: 'Bitter-Bold',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
+  container: {
     width: '100%',
-    textAlign: 'center',
-    alignSelf: 'center',
-    marginVertical: SPACING.md,
+    paddingTop: SPACING.xs + 2,
+    paddingBottom: SPACING.lg,
   },
-  searchBar: {
-    width: '80%',
-    alignSelf: 'center',
-  },
-  headerRow: {
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    width: '100%',
-    position: 'relative',
+    gap: SPACING.md,
   },
-  searchIcon: {
-    position: 'absolute',
-    right: SPACING.md,
-    opacity: 0.6,
+  labels: {
+    flex: 1,
+    gap: 3,
   },
-  headerWithSearch: {
-    paddingHorizontal: 40,
+  title: {
+    fontSize: 32,
+    // Bitter-Bold is the bundled face; fontWeight is ignored when a named
+    // family is set, so the weight lives in the file name.
+    fontFamily: 'Bitter-Bold',
+    letterSpacing: -0.7,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    fontWeight: '400',
   },
 });

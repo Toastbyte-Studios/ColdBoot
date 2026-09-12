@@ -13,7 +13,7 @@ import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import { SPACING } from '../theme';
-import { LIGHT_COLORS } from '../theme/colors';
+import { onColor } from '../theme/colorUtils';
 import { Text } from './ScaledText';
 
 export type CardTopicProps = {
@@ -52,6 +52,13 @@ export default function CardTopic({
   const scale = useRef(new Animated.Value(1)).current;
   const opacity = useRef(new Animated.Value(1)).current;
   const COLORS = useTheme();
+
+  // The card is painted with BRAND_GRADIENT, so its label has to contrast with
+  // the gradient's end stop — not with the screen background. This used to be
+  // hardcoded to the light scheme's near-black ink, which meant the same
+  // near-black text on the same steel-blue tile in both schemes, failing
+  // contrast in light mode and ignoring the theme entirely in dark.
+  const contentColor = onColor(COLORS.BRAND_GRADIENT[1]);
 
   const bounce = () => {
     Animated.sequence([
@@ -103,16 +110,10 @@ export default function CardTopic({
             <IconComponent
               name={icon}
               size={40}
-              color={LIGHT_COLORS.PRIMARY_DARK}
+              color={contentColor}
               style={styles.icon}
             />
-            <Text
-              style={[
-                styles.title,
-                { color: LIGHT_COLORS.PRIMARY_DARK },
-                titleStyle,
-              ]}
-            >
+            <Text style={[styles.title, { color: contentColor }, titleStyle]}>
               {title}
             </Text>
           </View>

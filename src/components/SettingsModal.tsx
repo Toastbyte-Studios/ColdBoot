@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
@@ -10,7 +10,14 @@ import {
   ScrollView,
   Text as RNText,
 } from 'react-native';
+import DeviceInfo from 'react-native-device-info';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
+import {
+  OfflineMapService,
+  type OfflineMapPack,
+} from '../navigation/services/OfflineMapService';
+import { formatBytes } from '../navigation/utils/formatBytes';
 import {
   useChecklistStore,
   useDevToolsStore,
@@ -33,7 +40,8 @@ import {
   MeasurementSystem,
   ThemeMode,
 } from '../stores/SettingsStore';
-import { onColor } from '../theme/colorUtils';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
+import { withAlpha } from '../theme/colorUtils';
 import {
   BackupData,
   BackupPreview,
@@ -56,13 +64,31 @@ interface SettingsModalProps {
    * which owns that modal's visibility and navigation access.
    */
   onManageOfflineMaps?: () => void;
+  /**
+   * Opens Help, including the tutorial. The nav bar no longer carries a help
+   * button — it was one of three icons competing for the header — so this is
+   * now the way in.
+   */
+  onOpenHelp?: () => void;
 }
 
 /**
- * Settings modal component that overlays on top of the app.
- * Allows users to configure font size, theme mode, and manage data backups.
+ * Settings, presented as a sheet.
  *
- * Note: Uses React Native's Text directly to avoid scaling issues in the settings UI.
+ * Was a centred 85%-wide box of flat sections; it is now a sheet of grouped
+ * cards under uppercase eyebrows, matching the grouped lists the rest of the
+ * app uses.
+ *
+ * Three rows from the design are deliberately absent: "Night vision tint",
+ * "SOS hold duration" and "Reset all data". Each would be a control with
+ * nothing behind it — there is no global red-shift, the SOS hold is a fixed
+ * one second, and no reset action exists. A survival app is the wrong place to
+ * show a switch that only pretends to do something. "Larger text" is likewise
+ * kept as the existing three-way size control rather than demoted to a
+ * boolean, which would have dropped the medium step.
+ *
+ * Note: Uses React Native's Text directly to avoid scaling issues in the
+ * settings UI.
  */
 
 /** Formats a Unix timestamp (ms) as a locale date-time string. */
@@ -79,31 +105,49 @@ function hasPersistedCommunicationPlan(
 function makeStyles(COLORS: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
     primaryText: { color: COLORS.PRIMARY_DARK },
-    modalContainerThemed: {
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderColor: COLORS.BRAND,
+    mutedText: { color: COLORS.MUTED },
+    sheetThemed: {
+      backgroundColor: COLORS.SURFACE,
+      borderTopColor: COLORS.BORDER,
     },
-    headerThemed: {
-      backgroundColor: COLORS.SECONDARY_ACCENT,
-      borderBottomColor: COLORS.BRAND,
-    },
-    buttonDefault: {
-      borderColor: COLORS.BRAND,
+    groupThemed: {
       backgroundColor: COLORS.BACKGROUND,
+      borderColor: COLORS.BORDER,
+    },
+    separatorThemed: { backgroundColor: COLORS.SEPARATOR },
+    buttonDefault: {
+      borderColor: COLORS.BORDER,
+      backgroundColor: COLORS.SURFACE,
     },
     // Label on a BRAND-filled selection. In dark mode BRAND is pale, so the
-    // theme foreground would be pale on pale; measure it instead.
-    selectedText: { color: onColor(COLORS.BRAND) },
+    // theme foreground would be pale on pale.
+    selectedText: { color: COLORS.PRIMARY_LIGHT },
     restorePanelThemed: {
-      borderColor: COLORS.BRAND,
-      backgroundColor: COLORS.SECONDARY_ACCENT,
+      borderColor: COLORS.BORDER,
+      backgroundColor: COLORS.SURFACE,
     },
     fileItemSelected: { backgroundColor: COLORS.BRAND },
+    closeButton: { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
   });
 }
 
+/** Small uppercase label introducing a settings group. */
+function GroupLabel({ children }: { children: string }) {
+  const COLORS = useTheme();
+  return (
+    <RNText style={[styles.groupLabel, { color: COLORS.MUTED }]}>
+      {children}
+    </RNText>
+  );
+}
+
 export const SettingsModal = observer(
-  ({ visible, onClose, onManageOfflineMaps }: SettingsModalProps) => {
+  ({
+    visible,
+    onClose,
+    onManageOfflineMaps,
+    onOpenHelp,
+  }: SettingsModalProps) => {
     const settingsStore = useSettingsStore();
     const devToolsStore = useDevToolsStore();
     const coreStore = useNotesStore();
@@ -113,6 +157,7 @@ export const SettingsModal = observer(
     const pantryStore = usePantryStore();
     const repeaterBookStore = useRepeaterBookStore();
     const COLORS = useTheme();
+    const insets = useSafeAreaInsets();
     const trackStore = useTrackStore();
     const t = useMemo(() => makeStyles(COLORS), [COLORS]);
     const waypointStore = useWaypointStore();
@@ -133,6 +178,47 @@ export const SettingsModal = observer(
       null,
     );
     const [isRestoring, setIsRestoring] = useState(false);
+    const [offlinePacks, setOfflinePacks] = useState<OfflineMapPack[] | null>(
+      null,
+    );
+
+    // Summarise downloaded maps for the row's value. A Modal has no navigation
+    // focus event, so visibility is the equivalent trigger.
+    useEffect(() => {
+      if (!visible) return;
+      let ignore = false;
+      OfflineMapService.listPacks()
+        .then((packs) => {
+          if (!ignore) setOfflinePacks(packs);
+        })
+        .catch(() => {
+          // Leave the row without a value rather than guessing at one.
+          if (!ignore) setOfflinePacks(null);
+        });
+      return () => {
+        ignore = true;
+      };
+    }, [visible]);
+
+    const offlineSummary = useMemo(() => {
+      if (!offlinePacks || offlinePacks.length === 0) return undefined;
+      const bytes = offlinePacks.reduce(
+        (sum, p) => sum + (p.status?.completedResourceSize ?? 0),
+        0,
+      );
+      const areas = `${offlinePacks.length} area${
+        offlinePacks.length === 1 ? '' : 's'
+      }`;
+      return `${areas} · ${formatBytes(bytes)}`;
+    }, [offlinePacks]);
+
+    const appVersion = useMemo(() => {
+      try {
+        return DeviceInfo.getVersion();
+      } catch {
+        return null;
+      }
+    }, []);
 
     const fontSizeOptions: { value: FontSize; label: string }[] = [
       { value: 'small', label: 'Small' },
@@ -360,10 +446,15 @@ export const SettingsModal = observer(
       onManageOfflineMaps?.();
     }, [onClose, onManageOfflineMaps]);
 
+    const handleOpenHelp = useCallback(() => {
+      onClose();
+      onOpenHelp?.();
+    }, [onClose, onOpenHelp]);
+
     return (
       <Modal
         visible={visible}
-        animationType="fade"
+        animationType="slide"
         transparent
         onRequestClose={onClose}
       >
@@ -375,79 +466,106 @@ export const SettingsModal = observer(
             accessibilityRole="button"
             accessibilityHint="Tap to dismiss the settings"
           />
-          <View style={[styles.modalContainer, t.modalContainerThemed]}>
-            <View style={[styles.header, t.headerThemed]}>
+          <View
+            style={[
+              styles.sheet,
+              t.sheetThemed,
+              { marginTop: insets.top + 52 },
+            ]}
+          >
+            <View
+              style={[styles.grabber, { backgroundColor: COLORS.BORDER }]}
+            />
+
+            <View style={styles.header}>
               <RNText style={[styles.headerText, t.primaryText]}>
                 Settings
               </RNText>
-              <IconButton
-                name="close-outline"
-                size={28}
-                onPress={onClose}
-                accessibilityLabel="Close settings"
-              />
+              <View style={[styles.closeButton, t.closeButton]}>
+                <IconButton
+                  name="close-outline"
+                  size={14}
+                  onPress={onClose}
+                  accessibilityLabel="Close settings"
+                />
+              </View>
             </View>
 
-            <ScrollView style={styles.content}>
-              {/* Font Size Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Font Size
-                </RNText>
-                <SegmentedControl
-                  options={fontSizeOptions}
-                  value={settingsStore.fontSize}
-                  onChange={(size) => settingsStore.setFontSize(size)}
-                  accessibilityLabel="Font size"
-                />
+            <ScrollView
+              style={styles.content}
+              contentContainerStyle={[
+                styles.contentContainer,
+                { paddingBottom: insets.bottom + SPACING.xl },
+              ]}
+            >
+              {/* ── Appearance ─────────────────────────────────────────── */}
+              <GroupLabel>APPEARANCE</GroupLabel>
+              <View style={[styles.group, t.groupThemed]}>
+                <View style={styles.stackedRow}>
+                  <RNText style={[styles.rowTitle, t.primaryText]}>
+                    Theme
+                  </RNText>
+                  <SegmentedControl
+                    options={themeModeOptions}
+                    value={settingsStore.themeMode}
+                    onChange={(mode) => settingsStore.setThemeMode(mode)}
+                    accessibilityLabel="Theme"
+                  />
+                </View>
+
+                <View style={[styles.separator, t.separatorThemed]} />
+
+                <View style={styles.stackedRow}>
+                  <RNText style={[styles.rowTitle, t.primaryText]}>
+                    Text size
+                  </RNText>
+                  <SegmentedControl
+                    options={fontSizeOptions}
+                    value={settingsStore.fontSize}
+                    onChange={(size) => settingsStore.setFontSize(size)}
+                    accessibilityLabel="Text size"
+                  />
+                </View>
               </View>
 
-              {/* Theme Mode Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Theme
-                </RNText>
-                <SegmentedControl
-                  options={themeModeOptions}
-                  value={settingsStore.themeMode}
-                  onChange={(mode) => settingsStore.setThemeMode(mode)}
-                  accessibilityLabel="Theme"
-                />
-              </View>
-
-              {/* Measurement System Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Measurement System
-                </RNText>
-                <SegmentedControl
-                  options={measurementSystemOptions}
-                  value={settingsStore.measurementSystem}
-                  onChange={(system) =>
-                    settingsStore.setMeasurementSystem(system)
+              {/* ── Offline data ───────────────────────────────────────── */}
+              <GroupLabel>OFFLINE DATA</GroupLabel>
+              <View style={[styles.group, t.groupThemed]}>
+                <Touchable
+                  style={styles.row}
+                  onPress={handleManageOfflineMaps}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    offlineSummary
+                      ? `Offline maps, ${offlineSummary}`
+                      : 'Offline maps'
                   }
-                  accessibilityLabel="Measurement system"
-                />
-                <RNText style={[styles.optionCaption, t.primaryText]}>
-                  {settingsStore.measurementSystem === 'imperial'
-                    ? '°F, ft, mph'
-                    : '°C, m, km/h'}
-                </RNText>
-              </View>
+                >
+                  <RNText style={[styles.rowTitle, t.primaryText]}>
+                    Offline maps
+                  </RNText>
+                  {offlineSummary ? (
+                    <RNText style={[styles.rowValue, t.mutedText]}>
+                      {offlineSummary}
+                    </RNText>
+                  ) : null}
+                  <IconButton
+                    name="chevron-forward-outline"
+                    size={16}
+                    color={COLORS.CHEVRON}
+                    onPress={handleManageOfflineMaps}
+                    accessibilityLabel="Manage offline maps"
+                  />
+                </Touchable>
 
-              {/* Offline Maps Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Offline Maps
-                </RNText>
+                <View style={[styles.separator, t.separatorThemed]} />
 
-                {/* High-detail toggle */}
                 <View style={styles.toggleRow}>
                   <View style={styles.toggleLabel}>
-                    <RNText style={[styles.toggleTitle, t.primaryText]}>
+                    <RNText style={[styles.rowTitle, t.primaryText]}>
                       High detail (z8–14)
                     </RNText>
-                    <RNText style={[styles.toggleHint, t.primaryText]}>
+                    <RNText style={[styles.rowSubtitle, t.mutedText]}>
                       New downloads include building detail. Uses ~2× storage.
                     </RNText>
                   </View>
@@ -461,31 +579,39 @@ export const SettingsModal = observer(
                   />
                 </View>
 
-                {/* Manage offline maps entry */}
-                <AppButton
-                  label="Manage offline maps"
-                  icon="map-outline"
-                  variant="tinted"
-                  fullWidth
-                  onPress={handleManageOfflineMaps}
-                  style={styles.actionButton}
-                />
+                <View style={[styles.separator, t.separatorThemed]} />
+
+                <View style={styles.stackedRow}>
+                  <View style={styles.stackedHeading}>
+                    <RNText style={[styles.rowTitle, t.primaryText]}>
+                      Units
+                    </RNText>
+                    <RNText style={[styles.rowValue, t.mutedText]}>
+                      {settingsStore.measurementSystem === 'imperial'
+                        ? '°F, ft, mph'
+                        : '°C, m, km/h'}
+                    </RNText>
+                  </View>
+                  <SegmentedControl
+                    options={measurementSystemOptions}
+                    value={settingsStore.measurementSystem}
+                    onChange={(system) =>
+                      settingsStore.setMeasurementSystem(system)
+                    }
+                    accessibilityLabel="Measurement system"
+                  />
+                </View>
               </View>
 
-              {/* Data & Backup Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Data &amp; Backup
-                </RNText>
-
-                {/* Last backup timestamp */}
-                <RNText style={[styles.backupStatus, t.primaryText]}>
+              {/* ── Backup ─────────────────────────────────────────────── */}
+              <GroupLabel>BACKUP &amp; RESTORE</GroupLabel>
+              <View style={[styles.group, t.groupThemed, styles.groupPadded]}>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
                   {settingsStore.lastBackupAt
                     ? `Last backed up: ${formatBackupDate(settingsStore.lastBackupAt)}`
                     : 'No backup yet'}
                 </RNText>
 
-                {/* Export Now button */}
                 <AppButton
                   label="Export Now"
                   icon="share-outline"
@@ -497,7 +623,6 @@ export const SettingsModal = observer(
                   style={styles.actionButton}
                 />
 
-                {/* Restore from Backup button */}
                 <AppButton
                   label="Restore from Backup"
                   icon="cloud-download-outline"
@@ -529,7 +654,7 @@ export const SettingsModal = observer(
                     </View>
 
                     {backupFiles.length === 0 ? (
-                      <RNText style={[styles.noFilesText, t.primaryText]}>
+                      <RNText style={[styles.noFilesText, t.mutedText]}>
                         No backup files found. Export a backup first, then save
                         it to your Documents folder to restore.
                       </RNText>
@@ -569,7 +694,7 @@ export const SettingsModal = observer(
                         <RNText style={[styles.previewTitle, t.primaryText]}>
                           Backup from {backupPreview.backupDate}
                         </RNText>
-                        <RNText style={[styles.previewText, t.primaryText]}>
+                        <RNText style={[styles.previewText, t.mutedText]}>
                           {backupPreview.pantryItemCount} pantry items,{' '}
                           {backupPreview.inventoryItemCount} inventory items,{' '}
                           {backupPreview.noteCount} notes,{' '}
@@ -607,48 +732,68 @@ export const SettingsModal = observer(
                 )}
               </View>
 
-              {/* Developer Section — shown only in dev builds via __DEV__. */}
-              {__DEV__ && (
-                <View style={styles.section}>
-                  <RNText style={[styles.sectionTitle, t.primaryText]}>
-                    Developer
-                  </RNText>
-
-                  {/* Simulate offline toggle (QA tooling) */}
-                  <View style={styles.toggleRow}>
-                    <View style={styles.toggleLabel}>
-                      <RNText style={[styles.toggleTitle, t.primaryText]}>
-                        Simulate offline
-                      </RNText>
-                      <RNText style={[styles.toggleHint, t.primaryText]}>
-                        Blocks map tile requests to test offline behavior
-                        without toggling airplane mode. Resets on app launch.
-                      </RNText>
-                    </View>
-                    <Switch
-                      value={devToolsStore.simulatedOffline}
-                      onValueChange={(value) =>
-                        devToolsStore.setSimulatedOffline(value)
-                      }
-                      trackColor={{ true: COLORS.BRAND }}
-                      accessibilityLabel="Simulate offline mode (dev only)"
+              {/* ── Help ───────────────────────────────────────────────── */}
+              {onOpenHelp ? (
+                <>
+                  <GroupLabel>HELP</GroupLabel>
+                  <View
+                    style={[styles.group, t.groupThemed, styles.groupPadded]}
+                  >
+                    <AppButton
+                      label="Help & tutorial"
+                      icon="help-circle-outline"
+                      variant="tinted"
+                      fullWidth
+                      onPress={handleOpenHelp}
+                      accessibilityLabel="Open help and tutorial"
                     />
                   </View>
-                </View>
+                </>
+              ) : null}
+
+              {/* Developer Section — shown only in dev builds via __DEV__. */}
+              {__DEV__ && (
+                <>
+                  <GroupLabel>DEVELOPER</GroupLabel>
+                  <View style={[styles.group, t.groupThemed]}>
+                    <View style={styles.toggleRow}>
+                      <View style={styles.toggleLabel}>
+                        <RNText style={[styles.rowTitle, t.primaryText]}>
+                          Simulate offline
+                        </RNText>
+                        <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                          Blocks map tile requests to test offline behavior
+                          without toggling airplane mode. Resets on app launch.
+                        </RNText>
+                      </View>
+                      <Switch
+                        value={devToolsStore.simulatedOffline}
+                        onValueChange={(value) =>
+                          devToolsStore.setSimulatedOffline(value)
+                        }
+                        trackColor={{ true: COLORS.BRAND }}
+                        accessibilityLabel="Simulate offline mode (dev only)"
+                      />
+                    </View>
+                  </View>
+                </>
               )}
 
-              {/* Attribution Section */}
-              <View style={styles.section}>
-                <RNText style={[styles.sectionTitle, t.primaryText]}>
-                  Attributions
-                </RNText>
-                <RNText style={[styles.attributionText, t.primaryText]}>
+              {/* ── Attributions ───────────────────────────────────────── */}
+              <GroupLabel>ATTRIBUTIONS</GroupLabel>
+              <View style={[styles.group, t.groupThemed, styles.groupPadded]}>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
                   Knot diagrams sourced from Wikimedia Commons contributors,
                   licensed under CC BY-SA 3.0
                   (https://creativecommons.org/licenses/by-sa/3.0/) except where
                   noted as Public Domain.
                 </RNText>
               </View>
+
+              <RNText style={[styles.footer, { color: COLORS.CHEVRON }]}>
+                {appVersion ? `ColdBoot ${appVersion} · ` : 'ColdBoot · '}
+                Toastbyte Studios
+              </RNText>
             </ScrollView>
           </View>
         </View>
@@ -657,87 +802,132 @@ export const SettingsModal = observer(
   },
 );
 
+const hairline =
+  StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: 'rgba(29, 31, 32, 0.28)',
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: '85%',
-    maxWidth: 500,
-    borderRadius: 16,
-    borderWidth: 3,
-    maxHeight: '80%',
+  sheet: {
+    flex: 1,
+    borderTopLeftRadius: RADIUS.sheet,
+    borderTopRightRadius: RADIUS.sheet,
+    borderTopWidth: hairline,
     overflow: 'hidden',
+  },
+  grabber: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: SPACING.sm,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 2,
+    paddingHorizontal: SCREEN_GUTTER,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
   },
   headerText: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontFamily: 'Bitter-Bold',
+    letterSpacing: -0.4,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   content: {
-    padding: 20,
+    flex: 1,
   },
-  section: {
-    marginBottom: 32,
+  contentContainer: {
+    paddingHorizontal: SCREEN_GUTTER,
   },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 8,
+  groupLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.99,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
-  optionCaption: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 6,
+  group: {
+    borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
+  },
+  groupPadded: {
+    padding: SPACING.lg,
+  },
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    minHeight: 48,
+    paddingVertical: 13,
+    paddingHorizontal: SPACING.lg,
+  },
+  stackedRow: {
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    gap: SPACING.sm,
+  },
+  stackedHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   toggleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 12,
+    gap: SPACING.md,
+    paddingVertical: 13,
+    paddingHorizontal: SPACING.lg,
   },
   toggleLabel: {
     flex: 1,
-    marginRight: 12,
+    gap: 2,
   },
-  toggleTitle: {
-    fontSize: 16,
+  rowTitle: {
+    flex: 1,
+    fontSize: 15.5,
+    fontWeight: '500',
+  },
+  rowValue: {
+    fontSize: 15.5,
     fontWeight: '600',
   },
-  toggleHint: {
-    fontSize: 12,
-    opacity: 0.7,
-    marginTop: 2,
+  rowSubtitle: {
+    fontSize: 12.5,
+    lineHeight: 18,
   },
-  backupStatus: {
-    fontSize: 13,
-    marginBottom: 12,
-    opacity: 0.7,
+  separator: {
+    height: hairline,
+    marginLeft: SPACING.lg,
   },
   actionButton: {
-    marginBottom: 10,
+    marginTop: SPACING.md,
   },
   restorePanel: {
     borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginTop: 4,
+    borderRadius: 12,
+    padding: SPACING.md,
+    marginTop: SPACING.md,
   },
   restorePanelHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: SPACING.sm,
   },
   restorePanelTitle: {
     fontSize: 15,
@@ -745,15 +935,14 @@ const styles = StyleSheet.create({
   },
   noFilesText: {
     fontSize: 13,
-    opacity: 0.8,
     lineHeight: 18,
   },
   fileItem: {
     minHeight: 44,
     justifyContent: 'center',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 6,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    borderRadius: 8,
     borderWidth: 1,
     marginBottom: 6,
   },
@@ -762,29 +951,28 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   previewContainer: {
-    marginTop: 12,
+    marginTop: SPACING.md,
   },
   previewTitle: {
     fontSize: 14,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: SPACING.xs,
   },
   previewText: {
     fontSize: 13,
-    opacity: 0.85,
-    marginBottom: 10,
+    marginBottom: SPACING.sm,
     lineHeight: 18,
   },
   restoreButtons: {
     flexDirection: 'row',
-    gap: 10,
+    gap: SPACING.sm,
   },
   restoreButton: {
     flex: 1,
   },
-  attributionText: {
-    fontSize: 13,
-    lineHeight: 19,
-    opacity: 0.85,
+  footer: {
+    fontSize: 11.5,
+    textAlign: 'center',
+    marginTop: SPACING.xl,
   },
 });

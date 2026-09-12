@@ -1,25 +1,25 @@
 import { useNavigation } from '@react-navigation/native';
-import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { MODULES } from '../../../constants';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import ScreenBody from '../../components/ScreenBody';
-import SectionEyebrow from '../../components/SectionEyebrow';
+import SectionHeader from '../../components/SectionHeader';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { SCREEN_GUTTER } from '../../theme';
-import SolarCycleCard from './components/SolarCycleCard';
 import { MODULE_SUBTITLES } from './moduleSubtitles';
 
 /**
- * The app's landing screen: pick a module, and see the one time-critical fact
- * — the next solar event — without navigating anywhere.
+ * The Modules tab: the full module list, with a title and no solar card.
  *
- * The module list is sorted alphabetically, matching how tools are ordered
- * inside each module.
+ * The handoff left this tab undesigned, noting it would otherwise repeat
+ * Home's list. It does repeat it — deliberately: a tab that navigates
+ * somewhere the user already is would be worse than one that gives the list
+ * its own titled screen. Worth revisiting once the tab earns content of its
+ * own.
  */
-const HomeScreen = observer(() => {
+export default function ModulesScreen() {
   const navigation = useNavigation<{ navigate: (route: string) => void }>();
   const footerClearance = useFooterClearance();
 
@@ -37,9 +37,7 @@ const HomeScreen = observer(() => {
           { paddingBottom: footerClearance },
         ]}
       >
-        <SolarCycleCard />
-
-        <SectionEyebrow>Modules</SectionEyebrow>
+        <SectionHeader title="Modules" subtitle="Everything ColdBoot can do" />
         <GroupContainer>
           {modules.map((module, index) => (
             <ModuleRow
@@ -55,9 +53,7 @@ const HomeScreen = observer(() => {
       </ScrollView>
     </ScreenBody>
   );
-});
-
-export default HomeScreen;
+}
 
 const styles = StyleSheet.create({
   scroll: {
@@ -67,6 +63,5 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: SCREEN_GUTTER,
-    paddingTop: 4,
   },
 });

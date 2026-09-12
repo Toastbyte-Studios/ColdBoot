@@ -3,11 +3,25 @@ import { AppNotification } from '../../stores/NotificationsStore';
 import { SolarEventType } from '../../stores/SolarCycleNotificationStore';
 import {
   useAstronomyEventStore,
+  useNotificationsStore,
   usePantryStore,
   useSolarCycleNotificationStore,
   useWeatherOutlookStore,
 } from '../../stores/StoreContext';
 import { formatDaysUntil } from '../../utils/formatDaysUntil';
+
+/**
+ * Count of notifications the user has not hidden.
+ *
+ * Derived from {@link useAllNotifications} so the tab bar badge and the alerts
+ * sheet can never disagree about how many there are.
+ */
+export function useVisibleNotificationCount(): number {
+  const allNotifications = useAllNotifications();
+  const notificationsStore = useNotificationsStore();
+  return allNotifications.filter((n) => !notificationsStore.isHidden(n.key))
+    .length;
+}
 
 /**
  * Builds the full list of current in-app notifications across all sources

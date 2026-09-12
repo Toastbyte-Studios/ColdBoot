@@ -1,22 +1,37 @@
+import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { CORE_TOOLS } from '../../../constants';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import ToolList from '../../components/ToolList';
+import ModuleScreen from '../../components/ModuleScreen';
+import { useDeviceStatus } from '../../hooks/useDeviceStatus';
+import { useNotesStore } from '../../stores/StoreContext';
 
 /**
- * Renders the Core tools screen.
+ * The Core module: the tools that work with nothing but the device itself.
  *
- * Displays a section header labeled "Core" and a list of tools sourced from
- * {@link CORE_TOOLS}, wrapped within the standard {@link ScreenBody} layout.
- *
- * @returns A React element representing the Core module screen.
+ * Two rows carry live values, because a number the app already knows is worth
+ * more on the list than behind a tap — battery level in particular, which is
+ * the constraint every other tool here spends.
  */
-export default function CoreModule() {
+const CoreModule = observer(() => {
+  const notes = useNotesStore();
+  const { batteryLevel } = useDeviceStatus();
+
+  const values: Record<string, string> = {};
+  if (batteryLevel != null) {
+    values.core_device_status = `${Math.round(batteryLevel * 100)}%`;
+  }
+  if (notes.notes.length > 0) {
+    values.core_notepad = String(notes.notes.length);
+  }
+
   return (
-    <ScreenBody>
-      <SectionHeader>Core</SectionHeader>
-      <ToolList tools={CORE_TOOLS} />
-    </ScreenBody>
+    <ModuleScreen
+      title="Core"
+      icon="pulse-outline"
+      tools={CORE_TOOLS}
+      values={values}
+    />
   );
-}
+});
+
+export default CoreModule;

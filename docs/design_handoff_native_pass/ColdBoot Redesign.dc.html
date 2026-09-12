@@ -1,0 +1,5119 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet data-dc-atomics
+        ><meta name="design_doc_mode" content="canvas" /><link
+          rel="preconnect"
+          href="https://fonts.googleapis.com"
+        /><link
+          rel="stylesheet"
+          href="https://fonts.googleapis.com/css2?family=Bitter:wght@500;600;700&display=swap"
+        /><style>
+          body {
+            margin: 0;
+            background: #e9edf1;
+            font-family: -apple-system, system-ui, sans-serif;
+          }
+          a {
+            color: #2f5875;
+          }
+          a:hover {
+            color: #1d1f20;
+          }
+          .dv-turn {
+            padding: 40px 44px 32px;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+            scroll-margin-top: 16px;
+          }
+          .dv-thd {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            margin: 0 0 6px;
+          }
+          .dv-tid {
+            font:
+              600 10px ui-monospace,
+              Menlo,
+              monospace;
+            padding: 3px 7px;
+            background: #1d1f20;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+          }
+          .dv-tname {
+            font:
+              600 13px/1.2 system-ui,
+              sans-serif;
+            color: #1d1f20;
+          }
+          .dv-note {
+            margin: 0 0 22px;
+            max-width: 760px;
+            font:
+              13px/1.55 system-ui,
+              sans-serif;
+            color: rgba(29, 31, 32, 0.6);
+          }
+          .dv-opts {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 28px;
+            align-items: flex-start;
+          }
+          .dv-opt {
+            flex: none;
+            display: flex;
+            flex-direction: column;
+            gap: 9px;
+            scroll-margin-top: 16px;
+          }
+          .dv-oid {
+            font:
+              600 10.5px ui-monospace,
+              Menlo,
+              monospace;
+            padding: 3px 7px;
+            background: rgba(29, 31, 32, 0.09);
+            color: #1d1f20;
+            border-radius: 5px;
+            text-decoration: none;
+          }
+          .dv-olabel {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            font:
+              400 11.5px/1.3 system-ui,
+              sans-serif;
+            color: rgba(29, 31, 32, 0.55);
+          }
+          .dv-opt:target .dv-oid {
+            background: #2f5875;
+            color: #fff;
+          }
+          .dv-next {
+            margin: 22px 0 0;
+            font:
+              12px/1.5 system-ui,
+              sans-serif;
+            color: rgba(29, 31, 32, 0.5);
+          }
+        </style></helmet
+      >
+
+      <section class="dv-turn" id="t1">
+        <div class="dv-thd">
+          <a class="dv-tid" href="#t1">1</a
+          ><span class="dv-tname">ColdBoot — native iOS pass</span>
+        </div>
+        <p class="dv-note">
+          Topic rows now read from the theme instead of a fixed steel gradient:
+          a grouped inset list on the ground color, hairline separators, tinted
+          icon tiles. The footer becomes a real tab bar (Home / Modules /
+          Alerts) in glass, with SOS lifted out as a red floating action that
+          still needs a one-second hold. Header shrinks to a nav bar with the
+          real mark from assets/coldboot-assets; search moved to a header icon.
+          Type is SF for interface, Bitter kept for the wordmark and hero
+          numbers.
+        </p>
+
+        <div class="dv-opts">
+          <div class="dv-opt" id="1a">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1a">1a</a>Home — refined native, light
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  background: linear-gradient(
+                    180deg,
+                    #f1f7fb 0%,
+                    #dcecf7 52%,
+                    #c9deec 100%
+                  );
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 11px;
+                    padding: 58px 16px 10px;
+                  "
+                >
+                  <svg
+                    width="34"
+                    height="34"
+                    viewBox="0 0 120 120"
+                    style="
+                      flex: none;
+                      border-radius: 10px;
+                      box-shadow: 0 1px 2px rgba(29, 31, 32, 0.12);
+                    "
+                  >
+                    <defs>
+                      <linearGradient
+                        id="cbTileL"
+                        x1="0"
+                        y1="0"
+                        x2="0.5"
+                        y2="0.87"
+                      >
+                        <stop offset="0" stop-color="#DCECF7"></stop>
+                        <stop offset="1" stop-color="#A9C5DA"></stop>
+                      </linearGradient>
+                      <clipPath id="cbTileClipL">
+                        <rect width="120" height="120" rx="26.5"></rect>
+                      </clipPath>
+                    </defs>
+                    <rect
+                      width="120"
+                      height="120"
+                      rx="26.5"
+                      fill="url(#cbTileL)"
+                    ></rect>
+                    <g clip-path="url(#cbTileClipL)">
+                      <path
+                        fill="#1D1F20"
+                        fill-rule="evenodd"
+                        transform="rotate(-7 60 60) scale(0.84) translate(11 11)"
+                        d="M60 8 C47 8 39 15 36 26 C33 37 36 47 39 54 C42 61 47 64 47 70 C47 76 44 79 44 85 C44 97 48 112 60 112 C72 112 77 97 77 85 C77 79 74 76 74 70 C74 64 79 61 82 54 C85 47 88 37 85 26 C82 15 73 8 60 8 Z M39 30 L60 23 L81 30 L81 35 L60 28 L39 35 Z M38.5 44 L60 37 L81.5 44 L81.5 49 L60 42 L38.5 49 Z M60 67 a8 8 0 1 0 0 16 a8 8 0 1 0 0 -16 Z M60 71 a4 4 0 1 0 0 8 a4 4 0 1 0 0 -8 Z M57.5 64 h5 v11 h-5 Z M47 95 L60 89 L73 95 L73 100 L60 94 L47 100 Z"
+                      ></path>
+                    </g>
+                  </svg>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1px;
+                      flex: 1;
+                      min-width: 0;
+                    "
+                  >
+                    <div
+                      style="
+                        font:
+                          700 17px/1.15 Bitter,
+                          Georgia,
+                          serif;
+                        color: #1d1f20;
+                        letter-spacing: -0.2px;
+                      "
+                    >
+                      ColdBoot
+                    </div>
+                    <div
+                      style="
+                        font:
+                          500 11.5px/1.2 -apple-system,
+                          system-ui;
+                        color: #557286;
+                      "
+                    >
+                      Friday, September 11 · Offline ready
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <div
+                      style="
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 17px;
+                        background: rgba(255, 255, 255, 0.72);
+                        border: 0.5px solid rgba(47, 88, 117, 0.18);
+                        box-shadow: 0 1px 2px rgba(29, 31, 32, 0.06);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="11"
+                          cy="11"
+                          r="6.5"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                        />
+                        <path
+                          d="M16 16l4.5 4.5"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      style="
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 17px;
+                        background: rgba(255, 255, 255, 0.72);
+                        border: 0.5px solid rgba(47, 88, 117, 0.18);
+                        box-shadow: 0 1px 2px rgba(29, 31, 32, 0.06);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3.2"
+                          stroke="#2F5875"
+                          stroke-width="1.7"
+                        />
+                        <path
+                          d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"
+                          stroke="#2F5875"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    flex: 1;
+                    overflow: hidden;
+                    padding: 6px 16px 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #f7fafc;
+                      border: 1px solid #a9c5da;
+                      border-radius: 20px;
+                      padding: 15px 17px 13px;
+                      box-shadow:
+                        0 1px 2px rgba(29, 31, 32, 0.05),
+                        0 8px 20px rgba(47, 88, 117, 0.07);
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: space-between;
+                        gap: 12px;
+                      "
+                    >
+                      <div
+                        style="display: flex; flex-direction: column; gap: 3px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10.5px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.09em;
+                          "
+                        >
+                          SOLAR CYCLE
+                        </div>
+                        <div
+                          style="
+                            font:
+                              600 27px/1.1 Bitter,
+                              Georgia,
+                              serif;
+                            color: #1d1f20;
+                            letter-spacing: -0.5px;
+                          "
+                        >
+                          Sunset 7:42<span
+                            style="font-size: 15px; letter-spacing: 0"
+                          >
+                            PM</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            font:
+                              500 13px/1.3 -apple-system,
+                              system-ui;
+                            color: #557286;
+                          "
+                        >
+                          in 2h 08m · golden hour from 6:55
+                        </div>
+                      </div>
+                      <svg
+                        width="78"
+                        height="54"
+                        viewBox="0 0 78 54"
+                        fill="none"
+                        style="flex: none; margin-top: 2px"
+                      >
+                        <path
+                          d="M4 46a35 35 0 0170 0"
+                          stroke="#A9C5DA"
+                          stroke-width="1.5"
+                          stroke-dasharray="3 4"
+                        />
+                        <path
+                          d="M4 46a35 35 0 0152.5-30.3"
+                          stroke="#2F5875"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        />
+                        <circle cx="56.5" cy="15.7" r="5.5" fill="#B45309" />
+                        <path
+                          d="M0 46h78"
+                          stroke="#A9C5DA"
+                          stroke-width="1.5"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      style="
+                        height: 1px;
+                        background: #dcecf7;
+                        margin: 13px -17px 11px;
+                      "
+                    ></div>
+                    <div style="display: flex; gap: 18px">
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          PRESSURE
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                          "
+                        >
+                          30.08 in ↓
+                        </div>
+                      </div>
+                      <div style="width: 1px; background: #dcecf7"></div>
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          MOON
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                          "
+                        >
+                          Waxing 78%
+                        </div>
+                      </div>
+                      <div style="width: 1px; background: #dcecf7"></div>
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          FIX
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #2f6f7a;
+                          "
+                        >
+                          GPS locked
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 7px">
+                    <div
+                      style="
+                        font:
+                          600 11px/1 -apple-system,
+                          system-ui;
+                        color: #557286;
+                        letter-spacing: 0.09em;
+                        padding-left: 4px;
+                      "
+                    >
+                      MODULES
+                    </div>
+                    <div
+                      style="
+                        background: #f7fafc;
+                        border: 1px solid #a9c5da;
+                        border-radius: 18px;
+                        overflow: hidden;
+                      "
+                    >
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M3 11.5c0-3.3 3-6 6.8-6s6.7 2.7 6.7 6-3 6-6.7 6c-.9 0-1.7-.1-2.5-.4L3.8 18.4l.9-2.7A5.9 5.9 0 013 11.5z"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                            <path
+                              d="M17.6 8.2c2 .8 3.4 2.5 3.4 4.6 0 1.4-.6 2.6-1.6 3.5l.8 2.4-2.3-.8c-.7.2-1.4.4-2.2.4"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Comms
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Morse · whistle · frequencies
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M2.5 13h3.2l2-6 3 11 2.3-7.5 1.6 2.5h3.4"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                            <circle
+                              cx="20.5"
+                              cy="13"
+                              r="1.4"
+                              stroke="#2F5875"
+                              stroke-width="1.5"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Core
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Flashlight · notepad · status
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M3.4 9.5h4l2 3-1.5 3 2 4M20.6 9h-4l-2.5 2.5 1 3 3-1"
+                              stroke="#2F5875"
+                              stroke-width="1.5"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Earth
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Sun · moon · pressure · sky
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M15 9l-2.2 5.2L7.6 16l2.2-5.2L15 9z"
+                              stroke="#2F5875"
+                              stroke-width="1.5"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Navigation
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Offline maps · grid · star map
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M12 2.8l7 2.6v6c0 4.4-3 8-7 9.8-4-1.8-7-5.4-7-9.8v-6l7-2.6z"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                            <path
+                              d="M8.6 12l2.4 2.4 4.4-4.6"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Prepper
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Pantry · inventory · planning
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M12 6.5C10.2 5 7.6 4.4 4 4.6v13c3.6-.2 6.2.4 8 1.9 1.8-1.5 4.4-2.1 8-1.9v-13c-3.6-.2-6.2.4-8 1.9zM12 6.5v12.9"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Reference
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                          >
+                            Health · survival · weather
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="position: relative; height: 88px; flex: none">
+                  <div
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      height: 82px;
+                      background: rgba(247, 250, 252, 0.82);
+                      backdrop-filter: blur(18px) saturate(180%);
+                      -webkit-backdrop-filter: blur(18px) saturate(180%);
+                      border-top: 0.5px solid rgba(47, 88, 117, 0.2);
+                      display: flex;
+                      align-items: flex-start;
+                      padding: 9px 0 0;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M3.5 10.8L12 4l8.5 6.8V20a1 1 0 01-1 1h-15a1 1 0 01-1-1v-9.2z"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.3 21v-6.3h5.4V21"
+                          stroke="#2F5875"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            590 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #2f5875;
+                        "
+                      >
+                        Home
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <rect
+                          x="3.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="13.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="3.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="13.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #557286;
+                        "
+                      >
+                        Modules
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                        position: relative;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 3.5a5.5 5.5 0 00-5.5 5.5c0 4-1.5 5.5-2.5 6.5h16c-1-1-2.5-2.5-2.5-6.5A5.5 5.5 0 0012 3.5z"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.8 19a2.4 2.4 0 004.4 0"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #557286;
+                        "
+                      >
+                        Alerts
+                      </div>
+                      <div
+                        style="
+                          position: absolute;
+                          top: -2px;
+                          right: calc(50% - 22px);
+                          min-width: 17px;
+                          height: 17px;
+                          border-radius: 9px;
+                          background: #b45309;
+                          color: #fff;
+                          font:
+                            700 10.5px/17px -apple-system,
+                            system-ui;
+                          text-align: center;
+                          padding: 0 4px;
+                        "
+                      >
+                        3
+                      </div>
+                    </div>
+                    <div style="width: 84px"></div>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      right: 18px;
+                      bottom: 24px;
+                      width: 62px;
+                      height: 62px;
+                      border-radius: 31px;
+                      background: #c62828;
+                      box-shadow:
+                        0 6px 18px rgba(198, 40, 40, 0.42),
+                        0 2px 4px rgba(29, 31, 32, 0.2);
+                      border: 2px solid rgba(255, 255, 255, 0.34);
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 1px;
+                    "
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 4.2l8.4 15H3.6L12 4.2z"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M12 10v3.6"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                      />
+                      <circle cx="12" cy="16.4" r="1.05" fill="#fff" />
+                    </svg>
+                    <div
+                      style="
+                        font:
+                          800 10px/1 -apple-system,
+                          system-ui;
+                        color: #fff;
+                        letter-spacing: 0.06em;
+                      "
+                    >
+                      SOS
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+
+          <div class="dv-opt" id="1b">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1b">1b</a>Home — same system, dark
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              dark="{{ true }}"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  background: linear-gradient(
+                    180deg,
+                    #1b2f42 0%,
+                    #152532 46%,
+                    #0b131a 100%
+                  );
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 11px;
+                    padding: 58px 16px 10px;
+                  "
+                >
+                  <svg
+                    width="34"
+                    height="34"
+                    viewBox="0 0 120 120"
+                    style="flex: none; border-radius: 10px"
+                  >
+                    <defs>
+                      <linearGradient
+                        id="cbTileD"
+                        x1="0"
+                        y1="0"
+                        x2="0.5"
+                        y2="0.87"
+                      >
+                        <stop offset="0" stop-color="#2F4F6B"></stop>
+                        <stop offset="1" stop-color="#1B2F42"></stop>
+                      </linearGradient>
+                      <clipPath id="cbTileClipD">
+                        <rect width="120" height="120" rx="26.5"></rect>
+                      </clipPath>
+                    </defs>
+                    <rect
+                      width="120"
+                      height="120"
+                      rx="26.5"
+                      fill="url(#cbTileD)"
+                    ></rect>
+                    <g clip-path="url(#cbTileClipD)">
+                      <path
+                        fill="#DCECF7"
+                        fill-rule="evenodd"
+                        transform="rotate(-7 60 60) scale(0.84) translate(11 11)"
+                        d="M60 8 C47 8 39 15 36 26 C33 37 36 47 39 54 C42 61 47 64 47 70 C47 76 44 79 44 85 C44 97 48 112 60 112 C72 112 77 97 77 85 C77 79 74 76 74 70 C74 64 79 61 82 54 C85 47 88 37 85 26 C82 15 73 8 60 8 Z M39 30 L60 23 L81 30 L81 35 L60 28 L39 35 Z M38.5 44 L60 37 L81.5 44 L81.5 49 L60 42 L38.5 49 Z M60 67 a8 8 0 1 0 0 16 a8 8 0 1 0 0 -16 Z M60 71 a4 4 0 1 0 0 8 a4 4 0 1 0 0 -8 Z M57.5 64 h5 v11 h-5 Z M47 95 L60 89 L73 95 L73 100 L60 94 L47 100 Z"
+                      ></path>
+                    </g>
+                  </svg>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 1px;
+                      flex: 1;
+                      min-width: 0;
+                    "
+                  >
+                    <div
+                      style="
+                        font:
+                          700 17px/1.15 Bitter,
+                          Georgia,
+                          serif;
+                        color: #dcecf7;
+                        letter-spacing: -0.2px;
+                      "
+                    >
+                      ColdBoot
+                    </div>
+                    <div
+                      style="
+                        font:
+                          500 11.5px/1.2 -apple-system,
+                          system-ui;
+                        color: #8ca3b4;
+                      "
+                    >
+                      Friday, September 11 · Offline ready
+                    </div>
+                  </div>
+                  <div style="display: flex; gap: 8px">
+                    <div
+                      style="
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 17px;
+                        background: rgba(143, 182, 206, 0.12);
+                        border: 0.5px solid rgba(143, 182, 206, 0.22);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="11"
+                          cy="11"
+                          r="6.5"
+                          stroke="#8FB6CE"
+                          stroke-width="1.8"
+                        />
+                        <path
+                          d="M16 16l4.5 4.5"
+                          stroke="#8FB6CE"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      style="
+                        width: 34px;
+                        height: 34px;
+                        border-radius: 17px;
+                        background: rgba(143, 182, 206, 0.12);
+                        border: 0.5px solid rgba(143, 182, 206, 0.22);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="3.2"
+                          stroke="#8FB6CE"
+                          stroke-width="1.7"
+                        />
+                        <path
+                          d="M12 2.8v3M12 18.2v3M2.8 12h3M18.2 12h3M5.5 5.5l2.1 2.1M16.4 16.4l2.1 2.1M18.5 5.5l-2.1 2.1M7.6 16.4l-2.1 2.1"
+                          stroke="#8FB6CE"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    flex: 1;
+                    overflow: hidden;
+                    padding: 6px 16px 0;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 16px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #17232e;
+                      border: 1px solid #2c4256;
+                      border-radius: 20px;
+                      padding: 15px 17px 13px;
+                      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.28);
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: flex-start;
+                        justify-content: space-between;
+                        gap: 12px;
+                      "
+                    >
+                      <div
+                        style="display: flex; flex-direction: column; gap: 3px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10.5px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.09em;
+                          "
+                        >
+                          SOLAR CYCLE
+                        </div>
+                        <div
+                          style="
+                            font:
+                              600 27px/1.1 Bitter,
+                              Georgia,
+                              serif;
+                            color: #dcecf7;
+                            letter-spacing: -0.5px;
+                          "
+                        >
+                          Sunset 7:42<span
+                            style="font-size: 15px; letter-spacing: 0"
+                          >
+                            PM</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            font:
+                              500 13px/1.3 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                          "
+                        >
+                          in 2h 08m · golden hour from 6:55
+                        </div>
+                      </div>
+                      <svg
+                        width="78"
+                        height="54"
+                        viewBox="0 0 78 54"
+                        fill="none"
+                        style="flex: none; margin-top: 2px"
+                      >
+                        <path
+                          d="M4 46a35 35 0 0170 0"
+                          stroke="#2C4256"
+                          stroke-width="1.5"
+                          stroke-dasharray="3 4"
+                        />
+                        <path
+                          d="M4 46a35 35 0 0152.5-30.3"
+                          stroke="#8FB6CE"
+                          stroke-width="2"
+                          stroke-linecap="round"
+                        />
+                        <circle cx="56.5" cy="15.7" r="5.5" fill="#FFB020" />
+                        <path
+                          d="M0 46h78"
+                          stroke="#2C4256"
+                          stroke-width="1.5"
+                        />
+                      </svg>
+                    </div>
+                    <div
+                      style="
+                        height: 1px;
+                        background: #22313d;
+                        margin: 13px -17px 11px;
+                      "
+                    ></div>
+                    <div style="display: flex; gap: 18px">
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          PRESSURE
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #dcecf7;
+                          "
+                        >
+                          30.08 in ↓
+                        </div>
+                      </div>
+                      <div style="width: 1px; background: #22313d"></div>
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          MOON
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #dcecf7;
+                          "
+                        >
+                          Waxing 78%
+                        </div>
+                      </div>
+                      <div style="width: 1px; background: #22313d"></div>
+                      <div
+                        style="display: flex; flex-direction: column; gap: 2px"
+                      >
+                        <div
+                          style="
+                            font:
+                              600 10px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.07em;
+                          "
+                        >
+                          FIX
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 14px/1.2 -apple-system,
+                              system-ui;
+                            color: #5e9ba8;
+                          "
+                        >
+                          GPS locked
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; flex-direction: column; gap: 7px">
+                    <div
+                      style="
+                        font:
+                          600 11px/1 -apple-system,
+                          system-ui;
+                        color: #8ca3b4;
+                        letter-spacing: 0.09em;
+                        padding-left: 4px;
+                      "
+                    >
+                      MODULES
+                    </div>
+                    <div
+                      style="
+                        background: #17232e;
+                        border: 1px solid #2c4256;
+                        border-radius: 18px;
+                        overflow: hidden;
+                      "
+                    >
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M3 11.5c0-3.3 3-6 6.8-6s6.7 2.7 6.7 6-3 6-6.7 6c-.9 0-1.7-.1-2.5-.4L3.8 18.4l.9-2.7A5.9 5.9 0 013 11.5z"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                            <path
+                              d="M17.6 8.2c2 .8 3.4 2.5 3.4 4.6 0 1.4-.6 2.6-1.6 3.5l.8 2.4-2.3-.8c-.7.2-1.4.4-2.2.4"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Comms
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Morse · whistle · frequencies
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #22313d;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M2.5 13h3.2l2-6 3 11 2.3-7.5 1.6 2.5h3.4"
+                              stroke="#8FB6CE"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                            <circle
+                              cx="20.5"
+                              cy="13"
+                              r="1.4"
+                              stroke="#8FB6CE"
+                              stroke-width="1.5"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Core
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Flashlight · notepad · status
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #22313d;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M3.4 9.5h4l2 3-1.5 3 2 4M20.6 9h-4l-2.5 2.5 1 3 3-1"
+                              stroke="#8FB6CE"
+                              stroke-width="1.5"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Earth
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Sun · moon · pressure · sky
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #22313d;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="9"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M15 9l-2.2 5.2L7.6 16l2.2-5.2L15 9z"
+                              stroke="#8FB6CE"
+                              stroke-width="1.5"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Navigation
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Offline maps · grid · star map
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #22313d;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M12 2.8l7 2.6v6c0 4.4-3 8-7 9.8-4-1.8-7-5.4-7-9.8v-6l7-2.6z"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                            <path
+                              d="M8.6 12l2.4 2.4 4.4-4.6"
+                              stroke="#8FB6CE"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Prepper
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Pantry · inventory · planning
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #22313d;
+                          margin-left: 63px;
+                        "
+                      ></div>
+
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 12px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 36px;
+                            height: 36px;
+                            border-radius: 11px;
+                            background: rgba(143, 182, 206, 0.14);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M12 6.5C10.2 5 7.6 4.4 4 4.6v13c3.6-.2 6.2.4 8 1.9 1.8-1.5 4.4-2.1 8-1.9v-13c-3.6-.2-6.2.4-8 1.9zM12 6.5v12.9"
+                              stroke="#8FB6CE"
+                              stroke-width="1.6"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div style="flex: 1; min-width: 0">
+                          <div
+                            style="
+                              font:
+                                590 16.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                              letter-spacing: -0.2px;
+                            "
+                          >
+                            Reference
+                          </div>
+                          <div
+                            style="
+                              font:
+                                400 12.5px/1.3 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                          >
+                            Health · survival · weather
+                          </div>
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#557286"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div style="position: relative; height: 88px; flex: none">
+                  <div
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      height: 82px;
+                      background: rgba(16, 27, 36, 0.8);
+                      backdrop-filter: blur(18px) saturate(180%);
+                      -webkit-backdrop-filter: blur(18px) saturate(180%);
+                      border-top: 0.5px solid rgba(143, 182, 206, 0.2);
+                      display: flex;
+                      align-items: flex-start;
+                      padding: 9px 0 0;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M3.5 10.8L12 4l8.5 6.8V20a1 1 0 01-1 1h-15a1 1 0 01-1-1v-9.2z"
+                          stroke="#8FB6CE"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.3 21v-6.3h5.4V21"
+                          stroke="#8FB6CE"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            590 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #8fb6ce;
+                        "
+                      >
+                        Home
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <rect
+                          x="3.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="13.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="3.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                        />
+                        <rect
+                          x="13.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                        "
+                      >
+                        Modules
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                        position: relative;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 3.5a5.5 5.5 0 00-5.5 5.5c0 4-1.5 5.5-2.5 6.5h16c-1-1-2.5-2.5-2.5-6.5A5.5 5.5 0 0012 3.5z"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.8 19a2.4 2.4 0 004.4 0"
+                          stroke="#8CA3B4"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                        "
+                      >
+                        Alerts
+                      </div>
+                      <div
+                        style="
+                          position: absolute;
+                          top: -2px;
+                          right: calc(50% - 22px);
+                          min-width: 17px;
+                          height: 17px;
+                          border-radius: 9px;
+                          background: #ffb020;
+                          color: #1d1f20;
+                          font:
+                            700 10.5px/17px -apple-system,
+                            system-ui;
+                          text-align: center;
+                          padding: 0 4px;
+                        "
+                      >
+                        3
+                      </div>
+                    </div>
+                    <div style="width: 84px"></div>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      right: 18px;
+                      bottom: 24px;
+                      width: 62px;
+                      height: 62px;
+                      border-radius: 31px;
+                      background: #d8352f;
+                      box-shadow:
+                        0 6px 20px rgba(216, 53, 47, 0.5),
+                        0 2px 4px rgba(0, 0, 0, 0.4);
+                      border: 2px solid rgba(255, 255, 255, 0.28);
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 1px;
+                    "
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 4.2l8.4 15H3.6L12 4.2z"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M12 10v3.6"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                      />
+                      <circle cx="12" cy="16.4" r="1.05" fill="#fff" />
+                    </svg>
+                    <div
+                      style="
+                        font:
+                          800 10px/1 -apple-system,
+                          system-ui;
+                        color: #fff;
+                        letter-spacing: 0.06em;
+                      "
+                    >
+                      SOS
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+        </div>
+
+        <div class="dv-olabel" style="margin: 30px 0 0">
+          <span
+            style="
+              font:
+                600 11px/1 -apple-system,
+                system-ui;
+              color: rgba(29, 31, 32, 0.75);
+              letter-spacing: 0.09em;
+            "
+            >FLOW — in the <a class="dv-oid" href="#1a">1a</a> system</span
+          >
+        </div>
+        <div class="dv-opts" style="margin-top: 9px">
+          <div class="dv-opt" id="1d">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1d">1d</a>Core module — tool list
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  background: linear-gradient(
+                    180deg,
+                    #f1f7fb 0%,
+                    #dcecf7 60%,
+                    #c9deec 100%
+                  );
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 58px 16px 8px;
+                  "
+                >
+                  <div style="display: flex; align-items: center; gap: 4px">
+                    <svg width="11" height="18" viewBox="0 0 12 20" fill="none">
+                      <path
+                        d="M10 2L2 10l8 8"
+                        stroke="#2F5875"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      /></svg
+                    ><span
+                      style="
+                        font:
+                          400 17px/1 -apple-system,
+                          system-ui;
+                        color: #2f5875;
+                        letter-spacing: -0.3px;
+                      "
+                      >Home</span
+                    >
+                  </div>
+                  <div style="flex: 1"></div>
+                  <div
+                    style="
+                      width: 32px;
+                      height: 32px;
+                      border-radius: 16px;
+                      background: rgba(255, 255, 255, 0.72);
+                      border: 0.5px solid rgba(47, 88, 117, 0.18);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="6.5"
+                        stroke="#2F5875"
+                        stroke-width="1.8"
+                      />
+                      <path
+                        d="M16 16l4.5 4.5"
+                        stroke="#2F5875"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div
+                  style="
+                    padding: 6px 20px 14px;
+                    display: flex;
+                    align-items: flex-end;
+                    justify-content: space-between;
+                    gap: 12px;
+                  "
+                >
+                  <div>
+                    <div
+                      style="
+                        font:
+                          700 32px/1.1 Bitter,
+                          Georgia,
+                          serif;
+                        color: #1d1f20;
+                        letter-spacing: -0.7px;
+                      "
+                    >
+                      Core
+                    </div>
+                    <div
+                      style="
+                        font:
+                          400 13.5px/1.35 -apple-system,
+                          system-ui;
+                        color: #557286;
+                        margin-top: 3px;
+                      "
+                    >
+                      Six tools · all offline
+                    </div>
+                  </div>
+                  <svg width="30" height="30" viewBox="0 0 24 24" fill="none">
+                    <path
+                      d="M2.5 13h3.2l2-6 3 11 2.3-7.5 1.6 2.5h3.4"
+                      stroke="#2F5875"
+                      stroke-width="1.6"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                    <circle
+                      cx="20.5"
+                      cy="13"
+                      r="1.4"
+                      stroke="#2F5875"
+                      stroke-width="1.5"
+                    />
+                  </svg>
+                </div>
+                <div
+                  style="
+                    flex: 1;
+                    overflow: hidden;
+                    padding: 0 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #f7fafc;
+                      border: 1px solid #a9c5da;
+                      border-radius: 18px;
+                      padding: 13px 15px;
+                      display: flex;
+                      align-items: center;
+                      gap: 13px;
+                      box-shadow: 0 1px 2px rgba(29, 31, 32, 0.05);
+                    "
+                  >
+                    <div
+                      style="
+                        width: 38px;
+                        height: 38px;
+                        border-radius: 12px;
+                        background: #b45309;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex: none;
+                      "
+                    >
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M8 3h8l-1 5-2 2v10h-2V10L9 8 8 3z"
+                          stroke="#fff"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </div>
+                    <div style="flex: 1">
+                      <div
+                        style="
+                          font:
+                            590 16px/1.2 -apple-system,
+                            system-ui;
+                          color: #1d1f20;
+                        "
+                      >
+                        Flashlight · strobe
+                      </div>
+                      <div
+                        style="
+                          font:
+                            400 12.5px/1.3 -apple-system,
+                            system-ui;
+                          color: #b45309;
+                          margin-top: 2px;
+                        "
+                      >
+                        Running · 4m 12s
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        width: 51px;
+                        height: 31px;
+                        border-radius: 16px;
+                        background: #b45309;
+                        position: relative;
+                      "
+                    >
+                      <div
+                        style="
+                          position: absolute;
+                          top: 2px;
+                          right: 2px;
+                          width: 27px;
+                          height: 27px;
+                          border-radius: 14px;
+                          background: #fff;
+                          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+                        "
+                      ></div>
+                    </div>
+                  </div>
+                  <div style="display: flex; flex-direction: column; gap: 7px">
+                    <div
+                      style="
+                        font:
+                          600 11px/1 -apple-system,
+                          system-ui;
+                        color: #557286;
+                        letter-spacing: 0.09em;
+                        padding-left: 4px;
+                      "
+                    >
+                      TOOLS
+                    </div>
+                    <div
+                      style="
+                        background: #f7fafc;
+                        border: 1px solid #a9c5da;
+                        border-radius: 18px;
+                        overflow: hidden;
+                      "
+                    >
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 13px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <circle
+                              cx="12"
+                              cy="12"
+                              r="8.5"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M12 12l4-3"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            flex: 1;
+                            font:
+                              590 16.5px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                            letter-spacing: -0.2px;
+                          "
+                        >
+                          Checklist
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 61px;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 13px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M4 12a8 8 0 0116 0"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                            />
+                            <path
+                              d="M12 12l4.5-3.5"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            flex: 1;
+                            font:
+                              590 16.5px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                            letter-spacing: -0.2px;
+                          "
+                        >
+                          Device Status
+                        </div>
+                        <div
+                          style="
+                            font:
+                              400 13px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            margin-right: 8px;
+                          "
+                        >
+                          72%
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 61px;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 13px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <rect
+                              x="5"
+                              y="3"
+                              width="14"
+                              height="18"
+                              rx="2.5"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M8.5 8h7M8.5 12h7M8.5 16h4"
+                              stroke="#2F5875"
+                              stroke-width="1.5"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            flex: 1;
+                            font:
+                              590 16.5px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                            letter-spacing: -0.2px;
+                          "
+                        >
+                          Notepad
+                        </div>
+                        <div
+                          style="
+                            font:
+                              400 13px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            margin-right: 8px;
+                          "
+                        >
+                          12
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 61px;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 13px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <path
+                              d="M4 8h12l-3-3M20 16H8l3 3"
+                              stroke="#2F5875"
+                              stroke-width="1.7"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            flex: 1;
+                            font:
+                              590 16.5px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                            letter-spacing: -0.2px;
+                          "
+                        >
+                          Unit Conversion
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                      <div
+                        style="
+                          height: 0.5px;
+                          background: #dcecf7;
+                          margin-left: 61px;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          display: flex;
+                          align-items: center;
+                          gap: 13px;
+                          padding: 13px 14px;
+                        "
+                      >
+                        <div
+                          style="
+                            width: 34px;
+                            height: 34px;
+                            border-radius: 10px;
+                            background: rgba(47, 88, 117, 0.1);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            flex: none;
+                          "
+                        >
+                          <svg
+                            width="19"
+                            height="19"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                          >
+                            <rect
+                              x="9"
+                              y="3"
+                              width="6"
+                              height="11"
+                              rx="3"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                            />
+                            <path
+                              d="M5.5 12a6.5 6.5 0 0013 0M12 18.5V21"
+                              stroke="#2F5875"
+                              stroke-width="1.6"
+                              stroke-linecap="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            flex: 1;
+                            font:
+                              590 16.5px/1.2 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                            letter-spacing: -0.2px;
+                          "
+                        >
+                          Voice Log
+                        </div>
+                        <svg
+                          width="8"
+                          height="14"
+                          viewBox="0 0 8 14"
+                          fill="none"
+                        >
+                          <path
+                            d="M1.5 1l5 6-5 6"
+                            stroke="#A9C5DA"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                          />
+                        </svg>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="position: relative; height: 88px; flex: none">
+                  <div
+                    style="
+                      position: absolute;
+                      left: 0;
+                      right: 0;
+                      bottom: 0;
+                      height: 82px;
+                      background: rgba(247, 250, 252, 0.82);
+                      backdrop-filter: blur(18px) saturate(180%);
+                      -webkit-backdrop-filter: blur(18px) saturate(180%);
+                      border-top: 0.5px solid rgba(47, 88, 117, 0.2);
+                      display: flex;
+                      align-items: flex-start;
+                      padding: 9px 0 0;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M3.5 10.8L12 4l8.5 6.8V20a1 1 0 01-1 1h-15a1 1 0 01-1-1v-9.2z"
+                          stroke="#557286"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.3 21v-6.3h5.4V21"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #557286;
+                        "
+                      >
+                        Home
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <rect
+                          x="3.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                        />
+                        <rect
+                          x="13.5"
+                          y="3.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                        />
+                        <rect
+                          x="3.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                        />
+                        <rect
+                          x="13.5"
+                          y="13.5"
+                          width="7"
+                          height="7"
+                          rx="2"
+                          stroke="#2F5875"
+                          stroke-width="1.8"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            590 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #2f5875;
+                        "
+                      >
+                        Modules
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        flex: 1;
+                        display: flex;
+                        flex-direction: column;
+                        align-items: center;
+                        gap: 3px;
+                        position: relative;
+                      "
+                    >
+                      <svg
+                        width="25"
+                        height="25"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 3.5a5.5 5.5 0 00-5.5 5.5c0 4-1.5 5.5-2.5 6.5h16c-1-1-2.5-2.5-2.5-6.5A5.5 5.5 0 0012 3.5z"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.8 19a2.4 2.4 0 004.4 0"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div
+                        style="
+                          font:
+                            500 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #557286;
+                        "
+                      >
+                        Alerts
+                      </div>
+                      <div
+                        style="
+                          position: absolute;
+                          top: -2px;
+                          right: calc(50% - 22px);
+                          min-width: 17px;
+                          height: 17px;
+                          border-radius: 9px;
+                          background: #b45309;
+                          color: #fff;
+                          font:
+                            700 10.5px/17px -apple-system,
+                            system-ui;
+                          text-align: center;
+                          padding: 0 4px;
+                        "
+                      >
+                        3
+                      </div>
+                    </div>
+                    <div style="width: 84px"></div>
+                  </div>
+                  <div
+                    style="
+                      position: absolute;
+                      right: 18px;
+                      bottom: 24px;
+                      width: 62px;
+                      height: 62px;
+                      border-radius: 31px;
+                      background: #c62828;
+                      box-shadow:
+                        0 6px 18px rgba(198, 40, 40, 0.42),
+                        0 2px 4px rgba(29, 31, 32, 0.2);
+                      border: 2px solid rgba(255, 255, 255, 0.34);
+                      display: flex;
+                      flex-direction: column;
+                      align-items: center;
+                      justify-content: center;
+                      gap: 1px;
+                    "
+                  >
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 4.2l8.4 15H3.6L12 4.2z"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linejoin="round"
+                      />
+                      <path
+                        d="M12 10v3.6"
+                        stroke="#fff"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                      />
+                      <circle cx="12" cy="16.4" r="1.05" fill="#fff" />
+                    </svg>
+                    <div
+                      style="
+                        font:
+                          800 10px/1 -apple-system,
+                          system-ui;
+                        color: #fff;
+                        letter-spacing: 0.06em;
+                      "
+                    >
+                      SOS
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+
+          <div class="dv-opt" id="1e">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1e">1e</a>Sun Times — leaf tool, dark
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              dark="{{ true }}"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  background: linear-gradient(
+                    180deg,
+                    #1b2f42 0%,
+                    #152532 50%,
+                    #0b131a 100%
+                  );
+                "
+              >
+                <div
+                  style="
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 58px 16px 8px;
+                  "
+                >
+                  <div style="display: flex; align-items: center; gap: 4px">
+                    <svg width="11" height="18" viewBox="0 0 12 20" fill="none">
+                      <path
+                        d="M10 2L2 10l8 8"
+                        stroke="#8FB6CE"
+                        stroke-width="2.4"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      /></svg
+                    ><span
+                      style="
+                        font:
+                          400 17px/1 -apple-system,
+                          system-ui;
+                        color: #8fb6ce;
+                        letter-spacing: -0.3px;
+                      "
+                      >Earth</span
+                    >
+                  </div>
+                  <div style="flex: 1"></div>
+                  <div
+                    style="
+                      width: 32px;
+                      height: 32px;
+                      border-radius: 16px;
+                      background: rgba(143, 182, 206, 0.12);
+                      border: 0.5px solid rgba(143, 182, 206, 0.22);
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                    "
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M12 4v10m0 0l-4-4m4 4l4-4M5 19h14"
+                        stroke="#8FB6CE"
+                        stroke-width="1.8"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </div>
+                </div>
+                <div style="padding: 6px 20px 16px">
+                  <div
+                    style="
+                      font:
+                        700 32px/1.1 Bitter,
+                        Georgia,
+                        serif;
+                      color: #dcecf7;
+                      letter-spacing: -0.7px;
+                    "
+                  >
+                    Sun Times
+                  </div>
+                  <div
+                    style="
+                      font:
+                        400 13.5px/1.35 -apple-system,
+                        system-ui;
+                      color: #8ca3b4;
+                      margin-top: 3px;
+                    "
+                  >
+                    44.9778° N, 93.2650° W · local
+                  </div>
+                </div>
+
+                <div
+                  style="
+                    flex: 1;
+                    overflow: hidden;
+                    padding: 0 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 14px;
+                  "
+                >
+                  <div
+                    style="
+                      background: #17232e;
+                      border: 1px solid #2c4256;
+                      border-radius: 20px;
+                      padding: 16px 0 0;
+                      overflow: hidden;
+                    "
+                  >
+                    <div style="padding: 0 18px 12px">
+                      <div
+                        style="
+                          font:
+                            600 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                          letter-spacing: 0.09em;
+                        "
+                      >
+                        DAYLIGHT REMAINING
+                      </div>
+                      <div
+                        style="
+                          font:
+                            600 34px/1.15 Bitter,
+                            Georgia,
+                            serif;
+                          color: #dcecf7;
+                          letter-spacing: -0.8px;
+                          margin-top: 4px;
+                        "
+                      >
+                        2h 08m
+                      </div>
+                    </div>
+                    <svg
+                      viewBox="0 0 366 132"
+                      preserveAspectRatio="none"
+                      style="width: 100%; height: 132px; display: block"
+                    >
+                      <defs>
+                        <linearGradient
+                          id="dayfill"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0"
+                            stop-color="#FFB020"
+                            stop-opacity=".22"
+                          />
+                          <stop
+                            offset="1"
+                            stop-color="#FFB020"
+                            stop-opacity="0"
+                          />
+                        </linearGradient>
+                      </defs>
+                      <path
+                        d="M-10 104C60 104 110 26 183 26s123 78 193 78V132H-10z"
+                        fill="url(#dayfill)"
+                      />
+                      <path
+                        d="M-10 104C60 104 110 26 183 26s123 78 193 78"
+                        stroke="#FFB020"
+                        stroke-width="2"
+                        fill="none"
+                      />
+                      <path
+                        d="M0 104h366"
+                        stroke="#2C4256"
+                        stroke-width="1.5"
+                      />
+                      <path
+                        d="M286 26v78"
+                        stroke="#2C4256"
+                        stroke-width="1"
+                        stroke-dasharray="3 4"
+                      />
+                      <circle cx="286" cy="60" r="7" fill="#FFB020" />
+                      <circle
+                        cx="286"
+                        cy="60"
+                        r="13"
+                        fill="#FFB020"
+                        opacity=".2"
+                      />
+                    </svg>
+                    <div style="display: flex; border-top: 1px solid #22313d">
+                      <div
+                        style="
+                          flex: 1;
+                          padding: 11px 14px;
+                          border-right: 1px solid #22313d;
+                        "
+                      >
+                        <div
+                          style="
+                            font:
+                              600 9.5px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.08em;
+                          "
+                        >
+                          DAWN
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 15px/1.2 -apple-system,
+                              system-ui;
+                            color: #dcecf7;
+                            margin-top: 3px;
+                          "
+                        >
+                          6:07 AM
+                        </div>
+                      </div>
+                      <div
+                        style="
+                          flex: 1;
+                          padding: 11px 14px;
+                          border-right: 1px solid #22313d;
+                        "
+                      >
+                        <div
+                          style="
+                            font:
+                              600 9.5px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.08em;
+                          "
+                        >
+                          SOLAR NOON
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 15px/1.2 -apple-system,
+                              system-ui;
+                            color: #dcecf7;
+                            margin-top: 3px;
+                          "
+                        >
+                          1:12 PM
+                        </div>
+                      </div>
+                      <div style="flex: 1; padding: 11px 14px">
+                        <div
+                          style="
+                            font:
+                              600 9.5px/1 -apple-system,
+                              system-ui;
+                            color: #8ca3b4;
+                            letter-spacing: 0.08em;
+                          "
+                        >
+                          DUSK
+                        </div>
+                        <div
+                          style="
+                            font:
+                              590 15px/1.2 -apple-system,
+                              system-ui;
+                            color: #dcecf7;
+                            margin-top: 3px;
+                          "
+                        >
+                          8:14 PM
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div
+                    style="
+                      background: #17232e;
+                      border: 1px solid #2c4256;
+                      border-radius: 18px;
+                      overflow: hidden;
+                    "
+                  >
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 15px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 8px;
+                          height: 8px;
+                          border-radius: 4px;
+                          background: #ffb020;
+                          flex: none;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          flex: 1;
+                          font:
+                            500 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        Sunrise
+                      </div>
+                      <div
+                        style="
+                          font:
+                            590 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        6:38 AM
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        height: 0.5px;
+                        background: #22313d;
+                        margin-left: 35px;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 15px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 8px;
+                          height: 8px;
+                          border-radius: 4px;
+                          background: #b45309;
+                          flex: none;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          flex: 1;
+                          font:
+                            500 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        Golden hour
+                      </div>
+                      <div
+                        style="
+                          font:
+                            590 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        6:55 PM
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        height: 0.5px;
+                        background: #22313d;
+                        margin-left: 35px;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 15px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 8px;
+                          height: 8px;
+                          border-radius: 4px;
+                          background: #5e9ba8;
+                          flex: none;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          flex: 1;
+                          font:
+                            500 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        Sunset
+                      </div>
+                      <div
+                        style="
+                          font:
+                            590 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        7:42 PM
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        height: 0.5px;
+                        background: #22313d;
+                        margin-left: 35px;
+                      "
+                    ></div>
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 12px;
+                        padding: 13px 15px;
+                      "
+                    >
+                      <div
+                        style="
+                          width: 8px;
+                          height: 8px;
+                          border-radius: 4px;
+                          background: #557286;
+                          flex: none;
+                        "
+                      ></div>
+                      <div
+                        style="
+                          flex: 1;
+                          font:
+                            500 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        Day length
+                      </div>
+                      <div
+                        style="
+                          font:
+                            590 15.5px/1.2 -apple-system,
+                            system-ui;
+                          color: #dcecf7;
+                        "
+                      >
+                        13h 04m
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 10px">
+                    <div
+                      style="
+                        flex: 1;
+                        height: 46px;
+                        border-radius: 14px;
+                        background: #8fb6ce;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        gap: 7px;
+                      "
+                    >
+                      <svg
+                        width="17"
+                        height="17"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 3.5a5.5 5.5 0 00-5.5 5.5c0 4-1.5 5.5-2.5 6.5h16c-1-1-2.5-2.5-2.5-6.5A5.5 5.5 0 0012 3.5z"
+                          stroke="#101B24"
+                          stroke-width="1.8"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M9.8 19a2.4 2.4 0 004.4 0"
+                          stroke="#101B24"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        /></svg
+                      ><span
+                        style="
+                          font:
+                            590 16px/1 -apple-system,
+                            system-ui;
+                          color: #101b24;
+                          letter-spacing: -0.3px;
+                        "
+                        >Alert me at dusk</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        width: 46px;
+                        height: 46px;
+                        border-radius: 14px;
+                        background: rgba(143, 182, 206, 0.14);
+                        border: 0.5px solid rgba(143, 182, 206, 0.22);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="18"
+                        height="18"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M12 21s-7-4.6-7-10a7 7 0 1114 0c0 5.4-7 10-7 10z"
+                          stroke="#8FB6CE"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                        <circle
+                          cx="12"
+                          cy="11"
+                          r="2.4"
+                          stroke="#8FB6CE"
+                          stroke-width="1.6"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </div>
+                <div style="height: 44px; flex: none"></div>
+              </div>
+            </x-import>
+          </div>
+
+          <div class="dv-opt" id="1f">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1f">1f</a>Search
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              keyboard="{{ true }}"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  display: flex;
+                  flex-direction: column;
+                  background: linear-gradient(180deg, #f1f7fb 0%, #dcecf7 100%);
+                "
+              >
+                <div
+                  style="
+                    padding: 56px 16px 10px;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                  "
+                >
+                  <div
+                    style="
+                      flex: 1;
+                      height: 38px;
+                      border-radius: 12px;
+                      background: #f7fafc;
+                      border: 1px solid #a9c5da;
+                      display: flex;
+                      align-items: center;
+                      gap: 8px;
+                      padding: 0 12px;
+                    "
+                  >
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                      <circle
+                        cx="11"
+                        cy="11"
+                        r="6.5"
+                        stroke="#557286"
+                        stroke-width="1.9"
+                      />
+                      <path
+                        d="M16 16l4.5 4.5"
+                        stroke="#557286"
+                        stroke-width="1.9"
+                        stroke-linecap="round"
+                      /></svg
+                    ><span
+                      style="
+                        font:
+                          400 16.5px/1 -apple-system,
+                          system-ui;
+                        color: #1d1f20;
+                      "
+                      >water pur</span
+                    >
+                    <div
+                      style="width: 1.5px; height: 19px; background: #2f5875"
+                    ></div>
+                  </div>
+                  <span
+                    style="
+                      font:
+                        400 17px/1 -apple-system,
+                        system-ui;
+                      color: #2f5875;
+                    "
+                    >Cancel</span
+                  >
+                </div>
+                <div
+                  style="
+                    flex: 1;
+                    overflow: hidden;
+                    padding: 0 16px;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 12px;
+                  "
+                >
+                  <div style="display: flex; gap: 7px">
+                    <div
+                      style="
+                        height: 30px;
+                        padding: 0 13px;
+                        border-radius: 15px;
+                        background: #2f5875;
+                        display: flex;
+                        align-items: center;
+                      "
+                    >
+                      <span
+                        style="
+                          font:
+                            590 13px/1 -apple-system,
+                            system-ui;
+                          color: #f7fafc;
+                        "
+                        >All 14</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        height: 30px;
+                        padding: 0 13px;
+                        border-radius: 15px;
+                        background: rgba(255, 255, 255, 0.7);
+                        border: 0.5px solid #a9c5da;
+                        display: flex;
+                        align-items: center;
+                      "
+                    >
+                      <span
+                        style="
+                          font:
+                            500 13px/1 -apple-system,
+                            system-ui;
+                          color: #2f5875;
+                        "
+                        >Reference 9</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        height: 30px;
+                        padding: 0 13px;
+                        border-radius: 15px;
+                        background: rgba(255, 255, 255, 0.7);
+                        border: 0.5px solid #a9c5da;
+                        display: flex;
+                        align-items: center;
+                      "
+                    >
+                      <span
+                        style="
+                          font:
+                            500 13px/1 -apple-system,
+                            system-ui;
+                          color: #2f5875;
+                        "
+                        >Tools 3</span
+                      >
+                    </div>
+                    <div
+                      style="
+                        height: 30px;
+                        padding: 0 13px;
+                        border-radius: 15px;
+                        background: rgba(255, 255, 255, 0.7);
+                        border: 0.5px solid #a9c5da;
+                        display: flex;
+                        align-items: center;
+                      "
+                    >
+                      <span
+                        style="
+                          font:
+                            500 13px/1 -apple-system,
+                            system-ui;
+                          color: #2f5875;
+                        "
+                        >Notes 2</span
+                      >
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      background: #f7fafc;
+                      border: 1px solid #a9c5da;
+                      border-radius: 18px;
+                      overflow: hidden;
+                    "
+                  >
+                    <div style="padding: 12px 15px">
+                      <div
+                        style="display: flex; align-items: baseline; gap: 7px"
+                      >
+                        <span
+                          style="
+                            font:
+                              590 15.5px/1.25 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                          "
+                          >Water purification</span
+                        ><span
+                          style="
+                            font:
+                              500 11px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.06em;
+                          "
+                          >SURVIVAL</span
+                        >
+                      </div>
+                      <div
+                        style="
+                          font:
+                            400 13px/1.4 -apple-system,
+                            system-ui;
+                          color: #557286;
+                          margin-top: 3px;
+                        "
+                      >
+                        Boil at a rolling boil for one minute; three at
+                        altitude…
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        height: 0.5px;
+                        background: #dcecf7;
+                        margin-left: 15px;
+                      "
+                    ></div>
+                    <div style="padding: 12px 15px">
+                      <div
+                        style="display: flex; align-items: baseline; gap: 7px"
+                      >
+                        <span
+                          style="
+                            font:
+                              590 15.5px/1.25 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                          "
+                          >Chemical treatment ratios</span
+                        ><span
+                          style="
+                            font:
+                              500 11px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.06em;
+                          "
+                          >HEALTH</span
+                        >
+                      </div>
+                      <div
+                        style="
+                          font:
+                            400 13px/1.4 -apple-system,
+                            system-ui;
+                          color: #557286;
+                          margin-top: 3px;
+                        "
+                      >
+                        Two drops of unscented bleach per liter, wait 30
+                        minutes…
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        height: 0.5px;
+                        background: #dcecf7;
+                        margin-left: 15px;
+                      "
+                    ></div>
+                    <div style="padding: 12px 15px">
+                      <div
+                        style="display: flex; align-items: baseline; gap: 7px"
+                      >
+                        <span
+                          style="
+                            font:
+                              590 15.5px/1.25 -apple-system,
+                              system-ui;
+                            color: #1d1f20;
+                          "
+                          >Pantry — water stores</span
+                        ><span
+                          style="
+                            font:
+                              500 11px/1 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            letter-spacing: 0.06em;
+                          "
+                          >PREPPER</span
+                        >
+                      </div>
+                      <div
+                        style="
+                          font:
+                            400 13px/1.4 -apple-system,
+                            system-ui;
+                          color: #557286;
+                          margin-top: 3px;
+                        "
+                      >
+                        18 gal on hand · 6 days at current draw
+                      </div>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      font:
+                        600 11px/1 -apple-system,
+                        system-ui;
+                      color: #557286;
+                      letter-spacing: 0.09em;
+                      padding-left: 4px;
+                    "
+                  >
+                    RECENT
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      flex-direction: column;
+                      gap: 9px;
+                      padding-left: 4px;
+                    "
+                  >
+                    <div style="display: flex; align-items: center; gap: 9px">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="8.5"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                        <path
+                          d="M12 7.5V12l3 2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        /></svg
+                      ><span
+                        style="
+                          font:
+                            400 15px/1 -apple-system,
+                            system-ui;
+                          color: #1d1f20;
+                        "
+                        >morse sos</span
+                      >
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 9px">
+                      <svg
+                        width="15"
+                        height="15"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="8.5"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                        />
+                        <path
+                          d="M12 7.5V12l3 2"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linecap="round"
+                        /></svg
+                      ><span
+                        style="
+                          font:
+                            400 15px/1 -apple-system,
+                            system-ui;
+                          color: #1d1f20;
+                        "
+                        >frostbite</span
+                      >
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+
+          <div class="dv-opt" id="1g">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1g">1g</a>Settings — sheet, dark
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              dark="{{ true }}"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  position: relative;
+                  background: linear-gradient(180deg, #1b2f42 0%, #0b131a 100%);
+                "
+              >
+                <div
+                  style="
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.45);
+                  "
+                ></div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    top: 52px;
+                    background: #101b24;
+                    border-radius: 24px 24px 0 0;
+                    border-top: 0.5px solid #2c4256;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: center;
+                      padding: 9px 0 2px;
+                    "
+                  >
+                    <div
+                      style="
+                        width: 40px;
+                        height: 5px;
+                        border-radius: 3px;
+                        background: #2c4256;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      padding: 6px 18px 14px;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        font:
+                          700 24px/1.15 Bitter,
+                          Georgia,
+                          serif;
+                        color: #dcecf7;
+                        letter-spacing: -0.4px;
+                      "
+                    >
+                      Settings
+                    </div>
+                    <div
+                      style="
+                        width: 30px;
+                        height: 30px;
+                        border-radius: 15px;
+                        background: rgba(143, 182, 206, 0.14);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                      "
+                    >
+                      <svg
+                        width="14"
+                        height="14"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                      >
+                        <path
+                          d="M5 5l14 14M19 5L5 19"
+                          stroke="#8FB6CE"
+                          stroke-width="2.2"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      overflow: hidden;
+                      padding: 0 16px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 16px;
+                    "
+                  >
+                    <div
+                      style="display: flex; flex-direction: column; gap: 7px"
+                    >
+                      <div
+                        style="
+                          font:
+                            600 11px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                          letter-spacing: 0.09em;
+                          padding-left: 4px;
+                        "
+                      >
+                        APPEARANCE
+                      </div>
+                      <div
+                        style="
+                          background: #17232e;
+                          border: 1px solid #2c4256;
+                          border-radius: 16px;
+                          padding: 12px 14px;
+                          display: flex;
+                          flex-direction: column;
+                          gap: 11px;
+                        "
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            background: rgba(143, 182, 206, 0.1);
+                            border-radius: 9px;
+                            padding: 2px;
+                          "
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              height: 30px;
+                              border-radius: 7px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                            "
+                          >
+                            <span
+                              style="
+                                font:
+                                  500 14px/1 -apple-system,
+                                  system-ui;
+                                color: #8ca3b4;
+                              "
+                              >Light</span
+                            >
+                          </div>
+                          <div
+                            style="
+                              flex: 1;
+                              height: 30px;
+                              border-radius: 7px;
+                              background: #2c4256;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                              box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+                            "
+                          >
+                            <span
+                              style="
+                                font:
+                                  590 14px/1 -apple-system,
+                                  system-ui;
+                                color: #dcecf7;
+                              "
+                              >Dark</span
+                            >
+                          </div>
+                          <div
+                            style="
+                              flex: 1;
+                              height: 30px;
+                              border-radius: 7px;
+                              display: flex;
+                              align-items: center;
+                              justify-content: center;
+                            "
+                          >
+                            <span
+                              style="
+                                font:
+                                  500 14px/1 -apple-system,
+                                  system-ui;
+                                color: #8ca3b4;
+                              "
+                              >System</span
+                            >
+                          </div>
+                        </div>
+                        <div
+                          style="display: flex; align-items: center; gap: 12px"
+                        >
+                          <div style="flex: 1">
+                            <div
+                              style="
+                                font:
+                                  500 15.5px/1.2 -apple-system,
+                                  system-ui;
+                                color: #dcecf7;
+                              "
+                            >
+                              Night vision tint
+                            </div>
+                            <div
+                              style="
+                                font:
+                                  400 12.5px/1.3 -apple-system,
+                                  system-ui;
+                                color: #8ca3b4;
+                                margin-top: 2px;
+                              "
+                            >
+                              Red-shift the whole interface
+                            </div>
+                          </div>
+                          <div
+                            style="
+                              width: 51px;
+                              height: 31px;
+                              border-radius: 16px;
+                              background: #2c4256;
+                              position: relative;
+                              flex: none;
+                            "
+                          >
+                            <div
+                              style="
+                                position: absolute;
+                                top: 2px;
+                                left: 2px;
+                                width: 27px;
+                                height: 27px;
+                                border-radius: 14px;
+                                background: #8ca3b4;
+                              "
+                            ></div>
+                          </div>
+                        </div>
+                        <div
+                          style="display: flex; align-items: center; gap: 12px"
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              font:
+                                500 15.5px/1.2 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                            "
+                          >
+                            Larger text
+                          </div>
+                          <div
+                            style="
+                              width: 51px;
+                              height: 31px;
+                              border-radius: 16px;
+                              background: #5e9ba8;
+                              position: relative;
+                              flex: none;
+                            "
+                          >
+                            <div
+                              style="
+                                position: absolute;
+                                top: 2px;
+                                right: 2px;
+                                width: 27px;
+                                height: 27px;
+                                border-radius: 14px;
+                                background: #fff;
+                              "
+                            ></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style="display: flex; flex-direction: column; gap: 7px"
+                    >
+                      <div
+                        style="
+                          font:
+                            600 11px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                          letter-spacing: 0.09em;
+                          padding-left: 4px;
+                        "
+                      >
+                        OFFLINE DATA
+                      </div>
+                      <div
+                        style="
+                          background: #17232e;
+                          border: 1px solid #2c4256;
+                          border-radius: 16px;
+                          overflow: hidden;
+                        "
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 13px 14px;
+                          "
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              font:
+                                500 15.5px/1.2 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                            "
+                          >
+                            Offline maps
+                          </div>
+                          <span
+                            style="
+                              font:
+                                400 14px/1 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                            >3 areas · 412 MB</span
+                          ><svg
+                            width="8"
+                            height="14"
+                            viewBox="0 0 8 14"
+                            fill="none"
+                          >
+                            <path
+                              d="M1.5 1l5 6-5 6"
+                              stroke="#557286"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            height: 0.5px;
+                            background: #22313d;
+                            margin-left: 14px;
+                          "
+                        ></div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 13px 14px;
+                          "
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              font:
+                                500 15.5px/1.2 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                            "
+                          >
+                            Backup &amp; restore
+                          </div>
+                          <svg
+                            width="8"
+                            height="14"
+                            viewBox="0 0 8 14"
+                            fill="none"
+                          >
+                            <path
+                              d="M1.5 1l5 6-5 6"
+                              stroke="#557286"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                        <div
+                          style="
+                            height: 0.5px;
+                            background: #22313d;
+                            margin-left: 14px;
+                          "
+                        ></div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 13px 14px;
+                          "
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              font:
+                                500 15.5px/1.2 -apple-system,
+                                system-ui;
+                              color: #dcecf7;
+                            "
+                          >
+                            Units
+                          </div>
+                          <span
+                            style="
+                              font:
+                                400 14px/1 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                            >Imperial</span
+                          ><svg
+                            width="8"
+                            height="14"
+                            viewBox="0 0 8 14"
+                            fill="none"
+                          >
+                            <path
+                              d="M1.5 1l5 6-5 6"
+                              stroke="#557286"
+                              stroke-width="2"
+                              stroke-linecap="round"
+                              stroke-linejoin="round"
+                            />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style="display: flex; flex-direction: column; gap: 7px"
+                    >
+                      <div
+                        style="
+                          font:
+                            600 11px/1 -apple-system,
+                            system-ui;
+                          color: #8ca3b4;
+                          letter-spacing: 0.09em;
+                          padding-left: 4px;
+                        "
+                      >
+                        EMERGENCY
+                      </div>
+                      <div
+                        style="
+                          background: #17232e;
+                          border: 1px solid #2c4256;
+                          border-radius: 16px;
+                          overflow: hidden;
+                        "
+                      >
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 13px 14px;
+                          "
+                        >
+                          <div style="flex: 1">
+                            <div
+                              style="
+                                font:
+                                  500 15.5px/1.2 -apple-system,
+                                  system-ui;
+                                color: #dcecf7;
+                              "
+                            >
+                              SOS hold duration
+                            </div>
+                            <div
+                              style="
+                                font:
+                                  400 12.5px/1.3 -apple-system,
+                                  system-ui;
+                                color: #8ca3b4;
+                                margin-top: 2px;
+                              "
+                            >
+                              Guards against accidental triggers
+                            </div>
+                          </div>
+                          <span
+                            style="
+                              font:
+                                400 14px/1 -apple-system,
+                                system-ui;
+                              color: #8ca3b4;
+                            "
+                            >1.0s</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            height: 0.5px;
+                            background: #22313d;
+                            margin-left: 14px;
+                          "
+                        ></div>
+                        <div
+                          style="
+                            display: flex;
+                            align-items: center;
+                            gap: 12px;
+                            padding: 13px 14px;
+                          "
+                        >
+                          <div
+                            style="
+                              flex: 1;
+                              font:
+                                500 15.5px/1.2 -apple-system,
+                                system-ui;
+                              color: #ef5350;
+                            "
+                          >
+                            Reset all data
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div
+                      style="
+                        font:
+                          400 11.5px/1.4 -apple-system,
+                          system-ui;
+                        color: #557286;
+                        text-align: center;
+                        padding-top: 2px;
+                      "
+                    >
+                      ColdBoot 1.4.0 · Toastbyte Studios
+                    </div>
+                  </div>
+                  <div style="height: 34px; flex: none"></div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+
+          <div class="dv-opt" id="1h">
+            <div class="dv-olabel">
+              <a class="dv-oid" href="#1h">1h</a>Alerts — sheet over Home
+            </div>
+            <x-import
+              component-from-global-scope="IOSDevice"
+              from="./ios-frame.jsx"
+              hint-size="402px,874px"
+            >
+              <div
+                style="
+                  height: 100%;
+                  position: relative;
+                  background: linear-gradient(180deg, #f1f7fb 0%, #c9deec 100%);
+                "
+              >
+                <div
+                  style="
+                    position: absolute;
+                    inset: 0;
+                    background: rgba(29, 31, 32, 0.28);
+                  "
+                ></div>
+                <div
+                  style="
+                    position: absolute;
+                    left: 0;
+                    right: 0;
+                    bottom: 0;
+                    top: 150px;
+                    background: #f7fafc;
+                    border-radius: 24px 24px 0 0;
+                    border-top: 0.5px solid #a9c5da;
+                    box-shadow: 0 -12px 40px rgba(29, 31, 32, 0.18);
+                    display: flex;
+                    flex-direction: column;
+                    overflow: hidden;
+                  "
+                >
+                  <div
+                    style="
+                      display: flex;
+                      justify-content: center;
+                      padding: 9px 0 2px;
+                    "
+                  >
+                    <div
+                      style="
+                        width: 40px;
+                        height: 5px;
+                        border-radius: 3px;
+                        background: #a9c5da;
+                      "
+                    ></div>
+                  </div>
+                  <div
+                    style="
+                      display: flex;
+                      align-items: center;
+                      gap: 10px;
+                      padding: 6px 18px 14px;
+                    "
+                  >
+                    <div
+                      style="
+                        flex: 1;
+                        font:
+                          700 24px/1.15 Bitter,
+                          Georgia,
+                          serif;
+                        color: #1d1f20;
+                        letter-spacing: -0.4px;
+                      "
+                    >
+                      Alerts
+                    </div>
+                    <span
+                      style="
+                        font:
+                          400 15.5px/1 -apple-system,
+                          system-ui;
+                        color: #2f5875;
+                      "
+                      >Clear all</span
+                    >
+                  </div>
+                  <div
+                    style="
+                      flex: 1;
+                      overflow: hidden;
+                      padding: 0 16px;
+                      display: flex;
+                      flex-direction: column;
+                      gap: 10px;
+                    "
+                  >
+                    <div
+                      style="
+                        background: #fff;
+                        border: 1px solid #a9c5da;
+                        border-left: 3px solid #b45309;
+                        border-radius: 14px;
+                        padding: 13px 15px;
+                        display: flex;
+                        gap: 12px;
+                      "
+                    >
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        style="flex: none; margin-top: 1px"
+                      >
+                        <circle
+                          cx="12"
+                          cy="12"
+                          r="4.2"
+                          stroke="#B45309"
+                          stroke-width="1.8"
+                        />
+                        <path
+                          d="M12 2.6v2.6M12 18.8v2.6M2.6 12h2.6M18.8 12h2.6M5.6 5.6l1.9 1.9M16.5 16.5l1.9 1.9M18.4 5.6l-1.9 1.9M7.5 16.5l-1.9 1.9"
+                          stroke="#B45309"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div style="flex: 1">
+                        <div
+                          style="display: flex; align-items: baseline; gap: 8px"
+                        >
+                          <span
+                            style="
+                              font:
+                                590 15.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                            "
+                            >Sunset in 2h 08m</span
+                          ><span
+                            style="
+                              font:
+                                400 12px/1 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                            >now</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            font:
+                              400 13px/1.4 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            margin-top: 3px;
+                          "
+                        >
+                          Golden hour begins 6:55 PM. Headlamp check before
+                          dusk.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style="
+                        background: #fff;
+                        border: 1px solid #a9c5da;
+                        border-left: 3px solid #2f6f7a;
+                        border-radius: 14px;
+                        padding: 13px 15px;
+                        display: flex;
+                        gap: 12px;
+                      "
+                    >
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        style="flex: none; margin-top: 1px"
+                      >
+                        <path
+                          d="M4 12a8 8 0 0116 0"
+                          stroke="#2F6F7A"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M12 12l4.5-3.5"
+                          stroke="#2F6F7A"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                        <path
+                          d="M3 18h18"
+                          stroke="#2F6F7A"
+                          stroke-width="1.6"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div style="flex: 1">
+                        <div
+                          style="display: flex; align-items: baseline; gap: 8px"
+                        >
+                          <span
+                            style="
+                              font:
+                                590 15.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                            "
+                            >Pressure falling fast</span
+                          ><span
+                            style="
+                              font:
+                                400 12px/1 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                            >18m</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            font:
+                              400 13px/1.4 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            margin-top: 3px;
+                          "
+                        >
+                          −0.06 in over 3 hours. Weather likely deteriorating.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style="
+                        background: #fff;
+                        border: 1px solid #a9c5da;
+                        border-left: 3px solid #557286;
+                        border-radius: 14px;
+                        padding: 13px 15px;
+                        display: flex;
+                        gap: 12px;
+                      "
+                    >
+                      <svg
+                        width="21"
+                        height="21"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        style="flex: none; margin-top: 1px"
+                      >
+                        <path
+                          d="M12 2.8l7 2.6v6c0 4.4-3 8-7 9.8-4-1.8-7-5.4-7-9.8v-6l7-2.6z"
+                          stroke="#557286"
+                          stroke-width="1.7"
+                          stroke-linejoin="round"
+                        />
+                        <path
+                          d="M12 9v4M12 15.6v.1"
+                          stroke="#557286"
+                          stroke-width="1.8"
+                          stroke-linecap="round"
+                        />
+                      </svg>
+                      <div style="flex: 1">
+                        <div
+                          style="display: flex; align-items: baseline; gap: 8px"
+                        >
+                          <span
+                            style="
+                              font:
+                                590 15.5px/1.25 -apple-system,
+                                system-ui;
+                              color: #1d1f20;
+                            "
+                            >Pantry: 3 items expiring</span
+                          ><span
+                            style="
+                              font:
+                                400 12px/1 -apple-system,
+                                system-ui;
+                              color: #557286;
+                            "
+                            >2h</span
+                          >
+                        </div>
+                        <div
+                          style="
+                            font:
+                              400 13px/1.4 -apple-system,
+                              system-ui;
+                            color: #557286;
+                            margin-top: 3px;
+                          "
+                        >
+                          Rotate within 14 days. Review in Prepper → Pantry.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div
+                      style="
+                        display: flex;
+                        align-items: center;
+                        gap: 10px;
+                        padding: 14px 4px 0;
+                      "
+                    >
+                      <div
+                        style="flex: 1; height: 1px; background: #dcecf7"
+                      ></div>
+                      <span
+                        style="
+                          font:
+                            600 10.5px/1 -apple-system,
+                            system-ui;
+                          color: #557286;
+                          letter-spacing: 0.09em;
+                        "
+                        >ALWAYS ON</span
+                      >
+                      <div
+                        style="flex: 1; height: 1px; background: #dcecf7"
+                      ></div>
+                    </div>
+                    <div
+                      style="
+                        font:
+                          400 12.5px/1.5 -apple-system,
+                          system-ui;
+                        color: #557286;
+                        padding: 0 6px;
+                      "
+                    >
+                      Sunrise and sunset alerts cannot be turned off — they are
+                      the app's one guaranteed signal. Everything else here is
+                      dismissible.
+                    </div>
+                  </div>
+                  <div style="height: 40px; flex: none"></div>
+                </div>
+              </div>
+            </x-import>
+          </div>
+        </div>
+
+        <p class="dv-next">
+          Try next: "carry this into the Modules tab and the other five module
+          screens" · "make the SOS action a wide pill instead of a circle" ·
+          "show <a class="dv-oid" href="#1d">1d</a> in dark too"
+        </p>
+      </section>
+    </x-dc>
+  </body>
+</html>

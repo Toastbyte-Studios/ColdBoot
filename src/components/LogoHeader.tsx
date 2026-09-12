@@ -1,67 +1,54 @@
 import React from 'react';
 import {
   Image,
-  StyleSheet,
   ImageStyle,
   StyleProp,
+  StyleSheet,
   View,
   ViewStyle,
 } from 'react-native';
 import { useIsDarkMode } from '../hooks/useIsDarkMode';
-import { useTheme } from '../hooks/useTheme';
+import { RADIUS } from '../theme';
 // Static requires: Metro resolves these at build time, so the paths cannot be
 // interpolated. Both variants are bundled and the correct one is chosen at
 // render time.
-const LOGO_DARK = require('../../assets/coldboot-assets/png/dark/icon-512.png');
-const LOGO_LIGHT = require('../../assets/coldboot-assets/png/light/icon-512.png');
+const LOGO_DARK = require('../../assets/coldboot-assets/png/dark/icon-96.png');
+const LOGO_LIGHT = require('../../assets/coldboot-assets/png/light/icon-96.png');
 
 type Props = {
+  /** Tile edge length in points. @default 34 */
   size?: number;
   style?: StyleProp<ImageStyle>;
   shadowStyle?: Partial<ViewStyle>;
 };
 
 /**
- * Renders the ColdBoot logo as a circular image with customizable size and style.
+ * The ColdBoot app mark, as a rounded tile in the nav bar.
  *
- * The mark ships in a light and a dark variant; the active theme decides which
- * is shown. Each tile carries its own ground, so the circle is filled by the
- * artwork rather than by a themed background color.
+ * Was a 120px bordered circle that opened the header; the mark now sits at
+ * 34px beside the wordmark, which is what freed the ~260px the old header
+ * spent on chrome. The border and bottom margin are gone with it — at this
+ * size an outline just muddies the artwork.
  *
- * @param size - The diameter of the logo in pixels. Defaults to 120.
- * @param style - Optional additional styles to apply to the logo image.
- * @param shadowStyle - Optional shadow styles to apply dynamic shadows (e.g., sun shadow).
- * @returns A React element displaying the ColdBoot logo.
+ * The mark ships in a light and a dark variant, each carrying its own ground,
+ * so the tile is filled by the artwork rather than by a themed background.
  */
-export default function LogoHeader({ size = 120, style, shadowStyle }: Props) {
-  const COLORS = useTheme();
+export default function LogoHeader({ size = 34, style, shadowStyle }: Props) {
   const isDarkMode = useIsDarkMode();
 
-  const containerStyle: StyleProp<ViewStyle> = [
-    {
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-    },
-    shadowStyle,
-  ];
-
-  const imageStyle: StyleProp<ImageStyle> = [
-    styles.base,
-    {
-      width: size,
-      height: size,
-      borderRadius: size / 2,
-      borderColor: COLORS.BRAND,
-    },
-    style,
-  ];
+  // Small tiles take the squircle radius; anything large stays a circle, which
+  // is how the mark reads at hero sizes.
+  const borderRadius = size <= 48 ? RADIUS.tileSmall : size / 2;
 
   return (
-    <View style={containerStyle}>
+    <View style={[{ width: size, height: size, borderRadius }, shadowStyle]}>
       <Image
         source={isDarkMode ? LOGO_DARK : LOGO_LIGHT}
-        style={imageStyle}
+        style={[
+          styles.base,
+          { width: size, height: size, borderRadius },
+          style,
+        ]}
         accessibilityIgnoresInvertColors
       />
     </View>
@@ -71,7 +58,5 @@ export default function LogoHeader({ size = 120, style, shadowStyle }: Props) {
 const styles = StyleSheet.create({
   base: {
     resizeMode: 'cover',
-    marginBottom: 10,
-    borderWidth: 2,
   },
 });

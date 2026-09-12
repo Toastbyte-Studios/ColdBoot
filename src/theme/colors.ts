@@ -41,6 +41,15 @@ const LIGHT_COLORS = {
   /** De-emphasised labels, timestamps, placeholder text. */
   MUTED: '#557286',
 
+  /**
+   * Row separator inside a grouped list. Lighter than BORDER, which outlines
+   * the group as a whole — the hairlines between rows sit inside that outline
+   * and must not compete with it.
+   */
+  SEPARATOR: '#DCECF7',
+  /** Disclosure chevrons. Recedes further than MUTED: it is an affordance, not content. */
+  CHEVRON: '#A9C5DA',
+
   ERROR: '#C62828',
   SUCCESS: '#227A66',
   SUCCESS_LIGHT: '#D2E9E2',
@@ -64,7 +73,10 @@ const DARK_COLORS: typeof LIGHT_COLORS = {
   BORDER: '#2C4256',
   MUTED: '#8CA3B4',
 
-  ERROR: '#EF5350',
+  SEPARATOR: '#22313D',
+  CHEVRON: '#557286',
+
+  ERROR: '#D8352F',
   SUCCESS: '#4CA891',
   SUCCESS_LIGHT: '#173029',
   ERROR_LIGHT: '#3E2129',
