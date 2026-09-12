@@ -4,6 +4,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
@@ -23,6 +24,7 @@ const MorseToAlphaScreen = () => {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [morseInput, setMorseInput] = useState('');
+  const footerClearance = useFooterClearance();
 
   // Compute translation directly from morse input
   const translatedText = morseToText(morseInput);
@@ -71,7 +73,7 @@ const MorseToAlphaScreen = () => {
     <ScreenBody>
       <SectionHeader>Morse to Alpha</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance + 10 }]}>
         {/* Morse Code Input Display */}
         <View style={styles.displayContainer}>
           <Text style={styles.displayLabel}>Morse Code:</Text>

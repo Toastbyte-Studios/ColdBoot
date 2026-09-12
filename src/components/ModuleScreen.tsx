@@ -1,3 +1,8 @@
+import {
+  NavigationProp,
+  ParamListBase,
+  useNavigation,
+} from '@react-navigation/native';
 import React from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -6,6 +11,7 @@ import { useTheme } from '../hooks/useTheme';
 import { SCREEN_GUTTER } from '../theme';
 import { ToolType } from '../types/common-types';
 import ActiveToolCard from './ActiveToolCard';
+import IconButton from './IconButton';
 import ScreenBody from './ScreenBody';
 import SectionEyebrow from './SectionEyebrow';
 import SectionHeader from './SectionHeader';
@@ -43,6 +49,7 @@ export default function ModuleScreen({
 }: Props) {
   const COLORS = useTheme();
   const footerClearance = useFooterClearance();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
   const subtitle = `${tools.length} tool${tools.length === 1 ? '' : 's'} · all offline`;
 
@@ -56,6 +63,17 @@ export default function ModuleScreen({
         ]}
       >
         <SectionHeader
+          leading={
+            navigation.canGoBack() ? (
+              <IconButton
+                name="chevron-back-outline"
+                size={20}
+                color={COLORS.BRAND}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+              />
+            ) : undefined
+          }
           title={title}
           subtitle={subtitle}
           trailing={

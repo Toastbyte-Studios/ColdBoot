@@ -38,9 +38,12 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
   const visibleNotifications = allNotifications.filter(
     (n) => !notificationsStore.isHidden(n.key),
   );
+  const dismissibleNotifications = visibleNotifications.filter(
+    (n) => n.dismissible,
+  );
 
   const clearAll = () => {
-    visibleNotifications.forEach((n) =>
+    dismissibleNotifications.forEach((n) =>
       notificationsStore.hideNotification(n.key),
     );
   };
@@ -76,7 +79,7 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
             <Text style={[styles.title, { color: COLORS.PRIMARY_DARK }]}>
               Alerts
             </Text>
-            {visibleNotifications.length > 0 ? (
+            {dismissibleNotifications.length > 0 ? (
               <Touchable
                 onPress={clearAll}
                 accessibilityRole="button"
@@ -124,14 +127,16 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
                   >
                     {notification.message}
                   </Text>
-                  <IconButton
-                    name="close-outline"
-                    size={20}
-                    onPress={() =>
-                      notificationsStore.hideNotification(notification.key)
-                    }
-                    accessibilityLabel={`Dismiss: ${notification.message}`}
-                  />
+                  {notification.dismissible ? (
+                    <IconButton
+                      name="close-outline"
+                      size={20}
+                      onPress={() =>
+                        notificationsStore.hideNotification(notification.key)
+                      }
+                      accessibilityLabel={`Dismiss: ${notification.message}`}
+                    />
+                  ) : null}
                 </View>
               ))
             )}

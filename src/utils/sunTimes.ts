@@ -16,6 +16,7 @@ export type SolarEventName = 'sunrise' | 'sunset' | 'dawn' | 'dusk';
 
 export type SolarSnapshot = {
   sunrise: Date;
+  nextSunrise: Date;
   sunset: Date;
   dawn: Date;
   dusk: Date;
@@ -66,6 +67,9 @@ export function getSolarSnapshot(
   }
 
   const times = SunCalc.getTimes(now, latitude, longitude);
+  const tomorrow = new Date(now);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowTimes = SunCalc.getTimes(tomorrow, latitude, longitude);
   const required: Date[] = [
     times.sunrise,
     times.sunset,
@@ -74,6 +78,7 @@ export function getSolarSnapshot(
     times.solarNoon,
     times.goldenHour,
     times.goldenHourEnd,
+    tomorrowTimes.sunrise,
   ];
   if (!required.every(isValidDate)) {
     return null;
@@ -104,13 +109,17 @@ export function getSolarSnapshot(
 
   return {
     sunrise: times.sunrise,
+    nextSunrise: tomorrowTimes.sunrise,
     sunset: times.sunset,
     dawn: times.dawn,
     dusk: times.dusk,
     solarNoon: times.solarNoon,
     goldenHour: times.goldenHour,
     goldenHourEnd: times.goldenHourEnd,
-    daylightRemainingMs: Math.max(0, dayEnd - now.getTime()),
+    daylightRemainingMs:
+      now.getTime() < dayStart
+        ? Math.max(0, span)
+        : Math.max(0, dayEnd - now.getTime()),
     nextEvent,
     progress:
       span > 0

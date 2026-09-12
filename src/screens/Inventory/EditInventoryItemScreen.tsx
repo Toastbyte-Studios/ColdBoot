@@ -5,6 +5,7 @@ import { View, ScrollView, Alert } from 'react-native';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -41,6 +42,7 @@ export default observer(function EditInventoryItemScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const inventory = useInventoryStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   const { item } = route.params || {};
   const [name, setName] = useState<string>(item?.name || '');
@@ -123,7 +125,7 @@ export default observer(function EditInventoryItemScreen(): React.JSX.Element {
     return (
       <ScreenBody>
         <SectionHeader>Edit Item</SectionHeader>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: footerClearance }]}>
           <Text
             style={[styles.errorText, { color: COLORS.ERROR || '#d32f2f' }]}
           >
@@ -137,7 +139,7 @@ export default observer(function EditInventoryItemScreen(): React.JSX.Element {
   return (
     <ScreenBody>
       <SectionHeader>Edit Item</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

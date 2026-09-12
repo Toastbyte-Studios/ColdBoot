@@ -10,6 +10,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
@@ -43,6 +44,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
   const navigation = useNavigation<PantryCategoryNavigationProp>();
   const pantry = usePantryStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   const { category } = route.params || {};
   const isValidCategory = category && pantry.categories.includes(category);
@@ -70,7 +72,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
     return (
       <ScreenBody>
         <SectionHeader>Category Not Found</SectionHeader>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: footerClearance }]}>
           <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
             The requested category does not exist.
           </Text>
@@ -96,7 +98,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
         />
       </View>
       <HorizontalRule />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

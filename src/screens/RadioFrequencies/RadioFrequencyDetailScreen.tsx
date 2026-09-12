@@ -7,6 +7,7 @@ import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 
@@ -43,6 +44,7 @@ type RadioFrequencyDetailScreenRouteProp = RouteProp<
 export default function RadioFrequencyDetailScreen(): JSX.Element {
   const route = useRoute<RadioFrequencyDetailScreenRouteProp>();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const { frequencyData } = route.params || {};
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
@@ -100,7 +102,7 @@ export default function RadioFrequencyDetailScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{frequencyData.title}</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         {/* License info icon row */}
         <View style={styles.infoRow}>
           <IconButton

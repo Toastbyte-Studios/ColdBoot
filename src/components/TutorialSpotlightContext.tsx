@@ -3,6 +3,7 @@ import { View } from 'react-native';
 
 export type TutorialSpotlightTarget =
   | 'logo'
+  | 'navSearch'
   | 'sectionHeader'
   | 'footerButtons';
 
@@ -17,6 +18,7 @@ export type TutorialSpotlightContextValue = {
   target: TutorialSpotlightTarget | undefined;
   setSpotlightLayout: (layout: SpotlightLayout | null) => void;
   containerRef: { current: View | null };
+  navSearchRef: React.RefObject<View | null>;
   sectionHeaderRef: React.RefObject<View | null>;
 };
 
@@ -25,5 +27,6 @@ export const TutorialSpotlightContext =
     target: undefined,
     setSpotlightLayout: () => {},
     containerRef: { current: null },
+    navSearchRef: { current: null },
     sectionHeaderRef: { current: null },
   });

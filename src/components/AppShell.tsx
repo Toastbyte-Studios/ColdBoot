@@ -102,6 +102,7 @@ export default function AppShell({ children }: Props) {
     useState<SpotlightLayout | null>(null);
   const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
+  const navSearchRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
   const [currentDate, setCurrentDate] = useState(() =>
     dayjs().format(DATE_FORMAT),
@@ -174,9 +175,11 @@ export default function AppShell({ children }: Props) {
     const targetRef =
       tutorialSpotlightTarget === 'logo'
         ? logoRef.current
-        : tutorialSpotlightTarget === 'sectionHeader'
-          ? sectionHeaderRef.current
-          : null;
+        : tutorialSpotlightTarget === 'navSearch'
+          ? navSearchRef.current
+          : tutorialSpotlightTarget === 'sectionHeader'
+            ? sectionHeaderRef.current
+            : null;
     if (!targetRef) return;
     let cancelled = false;
     targetRef.measureInWindow(
@@ -273,6 +276,7 @@ export default function AppShell({ children }: Props) {
           target: tutorialSpotlightTarget,
           setSpotlightLayout,
           containerRef: gestureContainerRef,
+          navSearchRef,
           sectionHeaderRef,
         }}
       >
@@ -311,6 +315,7 @@ export default function AppShell({ children }: Props) {
               </View>
 
               <Pressable
+                ref={navSearchRef}
                 onPress={() => navigation.navigate('Search')}
                 accessibilityRole="button"
                 accessibilityLabel="Search"
@@ -375,6 +380,18 @@ export default function AppShell({ children }: Props) {
                       fill="black"
                     />
                   )}
+                  {spotlightLayout &&
+                    tutorialSpotlightTarget === 'navSearch' && (
+                      <SvgRect
+                        x={spotlightLayout.x}
+                        y={spotlightLayout.y}
+                        width={spotlightLayout.width}
+                        height={spotlightLayout.height}
+                        rx={spotlightLayout.height / 2}
+                        ry={spotlightLayout.height / 2}
+                        fill="black"
+                      />
+                    )}
                   {spotlightLayout &&
                     tutorialSpotlightTarget === 'sectionHeader' && (
                       <SvgRect

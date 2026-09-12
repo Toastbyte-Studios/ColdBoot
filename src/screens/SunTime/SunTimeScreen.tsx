@@ -1,3 +1,8 @@
+import {
+  NavigationProp,
+  ParamListBase,
+  useNavigation,
+} from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import {
@@ -15,6 +20,7 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import GroupContainer from '../../components/GroupContainer';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionEyebrow from '../../components/SectionEyebrow';
@@ -50,6 +56,7 @@ const SunTimeScreen = observer(() => {
   const COLORS = useTheme();
   const core = useCoreStore();
   const footerClearance = useFooterClearance();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -111,6 +118,14 @@ const SunTimeScreen = observer(() => {
     return () => clearInterval(interval);
   }, []);
 
+  useEffect(() => {
+    if (core.lastFix) {
+      setLoading(false);
+      setError(null);
+      setNow(new Date());
+    }
+  }, [core.lastFix]);
+
   const fix = core.lastFix;
   const snapshot = fix
     ? getSolarSnapshot(fix.coords.latitude, fix.coords.longitude, now)
@@ -156,7 +171,21 @@ const SunTimeScreen = observer(() => {
           { paddingBottom: footerClearance },
         ]}
       >
-        <SectionHeader title="Sun Times" subtitle={coordinates} />
+        <SectionHeader
+          leading={
+            navigation.canGoBack() ? (
+              <IconButton
+                name="chevron-back-outline"
+                size={20}
+                color={COLORS.BRAND}
+                onPress={() => navigation.goBack()}
+                accessibilityLabel="Go back"
+              />
+            ) : undefined
+          }
+          title="Sun Times"
+          subtitle={coordinates}
+        />
 
         {loading && (
           <View style={styles.centerContainer}>

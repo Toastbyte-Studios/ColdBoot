@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { View, ScrollView, Alert } from 'react-native';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useInventoryStore } from '../../stores';
 import {
   FormInput,
@@ -35,6 +36,7 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
   const route = useRoute<NewInventoryItemRouteProp>();
   const navigation = useNavigation();
   const inventory = useInventoryStore();
+  const footerClearance = useFooterClearance();
 
   const { category } = route.params || {};
   const [name, setName] = useState<string>('');
@@ -81,7 +83,7 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
   return (
     <ScreenBody>
       <SectionHeader>Add Item to {category}</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

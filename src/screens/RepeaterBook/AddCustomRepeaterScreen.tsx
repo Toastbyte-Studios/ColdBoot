@@ -7,6 +7,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SelectMenu from '../../components/SelectMenu';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -34,6 +35,7 @@ const STATUS_OPTIONS = STATUSES.map((s) => ({ value: s, label: s }));
  */
 const AddCustomRepeaterScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const navigation = useNavigation();
   const route = useRoute<AddCustomRepeaterRouteProp>();
@@ -97,7 +99,7 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
         {isEditing ? 'Edit Repeater' : 'Add Repeater'}
       </SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

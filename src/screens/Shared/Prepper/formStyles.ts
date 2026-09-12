@@ -1,5 +1,4 @@
 import { StyleSheet } from 'react-native';
-import { FOOTER_HEIGHT } from '../../../theme';
 
 /**
  * Shared styles for inventory item forms (New and Edit screens).
@@ -8,7 +7,6 @@ export const formStyles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
   },
   scrollView: {
     flex: 1,

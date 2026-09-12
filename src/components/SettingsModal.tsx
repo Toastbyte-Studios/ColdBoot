@@ -553,7 +553,10 @@ export const SettingsModal = observer(
                     name="chevron-forward-outline"
                     size={16}
                     color={COLORS.CHEVRON}
-                    onPress={handleManageOfflineMaps}
+                    onPress={(event) => {
+                      event.stopPropagation();
+                      handleManageOfflineMaps();
+                    }}
                     accessibilityLabel="Manage offline maps"
                   />
                 </Touchable>

@@ -26,6 +26,7 @@ import SketchCanvas, {
   SketchCanvasHandle,
 } from '../../components/SketchCanvas';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, Note } from '../../stores';
@@ -66,6 +67,7 @@ type EditNoteScreenNavigationProp = NativeStackNavigationProp<
  */
 export default observer(function EditNoteScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation<EditNoteScreenNavigationProp>();
@@ -216,7 +218,7 @@ export default observer(function EditNoteScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={styles.innerContainer}>
             <SectionHeader>Edit Note</SectionHeader>
-            <View style={styles.card}>
+            <View style={[styles.card, { marginBottom: footerClearance + 6 }]}>
               <View style={styles.inlineCenter}>
                 <SelectMenu
                   title="Category"

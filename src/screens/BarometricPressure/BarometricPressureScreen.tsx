@@ -8,6 +8,7 @@ import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SegmentedControl from '../../components/SegmentedControl';
 import { useBarometricPressure } from '../../hooks/useBarometricPressure';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useSettingsStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -49,6 +50,7 @@ const TREND_ICON: Record<PressureTrend, string> = {
  */
 function BarometricPressureScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const settingsStore = useSettingsStore();
   const { pressure, available, loading, history, error } =
     useBarometricPressure();
@@ -129,7 +131,7 @@ function BarometricPressureScreen() {
       )}
 
       {available && !loading && pressure !== null && (
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: footerClearance }]}>
           <ScrollView
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}

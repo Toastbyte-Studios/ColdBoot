@@ -14,6 +14,7 @@ import { FlashlightModes } from '../../constants';
 import { useTheme } from '../hooks/useTheme';
 import { useSignalingStore } from '../stores/StoreContext';
 import { RADIUS, SOS_SIZE } from '../theme';
+import { onColor, withAlpha } from '../theme/colorUtils';
 import { Text } from './ScaledText';
 
 const HOLD_DURATION_MS = 1000;
@@ -111,6 +112,7 @@ const SOSFab = observer(() => {
     inputRange: [0, 1],
     outputRange: [RING_CIRCUMFERENCE, 0],
   });
+  const foreground = onColor(COLORS.ERROR);
 
   return (
     <Pressable
@@ -125,6 +127,7 @@ const SOSFab = observer(() => {
         {
           bottom: 24 + insets.bottom,
           backgroundColor: COLORS.ERROR,
+          borderColor: withAlpha(foreground, 0.34),
           shadowColor: COLORS.ERROR,
         },
       ]}
@@ -140,7 +143,7 @@ const SOSFab = observer(() => {
             cx={SOS_SIZE / 2}
             cy={SOS_SIZE / 2}
             r={RING_RADIUS}
-            stroke="#FFFFFF"
+            stroke={foreground}
             strokeWidth={3}
             fill="none"
             strokeLinecap="round"
@@ -152,8 +155,8 @@ const SOSFab = observer(() => {
         </Svg>
       ) : null}
 
-      <Ionicons name="warning-outline" size={20} color="#FFFFFF" />
-      <Text style={styles.label}>SOS</Text>
+      <Ionicons name="warning-outline" size={20} color={foreground} />
+      <Text style={[styles.label, { color: foreground }]}>SOS</Text>
     </Pressable>
   );
 });
@@ -177,7 +180,6 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   label: {
-    color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '800',
     letterSpacing: 0.6,

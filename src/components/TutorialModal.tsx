@@ -42,7 +42,7 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Find Anything',
     description:
       'Tap the search button in the header to search every tool and reference.',
-    spotlightTarget: 'sectionHeader',
+    spotlightTarget: 'navSearch',
   },
   {
     icon: 'notifications-outline',

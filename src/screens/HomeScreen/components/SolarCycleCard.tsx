@@ -79,7 +79,11 @@ const SolarCycleCard = observer(() => {
   const isDaylight =
     now >= snapshot.sunrise && now < snapshot.sunset ? true : false;
   const headlineEvent = isDaylight ? 'Sunset' : 'Sunrise';
-  const headlineTime = isDaylight ? snapshot.sunset : snapshot.sunrise;
+  const headlineTime = isDaylight
+    ? snapshot.sunset
+    : now < snapshot.sunrise
+      ? snapshot.sunrise
+      : snapshot.nextSunrise;
 
   // Split the meridiem so it can sit smaller than the time itself.
   const formatted = formatTime(headlineTime);

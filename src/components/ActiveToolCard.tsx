@@ -86,25 +86,25 @@ const ActiveToolCard = observer(() => {
   const COLORS = useTheme();
   const navigation = useNavigation<{ navigate: (route: string) => void }>();
   const activeTool = resolveActiveTool(core);
+  const activeToolKind = activeTool?.kind;
   const [now, setNow] = useState(() => Date.now());
 
   // Tick only while something is running; an idle screen schedules no timer.
   useEffect(() => {
-    if (!activeTool) {
+    if (!activeToolKind) {
       return;
     }
     setNow(Date.now());
     const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(interval);
-  }, [activeTool]);
+  }, [activeToolKind]);
 
   if (!activeTool) {
     return null;
   }
 
-  const elapsed = core.activeSince
-    ? formatElapsed(now - core.activeSince)
-    : null;
+  const activeSince = core.getActiveSince(activeTool.kind);
+  const elapsed = activeSince ? formatElapsed(now - activeSince) : null;
   const status = elapsed ? `Running · ${elapsed}` : 'Running';
 
   const stop = () => {

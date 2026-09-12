@@ -9,6 +9,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useChecklistStore } from '../../stores';
 import { Checklist } from '../../stores/ChecklistStore';
@@ -32,6 +33,7 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const checklistStore = useChecklistStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const [newItemText, setNewItemText] = useState<string>('');
   const [isAddingItem, setIsAddingItem] = useState<boolean>(false);
 
@@ -47,7 +49,13 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
     return (
       <ScreenBody>
         <SectionHeader>Checklist Not Found</SectionHeader>
-        <View style={[styles.container, containerThemeStyle]}>
+        <View
+          style={[
+            styles.container,
+            containerThemeStyle,
+            { marginBottom: footerClearance + 12 },
+          ]}
+        >
           <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
             The requested checklist could not be found.
           </Text>
@@ -118,7 +126,13 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
         />
       </View>
       <HorizontalRule />
-      <View style={[styles.container, containerThemeStyle]}>
+      <View
+        style={[
+          styles.container,
+          containerThemeStyle,
+          { marginBottom: footerClearance + 12 },
+        ]}
+      >
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

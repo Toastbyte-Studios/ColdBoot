@@ -7,6 +7,7 @@ import constellationImages from '../../assets/constellationImages';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -35,6 +36,7 @@ import {
  */
 function StarMapScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const core = useCoreStore();
   const [hemisphere, setHemisphere] = useState<'northern' | 'southern'>(
     'northern',
@@ -161,7 +163,7 @@ function StarMapScreen() {
     <ScreenBody>
       <SectionHeader>Star Map & Celestial Navigation</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

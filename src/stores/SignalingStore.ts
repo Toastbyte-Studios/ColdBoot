@@ -117,7 +117,8 @@ export class SignalingStore {
     if (changed) {
       // Switching between two live modes restarts the clock: the elapsed time
       // describes the mode that is running now, not the session as a whole.
-      this.activeSince = next === FlashlightModes.OFF ? null : Date.now();
+      this.flashlightActiveSince =
+        next === FlashlightModes.OFF ? null : Date.now();
     }
     this.applyFlashlightState();
   }
@@ -396,7 +397,14 @@ export class SignalingStore {
    * the count every time the user navigated away, so the start time belongs
    * to the store that owns the tool's lifecycle.
    */
-  activeSince: number | null = null;
+  flashlightActiveSince: number | null = null;
+  decibelMeterActiveSince: number | null = null;
+
+  getActiveSince(kind: 'flashlight' | 'decibel'): number | null {
+    return kind === 'decibel'
+      ? this.decibelMeterActiveSince
+      : this.flashlightActiveSince;
+  }
 
   /**
    * Sets the decibel meter active state.
@@ -412,11 +420,7 @@ export class SignalingStore {
       this.currentDecibelLevel = 0;
     }
     if (changed) {
-      this.activeSince = active
-        ? Date.now()
-        : this.flashlightMode === FlashlightModes.OFF
-          ? null
-          : this.activeSince;
+      this.decibelMeterActiveSince = active ? Date.now() : null;
     }
   }
 

@@ -13,6 +13,7 @@ import Sound, { type RecordBackType } from 'react-native-nitro-sound';
 import AppButton from '../../components/AppButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
@@ -38,6 +39,7 @@ let isGlobalRecording = false;
 const DecibelMeterScreenImpl = () => {
   const core = useSignalingStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const [isActive, setIsActive] = useState(core.decibelMeterActive);
   const [decibelLevel, setDecibelLevel] = useState(0);
   const animatedLevel = useRef(new Animated.Value(0)).current;
@@ -232,7 +234,7 @@ const DecibelMeterScreenImpl = () => {
   return (
     <ScreenBody>
       <SectionHeader>Decibel Meter</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

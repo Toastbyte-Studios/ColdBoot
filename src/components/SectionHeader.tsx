@@ -6,6 +6,8 @@ import { Text } from './ScaledText';
 import { TutorialSpotlightContext } from './TutorialSpotlightContext';
 
 type Props = TextProps & {
+  /** Rendered before the title block, e.g. a back button. */
+  leading?: React.ReactNode;
   title?: string;
   /** Secondary line under the title, e.g. "Six tools · all offline". */
   subtitle?: string;
@@ -37,6 +39,7 @@ type Props = TextProps & {
  * edit for no behavioural gain.
  */
 export default function SectionHeader({
+  leading,
   title,
   subtitle,
   trailing,
@@ -53,6 +56,7 @@ export default function SectionHeader({
   return (
     <View ref={sectionHeaderRef} style={styles.container}>
       <View style={styles.row}>
+        {leading}
         <View style={styles.labels}>
           <Text
             {...rest}

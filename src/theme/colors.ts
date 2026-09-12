@@ -47,7 +47,7 @@ const LIGHT_COLORS = {
    * and must not compete with it.
    */
   SEPARATOR: '#DCECF7',
-  /** Disclosure chevrons. Recedes further than MUTED: it is an affordance, not content. */
+  /** Disclosure chevrons. Recede further than MUTED: they are affordances, not content. */
   CHEVRON: '#A9C5DA',
 
   ERROR: '#C62828',

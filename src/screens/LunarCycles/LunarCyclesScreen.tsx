@@ -6,6 +6,7 @@ import MoonPhaseGlyph from '../../components/MoonPhaseGlyph';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import { getLunarPhaseName } from '../../utils/lunarPhase';
@@ -81,6 +82,7 @@ const formatDateTime = (date: Date): string => {
 
 function LunarCyclesScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const [currentPhase, setCurrentPhase] = useState<MoonPhase | null>(null);
   const [nextFullMoon, setNextFullMoon] = useState<MoonPhase | null>(null);
   const [nextFirstQuarter, setNextFirstQuarter] = useState<MoonPhase | null>(
@@ -227,7 +229,7 @@ function LunarCyclesScreen() {
     <ScreenBody>
       <SectionHeader>Lunar Cycles</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

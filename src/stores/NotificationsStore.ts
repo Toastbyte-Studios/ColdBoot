@@ -17,6 +17,8 @@ export interface AppNotification {
   icon: string;
   iconColor: string;
   message: string;
+  /** Whether the user is allowed to dismiss this notification. */
+  dismissible: boolean;
   /** Optional background highlight color (e.g., for expiring pantry items). */
   highlightColor?: string;
 }

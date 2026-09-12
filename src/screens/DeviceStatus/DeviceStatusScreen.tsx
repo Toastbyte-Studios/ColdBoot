@@ -6,6 +6,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import { useDeviceStatus } from '../../hooks/useDeviceStatus';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 
@@ -29,13 +30,14 @@ import { FOOTER_HEIGHT } from '../../theme';
  */
 function DeviceStatusScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const { storageText, batteryText, lastFixText, offlineText } =
     useDeviceStatus();
 
   return (
     <ScreenBody>
       <SectionHeader>Device Status</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

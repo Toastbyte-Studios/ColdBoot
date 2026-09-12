@@ -2,6 +2,7 @@
  * @format
  */
 
+import { FlashlightModes } from '../constants';
 import { SignalingStore } from '../src/stores/SignalingStore';
 
 // Mock react-native-geolocation-service
@@ -123,6 +124,26 @@ describe('SignalingStore - Decibel Meter', () => {
 
     it('should have decibel level at 0 by default', () => {
       expect(store.currentDecibelLevel).toBe(0);
+    });
+  });
+
+  describe('active tool timing', () => {
+    it('tracks flashlight and decibel start times independently', () => {
+      const nowSpy = jest.spyOn(Date, 'now');
+
+      nowSpy.mockReturnValueOnce(1000);
+      store.setFlashlightMode(FlashlightModes.ON);
+
+      nowSpy.mockReturnValueOnce(2000);
+      store.setDecibelMeterActive(true);
+
+      expect(store.getActiveSince('flashlight')).toBe(1000);
+      expect(store.getActiveSince('decibel')).toBe(2000);
+
+      store.setFlashlightMode(FlashlightModes.OFF);
+
+      expect(store.getActiveSince('flashlight')).toBeNull();
+      expect(store.getActiveSince('decibel')).toBe(2000);
     });
   });
 });

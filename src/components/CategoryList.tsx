@@ -5,6 +5,7 @@ import {
 } from '@react-navigation/native';
 import { JSX, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import { useFooterClearance } from '../hooks/useFooterClearance';
 import { FOOTER_HEIGHT } from '../theme';
 import { CategoryType } from '../types/common-types';
 import CardTopic from './CardTopic';
@@ -33,6 +34,7 @@ export default function CategoryList({
   categoryScreen = 'Category',
 }: CategoryListProps): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const footerClearance = useFooterClearance();
 
   // Sort categories alphabetically by title
   const sortedCategories = useMemo(
@@ -41,7 +43,7 @@ export default function CategoryList({
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingBottom: footerClearance }]}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
