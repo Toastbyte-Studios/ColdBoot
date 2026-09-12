@@ -11,6 +11,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import scenarioData from '../../data/scenarioCards.json';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import {
   getBookmarks,
   BookmarkItem,
@@ -33,6 +34,7 @@ import { ScenarioCardType } from '../../types/data-type';
 export default function ScenarioBookmarksScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [items, setItems] = useState<BookmarkItem[]>([]);
+  const footerClearance = useFooterClearance();
 
   // Create a Map for O(1) lookup performance instead of O(n) for each find operation
   // Using useMemo to lazily initialize only when component mounts
@@ -106,7 +108,7 @@ export default function ScenarioBookmarksScreen(): JSX.Element {
       )}
       {/* END DEV ONLY */}
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

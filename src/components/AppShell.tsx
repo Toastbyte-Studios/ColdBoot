@@ -20,24 +20,25 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
+import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
-import { useSunShadow } from '../hooks/useSunShadow';
 import { useTheme } from '../hooks/useTheme';
 import {
   useNavigationHistory,
   useGestureNavigation,
 } from '../navigation/NavigationHistoryContext';
 import canGoBack, { goBack } from '../navigation/navigationRef';
-import { FOOTER_HEIGHT } from '../theme';
-import Footer from './Footer/Footer';
+import { SCREEN_GUTTER } from '../theme';
+import { withAlpha } from '../theme/colorUtils';
+import AlertsSheet from './AlertsSheet';
 import { HelpModal } from './HelpModal';
-import { HorizontalRule } from './HorizontalRule';
-import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
 import { Text } from './ScaledText';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
+import SOSFab from './SOSFab';
+import TabBar from './TabBar';
 import TutorialModal from './TutorialModal';
 import {
   SpotlightLayout,
@@ -49,45 +50,38 @@ type Props = PropsWithChildren;
 
 type AppShellNavigationProp = NativeStackNavigationProp<{
   Home: undefined;
+  Search: undefined;
   DownloadArea: undefined;
 }>;
 
-const DATE_FORMAT = 'dddd, MMMM D, YYYY';
+const DATE_FORMAT = 'dddd, MMMM D';
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
 
-/**
- * The header's vertical offsets were hand-tuned as fixed pixel values against
- * a device with a 44pt top inset. Rather than re-tune them blind, we keep the
- * tuned spacing and shift the whole group by however far this device's inset
- * differs: identical layout on a 44pt device, correct clearance on a Dynamic
- * Island phone (59pt) or an Android status bar (~24pt).
- */
-const BASELINE_TOP_INSET = 44;
-const DATE_TOP = 30;
-const SETTINGS_TOP = 50;
-const HEADER_PADDING_TOP = 80;
+/** Edge length of the nav bar's circular icon buttons. */
+const NAV_BUTTON = 34;
 
 /**
  * Root layout wrapper for the app.
  *
  * Provides:
- * - A consistent shell layout with a persistent header (settings button + logo) and a content area.
- * - Global horizontal swipe navigation using a `PanResponder` attached to the outer container:
- *   - Right swipe triggers {@link goBack} when {@link canGoBack} is true.
- *   - Left swipe triggers `goForward` when forward navigation is available.
+ * - A compact nav bar: the app mark, the wordmark over today's date, and the
+ *   search and settings buttons.
+ * - A bottom tab bar with the floating SOS action.
+ * - Global horizontal swipe navigation via a `PanResponder` on the outer
+ *   container: right swipes {@link goBack}, left swipes go forward.
+ *
+ * The header this replaces spent roughly 260px on a date, two icon buttons, a
+ * 120px logo circle and a full-width bar that was secretly the search field.
+ * The same affordances now fit in one 34px-tall row, which is the space the
+ * solar card and module list took over.
  *
  * Gesture behavior:
- * - Attempts to avoid interfering with vertical scrolling and taps by requiring a minimum horizontal
- *   movement and favoring horizontal intent over vertical (bias check against `dy`).
- * - On release, triggers navigation only on "confident" swipes using distance (`dx`), velocity (`vx`),
- *   and vertical displacement (`dy`) thresholds.
+ * - Requires minimum horizontal movement and favors horizontal intent over
+ *   vertical, so it does not fight scrolling or taps.
+ * - On release, navigates only on "confident" swipes, using distance (`dx`),
+ *   velocity (`vx`) and vertical displacement (`dy`) thresholds.
  *
- * @remarks
- * The settings button opens a modal overlay that allows users to configure app settings.
- *
- * @param props - Component props.
  * @param props.children - Screen content to render inside the shell.
- * @returns The composed app shell containing the header, content, and gesture handlers.
  */
 export default function AppShell({ children }: Props) {
   const navigation = useNavigation<AppShellNavigationProp>();
@@ -99,6 +93,7 @@ export default function AppShell({ children }: Props) {
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isManageOfflineVisible, setIsManageOfflineVisible] = useState(false);
   const [isHelpVisible, setIsHelpVisible] = useState(false);
+  const [isAlertsVisible, setIsAlertsVisible] = useState(false);
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
   const [tutorialSpotlightTarget, setTutorialSpotlightTarget] = useState<
     TutorialSpotlightTarget | undefined
@@ -107,15 +102,13 @@ export default function AppShell({ children }: Props) {
     useState<SpotlightLayout | null>(null);
   const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
+  const navSearchRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
   const [currentDate, setCurrentDate] = useState(() =>
     dayjs().format(DATE_FORMAT),
   );
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const COLORS = useTheme();
-  const sunShadow = useSunShadow();
-
-  const insetShift = insets.top - BASELINE_TOP_INSET;
 
   const markTutorialComplete = () => {
     AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true')
@@ -182,9 +175,11 @@ export default function AppShell({ children }: Props) {
     const targetRef =
       tutorialSpotlightTarget === 'logo'
         ? logoRef.current
-        : tutorialSpotlightTarget === 'sectionHeader'
-          ? sectionHeaderRef.current
-          : null;
+        : tutorialSpotlightTarget === 'navSearch'
+          ? navSearchRef.current
+          : tutorialSpotlightTarget === 'sectionHeader'
+            ? sectionHeaderRef.current
+            : null;
     if (!targetRef) return;
     let cancelled = false;
     targetRef.measureInWindow(
@@ -258,12 +253,21 @@ export default function AppShell({ children }: Props) {
       }),
     [navigationHistory, disableGestureNavigation],
   );
+
   const handleSpotlightTargetChange = useCallback(
     (target?: TutorialSpotlightTarget) => {
       setTutorialSpotlightTarget(target);
     },
     [],
   );
+
+  const navButtonStyle = [
+    styles.navButton,
+    {
+      backgroundColor: withAlpha(COLORS.BRAND, 0.1),
+      borderColor: withAlpha(COLORS.BRAND, 0.18),
+    },
+  ];
 
   return (
     <ScreenContainer>
@@ -272,6 +276,7 @@ export default function AppShell({ children }: Props) {
           target: tutorialSpotlightTarget,
           setSpotlightLayout,
           containerRef: gestureContainerRef,
+          navSearchRef,
           sectionHeaderRef,
         }}
       >
@@ -286,62 +291,65 @@ export default function AppShell({ children }: Props) {
               { transform: [{ translateY: translateYRef }] },
             ]}
           >
-            <View
-              style={[
-                styles.header,
-                { paddingTop: Math.max(24, HEADER_PADDING_TOP + insetShift) },
-              ]}
-            >
-              <View
-                style={[
-                  styles.dateAndHelpContainer,
-                  { top: Math.max(8, DATE_TOP + insetShift) },
-                ]}
-              >
-                <Text
-                  style={[styles.dateText, { color: COLORS.PRIMARY_DARK }]}
-                  accessibilityLabel={`Current date: ${currentDate}`}
-                >
-                  {currentDate}
-                </Text>
-                <IconButton
-                  name="help-circle-outline"
-                  size={30}
-                  accessibilityLabel="Help"
-                  onPress={() => setIsHelpVisible(true)}
-                />
-              </View>
-
-              <IconButton
-                name="settings-outline"
-                size={26}
-                accessibilityLabel="Settings"
-                onPress={() => setIsSettingsVisible(true)}
-                style={[
-                  styles.settingsButton,
-                  { top: Math.max(8, SETTINGS_TOP + insetShift) },
-                ]}
-              />
-
+            <View style={[styles.navBar, { paddingTop: insets.top + 14 }]}>
               <Pressable
                 ref={logoRef}
-                onPress={() => {
-                  navigation.navigate('Home');
-                }}
+                onPress={() => navigation.navigate('Home')}
                 accessibilityLabel="Go to home screen"
                 accessibilityRole="button"
-                style={({ pressed }) => (pressed ? styles.logoPressed : null)}
+                style={({ pressed }) => (pressed ? styles.pressed : null)}
               >
-                <LogoHeader shadowStyle={sunShadow} />
+                <LogoHeader size={NAV_BUTTON} />
+              </Pressable>
+
+              <View style={styles.navTitles}>
+                <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
+                  ColdBoot
+                </Text>
+                <Text
+                  style={[styles.navDate, { color: COLORS.MUTED }]}
+                  accessibilityLabel={`Current date: ${currentDate}`}
+                >
+                  {currentDate} · Offline ready
+                </Text>
+              </View>
+
+              <Pressable
+                ref={navSearchRef}
+                onPress={() => navigation.navigate('Search')}
+                accessibilityRole="button"
+                accessibilityLabel="Search"
+                style={({ pressed }) => [
+                  navButtonStyle,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons
+                  name="search-outline"
+                  size={17}
+                  color={COLORS.BRAND}
+                />
+              </Pressable>
+
+              <Pressable
+                onPress={() => setIsSettingsVisible(true)}
+                accessibilityRole="button"
+                accessibilityLabel="Settings"
+                style={({ pressed }) => [
+                  navButtonStyle,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons
+                  name="settings-outline"
+                  size={17}
+                  color={COLORS.BRAND}
+                />
               </Pressable>
             </View>
 
             <View style={styles.content}>{children}</View>
           </Animated.View>
-
-          <View style={styles.bottomRule}>
-            <HorizontalRule />
-          </View>
 
           {isTutorialVisible && (
             <Svg
@@ -372,6 +380,18 @@ export default function AppShell({ children }: Props) {
                       fill="black"
                     />
                   )}
+                  {spotlightLayout &&
+                    tutorialSpotlightTarget === 'navSearch' && (
+                      <SvgRect
+                        x={spotlightLayout.x}
+                        y={spotlightLayout.y}
+                        width={spotlightLayout.width}
+                        height={spotlightLayout.height}
+                        rx={spotlightLayout.height / 2}
+                        ry={spotlightLayout.height / 2}
+                        fill="black"
+                      />
+                    )}
                   {spotlightLayout &&
                     tutorialSpotlightTarget === 'sectionHeader' && (
                       <SvgRect
@@ -404,7 +424,12 @@ export default function AppShell({ children }: Props) {
                 : undefined
             }
           >
-            <Footer />
+            <TabBar
+              onAlertsPress={() => setIsAlertsVisible(true)}
+              onAlertsClose={() => setIsAlertsVisible(false)}
+              alertsActive={isAlertsVisible}
+            />
+            <SOSFab />
           </View>
 
           <TutorialModal
@@ -416,10 +441,16 @@ export default function AppShell({ children }: Props) {
         </View>
       </TutorialSpotlightContext.Provider>
 
+      <AlertsSheet
+        visible={isAlertsVisible}
+        onClose={() => setIsAlertsVisible(false)}
+      />
+
       <SettingsModal
         visible={isSettingsVisible}
         onClose={() => setIsSettingsVisible(false)}
         onManageOfflineMaps={() => setIsManageOfflineVisible(true)}
+        onOpenHelp={() => setIsHelpVisible(true)}
       />
 
       <ManageOfflineMapsModal
@@ -447,44 +478,45 @@ const styles = StyleSheet.create({
   },
   shell: {
     flex: 1,
-    paddingTop: 0,
-    paddingHorizontal: 0,
     alignItems: 'stretch',
   },
-  header: {
+  navBar: {
+    flexDirection: 'row',
     alignItems: 'center',
+    gap: 11,
+    paddingHorizontal: SCREEN_GUTTER,
+    paddingBottom: 10,
   },
-  dateAndHelpContainer: {
-    position: 'absolute',
-    left: 10,
-    zIndex: 10,
-    alignItems: 'flex-start',
+  navTitles: {
+    flex: 1,
   },
-  dateText: {
-    fontSize: 14,
-    fontWeight: '600',
-    marginBottom: 2,
+  wordmark: {
+    fontSize: 17,
+    fontFamily: 'Bitter-Bold',
+    letterSpacing: -0.2,
   },
-  settingsButton: {
-    position: 'absolute',
-    right: 10,
-    zIndex: 10,
+  navDate: {
+    fontSize: 11.5,
+    fontWeight: '500',
+    marginTop: 1,
   },
-  logoPressed: {
-    opacity: 0.7,
+  navButton: {
+    width: NAV_BUTTON,
+    height: NAV_BUTTON,
+    borderRadius: NAV_BUTTON / 2,
+    borderWidth: StyleSheet.hairlineWidth,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pressed: {
+    opacity: 0.6,
   },
   content: {
     flex: 1,
     flexDirection: 'row',
     alignSelf: 'stretch',
     width: '100%',
-    paddingHorizontal: 2,
     alignItems: 'stretch',
-  },
-  bottomRule: {
-    position: 'absolute',
-    bottom: FOOTER_HEIGHT,
-    width: '100%',
   },
   tutorialBackdrop: {
     ...StyleSheet.absoluteFillObject,

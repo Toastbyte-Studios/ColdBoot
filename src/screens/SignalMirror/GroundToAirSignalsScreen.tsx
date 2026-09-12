@@ -5,6 +5,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import { GROUND_TO_AIR_SIGNALS } from './data';
@@ -23,12 +24,13 @@ import { createStyles } from './styles';
  */
 export default function GroundToAirSignalsScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const dynamicStyles = createStyles(COLORS);
 
   return (
     <ScreenBody>
       <SectionHeader>Ground-to-Air Signals</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={dynamicStyles.scrollContent}

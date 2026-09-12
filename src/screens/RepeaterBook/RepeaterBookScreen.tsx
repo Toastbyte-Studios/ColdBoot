@@ -25,6 +25,7 @@ import SectionHeader from '../../components/SectionHeader';
 import SelectMenu from '../../components/SelectMenu';
 import Touchable from '../../components/Touchable';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -51,6 +52,7 @@ const gmrsData =
  */
 const RepeaterBookScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
@@ -109,7 +111,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
     <ScreenBody>
       <SectionHeader>Local Repeaters</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         {/* Filter row: mode dropdown + on-air toggle */}
         <View style={styles.filterRow}>
           {/* Mode filter */}

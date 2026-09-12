@@ -15,6 +15,7 @@ import { NoteSortSelector } from '../../../components/NoteSortSelector';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
+import { useFooterClearance } from '../../../hooks/useFooterClearance';
 import { useNotesStore, useSettingsStore } from '../../../stores';
 import { FOOTER_HEIGHT } from '../../../theme';
 import { sortNotes } from '../../../utils/noteSorting';
@@ -43,6 +44,7 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const core = useNotesStore();
   const settings = useSettingsStore();
+  const footerClearance = useFooterClearance();
 
   const { category } = route.params || {};
   // Filter out Voice Logs from NotePad screens
@@ -63,7 +65,7 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
       <SectionHeader>{category}</SectionHeader>
       <NoteSortSelector />
       <HorizontalRule />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

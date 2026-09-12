@@ -11,9 +11,9 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
 
 /**
  * Emergency Contact & Rally Point Planner landing screen.
@@ -28,6 +28,7 @@ import { FOOTER_HEIGHT } from '../../theme';
 export default observer(function EmergencyPlanScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useEmergencyPlanStore();
+  const footerClearance = useFooterClearance();
   const COLORS = useTheme();
 
   const sections = [
@@ -54,7 +55,7 @@ export default observer(function EmergencyPlanScreen() {
   return (
     <ScreenBody>
       <SectionHeader>Emergency Planner</SectionHeader>
-      <View style={[styles.container, { paddingBottom: FOOTER_HEIGHT }]}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         {sections.map((section) => (
           <Touchable
             key={section.screen}

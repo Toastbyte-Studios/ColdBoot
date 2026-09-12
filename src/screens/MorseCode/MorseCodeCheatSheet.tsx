@@ -5,6 +5,7 @@ import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
@@ -23,6 +24,7 @@ type SortType = 'alphabetical' | 'morse';
  */
 export default function MorseCodeCheatSheet() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [sortType, setSortType] = useState<SortType>('alphabetical');
 
@@ -49,7 +51,7 @@ export default function MorseCodeCheatSheet() {
   return (
     <ScreenBody>
       <SectionHeader>Morse Code Cheat Sheet</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <View style={styles.sortButton}>
           <AppButton
             label={`Sort: ${sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}`}

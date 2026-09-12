@@ -12,6 +12,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -31,6 +32,7 @@ type DetailRow = { label: string; value: string };
  */
 export default function RepeaterDetailScreen(): JSX.Element {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const route = useRoute<RepeaterDetailRouteProp>();
   const store = useRepeaterBookStore();
@@ -80,7 +82,7 @@ export default function RepeaterDetailScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>{repeater.frequency} MHz</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

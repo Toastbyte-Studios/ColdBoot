@@ -112,7 +112,14 @@ export class SignalingStore {
   setFlashlightMode(mode: FlashlightModeType[keyof FlashlightModeType]) {
     // Exclusive selection: tapping active mode turns it off
     const next = this.flashlightMode === mode ? FlashlightModes.OFF : mode;
+    const changed = next !== this.flashlightMode;
     this.flashlightMode = next;
+    if (changed) {
+      // Switching between two live modes restarts the clock: the elapsed time
+      // describes the mode that is running now, not the session as a whole.
+      this.flashlightActiveSince =
+        next === FlashlightModes.OFF ? null : Date.now();
+    }
     this.applyFlashlightState();
   }
 
@@ -381,16 +388,39 @@ export class SignalingStore {
   currentDecibelLevel: number = 0; // Current decibel level (0-100 normalized scale)
 
   /**
+   * When the currently-running tool started, as a Unix timestamp, or `null`
+   * when nothing is running.
+   *
+   * The active-tool card shows how long a tool has been going ("Running ·
+   * 4m 12s"). Elapsed time cannot be derived from `flashlightMode` /
+   * `decibelMeterActive` alone, and deriving it in the component would reset
+   * the count every time the user navigated away, so the start time belongs
+   * to the store that owns the tool's lifecycle.
+   */
+  flashlightActiveSince: number | null = null;
+  decibelMeterActiveSince: number | null = null;
+
+  getActiveSince(kind: 'flashlight' | 'decibel'): number | null {
+    return kind === 'decibel'
+      ? this.decibelMeterActiveSince
+      : this.flashlightActiveSince;
+  }
+
+  /**
    * Sets the decibel meter active state.
    * When active, the decibel meter appears in the footer.
    *
    * @param active - Whether the decibel meter should be active.
    */
   setDecibelMeterActive(active: boolean) {
+    const changed = active !== this.decibelMeterActive;
     this.decibelMeterActive = active;
     if (!active) {
       // Reset level when deactivated
       this.currentDecibelLevel = 0;
+    }
+    if (changed) {
+      this.decibelMeterActiveSince = active ? Date.now() : null;
     }
   }
 

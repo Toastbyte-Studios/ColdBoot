@@ -7,6 +7,7 @@ import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -25,6 +26,7 @@ export default observer(
   function ManageInventoryCategoriesScreen(): React.JSX.Element {
     const inventory = useInventoryStore();
     const COLORS = useTheme();
+    const footerClearance = useFooterClearance();
     const [newCategoryName, setNewCategoryName] = useState<string>('');
     const [isAdding, setIsAdding] = useState<boolean>(false);
 
@@ -132,7 +134,7 @@ export default observer(
     return (
       <ScreenBody>
         <SectionHeader>Manage Inventory Categories</SectionHeader>
-        <View style={styles.container}>
+        <View style={[styles.container, { paddingBottom: footerClearance }]}>
           <View style={styles.headerSection}>
             <AppButton
               label={isAdding ? 'Cancel' : 'Add category'}

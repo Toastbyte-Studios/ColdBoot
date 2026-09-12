@@ -15,6 +15,7 @@ import healthData from '../../data/health.json';
 import survivalData from '../../data/survival.json';
 import toolsData from '../../data/tools.json';
 import weatherData from '../../data/weather.json';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import {
   getBookmarks,
   BookmarkItem,
@@ -37,6 +38,7 @@ import ReferenceEntryType from '../../types/data-type';
 export default function BookmarkScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [items, setItems] = useState<BookmarkItem[]>([]);
+  const footerClearance = useFooterClearance();
 
   // Create a Map for O(1) lookup performance instead of O(n) for each find operation
   // Using useMemo to lazily initialize only when component mounts
@@ -116,7 +118,7 @@ export default function BookmarkScreen(): JSX.Element {
       )}
       {/* END DEV ONLY */}
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

@@ -39,15 +39,16 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     icon: 'search-outline',
-    title: 'Tap the Section Header',
-    description: 'Tap the section header title to open search in that section.',
-    spotlightTarget: 'sectionHeader',
+    title: 'Find Anything',
+    description:
+      'Tap the search button in the header to search every tool and reference.',
+    spotlightTarget: 'navSearch',
   },
   {
     icon: 'notifications-outline',
-    title: 'Footer Buttons',
+    title: 'Tab Bar and SOS',
     description:
-      'Use footer buttons for notifications and quick access to settings/help.',
+      'Switch between Home, Modules and Alerts below. Hold the red SOS button for one second in an emergency.',
     spotlightTarget: 'footerButtons',
   },
   {

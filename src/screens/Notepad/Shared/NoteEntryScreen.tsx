@@ -13,6 +13,7 @@ import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
+import { useFooterClearance } from '../../../hooks/useFooterClearance';
 import { useTheme } from '../../../hooks/useTheme';
 import { useNotesStore } from '../../../stores';
 import { Note } from '../../../stores/NotesStore';
@@ -42,6 +43,7 @@ type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
  */
 export default observer(function NoteEntryScreen(): React.JSX.Element {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const shared = useMemo(() => makeNoteListSharedStyles(COLORS), [COLORS]);
   const route = useRoute<NoteEntryRouteProp>();
@@ -57,7 +59,9 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
     return (
       <ScreenBody>
         <SectionHeader>Note Not Found</SectionHeader>
-        <View style={styles.container}>
+        <View
+          style={[styles.container, { marginBottom: footerClearance + 12 }]}
+        >
           <Text style={shared.value}>
             The requested note could not be found.
           </Text>
@@ -126,7 +130,7 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
         />
       </View>
       <HorizontalRule />
-      <View style={styles.container}>
+      <View style={[styles.container, { marginBottom: footerClearance + 12 }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

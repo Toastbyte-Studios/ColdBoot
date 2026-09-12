@@ -13,6 +13,7 @@ import { Text } from '../../../components/ScaledText';
 import ScreenBody from '../../../components/ScreenBody';
 import SectionHeader from '../../../components/SectionHeader';
 import SectionSubHeader from '../../../components/SectionSubHeader';
+import { useFooterClearance } from '../../../hooks/useFooterClearance';
 import { FOOTER_HEIGHT } from '../../../theme';
 import ReferenceEntryType from '../../../types/data-type';
 
@@ -43,6 +44,7 @@ type CategoryScreenRouteProp = RouteProp<
 export default function CategoryScreen(): JSX.Element {
   const route = useRoute<CategoryScreenRouteProp>();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const footerClearance = useFooterClearance();
   const { title, data, disclaimer } = route.params || {};
 
   const entries = useMemo(() => {
@@ -52,7 +54,7 @@ export default function CategoryScreen(): JSX.Element {
   return (
     <ScreenBody>
       <SectionHeader>{title}</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

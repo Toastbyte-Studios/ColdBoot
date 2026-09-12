@@ -6,6 +6,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SegmentedControl from '../../components/SegmentedControl';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import {
@@ -84,6 +85,7 @@ function convertFromMGRS(mgrsStr: string): ConversionResults {
  */
 export default function GridReferenceScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   const [inputFormat, setInputFormat] = useState<InputFormat>('DD');
   const [inputText, setInputText] = useState('');
@@ -145,7 +147,7 @@ export default function GridReferenceScreen() {
     <ScreenBody>
       <SectionHeader>Grid Reference</SectionHeader>
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { paddingBottom: footerClearance }]}
         contentContainerStyle={styles.contentContainer}
         keyboardShouldPersistTaps="handled"
       >

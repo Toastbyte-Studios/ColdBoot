@@ -8,13 +8,13 @@ import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import {
   useCoreStore,
   useSettingsStore,
   useWeatherOutlookStore,
 } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT } from '../../theme';
 import {
   displayPrecipitation,
   displaySpeed,
@@ -57,6 +57,7 @@ function SeasonalOutlookScreen() {
   const settings = useSettingsStore();
   const weatherStore = useWeatherOutlookStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   const [locationError, setLocationError] = useState<string | null>(null);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
@@ -201,7 +202,7 @@ function SeasonalOutlookScreen() {
         !weatherStore.error &&
         weatherStore.outlook && (
           <View
-            style={[styles.container, { paddingBottom: FOOTER_HEIGHT + 16 }]}
+            style={[styles.container, { paddingBottom: footerClearance + 16 }]}
           >
             <ScrollView
               style={styles.scrollView}

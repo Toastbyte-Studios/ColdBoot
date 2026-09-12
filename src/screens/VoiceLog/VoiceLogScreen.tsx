@@ -25,6 +25,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
 import { FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
@@ -55,6 +56,7 @@ const MAX_DURATION_SECONDS = 12;
  */
 export default observer(function VoiceLogScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation();
@@ -317,7 +319,10 @@ export default observer(function VoiceLogScreen() {
         <SectionHeader>Voice Logs</SectionHeader>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: footerClearance + SCROLL_PADDING },
+          ]}
         >
           <Text style={styles.modeSelectionTitle}>
             What would you like to do?
@@ -354,7 +359,10 @@ export default observer(function VoiceLogScreen() {
         <SectionHeader>Record Voice Log</SectionHeader>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: footerClearance + SCROLL_PADDING },
+          ]}
         >
           <InfoBox icon="information-circle-outline">
             <Text style={styles.infoText}>
@@ -406,7 +414,10 @@ export default observer(function VoiceLogScreen() {
       <SectionHeader>Voice Logs</SectionHeader>
       <ScrollView
         style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[
+          styles.scrollContent,
+          { paddingBottom: footerClearance + SCROLL_PADDING },
+        ]}
       >
         {voiceLogs.length === 0 ? (
           <EmptyState

@@ -12,10 +12,10 @@ import {
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-import { HorizontalRule } from '../../components/HorizontalRule';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import {
   type Checklist,
@@ -25,7 +25,8 @@ import {
   useNotesStore,
   usePantryStore,
 } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import { withAlpha } from '../../theme/colorUtils';
 import ReferenceEntryType from '../../types/data-type';
 import { RagResult, ragSearch } from '../../utils/ragSearch';
 import { SearchableItem, searchItems } from '../../utils/searchData';
@@ -88,6 +89,7 @@ const WELCOME_MESSAGE: SearchMessage = {
 export default observer(function SearchScreen(): JSX.Element {
   const navigation = useNavigation<SearchScreenNavigationProp>();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const checklistStore = useChecklistStore();
   const coreStore = useNotesStore();
   const inventoryStore = useInventoryStore();
@@ -289,8 +291,8 @@ export default observer(function SearchScreen(): JSX.Element {
         style={[
           styles.resultCard,
           {
-            backgroundColor: COLORS.SECONDARY_ACCENT + '33',
-            borderColor: COLORS.BRAND,
+            backgroundColor: COLORS.SURFACE,
+            borderColor: COLORS.BORDER,
           },
         ]}
       >
@@ -300,11 +302,11 @@ export default observer(function SearchScreen(): JSX.Element {
         >
           {index + 1}. {result.entry.title}
         </Text>
-        <Text style={[styles.resultCategory, { color: COLORS.PRIMARY_DARK }]}>
-          {result.entry.category}
+        <Text style={[styles.resultCategory, { color: COLORS.MUTED }]}>
+          {result.entry.category.toUpperCase()}
         </Text>
         <Text
-          style={[styles.resultExcerpt, { color: COLORS.PRIMARY_DARK }]}
+          style={[styles.resultExcerpt, { color: COLORS.MUTED }]}
           numberOfLines={6}
         >
           {result.excerpt}
@@ -343,8 +345,8 @@ export default observer(function SearchScreen(): JSX.Element {
         style={[
           styles.userDataItem,
           {
-            backgroundColor: COLORS.SECONDARY_ACCENT + '22',
-            borderColor: COLORS.BRAND + '88',
+            backgroundColor: COLORS.SURFACE,
+            borderColor: COLORS.SEPARATOR,
           },
         ]}
         onPress={() => handleItemPress(item)}
@@ -354,7 +356,7 @@ export default observer(function SearchScreen(): JSX.Element {
         <Ionicons
           name={item.icon}
           size={16}
-          color={COLORS.PRIMARY_DARK}
+          color={COLORS.BRAND}
           style={styles.userDataIcon}
         />
         <Text
@@ -366,7 +368,7 @@ export default observer(function SearchScreen(): JSX.Element {
         <Ionicons
           name="chevron-forward-outline"
           size={14}
-          color={COLORS.PRIMARY_DARK}
+          color={COLORS.CHEVRON}
         />
       </Touchable>
     ),
@@ -408,8 +410,8 @@ export default observer(function SearchScreen(): JSX.Element {
                   : [
                       styles.assistantBubble,
                       {
-                        backgroundColor: COLORS.SECONDARY_ACCENT + '55',
-                        borderColor: COLORS.BRAND + '88',
+                        backgroundColor: COLORS.SURFACE,
+                        borderColor: COLORS.BORDER,
                       },
                     ],
               ]}
@@ -442,7 +444,7 @@ export default observer(function SearchScreen(): JSX.Element {
                   style={[
                     styles.userDataList,
                     {
-                      borderColor: COLORS.BRAND + '55',
+                      borderColor: COLORS.BORDER,
                     },
                   ]}
                 >
@@ -459,27 +461,33 @@ export default observer(function SearchScreen(): JSX.Element {
   return (
     <ScreenBody>
       {/* Outer container provides footer clearance */}
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          {/* Input bar — top of screen, styled like SectionHeader */}
+          {/* Search field — the nav bar's search button lands here. */}
           <View style={styles.inputWrapper}>
             <View
               style={[
                 styles.inputRow,
                 {
-                  backgroundColor: COLORS.SECONDARY_ACCENT,
-                  borderColor: COLORS.BRAND,
+                  backgroundColor: COLORS.SURFACE,
+                  borderColor: COLORS.BORDER,
                 },
               ]}
             >
+              <Ionicons
+                name="search-outline"
+                size={16}
+                color={COLORS.MUTED}
+                accessible={false}
+              />
               <TextInput
                 style={[styles.textInput, { color: COLORS.PRIMARY_DARK }]}
                 placeholder="Search or ask a question…"
-                placeholderTextColor={COLORS.PRIMARY_DARK + '80'}
+                placeholderTextColor={COLORS.MUTED}
                 value={query}
                 onChangeText={setQuery}
                 onSubmitEditing={handleSend}
@@ -495,7 +503,7 @@ export default observer(function SearchScreen(): JSX.Element {
                 <Touchable
                   style={[styles.sendButton, { backgroundColor: COLORS.BRAND }]}
                   borderless
-                  rippleColor={COLORS.PRIMARY_LIGHT}
+                  rippleColor={withAlpha(COLORS.PRIMARY_LIGHT, 0.9)}
                   hitSlop={10}
                   onPress={handleSend}
                   disabled={isSearching}
@@ -511,8 +519,6 @@ export default observer(function SearchScreen(): JSX.Element {
               )}
             </View>
           </View>
-
-          <HorizontalRule />
 
           {/* Message history */}
           <ScrollView
@@ -545,8 +551,8 @@ export default observer(function SearchScreen(): JSX.Element {
                     styles.messageBubble,
                     styles.assistantBubble,
                     {
-                      backgroundColor: COLORS.SECONDARY_ACCENT + '55',
-                      borderColor: COLORS.BRAND + '88',
+                      backgroundColor: COLORS.SURFACE,
+                      borderColor: COLORS.BORDER,
                     },
                   ]}
                 >
@@ -569,38 +575,37 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
   },
   keyboardAvoid: {
     flex: 1,
     width: '100%',
   },
-  // Input is positioned at the top, styled to match SectionHeader
   inputWrapper: {
-    width: '80%',
-    alignSelf: 'center',
+    width: '100%',
+    paddingHorizontal: SCREEN_GUTTER,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 2,
-    borderRadius: 8,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    marginVertical: 12,
-    gap: 8,
+    minHeight: 38,
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
+    marginVertical: SPACING.md,
+    gap: SPACING.sm,
   },
   textInput: {
     flex: 1,
-    fontSize: 20,
-    fontWeight: '800',
+    fontSize: 16.5,
+    fontWeight: '400',
     padding: 0,
-    minHeight: 28,
+    minHeight: 22,
   },
   sendButton: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     flexShrink: 0,
@@ -610,9 +615,9 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   scrollContent: {
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    gap: 8,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SCREEN_GUTTER,
+    gap: SPACING.sm,
   },
   messageRow: {
     flexDirection: 'row',
@@ -641,7 +646,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   messageBubble: {
-    borderRadius: 12,
+    borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
   },
@@ -659,26 +664,25 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   resultCard: {
-    borderRadius: 10,
+    borderRadius: RADIUS.group,
     borderWidth: 1,
-    padding: 12,
+    padding: 15,
     gap: 4,
   },
   resultTitle: {
-    fontSize: 14,
-    fontWeight: '700',
+    fontSize: 15.5,
+    fontWeight: '600',
     marginBottom: 2,
   },
   resultCategory: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '500',
-    opacity: 0.7,
+    letterSpacing: 0.66,
     marginBottom: 4,
   },
   resultExcerpt: {
     fontSize: 13,
     lineHeight: 19,
-    opacity: 0.9,
   },
   jumpButton: {
     flexDirection: 'row',
@@ -695,7 +699,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   userDataList: {
-    borderRadius: 10,
+    borderRadius: RADIUS.group,
     borderWidth: 1,
     overflow: 'hidden',
   },

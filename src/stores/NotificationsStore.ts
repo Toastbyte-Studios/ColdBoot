@@ -17,6 +17,8 @@ export interface AppNotification {
   icon: string;
   iconColor: string;
   message: string;
+  /** Whether the user is allowed to dismiss this notification. */
+  dismissible: boolean;
   /** Optional background highlight color (e.g., for expiring pantry items). */
   highlightColor?: string;
 }
@@ -90,6 +92,17 @@ export class NotificationsStore {
     }
     runInAction(() => {
       this.hiddenKeys = new Set([...this.hiddenKeys, key]);
+    });
+    this._persist();
+  }
+
+  hideNotifications(keys: string[]): void {
+    const nextKeys = keys.filter((key) => !this.hiddenKeys.has(key));
+    if (nextKeys.length === 0) {
+      return;
+    }
+    runInAction(() => {
+      this.hiddenKeys = new Set([...this.hiddenKeys, ...nextKeys]);
     });
     this._persist();
   }

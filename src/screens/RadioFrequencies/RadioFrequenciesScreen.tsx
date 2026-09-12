@@ -11,6 +11,7 @@ import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { FOOTER_HEIGHT } from '../../theme';
 
 const radioCategories = [
@@ -34,6 +35,7 @@ const radioCategories = [
  */
 export default function RadioFrequenciesScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const footerClearance = useFooterClearance();
   const disclaimer: string = radioFrequenciesData.metadata?.disclaimer ?? '';
 
   const handleCategoryPress = (categoryId: string) => {
@@ -51,7 +53,7 @@ export default function RadioFrequenciesScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>Radio Frequencies</SectionHeader>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

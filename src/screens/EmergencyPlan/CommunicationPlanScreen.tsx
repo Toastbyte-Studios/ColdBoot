@@ -6,9 +6,9 @@ import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
 import { FormButtonRow, FormTextArea } from '../Shared/Prepper';
 import { ImportModal } from './ImportModal';
 import {
@@ -33,6 +33,7 @@ import {
 export default observer(function CommunicationPlanScreen() {
   const navigation = useNavigation();
   const store = useEmergencyPlanStore();
+  const footerClearance = useFooterClearance();
   const COLORS = useTheme();
 
   const plan = store.communicationPlan;
@@ -130,7 +131,7 @@ export default observer(function CommunicationPlanScreen() {
         />
       </View>
 
-      <View style={[styles.container, { paddingBottom: FOOTER_HEIGHT }]}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

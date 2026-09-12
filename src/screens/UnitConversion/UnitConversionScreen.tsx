@@ -9,6 +9,7 @@ import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { FOOTER_HEIGHT } from '../../theme';
 import { conversionCategories } from '../../utils/unitConversions';
 
@@ -23,6 +24,7 @@ import { conversionCategories } from '../../utils/unitConversions';
  */
 export default function UnitConversionScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const footerClearance = useFooterClearance();
 
   const openCategory = (categoryId: string) => {
     navigation.navigate('ConversionCategory', { categoryId });
@@ -32,7 +34,7 @@ export default function UnitConversionScreen() {
     <ScreenBody>
       <SectionHeader>Unit Conversion</SectionHeader>
       <ScrollView
-        style={styles.container}
+        style={[styles.container, { marginBottom: footerClearance }]}
         contentContainerStyle={styles.contentContainer}
       >
         <View style={styles.gridWrapper}>

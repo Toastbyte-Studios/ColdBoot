@@ -6,6 +6,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore, usePantryStore } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -86,6 +87,7 @@ function CategoryRow({
  */
 export default observer(function BarterEstimatorScreen(): JSX.Element {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const pantryStore = usePantryStore();
   const inventoryStore = useInventoryStore();
 
@@ -107,7 +109,7 @@ export default observer(function BarterEstimatorScreen(): JSX.Element {
     <ScreenBody>
       <SectionHeader>Barter Estimator</SectionHeader>
 
-      <View style={styles.scrollWrapper}>
+      <View style={[styles.scrollWrapper, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.content}

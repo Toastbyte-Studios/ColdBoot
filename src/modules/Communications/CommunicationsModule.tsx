@@ -1,22 +1,16 @@
 import React from 'react';
 import { COMMUNICATION_TOOLS } from '../../../constants';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import ToolList from '../../components/ToolList';
+import ModuleScreen from '../../components/ModuleScreen';
 
 /**
- * Renders the Communications screen module.
- *
- * Displays a section header labeled "Communications" and a list of available
- * communication-related tools within a standard screen layout.
- *
- * @returns A React element containing the Communications module UI.
+ * The Communications module: ways to be heard or understood without a network.
  */
 export default function CommunicationsModule() {
   return (
-    <ScreenBody>
-      <SectionHeader>Communications</SectionHeader>
-      <ToolList tools={COMMUNICATION_TOOLS} />
-    </ScreenBody>
+    <ModuleScreen
+      title="Comms"
+      icon="chatbubbles-outline"
+      tools={COMMUNICATION_TOOLS}
+    />
   );
 }

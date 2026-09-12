@@ -26,6 +26,7 @@ import SketchCanvas, {
   SketchCanvasHandle,
 } from '../../components/SketchCanvas';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useKeyboardStatus } from '../../hooks/useKeyboardStatus';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
@@ -71,6 +72,7 @@ const NOTE_TYPE_OPTIONS: { value: NoteType; label: string }[] = [
  */
 export default observer(function NewNoteScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation<NewNoteScreenNavigationProp>();
@@ -169,7 +171,7 @@ export default observer(function NewNoteScreen() {
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
           <View style={styles.innerContainer}>
             <SectionHeader>New Note</SectionHeader>
-            <View style={styles.card}>
+            <View style={[styles.card, { marginBottom: footerClearance + 6 }]}>
               <View style={styles.inlineCenter}>
                 <SelectMenu
                   title="Category"

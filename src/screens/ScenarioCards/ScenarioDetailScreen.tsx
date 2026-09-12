@@ -6,6 +6,7 @@ import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import {
   addBookmark,
@@ -36,6 +37,7 @@ type ScenarioDetailScreenRouteProp = RouteProp<
  */
 export default function ScenarioDetailScreen(): JSX.Element {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const route = useRoute<ScenarioDetailScreenRouteProp>();
   const { scenario: routeScenario } = route.params || {};
@@ -111,7 +113,7 @@ export default function ScenarioDetailScreen(): JSX.Element {
           onPress={toggleBookmark}
         />
       </View>
-      <View style={styles.bodyWrap}>
+      <View style={[styles.bodyWrap, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scroll}
           contentContainerStyle={styles.scrollContent}

@@ -98,7 +98,7 @@ describe('Tutorial flow components', () => {
     ).toThrow();
 
     expect(onSpotlightTargetChange).toHaveBeenCalledWith('logo');
-    expect(onSpotlightTargetChange).toHaveBeenCalledWith('sectionHeader');
+    expect(onSpotlightTargetChange).toHaveBeenCalledWith('navSearch');
     expect(onSpotlightTargetChange).toHaveBeenCalledWith('footerButtons');
   });
 

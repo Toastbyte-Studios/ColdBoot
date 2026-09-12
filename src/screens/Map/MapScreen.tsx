@@ -37,6 +37,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
 import { navigationRef } from '../../navigation/navigationRef';
@@ -297,6 +298,7 @@ const GEOCODE_THRESHOLD = 0.001;
 
 export default observer(function MapScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { setDisableGestureNavigation } = useGestureNavigation();
   const cameraRef = useRef<CameraRef>(null);
@@ -735,7 +737,7 @@ export default observer(function MapScreen() {
   return (
     <ScreenBody>
       <SectionHeader>Map</SectionHeader>
-      <View style={styles.wrapper}>
+      <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
         <View
           style={styles.mapWrapper}

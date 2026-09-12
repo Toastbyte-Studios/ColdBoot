@@ -3,6 +3,7 @@ import { StyleSheet, ScrollView, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
@@ -45,13 +46,14 @@ const natoPhoneticAlphabet = [
  * @returns A React element containing the NATO Phonetic Alphabet screen.
  */
 export default function NatoPhoneticScreen() {
+  const footerClearance = useFooterClearance();
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
 
   return (
     <ScreenBody>
       <SectionHeader>NATO Phonetic</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

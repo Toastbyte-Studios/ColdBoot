@@ -9,6 +9,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -31,6 +32,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
   const navigation = useNavigation<InventoryAllItemsNavigationProp>();
   const inventory = useInventoryStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   const allItems = inventory.allItemsSorted;
 
@@ -42,7 +44,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
     <ScreenBody>
       <SectionHeader>All Inventory Items</SectionHeader>
       <HorizontalRule />
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

@@ -3,11 +3,25 @@ import { AppNotification } from '../../stores/NotificationsStore';
 import { SolarEventType } from '../../stores/SolarCycleNotificationStore';
 import {
   useAstronomyEventStore,
+  useNotificationsStore,
   usePantryStore,
   useSolarCycleNotificationStore,
   useWeatherOutlookStore,
 } from '../../stores/StoreContext';
 import { formatDaysUntil } from '../../utils/formatDaysUntil';
+
+/**
+ * Count of notifications the user has not hidden.
+ *
+ * Derived from {@link useAllNotifications} so the tab bar badge and the alerts
+ * sheet can never disagree about how many there are.
+ */
+export function useVisibleNotificationCount(): number {
+  const allNotifications = useAllNotifications();
+  const notificationsStore = useNotificationsStore();
+  return allNotifications.filter((n) => !notificationsStore.isHidden(n.key))
+    .length;
+}
 
 /**
  * Builds the full list of current in-app notifications across all sources
@@ -43,6 +57,7 @@ export function useAllNotifications(): AppNotification[] {
       icon: iconMap[n.eventType] ?? 'sunny-outline',
       iconColor: COLORS.ACCENT,
       message: solarStore.getNotificationMessage(n),
+      dismissible: n.eventType !== 'sunrise' && n.eventType !== 'sunset',
     });
   }
 
@@ -55,6 +70,7 @@ export function useAllNotifications(): AppNotification[] {
       icon: 'moon-outline',
       iconColor: COLORS.ACCENT,
       message: `${lunar.phaseName} (${lunar.illumination}%)`,
+      dismissible: true,
     });
   }
 
@@ -67,6 +83,7 @@ export function useAllNotifications(): AppNotification[] {
       icon: 'partly-sunny-outline',
       iconColor: COLORS.ACCENT,
       message: weatherSummary,
+      dismissible: true,
     });
   }
 
@@ -79,6 +96,7 @@ export function useAllNotifications(): AppNotification[] {
       icon: nextAstro.icon,
       iconColor: COLORS.ACCENT,
       message: `${nextAstro.label} — ${formatDaysUntil(nextAstro.date)}`,
+      dismissible: true,
     });
   }
 
@@ -96,6 +114,7 @@ export function useAllNotifications(): AppNotification[] {
       highlightColor: isExpired
         ? 'rgba(211,47,47,0.22)'
         : 'rgba(249,168,37,0.28)',
+      dismissible: true,
     });
   }
 

@@ -13,6 +13,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import SectionSubHeader from '../../components/SectionSubHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { FOOTER_HEIGHT } from '../../theme';
 import { ScenarioCardType } from '../../types/data-type';
 
@@ -42,6 +43,7 @@ type ScenarioCategoryRouteProp = RouteProp<
  */
 export default function ScenarioCategoryScreen(): JSX.Element {
   const route = useRoute<ScenarioCategoryRouteProp>();
+  const footerClearance = useFooterClearance();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const { title, data, disclaimer } = route.params || {};
 
@@ -52,7 +54,7 @@ export default function ScenarioCategoryScreen(): JSX.Element {
   return (
     <ScreenBody>
       <SectionHeader>{title}</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

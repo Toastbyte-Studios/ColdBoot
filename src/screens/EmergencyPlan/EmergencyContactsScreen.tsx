@@ -12,6 +12,7 @@ import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
@@ -25,6 +26,7 @@ export default observer(function EmergencyContactsScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useEmergencyPlanStore();
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
 
   return (
     <ScreenBody>
@@ -39,7 +41,7 @@ export default observer(function EmergencyContactsScreen() {
         />
       </View>
 
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}

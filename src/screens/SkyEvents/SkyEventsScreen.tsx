@@ -6,6 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import {
   AstronomyEvent,
@@ -123,6 +124,7 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
  */
 function SkyEventsScreen() {
   const COLORS = useTheme();
+  const footerClearance = useFooterClearance();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const core = useCoreStore();
   const astronomyStore = useAstronomyEventStore();
@@ -145,7 +147,7 @@ function SkyEventsScreen() {
   return (
     <ScreenBody>
       <SectionHeader>Sky Events</SectionHeader>
-      <View style={styles.container}>
+      <View style={[styles.container, { paddingBottom: footerClearance }]}>
         <ScrollView
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
