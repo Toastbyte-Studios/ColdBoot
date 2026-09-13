@@ -46,6 +46,7 @@ export default function AppSwitch({
   value,
   onValueChange,
   tint,
+  thumbColor,
   disabled = false,
   accessibilityLabel,
   style,
@@ -117,7 +118,8 @@ export default function AppSwitch({
               width: thumbSize,
               height: thumbSize,
               borderRadius: THUMB.on / 2,
-              backgroundColor: value ? onColor(trackTint) : COLORS.MUTED,
+              backgroundColor:
+                thumbColor ?? (value ? onColor(trackTint) : COLORS.MUTED),
               transform: [{ translateX }],
             },
           ]}
