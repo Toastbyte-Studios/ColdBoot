@@ -18,13 +18,13 @@ import {
   ActivityIndicator,
   ScrollView,
   StyleSheet,
-  Switch,
   Text,
   View,
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../../components/AppButton';
+import AppSwitch from '../../../../components/AppSwitch';
 import { useTheme } from '../../../../hooks/useTheme';
 import {
   DEFAULT_OFFLINE_ZOOM,
@@ -268,10 +268,10 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
               Includes building detail. ~2× storage.
             </Text>
           </View>
-          <Switch
+          <AppSwitch
             value={highDetail}
             onValueChange={(value) => settingsStore.setHighDetailOffline(value)}
-            trackColor={{ true: COLORS.SECONDARY_ACCENT }}
+            tint={COLORS.SECONDARY_ACCENT}
             accessibilityLabel="Toggle high detail"
           />
         </View>

@@ -1,2 +1,8 @@
 # Ignore markdownlint config to avoid trailing comma issues with JSONC
 .markdownlint.jsonc
+
+# Design handoff bundles. These are references authored elsewhere — HTML
+# prototypes of the intended look, plus the device-bezel JSX — and are read
+# against the running app, not built from. Reformatting them rewrites someone
+# else's artifact for no gain. `.eslintrc.js` ignores the same paths.
+docs/design_handoff_*/

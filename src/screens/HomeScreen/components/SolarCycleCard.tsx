@@ -1,21 +1,24 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
+import Chip from '../../../components/Chip';
 import { Text } from '../../../components/ScaledText';
 import SectionEyebrow from '../../../components/SectionEyebrow';
 import { useTheme } from '../../../hooks/useTheme';
 import { useBarometerStore, useCoreStore } from '../../../stores/StoreContext';
-import { RADIUS, SPACING } from '../../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../../../theme';
 import { getLunarPhaseName } from '../../../utils/lunarPhase';
 import { getSolarSnapshot, formatDuration } from '../../../utils/sunTimes';
 import { formatTime } from '../../../utils/timeFormat';
 
-const ARC_WIDTH = 78;
-const ARC_HEIGHT = 54;
+const isAndroid = Platform.OS === 'android';
+
+const ARC_WIDTH = isAndroid ? 80 : 78;
+const ARC_HEIGHT = isAndroid ? 56 : 54;
 /** Baseline the sun travels above, leaving room for the ground line beneath. */
-const ARC_BASELINE = 44;
+const ARC_BASELINE = isAndroid ? 46 : 44;
 const ARC_PEAK = 8;
 
 /** hPa → inches of mercury. */
@@ -122,12 +125,17 @@ const SolarCycleCard = observer(() => {
     <View
       style={[
         styles.card,
-        { backgroundColor: COLORS.SURFACE, borderColor: COLORS.BORDER },
+        isAndroid
+          ? { backgroundColor: COLORS.SURFACE_CONTAINER }
+          : [
+              styles.outlined,
+              { backgroundColor: COLORS.SURFACE, borderColor: COLORS.BORDER },
+            ],
       ]}
     >
       <View style={styles.headlineRow}>
         <View style={styles.headline}>
-          <SectionEyebrow>Solar cycle</SectionEyebrow>
+          <SectionEyebrow inline>Solar cycle</SectionEyebrow>
           <Text style={[styles.time, { color: COLORS.PRIMARY_DARK }]}>
             {headlineEvent} {clock}
             {meridiem ? <Text style={styles.meridiem}> {meridiem}</Text> : null}
@@ -159,23 +167,58 @@ const SolarCycleCard = observer(() => {
             stroke={COLORS.BORDER}
             strokeWidth={1.5}
           />
+
           <Circle cx={sun.x} cy={sun.y} r={5.5} fill={COLORS.ACCENT} />
         </Svg>
       </View>
 
-      <View style={[styles.divider, { backgroundColor: COLORS.SEPARATOR }]} />
+      {isAndroid ? (
+        /* Material splits the readings into chips rather than a divided row.
+           Three only just fit a 412dp screen, so the row scrolls: a longer
+           pressure string or a larger font scale overflows it, and wrapping
+           would turn a glanceable strip into a paragraph. */
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.chipScroll}
+          contentContainerStyle={styles.chipRow}
+        >
+          <Chip
+            dotColor={COLORS.BRAND}
+            label={`${pressureText}${trendArrow}`}
+            accessibilityLabel={`Pressure ${pressureText}`}
+          />
+          <Chip dotColor={COLORS.ACCENT} label={moonText} />
+          <Chip
+            selected={!!fix}
+            tone="tertiary"
+            icon={fix ? 'checkmark' : 'alert-circle-outline'}
+            label={fix ? 'GPS locked' : 'No fix'}
+          />
+        </ScrollView>
+      ) : (
+        <>
+          <View
+            style={[styles.divider, { backgroundColor: COLORS.SEPARATOR }]}
+          />
 
-      <View style={styles.stats}>
-        <Stat label="Pressure" value={`${pressureText}${trendArrow}`} />
-        <View style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]} />
-        <Stat label="Moon" value={moonText} />
-        <View style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]} />
-        <Stat
-          label="Fix"
-          value={fix ? 'GPS locked' : 'No fix'}
-          tone={fix ? COLORS.SECONDARY_ACCENT : COLORS.MUTED}
-        />
-      </View>
+          <View style={styles.stats}>
+            <Stat label="Pressure" value={`${pressureText}${trendArrow}`} />
+            <View
+              style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
+            />
+            <Stat label="Moon" value={moonText} />
+            <View
+              style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
+            />
+            <Stat
+              label="Fix"
+              value={fix ? 'GPS locked' : 'No fix'}
+              tone={fix ? COLORS.SECONDARY_ACCENT : COLORS.MUTED}
+            />
+          </View>
+        </>
+      )}
     </View>
   );
 });
@@ -207,13 +250,18 @@ export default SolarCycleCard;
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    borderWidth: 1,
     borderRadius: RADIUS.card,
-    paddingTop: 15,
-    paddingHorizontal: 17,
-    paddingBottom: 13,
-    marginBottom: SPACING.xl,
+    // Material containers are flat: no border, no shadow. The tonal fill is
+    // the whole separation from the ground.
+    paddingTop: isAndroid ? 16 : 15,
+    paddingHorizontal: isAndroid ? 18 : 17,
+    paddingBottom: isAndroid ? 14 : 13,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: isAndroid ? SPACING.xs : SPACING.xl,
     overflow: 'hidden',
+  },
+  outlined: {
+    borderWidth: 1,
   },
   headlineRow: {
     flexDirection: 'row',
@@ -224,17 +272,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   time: {
-    fontSize: 27,
+    fontSize: isAndroid ? 28 : 27,
     fontFamily: 'Bitter-Bold',
     letterSpacing: -0.5,
   },
   meridiem: {
-    fontSize: 15,
+    fontSize: isAndroid ? 16 : 15,
     fontFamily: 'Bitter-Bold',
   },
   detail: {
-    fontSize: 13,
-    fontWeight: '500',
+    fontSize: isAndroid ? 14 : 13,
+    fontWeight: isAndroid ? '400' : '500',
     marginTop: 3,
   },
   divider: {
@@ -265,5 +313,16 @@ const styles = StyleSheet.create({
   rule: {
     width: StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth,
     alignSelf: 'stretch',
+  },
+  chipScroll: {
+    // Cancels the card's padding so a chip scrolled past the edge is clipped
+    // by the card rather than stopping short of it.
+    marginHorizontal: -18,
+    marginTop: 14,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingHorizontal: 18,
   },
 });

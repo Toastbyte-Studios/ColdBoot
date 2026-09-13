@@ -682,3 +682,86 @@ device to check on, or its own planning.
 **Deferred to the light/dark polish pass:** finding 13.
 
 **Their own piece of work:** findings 1 and 3.
+
+## The Android pass (Material 3)
+
+`docs/design_handoff_android/README.md` is the Android expression of the same
+redesign: same information architecture, same tokens, Material grammar. What
+landed, and what deliberately did not.
+
+### How the split works
+
+Metro picks a `.android.tsx` file over its bare sibling automatically, so the
+platform files are named for the module their callers import — `AppBar`,
+`TabBar`, `SOSFab`, `AppSwitch`, `SegmentedControl` — not for what each one
+draws. The handoff suggests `NavBar.android.tsx` / `TabBar.ios.tsx`; those are
+two different base names, and Metro would resolve neither.
+
+Everything structural enough to need its own file got one. Everything else is a
+`Platform.select` or an `isAndroid` branch inside the shared component, because
+the two designs differ in metrics rather than in what they contain:
+
+| Split into platform files       | Branch inside one component                                                                            |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| `AppBar`, `TabBar`, `SOSFab`    | `ModuleRow`, `GroupContainer`, `SectionEyebrow`, `SectionHeader`                                       |
+| `AppSwitch`, `SegmentedControl` | `SolarCycleCard`, `ActiveToolCard`, `AlertsSheet`, `SettingsModal`, `SunTimeScreen`, `ScreenContainer` |
+
+### Tokens
+
+`theme/colors.ts` gained a Material 3 block — `SURFACE_GROUND`,
+`SURFACE_CONTAINER`, `SURFACE_CONTAINER_HIGH`, `OUTLINE_VARIANT`, and the
+`SECONDARY`/`TERTIARY`/`ACCENT` container pairs. The handoff says only the two
+container tints are new; in fact five of the light values had no literal in the
+palette, so they are all declared together rather than derived at call sites.
+
+`theme/constants.ts` is now `Platform.select`ed: `FOOTER_HEIGHT`,
+`ROW_MIN_HEIGHT`, `ROW_PADDING_HORIZONTAL`, `SOS_SIZE` and the whole `RADIUS`
+table. `SCREEN_INSET` is new and exported so full-bleed screens can cancel
+`ScreenContainer`'s padding with a matching negative margin — the container
+keeps its inset, because ~95 screens rely on it and only three have full-bleed
+content.
+
+### Testing
+
+`jest.config.js` runs two projects. The React Native preset pins
+`haste.defaultPlatform` to `ios`, so a `.android.tsx` file would otherwise
+never load and `Platform.OS` would never be `'android'`. Tests under
+`__tests__/android/` run in a second project where both are true.
+
+### Deliberately not done
+
+- **The search view's filter chips.** The handoff describes a chip-filtered
+  result list over `searchData` / `ragSearch` groups. The shipped screen is a
+  conversational RAG search with a chat history. Android gets Material's
+  search bar — 56dp, radius 28, back arrow, clear button, no bottom chrome —
+  and keeps the results it has. Swapping the results model is a feature change,
+  not a skin.
+- **"Alert me at dusk" on Sun Times.** `SolarCycleNotificationStore` hardcodes
+  dawn, dusk, sunrise and sunset to enabled, and the alerts sheet says in so
+  many words that solar alerts cannot be turned off. The button would be a
+  control with nothing to control.
+- **Per-screen app bars.** The handoff gives module and tool screens their own
+  bars — back arrow, no title, an overflow menu. `AppShell` still wraps the
+  navigator rather than sitting inside it, so no screen has a real navigation
+  bar to put those in; the back control lives in the headline row on both
+  platforms, and only the glyph differs (`arrow-back` vs a chevron). This is
+  finding 1, still open.
+- **Swipe-to-dismiss on alert cards.** The shell's `PanResponder` is now off on
+  Android (see below), so the gesture is no longer blocked — but the dismiss
+  button stays, because it is reachable by assistive tech and a swipe is not.
+- **Settings' full-bleed rows.** The sheet got its Material chrome — 28dp
+  corners, `surface-container`, no close button, M3 switches and segmented
+  button. Its row internals are a 980-line file of backup/restore and dev
+  tooling the handoff does not describe, and were left alone.
+- **The Modules destination.** Still undesigned, still Home's list with a
+  title. The handoff suggests a 2-column tile grid; nothing was drawn.
+
+### Back handling
+
+The shell's horizontal `PanResponder` no longer registers on Android. It
+captured horizontal drags anywhere in the shell, including the edge where
+Android 13+ runs predictive back, so leaving it on meant the app quietly eating
+the system's own back gesture — exactly the conflict the handoff flags. Android
+already has back from the gesture and the hardware key, and a hand-rolled
+forward swipe is not a platform pattern. Every sheet is a `Modal` with
+`onRequestClose`, which is what makes hardware back close them.

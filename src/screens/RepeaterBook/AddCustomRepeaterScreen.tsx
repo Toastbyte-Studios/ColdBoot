@@ -1,8 +1,9 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { JSX, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppSwitch from '../../components/AppSwitch';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -219,16 +220,14 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                   Mark as ARES / RACES / SKYWARN / etc.
                 </Text>
               </View>
-              <Switch
+              <AppSwitch
                 value={isEmcomm}
                 onValueChange={(v) => {
                   setIsEmcomm(v);
                   if (!v) setEmcomm('');
                 }}
-                trackColor={{ false: COLORS.BRAND, true: COLORS.ERROR }}
-                thumbColor={COLORS.PRIMARY_LIGHT}
+                tint={COLORS.ERROR}
                 accessibilityLabel="Mark as emergency communications repeater"
-                accessibilityRole="switch"
               />
             </View>
             {isEmcomm && (

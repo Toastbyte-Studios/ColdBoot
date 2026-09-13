@@ -2,8 +2,9 @@ import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { StyleSheet, View, Switch } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { FlashlightModes } from '../../../constants';
+import AppSwitch from '../../components/AppSwitch';
 import CardTopic from '../../components/CardTopic';
 import Grid from '../../components/Grid';
 import { Text } from '../../components/ScaledText';
@@ -104,16 +105,11 @@ const FlashlightScreenImpl = () => {
           <SectionHeader isShowHr={false}>
             <View style={styles.sectionContainer}>
               <Text style={styles.sectionText}>SOS Tone</Text>
-              <Switch
+              <AppSwitch
                 value={core.sosWithTone}
                 onValueChange={(v: boolean) => core.setSosWithTone(v)}
-                trackColor={{
-                  false: COLORS.SECONDARY_ACCENT,
-                  true: COLORS.ACCENT,
-                }}
-                thumbColor={
-                  core.sosWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND
-                }
+                tint={COLORS.ACCENT}
+                accessibilityLabel="Play a tone alongside the SOS flash"
                 style={styles.switchContainer}
               />
             </View>

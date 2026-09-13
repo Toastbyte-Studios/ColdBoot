@@ -1,13 +1,28 @@
 import React from 'react';
-import { StyleSheet, TextProps, View } from 'react-native';
+import {
+  Platform,
+  StyleProp,
+  StyleSheet,
+  TextProps,
+  View,
+  ViewStyle,
+} from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { SPACING } from '../theme';
 import { Text } from './ScaledText';
 import { TutorialSpotlightContext } from './TutorialSpotlightContext';
 
+const isAndroid = Platform.OS === 'android';
+
 type Props = TextProps & {
   /** Rendered before the title block, e.g. a back button. */
   leading?: React.ReactNode;
+  /**
+   * Styles the block that holds the whole row, rather than the title text that
+   * `style` reaches. Screens whose content is full-bleed use it to give the
+   * headline its own gutter.
+   */
+  containerStyle?: StyleProp<ViewStyle>;
   title?: string;
   /** Secondary line under the title, e.g. "Six tools · all offline". */
   subtitle?: string;
@@ -40,6 +55,7 @@ type Props = TextProps & {
  */
 export default function SectionHeader({
   leading,
+  containerStyle,
   title,
   subtitle,
   trailing,
@@ -54,7 +70,7 @@ export default function SectionHeader({
   const { sectionHeaderRef } = React.useContext(TutorialSpotlightContext);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, containerStyle]}>
       <View style={styles.row}>
         {leading}
         <View style={styles.labels}>
@@ -97,14 +113,17 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   title: {
-    fontSize: 32,
+    // Material's headline sits a touch smaller and without iOS's tight
+    // tracking, which is a display-type convention rather than a Material one.
+    fontSize: isAndroid ? 30 : 32,
     // Bitter-Bold is the bundled face; fontWeight is ignored when a named
-    // family is set, so the weight lives in the file name.
+    // family is set, so the weight lives in the file name. The design asks for
+    // SemiBold on Android, which is not one of the two faces that ship.
     fontFamily: 'Bitter-Bold',
-    letterSpacing: -0.7,
+    letterSpacing: isAndroid ? 0 : -0.7,
   },
   subtitle: {
-    fontSize: 13.5,
+    fontSize: isAndroid ? 14 : 13.5,
     fontWeight: '400',
   },
 });
