@@ -76,6 +76,8 @@ const AlphaToMorseScreenImpl = () => {
               value={morseWithTone}
               onValueChange={setMorseWithTone}
               tint={COLORS.ACCENT}
+              offTint={COLORS.SECONDARY_ACCENT}
+              thumbColor={morseWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND}
               disabled={isTransmitting}
               accessibilityLabel="Play a tone while transmitting morse"
             />

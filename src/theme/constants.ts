@@ -7,9 +7,8 @@ import { Platform } from 'react-native';
  * Prefer `useFooterClearance()` in new code: it adds the device's bottom
  * inset, which this bare constant cannot know about.
  *
- * iOS is the 82pt blurred tab bar; Android the 80dp M3 navigation bar.
  */
-export const FOOTER_HEIGHT = Platform.select({ android: 80, default: 82 })!;
+export const FOOTER_HEIGHT = 82;
 export const SCROLL_PADDING = 20;
 
 export const SPACING = {

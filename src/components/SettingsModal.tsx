@@ -487,19 +487,14 @@ export const SettingsModal = observer(
               <RNText style={[styles.headerText, t.primaryText]}>
                 Settings
               </RNText>
-              {/* Android has two ways out already — the back gesture, which
-                  `onRequestClose` handles, and dragging the sheet down — so
-                  Material does not put a close button on one. */}
-              {isAndroid ? null : (
-                <View style={[styles.closeButton, t.closeButton]}>
-                  <IconButton
-                    name="close-outline"
-                    size={14}
-                    onPress={onClose}
-                    accessibilityLabel="Close settings"
-                  />
-                </View>
-              )}
+              <View style={[styles.closeButton, t.closeButton]}>
+                <IconButton
+                  name="close-outline"
+                  size={14}
+                  onPress={onClose}
+                  accessibilityLabel="Close settings"
+                />
+              </View>
             </View>
 
             <ScrollView

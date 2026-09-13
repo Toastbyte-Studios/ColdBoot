@@ -7,6 +7,10 @@ export type AppSwitchProps = {
   onValueChange: (value: boolean) => void;
   /** Track colour when on. Defaults to the brand tint. */
   tint?: string;
+  /** Track colour when off. */
+  offTint?: string;
+  /** Thumb colour for iOS. */
+  thumbColor?: string;
   disabled?: boolean;
   /** Required: a switch carries no text of its own. */
   accessibilityLabel: string;
@@ -26,6 +30,8 @@ export default function AppSwitch({
   value,
   onValueChange,
   tint,
+  offTint,
+  thumbColor,
   disabled = false,
   accessibilityLabel,
   style,
@@ -38,7 +44,11 @@ export default function AppSwitch({
       value={value}
       onValueChange={onValueChange}
       disabled={disabled}
-      trackColor={{ true: tint ?? COLORS.BRAND, false: COLORS.BORDER }}
+      trackColor={{
+        true: tint ?? COLORS.BRAND,
+        false: offTint ?? COLORS.BORDER,
+      }}
+      thumbColor={thumbColor}
       accessibilityLabel={accessibilityLabel}
       style={style}
       testID={testID}

@@ -109,6 +109,10 @@ const FlashlightScreenImpl = () => {
                 value={core.sosWithTone}
                 onValueChange={(v: boolean) => core.setSosWithTone(v)}
                 tint={COLORS.ACCENT}
+                offTint={COLORS.SECONDARY_ACCENT}
+                thumbColor={
+                  core.sosWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND
+                }
                 accessibilityLabel="Play a tone alongside the SOS flash"
                 style={styles.switchContainer}
               />

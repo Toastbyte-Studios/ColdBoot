@@ -249,7 +249,6 @@ export default SolarCycleCard;
 
 const styles = StyleSheet.create({
   card: {
-    width: '100%',
     borderRadius: RADIUS.card,
     // Material containers are flat: no border, no shadow. The tonal fill is
     // the whole separation from the ground.

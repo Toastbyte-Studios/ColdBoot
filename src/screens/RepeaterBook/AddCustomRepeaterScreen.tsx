@@ -227,6 +227,8 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
                   if (!v) setEmcomm('');
                 }}
                 tint={COLORS.ERROR}
+                offTint={COLORS.BRAND}
+                thumbColor={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Mark as emergency communications repeater"
               />
             </View>

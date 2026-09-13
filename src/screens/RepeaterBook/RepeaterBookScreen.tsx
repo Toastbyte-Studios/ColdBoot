@@ -157,6 +157,8 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                 value={store.onAirOnly}
                 onValueChange={(v) => store.setOnAirOnly(v)}
                 tint={COLORS.SUCCESS}
+                offTint={COLORS.BRAND}
+                thumbColor={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Filter to show only on-air repeaters"
               />
             </View>
@@ -171,6 +173,8 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                 value={store.emergencyOnly}
                 onValueChange={(v) => store.setEmergencyOnly(v)}
                 tint={COLORS.ERROR}
+                offTint={COLORS.BRAND}
+                thumbColor={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Filter to show only emergency communications repeaters"
               />
             </View>
