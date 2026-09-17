@@ -20,6 +20,9 @@ import type { ThemeColors } from '../theme/colors';
  *
  * - `filled`      — solid tint, white/ink label. iOS `.filled`, Android filled.
  * - `tinted`      — 12% tint wash, tint-colored label. iOS `.tinted`, Android tonal.
+ * - `outlined`    — 1px outline, no fill, tint-colored label. iOS `.bordered`,
+ *                   Android outlined. The middle step between tinted and plain:
+ *                   a real button that does not claim to be the primary one.
  * - `plain`       — no chrome, tint-colored label. iOS `.plain`, Android text button.
  * - `destructive` — filled with the error tint.
  *
@@ -29,6 +32,7 @@ import type { ThemeColors } from '../theme/colors';
 export type ButtonVariant =
   | 'filled'
   | 'tinted'
+  | 'outlined'
   | 'plain'
   | 'destructive'
   | 'primary'
@@ -101,7 +105,7 @@ const METRICS = Platform.select({
 /* Variant resolution                                                          */
 /* -------------------------------------------------------------------------- */
 
-type ResolvedStyle = 'filled' | 'tinted' | 'plain';
+type ResolvedStyle = 'filled' | 'tinted' | 'outlined' | 'plain';
 
 function resolveVariant(
   variant: ButtonVariant,
@@ -118,6 +122,8 @@ function resolveVariant(
     case 'secondary':
     case 'tinted':
       return { kind: 'tinted', tint: colors.BRAND };
+    case 'outlined':
+      return { kind: 'outlined', tint: colors.BRAND };
     case 'plain':
       return { kind: 'plain', tint: colors.BRAND };
   }
@@ -146,7 +152,11 @@ export default function AppButton({
   const COLORS = useTheme();
   const inactive = disabled || loading;
 
-  const { container, contentColor, ripple } = useMemo(() => {
+  const { container, contentColor, ripple } = useMemo((): {
+    container: ViewStyle;
+    contentColor: string;
+    ripple: string;
+  } => {
     const { kind, tint: variantTint } = resolveVariant(variant, COLORS);
     const tint = tintOverride ?? variantTint;
 
@@ -168,6 +178,16 @@ export default function AppButton({
       case 'tinted':
         return {
           container: { backgroundColor: withAlpha(tint, 0.12) },
+          contentColor: tint,
+          ripple: withAlpha(tint, 0.16),
+        };
+      case 'outlined':
+        return {
+          container: {
+            backgroundColor: 'transparent',
+            borderWidth: 1,
+            borderColor: COLORS.BORDER,
+          },
           contentColor: tint,
           ripple: withAlpha(tint, 0.16),
         };

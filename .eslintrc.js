@@ -1,5 +1,9 @@
 module.exports = {
   root: true,
+  // Design handoffs ship HTML/JSX prototypes of the intended look. They are
+  // references to build from, not code that ships, and linting them just
+  // reports on someone else's formatter.
+  ignorePatterns: ['docs/**'],
   extends: ['@react-native', 'plugin:prettier/recommended'],
   plugins: ['import'],
   rules: {

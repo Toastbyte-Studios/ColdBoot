@@ -11,7 +11,9 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import Touchable from '../../components/Touchable';
@@ -25,7 +27,7 @@ import {
   useNotesStore,
   usePantryStore,
 } from '../../stores';
-import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import { RADIUS, SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../../theme';
 import { withAlpha } from '../../theme/colorUtils';
 import ReferenceEntryType from '../../types/data-type';
 import { RagResult, ragSearch } from '../../utils/ragSearch';
@@ -58,6 +60,11 @@ type SearchScreenNavigationProp = NativeStackNavigationProp<{
   [key: string]: undefined | object;
 }>;
 
+const isAndroid = Platform.OS === 'android';
+
+/** M3 search bar: 56dp tall at the full pill radius. */
+const SEARCH_BAR = { height: 56, radius: 28 };
+
 type MessageRole = 'user' | 'assistant';
 
 interface SearchMessage {
@@ -85,11 +92,22 @@ const WELCOME_MESSAGE: SearchMessage = {
  * - "Jump to full section" navigation links on reference results
  * - Graceful "nothing found" message
  * - Existing keyword search and reference browsing are unaffected
+ *
+ * On Android this is a full-screen search view rather than a screen with a
+ * field on it: `AppShell` drops the app bar and the bottom chrome for this
+ * route, and the 56dp search bar carries the back arrow that dismisses it.
+ * The results below stay conversational — the handoff's chip-filtered result
+ * list describes a different search feature, not a different skin on this one.
  */
 export default observer(function SearchScreen(): JSX.Element {
   const navigation = useNavigation<SearchScreenNavigationProp>();
   const COLORS = useTheme();
+  const insets = useSafeAreaInsets();
+  // Android's full-screen search view has no tab bar, so there is nothing to
+  // clear beneath it.
   const footerClearance = useFooterClearance();
+  const bottomClearance = { paddingBottom: isAndroid ? 0 : footerClearance };
+  const searchBarInset = { paddingTop: insets.top + 10 };
   const checklistStore = useChecklistStore();
   const coreStore = useNotesStore();
   const inventoryStore = useInventoryStore();
@@ -461,29 +479,48 @@ export default observer(function SearchScreen(): JSX.Element {
   return (
     <ScreenBody>
       {/* Outer container provides footer clearance */}
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
+      <View style={[styles.container, bottomClearance]}>
         <KeyboardAvoidingView
           style={styles.keyboardAvoid}
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
         >
-          {/* Search field — the nav bar's search button lands here. */}
-          <View style={styles.inputWrapper}>
+          {/* Search field — the app bar's search button lands here. Android
+              gets Material's search bar, which owns the whole top of a
+              full-screen search view and carries the dismiss itself; iOS keeps
+              an inline field inside the shell's chrome. */}
+          <View style={[styles.inputWrapper, isAndroid && searchBarInset]}>
             <View
               style={[
                 styles.inputRow,
-                {
-                  backgroundColor: COLORS.SURFACE,
-                  borderColor: COLORS.BORDER,
-                },
+                isAndroid
+                  ? { backgroundColor: COLORS.SURFACE_CONTAINER }
+                  : [
+                      styles.inputOutlined,
+                      {
+                        backgroundColor: COLORS.SURFACE,
+                        borderColor: COLORS.BORDER,
+                      },
+                    ],
               ]}
             >
-              <Ionicons
-                name="search-outline"
-                size={16}
-                color={COLORS.MUTED}
-                accessible={false}
-              />
+              {isAndroid ? (
+                <IconButton
+                  name="arrow-back"
+                  size={24}
+                  color={COLORS.PRIMARY_DARK}
+                  onPress={() => navigation.goBack()}
+                  accessibilityLabel="Close search"
+                  style={styles.searchBarLeading}
+                />
+              ) : (
+                <Ionicons
+                  name="search-outline"
+                  size={16}
+                  color={COLORS.MUTED}
+                  accessible={false}
+                />
+              )}
               <TextInput
                 style={[styles.textInput, { color: COLORS.PRIMARY_DARK }]}
                 placeholder="Search or ask a question…"
@@ -491,32 +528,47 @@ export default observer(function SearchScreen(): JSX.Element {
                 value={query}
                 onChangeText={setQuery}
                 onSubmitEditing={handleSend}
-                returnKeyType="send"
+                returnKeyType={isAndroid ? 'search' : 'send'}
                 multiline={false}
                 editable={!isSearching}
                 autoFocus
                 accessibilityLabel="Search or ask a question"
               />
-              {hasQuery && (
-                /* Also hitSlop rather than a 44pt minimum — the send button is
-                   sized to fit inside the input row's height. */
-                <Touchable
-                  style={[styles.sendButton, { backgroundColor: COLORS.BRAND }]}
-                  borderless
-                  rippleColor={withAlpha(COLORS.PRIMARY_LIGHT, 0.9)}
-                  hitSlop={10}
-                  onPress={handleSend}
-                  disabled={isSearching}
-                  accessibilityLabel="Send"
-                  accessibilityRole="button"
-                >
-                  <Ionicons
-                    name="send"
-                    size={16}
-                    color={COLORS.PRIMARY_LIGHT}
+              {hasQuery &&
+                (isAndroid ? (
+                  /* Material's trailing action is a clear, not a send: the
+                     keyboard's search key submits, so a send button here would
+                     be a second way to do the same thing. */
+                  <IconButton
+                    name="close-outline"
+                    size={24}
+                    color={COLORS.MUTED}
+                    onPress={() => setQuery('')}
+                    accessibilityLabel="Clear search"
                   />
-                </Touchable>
-              )}
+                ) : (
+                  /* hitSlop rather than a 44pt minimum — the send button is
+                     sized to fit inside the input row's height. */
+                  <Touchable
+                    style={[
+                      styles.sendButton,
+                      { backgroundColor: COLORS.BRAND },
+                    ]}
+                    borderless
+                    rippleColor={withAlpha(COLORS.PRIMARY_LIGHT, 0.9)}
+                    hitSlop={10}
+                    onPress={handleSend}
+                    disabled={isSearching}
+                    accessibilityLabel="Send"
+                    accessibilityRole="button"
+                  >
+                    <Ionicons
+                      name="send"
+                      size={16}
+                      color={COLORS.PRIMARY_LIGHT}
+                    />
+                  </Touchable>
+                ))}
             </View>
           </View>
 
@@ -582,22 +634,34 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     width: '100%',
-    paddingHorizontal: SCREEN_GUTTER,
+    // Android's search bar reaches wider than the shell's inset, which the
+    // negative margin cancels; iOS keeps the screen gutter.
+    paddingHorizontal: isAndroid ? 12 - SCREEN_INSET : SCREEN_GUTTER,
   },
   inputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 38,
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: SPACING.sm,
-    paddingHorizontal: SPACING.md,
-    marginVertical: SPACING.md,
+    // A floor, not a height: the row grows with the font scale.
+    minHeight: isAndroid ? SEARCH_BAR.height : 38,
+    borderRadius: isAndroid ? SEARCH_BAR.radius : 12,
+    paddingVertical: isAndroid ? 0 : SPACING.sm,
+    paddingLeft: isAndroid ? 4 : SPACING.md,
+    paddingRight: isAndroid ? SPACING.sm : SPACING.md,
+    marginTop: isAndroid ? 0 : SPACING.md,
+    marginBottom: isAndroid ? 6 : SPACING.md,
     gap: SPACING.sm,
+  },
+  inputOutlined: {
+    borderWidth: 1,
+  },
+  searchBarLeading: {
+    // The 48dp target already carries its own padding, so the bar's leading
+    // inset is the target's, not an extra one.
+    marginLeft: 0,
   },
   textInput: {
     flex: 1,
-    fontSize: 16.5,
+    fontSize: isAndroid ? 16 : 16.5,
     fontWeight: '400',
     padding: 0,
     minHeight: 22,

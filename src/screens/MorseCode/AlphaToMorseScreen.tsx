@@ -1,7 +1,8 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, TextInput, Switch } from 'react-native';
+import { StyleSheet, View, TextInput } from 'react-native';
 import AppButton from '../../components/AppButton';
+import AppSwitch from '../../components/AppSwitch';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -71,15 +72,14 @@ const AlphaToMorseScreenImpl = () => {
         <View style={styles.controlsContainer}>
           <View style={styles.soundToggleContainer}>
             <Text style={styles.controlLabel}>Sound</Text>
-            <Switch
+            <AppSwitch
               value={morseWithTone}
               onValueChange={setMorseWithTone}
-              trackColor={{
-                false: COLORS.SECONDARY_ACCENT,
-                true: COLORS.ACCENT,
-              }}
+              tint={COLORS.ACCENT}
+              offTint={COLORS.SECONDARY_ACCENT}
               thumbColor={morseWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND}
               disabled={isTransmitting}
+              accessibilityLabel="Play a tone while transmitting morse"
             />
           </View>
         </View>

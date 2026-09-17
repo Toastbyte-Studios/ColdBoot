@@ -1,14 +1,16 @@
 import { useNavigation } from '@react-navigation/native';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet } from 'react-native';
+import { Platform, ScrollView, StyleSheet } from 'react-native';
 import { MODULES } from '../../../constants';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { SCREEN_GUTTER } from '../../theme';
-import { MODULE_SUBTITLES } from './moduleSubtitles';
+import { SCREEN_GUTTER, SCREEN_INSET, TEXT_GUTTER } from '../../theme';
+import { MODULE_SUBTITLES, MODULE_TOOL_COUNTS } from './moduleSubtitles';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * The Modules tab: the full module list, with a title and no solar card.
@@ -31,13 +33,17 @@ export default function ModulesScreen() {
   return (
     <ScreenBody>
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, isAndroid && styles.bleed]}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: footerClearance },
         ]}
       >
-        <SectionHeader title="Modules" subtitle="Everything ColdBoot can do" />
+        <SectionHeader
+          title="Modules"
+          subtitle="Everything ColdBoot can do"
+          containerStyle={isAndroid ? styles.headline : undefined}
+        />
         <GroupContainer>
           {modules.map((module, index) => (
             <ModuleRow
@@ -45,6 +51,11 @@ export default function ModulesScreen() {
               title={module.name}
               icon={module.icon}
               subtitle={MODULE_SUBTITLES[module.id]}
+              value={
+                isAndroid
+                  ? String(MODULE_TOOL_COUNTS[module.id] ?? '')
+                  : undefined
+              }
               showSeparator={index < modules.length - 1}
               onPress={() => navigation.navigate(module.screen)}
             />
@@ -61,7 +72,16 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'stretch',
   },
+  bleed: {
+    // See HomeScreen: `width: 'auto'` is what turns the negative margins into
+    // extra width rather than a sideways shift.
+    width: 'auto',
+    marginHorizontal: -SCREEN_INSET,
+  },
   content: {
-    paddingHorizontal: SCREEN_GUTTER,
+    paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
+  },
+  headline: {
+    paddingHorizontal: TEXT_GUTTER,
   },
 });

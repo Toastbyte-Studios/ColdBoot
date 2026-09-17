@@ -1,7 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import dayjs from 'dayjs';
 import React, {
   PropsWithChildren,
   useCallback,
@@ -13,28 +12,25 @@ import React, {
 import {
   Animated,
   PanResponder,
-  Pressable,
+  Platform,
+  StatusBar,
   StyleSheet,
   View,
   Easing,
 } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
-import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useActiveRouteName } from '../hooks/useActiveRouteName';
+import { useIsDarkMode } from '../hooks/useIsDarkMode';
 import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
-import { useTheme } from '../hooks/useTheme';
 import {
   useNavigationHistory,
   useGestureNavigation,
 } from '../navigation/NavigationHistoryContext';
 import canGoBack, { goBack } from '../navigation/navigationRef';
-import { SCREEN_GUTTER } from '../theme';
-import { withAlpha } from '../theme/colorUtils';
 import AlertsSheet from './AlertsSheet';
+import AppBar from './AppBar';
 import { HelpModal } from './HelpModal';
-import LogoHeader from './LogoHeader';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
-import { Text } from './ScaledText';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import SOSFab from './SOSFab';
@@ -54,32 +50,40 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
   DownloadArea: undefined;
 }>;
 
-const DATE_FORMAT = 'dddd, MMMM D';
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
 
-/** Edge length of the nav bar's circular icon buttons. */
-const NAV_BUTTON = 34;
+/**
+ * Routes that take the whole window on Android, with no app bar and no bottom
+ * chrome of their own.
+ *
+ * Material's search is a full-screen view, not a screen with a search field on
+ * it: it takes over the window for as long as the user is searching. Its own
+ * search bar carries the back arrow, so the app bar would be a second one, and
+ * the navigation bar and SOS button would be destinations competing with the
+ * thing the user just opened.
+ */
+const FULL_SCREEN_ROUTES = new Set(['Search']);
 
 /**
  * Root layout wrapper for the app.
  *
  * Provides:
- * - A compact nav bar: the app mark, the wordmark over today's date, and the
- *   search and settings buttons.
+ * - A top app bar ({@link AppBar}), which each platform draws its own way.
  * - A bottom tab bar with the floating SOS action.
- * - Global horizontal swipe navigation via a `PanResponder` on the outer
- *   container: right swipes {@link goBack}, left swipes go forward.
+ * - Global horizontal swipe navigation, on iOS only — see below.
  *
- * The header this replaces spent roughly 260px on a date, two icon buttons, a
- * 120px logo circle and a full-width bar that was secretly the search field.
- * The same affordances now fit in one 34px-tall row, which is the space the
- * solar card and module list took over.
- *
- * Gesture behavior:
+ * Gesture behavior (iOS):
  * - Requires minimum horizontal movement and favors horizontal intent over
  *   vertical, so it does not fight scrolling or taps.
  * - On release, navigates only on "confident" swipes, using distance (`dx`),
  *   velocity (`vx`) and vertical displacement (`dy`) thresholds.
+ *
+ * The gesture is **not** registered on Android. It captures horizontal drags
+ * anywhere in the shell, including the edge where Android 13+ runs predictive
+ * back, so leaving it on would mean the app quietly eating the system's own
+ * back gesture. Android already has back — from the gesture and from the
+ * hardware key — and a hand-rolled forward swipe is not a platform pattern, so
+ * there is nothing to replace it with.
  *
  * @param props.children - Screen content to render inside the shell.
  */
@@ -88,7 +92,12 @@ export default function AppShell({ children }: Props) {
   const navigationHistory = useNavigationHistory();
   const { disableGestureNavigation } = useGestureNavigation();
   const { isKeyboardVisible, keyboardHeight } = useKeyboardStatus();
-  const insets = useSafeAreaInsets();
+  const activeRouteName = useActiveRouteName();
+  const isDarkMode = useIsDarkMode();
+  const isFullScreenRoute =
+    Platform.OS === 'android' &&
+    activeRouteName !== undefined &&
+    FULL_SCREEN_ROUTES.has(activeRouteName);
   const translateYRef = useRef(new Animated.Value(0)).current;
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isManageOfflineVisible, setIsManageOfflineVisible] = useState(false);
@@ -104,11 +113,6 @@ export default function AppShell({ children }: Props) {
   const gestureContainerRef = useRef<View>(null);
   const navSearchRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
-  const [currentDate, setCurrentDate] = useState(() =>
-    dayjs().format(DATE_FORMAT),
-  );
-  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const COLORS = useTheme();
 
   const markTutorialComplete = () => {
     AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true')
@@ -119,31 +123,6 @@ export default function AppShell({ children }: Props) {
         setIsTutorialVisible(false);
       });
   };
-
-  // Keep `currentDate` in sync with the calendar date by scheduling a timeout
-  // to fire exactly at the next midnight. When the timeout runs, it updates
-  // the formatted date and then reschedules itself for the following midnight.
-  // The cleanup function clears any pending timeout when the component unmounts.
-  useEffect(() => {
-    const scheduleNextUpdate = () => {
-      const now = dayjs();
-      const tomorrow = now.add(1, 'day').startOf('day');
-      const msUntilMidnight = tomorrow.diff(now);
-
-      timeoutRef.current = setTimeout(() => {
-        setCurrentDate(dayjs().format(DATE_FORMAT));
-        scheduleNextUpdate();
-      }, msUntilMidnight);
-    };
-
-    scheduleNextUpdate();
-
-    return () => {
-      if (timeoutRef.current !== null) {
-        clearTimeout(timeoutRef.current);
-      }
-    };
-  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -207,6 +186,10 @@ export default function AppShell({ children }: Props) {
     () =>
       PanResponder.create({
         onMoveShouldSetPanResponderCapture: (_evt, gestureState) => {
+          // Android owns horizontal edge drags: capturing them here would
+          // swallow the system's predictive back gesture.
+          if (Platform.OS === 'android') return false;
+
           // If gesture navigation is disabled, don't capture any gestures
           if (disableGestureNavigation) return false;
 
@@ -261,16 +244,18 @@ export default function AppShell({ children }: Props) {
     [],
   );
 
-  const navButtonStyle = [
-    styles.navButton,
-    {
-      backgroundColor: withAlpha(COLORS.BRAND, 0.1),
-      borderColor: withAlpha(COLORS.BRAND, 0.18),
-    },
-  ];
-
   return (
     <ScreenContainer>
+      {/* Edge to edge: the app paints under the status bar and the system
+          navigation bar, and the safe-area insets keep content out from under
+          them. The bar style follows the in-app theme rather than the OS,
+          which the user can have pinned the other way. */}
+      <StatusBar
+        translucent
+        backgroundColor="transparent"
+        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
+      />
+
       <TutorialSpotlightContext.Provider
         value={{
           target: tutorialSpotlightTarget,
@@ -291,62 +276,15 @@ export default function AppShell({ children }: Props) {
               { transform: [{ translateY: translateYRef }] },
             ]}
           >
-            <View style={[styles.navBar, { paddingTop: insets.top + 14 }]}>
-              <Pressable
-                ref={logoRef}
-                onPress={() => navigation.navigate('Home')}
-                accessibilityLabel="Go to home screen"
-                accessibilityRole="button"
-                style={({ pressed }) => (pressed ? styles.pressed : null)}
-              >
-                <LogoHeader size={NAV_BUTTON} />
-              </Pressable>
-
-              <View style={styles.navTitles}>
-                <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
-                  ColdBoot
-                </Text>
-                <Text
-                  style={[styles.navDate, { color: COLORS.MUTED }]}
-                  accessibilityLabel={`Current date: ${currentDate}`}
-                >
-                  {currentDate} · Offline ready
-                </Text>
-              </View>
-
-              <Pressable
-                ref={navSearchRef}
-                onPress={() => navigation.navigate('Search')}
-                accessibilityRole="button"
-                accessibilityLabel="Search"
-                style={({ pressed }) => [
-                  navButtonStyle,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Ionicons
-                  name="search-outline"
-                  size={17}
-                  color={COLORS.BRAND}
-                />
-              </Pressable>
-
-              <Pressable
-                onPress={() => setIsSettingsVisible(true)}
-                accessibilityRole="button"
-                accessibilityLabel="Settings"
-                style={({ pressed }) => [
-                  navButtonStyle,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Ionicons
-                  name="settings-outline"
-                  size={17}
-                  color={COLORS.BRAND}
-                />
-              </Pressable>
-            </View>
+            {isFullScreenRoute ? null : (
+              <AppBar
+                logoRef={logoRef}
+                searchRef={navSearchRef}
+                onHomePress={() => navigation.navigate('Home')}
+                onSearchPress={() => navigation.navigate('Search')}
+                onSettingsPress={() => setIsSettingsVisible(true)}
+              />
+            )}
 
             <View style={styles.content}>{children}</View>
           </Animated.View>
@@ -417,20 +355,22 @@ export default function AppShell({ children }: Props) {
             </Svg>
           )}
 
-          <View
-            style={
-              tutorialSpotlightTarget === 'footerButtons'
-                ? styles.spotlightTarget
-                : undefined
-            }
-          >
-            <TabBar
-              onAlertsPress={() => setIsAlertsVisible(true)}
-              onAlertsClose={() => setIsAlertsVisible(false)}
-              alertsActive={isAlertsVisible}
-            />
-            <SOSFab />
-          </View>
+          {isFullScreenRoute ? null : (
+            <View
+              style={
+                tutorialSpotlightTarget === 'footerButtons'
+                  ? styles.spotlightTarget
+                  : undefined
+              }
+            >
+              <TabBar
+                onAlertsPress={() => setIsAlertsVisible(true)}
+                onAlertsClose={() => setIsAlertsVisible(false)}
+                alertsActive={isAlertsVisible}
+              />
+              <SOSFab />
+            </View>
+          )}
 
           <TutorialModal
             visible={isTutorialVisible}
@@ -479,37 +419,6 @@ const styles = StyleSheet.create({
   shell: {
     flex: 1,
     alignItems: 'stretch',
-  },
-  navBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 11,
-    paddingHorizontal: SCREEN_GUTTER,
-    paddingBottom: 10,
-  },
-  navTitles: {
-    flex: 1,
-  },
-  wordmark: {
-    fontSize: 17,
-    fontFamily: 'Bitter-Bold',
-    letterSpacing: -0.2,
-  },
-  navDate: {
-    fontSize: 11.5,
-    fontWeight: '500',
-    marginTop: 1,
-  },
-  navButton: {
-    width: NAV_BUTTON,
-    height: NAV_BUTTON,
-    borderRadius: NAV_BUTTON / 2,
-    borderWidth: StyleSheet.hairlineWidth,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  pressed: {
-    opacity: 0.6,
   },
   content: {
     flex: 1,

@@ -12,11 +12,11 @@ import {
   Modal,
   ScrollView,
   StyleSheet,
-  Switch,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
+import AppSwitch from '../../components/AppSwitch';
 import { HorizontalRule } from '../../components/HorizontalRule';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
@@ -153,16 +153,13 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               >
                 On-air
               </Text>
-              <Switch
+              <AppSwitch
                 value={store.onAirOnly}
                 onValueChange={(v) => store.setOnAirOnly(v)}
-                trackColor={{
-                  false: COLORS.BRAND,
-                  true: COLORS.SUCCESS,
-                }}
+                tint={COLORS.SUCCESS}
+                offTint={COLORS.BRAND}
                 thumbColor={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Filter to show only on-air repeaters"
-                accessibilityRole="switch"
               />
             </View>
             <View style={styles.toggleGroup}>
@@ -172,16 +169,13 @@ const RepeaterBookScreen = observer((): JSX.Element => {
                 color={COLORS.ERROR}
                 accessible={false}
               />
-              <Switch
+              <AppSwitch
                 value={store.emergencyOnly}
                 onValueChange={(v) => store.setEmergencyOnly(v)}
-                trackColor={{
-                  false: COLORS.BRAND,
-                  true: COLORS.ERROR,
-                }}
+                tint={COLORS.ERROR}
+                offTint={COLORS.BRAND}
                 thumbColor={COLORS.PRIMARY_LIGHT}
                 accessibilityLabel="Filter to show only emergency communications repeaters"
-                accessibilityRole="switch"
               />
             </View>
           </View>

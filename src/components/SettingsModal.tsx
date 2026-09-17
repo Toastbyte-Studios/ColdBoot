@@ -3,9 +3,9 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   Modal,
+  Platform,
   Pressable,
   StyleSheet,
-  Switch,
   View,
   ScrollView,
   Text as RNText,
@@ -52,9 +52,12 @@ import {
   readBackupFile,
 } from '../utils/backupService';
 import AppButton from './AppButton';
+import AppSwitch from './AppSwitch';
 import IconButton from './IconButton';
 import SegmentedControl from './SegmentedControl';
 import Touchable from './Touchable';
+
+const isAndroid = Platform.OS === 'android';
 
 interface SettingsModalProps {
   visible: boolean;
@@ -107,7 +110,7 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
     primaryText: { color: COLORS.PRIMARY_DARK },
     mutedText: { color: COLORS.MUTED },
     sheetThemed: {
-      backgroundColor: COLORS.SURFACE,
+      backgroundColor: isAndroid ? COLORS.SURFACE_CONTAINER : COLORS.SURFACE,
       borderTopColor: COLORS.BORDER,
     },
     groupThemed: {
@@ -474,7 +477,10 @@ export const SettingsModal = observer(
             ]}
           >
             <View
-              style={[styles.grabber, { backgroundColor: COLORS.BORDER }]}
+              style={[
+                styles.grabber,
+                { backgroundColor: isAndroid ? COLORS.MUTED : COLORS.BORDER },
+              ]}
             />
 
             <View style={styles.header}>
@@ -572,12 +578,11 @@ export const SettingsModal = observer(
                       New downloads include building detail. Uses ~2× storage.
                     </RNText>
                   </View>
-                  <Switch
+                  <AppSwitch
                     value={settingsStore.highDetailOffline}
                     onValueChange={(value) =>
                       settingsStore.setHighDetailOffline(value)
                     }
-                    trackColor={{ true: COLORS.BRAND }}
                     accessibilityLabel="Toggle high detail for new offline downloads"
                   />
                 </View>
@@ -769,12 +774,11 @@ export const SettingsModal = observer(
                           without toggling airplane mode. Resets on app launch.
                         </RNText>
                       </View>
-                      <Switch
+                      <AppSwitch
                         value={devToolsStore.simulatedOffline}
                         onValueChange={(value) =>
                           devToolsStore.setSimulatedOffline(value)
                         }
-                        trackColor={{ true: COLORS.BRAND }}
                         accessibilityLabel="Simulate offline mode (dev only)"
                       />
                     </View>

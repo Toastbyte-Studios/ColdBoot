@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
+  Platform,
   ScrollView,
   StyleSheet,
   View,
@@ -28,10 +29,18 @@ import SectionHeader from '../../components/SectionHeader';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
-import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import {
+  RADIUS,
+  SCREEN_GUTTER,
+  SCREEN_INSET,
+  SPACING,
+  TEXT_GUTTER,
+} from '../../theme';
 import { withAlpha } from '../../theme/colorUtils';
 import { formatDuration, getSolarSnapshot } from '../../utils/sunTimes';
 import { formatTime } from '../../utils/timeFormat';
+
+const isAndroid = Platform.OS === 'android';
 
 // Constants for location polling
 const LOCATION_WAIT_TIMEOUT_MS = 3000;
@@ -51,6 +60,11 @@ const CHART_PEAK = 18;
  * how much daylight is left. The individual times follow as a grouped list.
  *
  * Every value is computed on-device from the last fix.
+ *
+ * The design's "Alert me at dusk" button is deliberately absent. Solar alerts
+ * are not user-configurable — `SolarCycleNotificationStore` hardcodes dawn,
+ * dusk, sunrise and sunset to on, and the alerts sheet says as much in so many
+ * words — so the button would be a control with nothing to control.
  */
 const SunTimeScreen = observer(() => {
   const COLORS = useTheme();
@@ -165,19 +179,20 @@ const SunTimeScreen = observer(() => {
   return (
     <ScreenBody>
       <ScrollView
-        style={styles.scroll}
+        style={[styles.scroll, isAndroid && styles.bleed]}
         contentContainerStyle={[
           styles.content,
           { paddingBottom: footerClearance },
         ]}
       >
         <SectionHeader
+          containerStyle={isAndroid ? styles.headline : undefined}
           leading={
             navigation.canGoBack() ? (
               <IconButton
-                name="chevron-back-outline"
-                size={20}
-                color={COLORS.BRAND}
+                name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
+                size={isAndroid ? 24 : 20}
+                color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
                 onPress={() => navigation.goBack()}
                 accessibilityLabel="Go back"
               />
@@ -210,14 +225,19 @@ const SunTimeScreen = observer(() => {
             <View
               style={[
                 styles.daylightCard,
-                {
-                  backgroundColor: COLORS.SURFACE,
-                  borderColor: COLORS.BORDER,
-                },
+                isAndroid
+                  ? { backgroundColor: COLORS.SURFACE_CONTAINER }
+                  : [
+                      styles.outlined,
+                      {
+                        backgroundColor: COLORS.SURFACE,
+                        borderColor: COLORS.BORDER,
+                      },
+                    ],
               ]}
             >
               <View style={styles.daylightHeader}>
-                <SectionEyebrow>Daylight remaining</SectionEyebrow>
+                <SectionEyebrow inline>Daylight remaining</SectionEyebrow>
                 <Text
                   style={[styles.daylightValue, { color: COLORS.PRIMARY_DARK }]}
                 >
@@ -291,14 +311,28 @@ const SunTimeScreen = observer(() => {
               <View style={styles.milestones}>
                 <Milestone label="Dawn" value={formatTime(snapshot.dawn)} />
                 <View
-                  style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
+                  style={[
+                    styles.rule,
+                    {
+                      backgroundColor: isAndroid
+                        ? COLORS.OUTLINE_VARIANT
+                        : COLORS.SEPARATOR,
+                    },
+                  ]}
                 />
                 <Milestone
                   label="Solar noon"
                   value={formatTime(snapshot.solarNoon)}
                 />
                 <View
-                  style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
+                  style={[
+                    styles.rule,
+                    {
+                      backgroundColor: isAndroid
+                        ? COLORS.OUTLINE_VARIANT
+                        : COLORS.SEPARATOR,
+                    },
+                  ]}
                 />
                 <Milestone label="Dusk" value={formatTime(snapshot.dusk)} />
               </View>
@@ -377,7 +411,14 @@ function EventRow({
       </View>
       {!isLast && (
         <View
-          style={[styles.eventSeparator, { backgroundColor: COLORS.SEPARATOR }]}
+          style={[
+            styles.eventSeparator,
+            {
+              backgroundColor: isAndroid
+                ? COLORS.OUTLINE_VARIANT
+                : COLORS.SEPARATOR,
+            },
+          ]}
         />
       )}
     </View>
@@ -395,11 +436,23 @@ const styles = StyleSheet.create({
     width: '100%',
     alignSelf: 'stretch',
   },
+  bleed: {
+    // See HomeScreen: `width: 'auto'` turns the negative margins into extra
+    // width rather than a sideways shift.
+    width: 'auto',
+    marginHorizontal: -SCREEN_INSET,
+  },
   content: {
-    paddingHorizontal: SCREEN_GUTTER,
+    paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
+  },
+  headline: {
+    paddingHorizontal: TEXT_GUTTER,
+    paddingTop: 4,
+    paddingBottom: 18,
   },
   centerContainer: {
     alignItems: 'center',
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
     justifyContent: 'center',
     paddingVertical: 48,
     gap: SPACING.md,
@@ -410,19 +463,22 @@ const styles = StyleSheet.create({
     lineHeight: 21,
   },
   daylightCard: {
-    borderWidth: 1,
     borderRadius: RADIUS.card,
     overflow: 'hidden',
-    paddingTop: 15,
+    paddingTop: isAndroid ? 16 : 15,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     marginBottom: SPACING.xl,
   },
+  outlined: {
+    borderWidth: 1,
+  },
   daylightHeader: {
-    paddingHorizontal: 17,
+    paddingHorizontal: isAndroid ? 18 : 17,
   },
   daylightValue: {
     fontSize: 34,
     fontFamily: 'Bitter-Bold',
-    letterSpacing: -0.8,
+    letterSpacing: isAndroid ? 0 : -0.8,
   },
   chart: {
     width: '100%',
@@ -432,7 +488,7 @@ const styles = StyleSheet.create({
   milestones: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 17,
+    paddingHorizontal: isAndroid ? 18 : 17,
     paddingBottom: 14,
     paddingTop: 12,
   },
@@ -441,43 +497,43 @@ const styles = StyleSheet.create({
     gap: 3,
   },
   milestoneLabel: {
-    fontSize: 9.5,
+    fontSize: isAndroid ? 10.5 : 9.5,
     fontWeight: '600',
-    letterSpacing: 0.6,
+    letterSpacing: isAndroid ? 0.7 : 0.6,
   },
   milestoneValue: {
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: isAndroid ? '500' : '600',
   },
   rule: {
-    width: hairline,
+    width: isAndroid ? 1 : hairline,
     alignSelf: 'stretch',
     marginHorizontal: SPACING.md,
   },
   eventRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 11,
+    gap: isAndroid ? SPACING.lg : 11,
     minHeight: 48,
-    paddingVertical: SPACING.md,
-    paddingHorizontal: SPACING.lg,
+    paddingVertical: isAndroid ? 13 : SPACING.md,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : SPACING.lg,
   },
   dot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: isAndroid ? 10 : 8,
+    height: isAndroid ? 10 : 8,
+    borderRadius: isAndroid ? 5 : 4,
   },
   eventLabel: {
     flex: 1,
-    fontSize: 15.5,
-    fontWeight: '500',
+    fontSize: isAndroid ? 16 : 15.5,
+    fontWeight: isAndroid ? '400' : '500',
   },
   eventValue: {
-    fontSize: 15.5,
-    fontWeight: '600',
+    fontSize: isAndroid ? 16 : 15.5,
+    fontWeight: isAndroid ? '500' : '600',
   },
   eventSeparator: {
-    height: hairline,
-    marginLeft: 35,
+    height: isAndroid ? 1 : hairline,
+    marginLeft: isAndroid ? 46 : 35,
   },
 });

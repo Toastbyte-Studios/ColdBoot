@@ -54,6 +54,37 @@ const LIGHT_COLORS = {
   SUCCESS: '#227A66',
   SUCCESS_LIGHT: '#D2E9E2',
   ERROR_LIGHT: '#F6DAD8',
+
+  /* ---------------------------------------------------------------------- */
+  /* Material 3 tonal roles                                                  */
+  /*                                                                         */
+  /* Android expresses the same palette as flat tonal surfaces rather than    */
+  /* gradients and hairline cards, which needs a few steps the iOS pass never */
+  /* had a use for. Everything here is a tonal step off a colour that is      */
+  /* already above — nothing new enters the palette.                          */
+  /* ---------------------------------------------------------------------- */
+
+  /** M3 `surface`. The flat screen ground; iOS paints BACKGROUND_GRADIENT. */
+  SURFACE_GROUND: '#EDF4F9',
+  /** M3 `surface-container`. Solar card, search bar, sheets. */
+  SURFACE_CONTAINER: '#DCECF7',
+  /** M3 `surface-container-high`. The navigation bar, one step above the rest. */
+  SURFACE_CONTAINER_HIGH: '#E3EEF6',
+
+  /** M3 `outline-variant`. 1dp dividers; quieter than BORDER, which outlines. */
+  OUTLINE_VARIANT: '#D5E4EF',
+
+  /** M3 `secondary-container`. Icon circles, the nav pill, selected chips. */
+  SECONDARY_CONTAINER: '#C9DEEC',
+  ON_SECONDARY_CONTAINER: '#14344B',
+
+  /** M3 `tertiary-container`. Confirmed states — "GPS locked". */
+  TERTIARY_CONTAINER: '#CFE6E5',
+  ON_TERTIARY_CONTAINER: '#1F4D4F',
+
+  /** Amber container. The active-tool card and the solar alert card. */
+  ACCENT_CONTAINER: '#F5E3D2',
+  ON_ACCENT_CONTAINER: '#8A4A0C',
 };
 
 const DARK_COLORS: typeof LIGHT_COLORS = {
@@ -80,6 +111,23 @@ const DARK_COLORS: typeof LIGHT_COLORS = {
   SUCCESS: '#4CA891',
   SUCCESS_LIGHT: '#173029',
   ERROR_LIGHT: '#3E2129',
+
+  SURFACE_GROUND: '#101B24',
+  SURFACE_CONTAINER: '#17232E',
+  SURFACE_CONTAINER_HIGH: '#17232E',
+
+  OUTLINE_VARIANT: '#22313D',
+
+  SECONDARY_CONTAINER: '#2F4F6B',
+  ON_SECONDARY_CONTAINER: '#DCECF7',
+
+  TERTIARY_CONTAINER: '#1E4045',
+  ON_TERTIARY_CONTAINER: '#9CD3D8',
+
+  // The handoff leaves the dark amber container open; this is the same tonal
+  // step below ACCENT that SUCCESS_LIGHT and ERROR_LIGHT take below theirs.
+  ACCENT_CONTAINER: '#3A2A12',
+  ON_ACCENT_CONTAINER: '#FFB020',
 };
 
 export type ThemeColors = typeof LIGHT_COLORS;

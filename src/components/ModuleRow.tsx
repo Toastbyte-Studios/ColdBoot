@@ -2,6 +2,7 @@ import React from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
 import {
   RADIUS,
@@ -12,20 +13,32 @@ import {
 import { withAlpha } from '../theme/colorUtils';
 import { Text } from './ScaledText';
 
+const isAndroid = Platform.OS === 'android';
+
 /**
- * Tile sizes, and the separator inset that aligns with each one's title.
+ * Leading-icon sizes, and the separator inset that aligns with each one's
+ * title.
  *
- * The inset is row padding + tile + gap, so the hairline starts under the
- * first letter of the title rather than at the row edge — the iOS grouped-list
- * convention, which reads as "these rows belong to one list" instead of
- * "these rows are separate slabs".
+ * The inset is row padding + icon + gap, so the divider starts under the first
+ * letter of the title rather than at the row edge. Both platforms do this;
+ * they disagree on everything else.
+ *
+ * iOS distinguishes a Home module row from a tool row inside a module by two
+ * points of tile size. Material does not: a list item is a list item, so both
+ * variants resolve to the same 40dp circle and 72dp inset.
  */
-const TILE = {
-  /** Module rows on Home. */
-  module: { size: 36, radius: RADIUS.tile, glyph: 20, separatorInset: 63 },
-  /** Tool rows inside a module. */
-  tool: { size: 34, radius: RADIUS.tileSmall, glyph: 19, separatorInset: 61 },
-} as const;
+const TILE = Platform.select({
+  android: {
+    module: { size: 40, radius: 20, glyph: 22, separatorInset: 72 },
+    tool: { size: 40, radius: 20, glyph: 22, separatorInset: 72 },
+  },
+  default: {
+    /** Module rows on Home. */
+    module: { size: 36, radius: RADIUS.tile, glyph: 20, separatorInset: 63 },
+    /** Tool rows inside a module. */
+    tool: { size: 34, radius: RADIUS.tileSmall, glyph: 19, separatorInset: 61 },
+  },
+})!;
 
 export type ModuleRowProps = {
   title: string;
@@ -35,24 +48,27 @@ export type ModuleRowProps = {
   /** Right-aligned value, shown before the chevron. Only when a store has the number. */
   value?: string;
   onPress?: () => void;
-  /** `module` is the 36px Home tile; `tool` the 34px tile inside a module. @default 'module' */
+  /** `module` is the Home row; `tool` the row inside a module. @default 'module' */
   variant?: keyof typeof TILE;
-  /** Draws the hairline below this row. Pass `false` for the last row in a group. */
+  /** Draws the divider below this row. Pass `false` for the last row in a group. */
   showSeparator?: boolean;
 };
 
 /**
- * One row in a grouped list: icon tile, title over optional subtitle, optional
- * value, chevron.
+ * One row in a list: leading icon, title over optional subtitle, optional
+ * value, and — on iOS — a chevron.
  *
- * Replaces the gradient `CardTopic` on Home and in the module screens. Two
+ * Replaces the gradient `CardTopic` on Home and in the module screens. Three
  * deliberate departures from that component:
  *
  * - **No scale bounce.** `CardTopic` shrank to 0.94 on press, which reads as a
- *   toy. A background highlight is the native behaviour, and it survives
- *   Dynamic Type — a transform does not reflow, so a scaled-up row would clip.
+ *   toy. Native feedback is a highlight on iOS and a ripple on Android, and
+ *   both survive Dynamic Type — a transform does not reflow, so a scaled-up
+ *   row would clip.
  * - **Theme-aware.** Every color resolves through `useTheme()`, so the row
  *   inverts with the scheme instead of painting one fixed gradient in both.
+ * - **No chevron on Android.** Material list items do not carry one; the row
+ *   being tappable is conveyed by the ripple, not by a glyph.
  *
  * Accessibility: the row is a single button labelled with its title; the inner
  * view is hidden from assistive tech so the icon and subtitle are not
@@ -68,6 +84,7 @@ export default function ModuleRow({
   showSeparator = true,
 }: ModuleRowProps) {
   const COLORS = useTheme();
+  const rippleColor = useRippleColor();
   const tile = TILE[variant];
 
   const accessibilityLabel = subtitle ? `${title}. ${subtitle}` : title;
@@ -79,10 +96,10 @@ export default function ModuleRow({
         accessible
         accessibilityRole="button"
         accessibilityLabel={accessibilityLabel}
-        android_ripple={{ color: withAlpha(COLORS.BRAND, 0.08) }}
+        android_ripple={{ color: rippleColor }}
         style={({ pressed }) => [
           styles.row,
-          Platform.OS === 'ios' &&
+          !isAndroid &&
             pressed && { backgroundColor: withAlpha(COLORS.BRAND, 0.06) },
         ]}
       >
@@ -94,11 +111,17 @@ export default function ModuleRow({
                 width: tile.size,
                 height: tile.size,
                 borderRadius: tile.radius,
-                backgroundColor: withAlpha(COLORS.BRAND, 0.1),
+                backgroundColor: isAndroid
+                  ? COLORS.SECONDARY_CONTAINER
+                  : withAlpha(COLORS.BRAND, 0.1),
               },
             ]}
           >
-            <Ionicons name={icon} size={tile.glyph} color={COLORS.BRAND} />
+            <Ionicons
+              name={icon}
+              size={tile.glyph}
+              color={isAndroid ? COLORS.ON_SECONDARY_CONTAINER : COLORS.BRAND}
+            />
           </View>
 
           <View style={styles.labels}>
@@ -118,16 +141,18 @@ export default function ModuleRow({
 
           {/* Ionicons' chevron is heavier than the 2px hairline the design
               calls for, so it is drawn directly. */}
-          <Svg width={8} height={14} viewBox="0 0 8 14">
-            <Path
-              d="M1 1L7 7L1 13"
-              stroke={COLORS.CHEVRON}
-              strokeWidth={2}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          </Svg>
+          {isAndroid ? null : (
+            <Svg width={8} height={14} viewBox="0 0 8 14">
+              <Path
+                d="M1 1L7 7L1 13"
+                stroke={COLORS.CHEVRON}
+                strokeWidth={2}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            </Svg>
+          )}
         </View>
       </Pressable>
 
@@ -136,7 +161,9 @@ export default function ModuleRow({
           style={[
             styles.separator,
             {
-              backgroundColor: COLORS.SEPARATOR,
+              backgroundColor: isAndroid
+                ? COLORS.OUTLINE_VARIANT
+                : COLORS.SEPARATOR,
               marginLeft: tile.separatorInset,
             },
           ]}
@@ -158,7 +185,7 @@ const styles = StyleSheet.create({
   inner: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 13,
+    gap: isAndroid ? 16 : 13,
   },
   tile: {
     alignItems: 'center',
@@ -170,21 +197,26 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   title: {
-    fontSize: 16.5,
-    // The design specifies weight 590, which RN does not accept.
-    fontWeight: '600',
-    letterSpacing: -0.2,
+    fontSize: isAndroid ? 16 : 16.5,
+    // iOS specifies weight 590, which RN does not accept; Material asks for
+    // 500 and means it.
+    fontWeight: isAndroid ? '500' : '600',
+    letterSpacing: isAndroid ? 0 : -0.2,
   },
   subtitle: {
-    fontSize: 12.5,
+    fontSize: isAndroid ? 14 : 12.5,
     fontWeight: '400',
   },
   value: {
-    fontSize: 13.5,
+    fontSize: isAndroid ? 13 : 13.5,
     fontWeight: '400',
     flexShrink: 0,
   },
   separator: {
-    height: StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth,
+    height: isAndroid
+      ? 1
+      : StyleSheet.hairlineWidth < 0.5
+        ? 0.5
+        : StyleSheet.hairlineWidth,
   },
 });
