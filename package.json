@@ -92,7 +92,7 @@
     "node": ">=20"
   },
   "overrides": {
-    "fast-xml-parser": "^5.3.6",
+    "fast-xml-parser": "5.7.2",
     "metro": {
       "image-size": "2.0.3"
     },
