@@ -10,12 +10,12 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useAllNotifications } from '../hooks/useAllNotifications';
 import { useTheme } from '../hooks/useTheme';
 import { AppNotification } from '../stores/NotificationsStore';
 import { useNotificationsStore } from '../stores/StoreContext';
 import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
 import AppButton from './AppButton';
-import { useAllNotifications } from './Footer/useAllNotifications';
 import IconButton from './IconButton';
 import { Text } from './ScaledText';
 import Touchable from './Touchable';
