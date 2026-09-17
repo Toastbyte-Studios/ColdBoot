@@ -11,15 +11,6 @@ import { onColor, withAlpha } from '../theme/colorUtils';
 import { useVisibleNotificationCount } from './Footer/useAllNotifications';
 import { Text } from './ScaledText';
 
-/**
- * Width reserved at the trailing edge for the floating SOS button.
- *
- * No tab may sit under it: SOS fires on a one-second hold, and a tab hidden
- * beneath it would be a target the user can see the label of but never
- * reliably hit.
- */
-const SOS_RESERVE = 84;
-
 type TabKey = 'home' | 'modules' | 'alerts';
 
 type TabDefinition = {
@@ -48,9 +39,8 @@ type Props = {
 /**
  * The app's bottom tab bar.
  *
- * Replaces the old three-zone footer, which split into 50% notifications /
- * 25% active tool / 25% SOS — unequal zones in mismatched shapes. This is a
- * standard tab bar: equal targets, icon over label, one active tint.
+ * Replaces the old three-zone footer with a standard tab bar: equal targets,
+ * icon over label, one active tint.
  *
  * The design asks for a blurred bar. `@react-native-community/blur` is not a
  * dependency of this offline-first app, and the handoff explicitly allows the
@@ -185,9 +175,6 @@ const TabBar = observer(
             </Pressable>
           );
         })}
-
-        {/* Keeps the trailing tab clear of the floating SOS button. */}
-        <View style={styles.sosReserve} />
       </View>
     );
   },
@@ -239,8 +226,5 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 10.5,
     fontWeight: '700',
-  },
-  sosReserve: {
-    width: SOS_RESERVE,
   },
 });

@@ -46,9 +46,8 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     icon: 'notifications-outline',
-    title: 'Tab Bar and SOS',
-    description:
-      'Switch between Home, Modules and Alerts below. Hold the red SOS button for one second in an emergency.',
+    title: 'Tab Bar',
+    description: 'Switch between Home, Modules and Alerts below.',
     spotlightTarget: 'footerButtons',
   },
   {

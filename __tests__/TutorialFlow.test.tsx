@@ -51,6 +51,13 @@ describe('Tutorial flow components', () => {
   test('TutorialModal spotlights guided UI targets and hides skip on done', () => {
     const onSpotlightTargetChange = jest.fn();
     let tree!: ReactTestRenderer.ReactTestRenderer;
+    const pressNext = () => {
+      ReactTestRenderer.act(() => {
+        tree.root
+          .findByProps({ accessibilityLabel: 'Next tutorial step' })
+          .props.onPress();
+      });
+    };
 
     ReactTestRenderer.act(() => {
       tree = ReactTestRenderer.create(
@@ -63,35 +70,29 @@ describe('Tutorial flow components', () => {
       );
     });
 
-    ReactTestRenderer.act(() => {
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-    });
+    pressNext();
+    pressNext();
+    pressNext();
+    pressNext();
 
-    ReactTestRenderer.act(() => {
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-    });
+    const renderedStep = JSON.stringify(tree.toJSON());
 
-    ReactTestRenderer.act(() => {
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-    });
+    expect(renderedStep).toContain('Tab Bar');
+    expect(renderedStep).not.toContain('Tab Bar and SOS');
+    expect(
+      tree.root.findByProps({
+        accessibilityLabel: 'Switch between Home, Modules and Alerts below.',
+      }),
+    ).toBeTruthy();
+    expect(() =>
+      tree.root.findByProps({
+        accessibilityLabel:
+          'Switch between Home, Modules and Alerts below. Hold the red SOS button for one second in an emergency.',
+      }),
+    ).toThrow();
 
-    ReactTestRenderer.act(() => {
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-      tree.root
-        .findByProps({ accessibilityLabel: 'Next tutorial step' })
-        .props.onPress();
-    });
+    pressNext();
+    pressNext();
 
     expect(() =>
       tree.root.findByProps({ accessibilityLabel: 'Skip tutorial' }),
