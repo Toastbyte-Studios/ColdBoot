@@ -1,15 +1,38 @@
 import { observer } from 'mobx-react-lite';
-import React from 'react';
-import { Text as RNText, TextProps, TextStyle } from 'react-native';
+import React, { createContext, useContext } from 'react';
+import {
+  Text as RNText,
+  TextProps,
+  TextStyle,
+  useColorScheme,
+} from 'react-native';
+import { getColorSchemeForThemeMode } from '../hooks/useTheme';
 import { useSettingsStore } from '../stores';
 
 /**
- * Custom Text component that automatically scales font size based on user settings.
- * This component wraps the React Native Text component and applies the font scale
- * from the SettingsStore to any fontSize styles.
+ * True inside another `Text`. A nested `Text` inherits its parent's colour, so
+ * it must not apply the default ink or it would override that inheritance —
+ * e.g. a bold span inside an accent-coloured sentence would turn back to ink.
+ */
+const TextNestingContext = createContext(false);
+
+/**
+ * Custom Text component that automatically scales font size based on user
+ * settings, and defaults its colour to the theme's ink.
+ *
+ * Font size: applies the font scale from the SettingsStore to any fontSize
+ * styles.
+ *
+ * Colour: React Native's `Text` has no theme, so a label without an explicit
+ * `color` renders the platform default (black on iOS) — readable on the light
+ * scheme and near-invisible on the dark one. Top-level `Text` therefore starts
+ * from `PRIMARY_DARK`, which inverts with the scheme. Any `color` in `style`
+ * still wins, because the default is placed first in the style array.
  */
 export const Text = observer((props: TextProps) => {
   const settingsStore = useSettingsStore();
+  const systemColorScheme = useColorScheme();
+  const isNested = useContext(TextNestingContext);
   const { style, ...otherProps } = props;
 
   // Apply font scaling to any numeric fontSize in the style (supports objects and arrays)
@@ -46,5 +69,23 @@ export const Text = observer((props: TextProps) => {
     }
   }
 
-  return <RNText {...otherProps} style={scaledStyle} />;
+  // Reading themeMode here is tracked by `observer`, so a theme switch
+  // re-renders every Text without each one holding its own reaction.
+  const finalStyle: TextProps['style'] = isNested
+    ? scaledStyle
+    : [
+        {
+          color: getColorSchemeForThemeMode(
+            settingsStore.themeMode,
+            systemColorScheme,
+          ).PRIMARY_DARK,
+        },
+        scaledStyle,
+      ];
+
+  return (
+    <TextNestingContext.Provider value={true}>
+      <RNText {...otherProps} style={finalStyle} />
+    </TextNestingContext.Provider>
+  );
 });

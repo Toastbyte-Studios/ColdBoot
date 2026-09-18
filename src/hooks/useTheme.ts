@@ -6,9 +6,13 @@ import { ThemeMode } from '../stores/SettingsStore';
 import { LIGHT_COLORS, DARK_COLORS, ColorScheme } from '../theme/colors';
 
 /**
- * Helper function to select the appropriate color scheme based on theme mode and system preference
+ * Selects the color scheme for a theme mode and the system preference.
+ *
+ * Exported for components that are already MobX observers of the settings
+ * store (such as `ScaledText`'s `Text`) and can resolve the scheme during
+ * render, without the per-instance state and reaction `useTheme` sets up.
  */
-function getColorSchemeForThemeMode(
+export function getColorSchemeForThemeMode(
   themeMode: ThemeMode,
   systemColorScheme: ColorSchemeName,
 ): ColorScheme {

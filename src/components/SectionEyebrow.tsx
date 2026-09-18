@@ -25,7 +25,9 @@ type Props = {
  * with the screen title. Each screen has exactly one large title; every other
  * band of content is introduced by one of these.
  *
- * Quiet means something different on each platform. iOS greys it out; Material
+ * Quiet means something different on each platform. iOS greys it out —
+ * `MUTED` inside a card, `MUTED_ON_GROUND` on the bare gradient, where plain
+ * `MUTED` would fall below 4.5:1 — while Material
  * tints it with `primary` and lets the size and tracking do the receding, so
  * that on Android it reads as a label belonging to the list below rather than
  * as an afterthought above it.
@@ -38,7 +40,13 @@ export default function SectionEyebrow({ children, inline, style }: Props) {
       style={[
         styles.eyebrow,
         isAndroid && !inline && styles.gutter,
-        { color: isAndroid ? COLORS.BRAND : COLORS.MUTED },
+        {
+          color: isAndroid
+            ? COLORS.BRAND
+            : inline
+              ? COLORS.MUTED
+              : COLORS.MUTED_ON_GROUND,
+        },
         style,
       ]}
     >
