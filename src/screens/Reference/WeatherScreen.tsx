@@ -1,7 +1,5 @@
 import React, { JSX } from 'react';
 import CategoryList from '../../components/CategoryList';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import data from '../../data/weather.json';
 import { CategoryType } from '../../types/common-types';
 
@@ -54,8 +52,8 @@ const weatherCategories: CategoryType[] = [
 /**
  * Displays the Weather screen, providing navigation to various weather-related categories.
  *
- * This screen presents a grid of `CardTopic` components, each representing a different weather condition
- * (e.g., Cold Weather, Heat & Sun, Rain & Flooding, Wind & Storms, Snow & Ice). When a card is pressed,
+ * This screen presents a list of categories, each representing a different weather condition
+ * (e.g., Cold Weather, Heat & Sun, Rain & Flooding, Wind & Storms, Snow & Ice). When a row is pressed,
  * the user is navigated to the corresponding category screen with relevant data.
  *
  * @returns {JSX.Element} The rendered WeatherScreen component.
@@ -64,9 +62,11 @@ export default function WeatherScreen(): JSX.Element {
   const disclaimer: string = data?.metadata?.disclaimer ?? '';
 
   return (
-    <ScreenBody>
-      <SectionHeader>Weather</SectionHeader>
-      <CategoryList disclaimer={disclaimer} categories={weatherCategories} />
-    </ScreenBody>
+    <CategoryList
+      title="Weather"
+      icon="rainy-outline"
+      disclaimer={disclaimer}
+      categories={weatherCategories}
+    />
   );
 }

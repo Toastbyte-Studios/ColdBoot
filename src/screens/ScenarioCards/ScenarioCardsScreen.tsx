@@ -4,12 +4,8 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, { JSX } from 'react';
-import { StyleSheet, View } from 'react-native';
 import CategoryList from '../../components/CategoryList';
-import { HorizontalRule } from '../../components/HorizontalRule';
 import IconButton from '../../components/IconButton';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import data from '../../data/scenarioCards.json';
 
 const categoryMap: Record<string, string> = {
@@ -77,12 +73,11 @@ const scenarioCategories = [
 /**
  * Displays the Scenario Cards screen, providing navigation to various emergency scenario categories.
  *
- * This screen presents a grid of topics including Power & Infrastructure, Natural Disasters,
- * Medical & Health, Urban Survival, Wilderness & Travel, Psychological & Decision, and Quick Thinking,
- * each represented by a CardTopic component. Selecting a topic navigates to the 'ScenarioCategory' screen
- * with the corresponding category data.
+ * This screen presents a grouped list of categories including Power & Infrastructure, Natural Disasters,
+ * Medical & Health, Urban Survival, Wilderness & Travel, Psychological & Decision, and Quick Thinking.
+ * Selecting a row navigates to the 'ScenarioCategory' screen with the corresponding category data.
  *
- * Includes an action bar with a bookmark icon to access bookmarked scenarios.
+ * The bookmarked-scenarios action sits in the title row, as Reference's does.
  *
  * @returns {JSX.Element} The rendered ScenarioCardsScreen component.
  */
@@ -91,31 +86,20 @@ export default function ScenarioCardsScreen(): JSX.Element {
   const disclaimer: string = data?.metadata?.disclaimer ?? '';
 
   return (
-    <ScreenBody>
-      <SectionHeader>Scenario Cards</SectionHeader>
-      <View style={styles.actionBar}>
+    <CategoryList
+      title="Scenario Cards"
+      icon="albums-outline"
+      disclaimer={disclaimer}
+      categories={scenarioCategories}
+      categoryScreen="ScenarioCategory"
+      actions={
         <IconButton
           name="bookmark-outline"
-          size={30}
+          size={22}
           accessibilityLabel="Bookmarked Scenarios"
           onPress={() => navigation.navigate('ScenarioBookmarks')}
         />
-      </View>
-      <HorizontalRule />
-      <CategoryList
-        disclaimer={disclaimer}
-        categories={scenarioCategories}
-        categoryScreen="ScenarioCategory"
-      />
-    </ScreenBody>
+      }
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  actionBar: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
-});

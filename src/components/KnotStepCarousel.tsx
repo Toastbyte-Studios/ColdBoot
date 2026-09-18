@@ -4,6 +4,8 @@ import {
   FlatListProps,
   Image,
   ImageSourcePropType,
+  LayoutChangeEvent,
+  Platform,
   StyleSheet,
   useWindowDimensions,
   View,
@@ -11,14 +13,25 @@ import {
 import { SvgProps } from 'react-native-svg';
 import { getKnotImage } from '../assets/referenceImages';
 import { useTheme } from '../hooks/useTheme';
-import { PAPER } from '../theme/fixedSurfaces';
+import { RADIUS, SPACING } from '../theme';
+import { INK, PAPER } from '../theme/fixedSurfaces';
 
 interface KnotStepCarouselProps {
   images: string[];
 }
 
-// Account for outer horizontal padding (14px each side) to fill the card width
-const CARD_PADDING = 28;
+const isAndroid = Platform.OS === 'android';
+
+/**
+ * First-frame estimate of the carousel's width, used only until `onLayout`
+ * reports the real one. Screen width minus the iOS content inset (screen
+ * inset + gutter, each side) is right for the common case, so the first
+ * frame rarely has to re-lay out.
+ */
+const ESTIMATED_HORIZONTAL_INSET = 52;
+
+/** The iOS card outline. Material cards are flat (see SolarCycleCard). */
+const OUTLINE_WIDTH = isAndroid ? 0 : 1;
 
 const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
 
@@ -35,8 +48,15 @@ const viewabilityConfig = { viewAreaCoveragePercentThreshold: 50 };
  * @remarks
  * The card background is deliberately fixed to `PAPER` rather than following
  * the colour scheme: the diagrams are dark line art on transparency and would
- * vanish on a dark card. The border and indicator dots are chrome, so those do
- * follow the scheme.
+ * vanish on a dark card. The border is chrome and follows the scheme. The
+ * indicator dots sit on the paper, so they use the fixed `INK`: the dark
+ * scheme's pale BRAND is under 2:1 against PAPER and the inactive dots
+ * disappeared.
+ *
+ * Slides are sized from the carousel's own measured width rather than from the
+ * screen width, so the component fits whatever column it is placed in. It used
+ * to subtract a fixed 28pt from the screen width, which only matched one
+ * screen's padding and overflowed anywhere else.
  *
  * @param images - Array of referenceImages keys.
  * @returns {JSX.Element | null} The rendered carousel, or null if no images resolve.
@@ -46,7 +66,19 @@ export default function KnotStepCarousel({
 }: KnotStepCarouselProps): JSX.Element | null {
   const COLORS = useTheme();
   const { width: screenWidth } = useWindowDimensions();
-  const itemWidth = screenWidth - CARD_PADDING;
+  const [measuredWidth, setMeasuredWidth] = useState<number | null>(null);
+  const itemWidth =
+    measuredWidth ?? Math.max(0, screenWidth - ESTIMATED_HORIZONTAL_INSET);
+
+  const handleLayout = (event: LayoutChangeEvent) => {
+    // onLayout reports the outer width; slides live inside the outline.
+    const width = Math.round(
+      event.nativeEvent.layout.width - OUTLINE_WIDTH * 2,
+    );
+    if (width > 0 && width !== measuredWidth) {
+      setMeasuredWidth(width);
+    }
+  };
   const [activeIndex, setActiveIndex] = useState(0);
   const flatListRef = useRef<FlatList<string>>(null);
 
@@ -95,7 +127,13 @@ export default function KnotStepCarousel({
   };
 
   return (
-    <View style={[styles.container, { borderColor: COLORS.BRAND }]}>
+    <View
+      onLayout={handleLayout}
+      style={[
+        styles.container,
+        { borderWidth: OUTLINE_WIDTH, borderColor: COLORS.BORDER },
+      ]}
+    >
       <FlatList
         ref={flatListRef}
         data={resolvedKeys}
@@ -123,7 +161,7 @@ export default function KnotStepCarousel({
               key={idx}
               style={[
                 styles.dot,
-                { backgroundColor: COLORS.BRAND },
+                { backgroundColor: INK },
                 idx === activeIndex && styles.dotActive,
               ]}
               accessibilityLabel={`Image ${idx + 1}${idx === activeIndex ? ', current' : ''}`}
@@ -137,10 +175,9 @@ export default function KnotStepCarousel({
 
 const styles = StyleSheet.create({
   container: {
-    borderWidth: 1,
-    borderRadius: 12,
-    paddingVertical: 12,
-    marginBottom: 12,
+    borderRadius: RADIUS.card,
+    paddingVertical: SPACING.md,
+    marginBottom: SPACING.md,
     backgroundColor: PAPER,
     alignItems: 'center',
     overflow: 'hidden',

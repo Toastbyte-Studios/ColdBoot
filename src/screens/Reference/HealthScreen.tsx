@@ -1,7 +1,5 @@
 import React, { JSX } from 'react';
 import CategoryList from '../../components/CategoryList';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import data from '../../data/health.json';
 import { CategoryType } from '../../types/common-types';
 
@@ -46,8 +44,8 @@ const healthCategories: CategoryType[] = [
 /**
  * Displays the Health reference screen, providing navigation to various health-related categories.
  *
- * This screen presents a grid of topics including Emergency, Illness, Injury, and Preventive,
- * each represented by a `CardTopic` component. Selecting a topic navigates to the 'Category' screen
+ * This screen presents a list of categories including Emergency, Illness, Injury, and Preventive,
+ * each shown as a row in a grouped list. Selecting a row navigates to the 'Category' screen
  * with the corresponding category data.
  *
  * @returns {JSX.Element} The rendered HealthScreen component.
@@ -56,9 +54,11 @@ export default function HealthScreen(): JSX.Element {
   const disclaimer: string = data?.metadata?.disclaimer ?? '';
 
   return (
-    <ScreenBody>
-      <SectionHeader>Health</SectionHeader>
-      <CategoryList disclaimer={disclaimer} categories={healthCategories} />
-    </ScreenBody>
+    <CategoryList
+      title="Health"
+      icon="medkit-outline"
+      disclaimer={disclaimer}
+      categories={healthCategories}
+    />
   );
 }
