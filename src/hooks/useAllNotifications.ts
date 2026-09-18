@@ -1,14 +1,14 @@
-import { useTheme } from '../../hooks/useTheme';
-import { AppNotification } from '../../stores/NotificationsStore';
-import { SolarEventType } from '../../stores/SolarCycleNotificationStore';
+import { AppNotification } from '../stores/NotificationsStore';
+import { SolarEventType } from '../stores/SolarCycleNotificationStore';
 import {
   useAstronomyEventStore,
   useNotificationsStore,
   usePantryStore,
   useSolarCycleNotificationStore,
   useWeatherOutlookStore,
-} from '../../stores/StoreContext';
-import { formatDaysUntil } from '../../utils/formatDaysUntil';
+} from '../stores/StoreContext';
+import { formatDaysUntil } from '../utils/formatDaysUntil';
+import { useTheme } from './useTheme';
 
 /**
  * Count of notifications the user has not hidden.
@@ -29,8 +29,8 @@ export function useVisibleNotificationCount(): number {
  *
  * Each entry carries a stable `key` that NotificationsStore uses to persist
  * dismissed state.  Filtering by hidden keys is intentionally left to the
- * caller so that both the footer badge count and the notifications modal can
- * share the same canonical list without duplicating source logic.
+ * caller so that both the tab bar badge count and the alerts sheet can share
+ * the same canonical list without duplicating source logic.
  */
 export function useAllNotifications(): AppNotification[] {
   const COLORS = useTheme();

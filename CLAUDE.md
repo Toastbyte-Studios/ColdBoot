@@ -26,11 +26,14 @@ npm run ios           # Run on iOS simulator
 npm run android       # Run on Android emulator
 npm run lint          # ESLint check
 npm run format        # Prettier format
+npm run typecheck     # tsc --noEmit
 npm test              # Jest
-npm run cleanup       # clean + format + lint + test
+npm run cleanup       # format + lint + typecheck + test
 ```
 
-There is no `tsc --noEmit` script; run it manually to check types.
+CI (`.github/workflows/ci.yml`) runs `npm run lint`, `npx prettier --check .`,
+`npm run typecheck` and `npm test -- --ci`. Run the same checks before opening
+a PR.
 
 ---
 
@@ -135,7 +138,7 @@ When adding a new tool:
 
 - Define styles with `StyleSheet.create()` at the bottom of each file
 - Don't share StyleSheet objects across files; co-locate styles with their component
-- At no point should the content ever bleed into the footer. Wrap screen content in `ScreenBody` for consistent layout, but do not assume it automatically applies footer-height bottom padding; add the required bottom spacing explicitly on screens that render above the footer.
+- At no point should the content ever bleed into the bottom tab bar (`TabBar`, height `FOOTER_HEIGHT`). Wrap screen content in `ScreenBody` for consistent layout, but do not assume it automatically applies tab-bar-height bottom padding; add the required bottom spacing explicitly on screens that render above the tab bar.
 
 ---
 
@@ -148,13 +151,10 @@ When adding a new tool:
 
 ---
 
-## Known Pre-existing Issues (do not fix unless assigned)
+## Known Pre-existing Issues
 
-- `demStorage.ts`, `fileOps.ts`: `atob`/`btoa` not available (needs DOM lib or polyfill)
-- `mbtilesWriter.ts`: no types for `react-native-sqlite-storage`
-- `geoIndex.ts`: Zod v4 `z.record()` workaround; type issue in cells Record
-- `schemas.ts`: Zod v4 `ZodIssueCode.too_small` API change
-- Offline maps map rendering uses `StubMapAdapter` (MapLibre integration pending)
+None currently tracked. `npm run typecheck` passes with zero errors — keep it
+that way, and add an entry here if you knowingly leave one behind.
 
 ---
 

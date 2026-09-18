@@ -4,11 +4,11 @@ import React, { useEffect, useState } from 'react';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { useVisibleNotificationCount } from '../hooks/useAllNotifications';
 import { useTheme } from '../hooks/useTheme';
 import { navigationRef } from '../navigation/navigationRef';
 import { FOOTER_HEIGHT } from '../theme';
 import { onColor, withAlpha } from '../theme/colorUtils';
-import { useVisibleNotificationCount } from './Footer/useAllNotifications';
 import { Text } from './ScaledText';
 
 type TabKey = 'home' | 'modules' | 'alerts';
