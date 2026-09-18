@@ -16,6 +16,7 @@ const shared = {
     'node_modules/(?!(react-native|@react-native|@maplibre|uuid|react-native-sensors|astronomia)/)',
   ],
   moduleNameMapper: {
+    '^react-dom$': '<rootDir>/__mocks__/react-dom.ts',
     '@react-native-async-storage/async-storage':
       '<rootDir>/__mocks__/@react-native-async-storage/async-storage.ts',
     '@react-native-clipboard/clipboard':
