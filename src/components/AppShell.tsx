@@ -33,7 +33,6 @@ import { HelpModal } from './HelpModal';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
-import SOSFab from './SOSFab';
 import TabBar from './TabBar';
 import TutorialModal from './TutorialModal';
 import {
@@ -59,7 +58,7 @@ const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
  * Material's search is a full-screen view, not a screen with a search field on
  * it: it takes over the window for as long as the user is searching. Its own
  * search bar carries the back arrow, so the app bar would be a second one, and
- * the navigation bar and SOS button would be destinations competing with the
+ * the navigation bar would be a second set of destinations competing with the
  * thing the user just opened.
  */
 const FULL_SCREEN_ROUTES = new Set(['Search']);
@@ -69,7 +68,7 @@ const FULL_SCREEN_ROUTES = new Set(['Search']);
  *
  * Provides:
  * - A top app bar ({@link AppBar}), which each platform draws its own way.
- * - A bottom tab bar with the floating SOS action.
+ * - A bottom tab bar.
  * - Global horizontal swipe navigation, on iOS only — see below.
  *
  * Gesture behavior (iOS):
@@ -368,7 +367,6 @@ export default function AppShell({ children }: Props) {
                 onAlertsClose={() => setIsAlertsVisible(false)}
                 alertsActive={isAlertsVisible}
               />
-              <SOSFab />
             </View>
           )}
 

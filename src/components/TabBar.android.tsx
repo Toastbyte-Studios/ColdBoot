@@ -47,15 +47,12 @@ type Props = {
 /**
  * The Material 3 navigation bar.
  *
- * Two structural differences from the iOS tab bar, beyond the obvious paint:
+ * One structural difference from the iOS tab bar, beyond the obvious paint:
  *
  * - **The pill, not a tint.** Material marks the active destination with a
  *   tonal indicator behind its icon and leaves the label alone; iOS tints both
  *   and draws nothing. The pill grows in rather than sliding, because the
  *   destinations are not a continuum.
- * - **No reserved cell.** The iOS bar keeps 84pt clear at the trailing edge so
- *   the floating SOS button has nothing under it. Android's FAB floats *above*
- *   the bar, so all three destinations get an even third of the width.
  *
  * The bar is opaque. Material does not blur this surface, and the app is
  * offline-first, so nothing is gained by pretending there is depth here.

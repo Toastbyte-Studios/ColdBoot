@@ -56,15 +56,11 @@ export const ROW_PADDING_HORIZONTAL = Platform.select({
   default: 14,
 })!;
 
-/** Diameter of the floating SOS action. Android's extended FAB is 56dp tall. */
-export const SOS_SIZE = Platform.select({ android: 56, default: 62 })!;
-
 /**
  * Corner radii, by the surface each one belongs to.
  *
  * Material 3 is flatter and more uniform than the iOS pass: containers and
- * cards share one 12dp radius, sheets open to 28dp, and the FAB takes the
- * large-button 16dp rather than a full circle.
+ * cards share one 12dp radius, and sheets open to 28dp.
  */
 export const RADIUS = Platform.select({
   android: {
@@ -80,8 +76,6 @@ export const RADIUS = Platform.select({
     pill: 16,
     /** Chips and small buttons. */
     chip: 8,
-    /** The extended SOS FAB. */
-    sos: 16,
     /** Top corners of a bottom sheet. */
     sheet: 28,
   },
@@ -98,8 +92,6 @@ export const RADIUS = Platform.select({
     pill: 16,
     /** Chips and small buttons. */
     chip: 8,
-    /** SOS circle: half of SOS_SIZE. */
-    sos: 31,
     /** Top corners of a bottom sheet. */
     sheet: 24,
   },

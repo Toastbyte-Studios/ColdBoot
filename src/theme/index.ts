@@ -8,7 +8,6 @@ export {
   SCREEN_GUTTER,
   SCREEN_INSET,
   SCROLL_PADDING,
-  SOS_SIZE,
   SPACING,
   TEXT_GUTTER,
 } from './constants';
