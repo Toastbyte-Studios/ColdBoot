@@ -3,8 +3,15 @@ import NetInfo, {
   NetInfoSubscription,
 } from '@react-native-community/netinfo';
 import { makeAutoObservable, runInAction } from 'mobx';
+import {
+  AppState,
+  AppStateStatus,
+  NativeEventSubscription,
+  Platform,
+} from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
+import { requestForegroundLocationPermission } from '../utils/locationPermission';
 
 export class CoreStore {
   constructor() {
@@ -30,6 +37,9 @@ export class CoreStore {
   // Connectivity
   netInfo: NetInfoState | null = null;
   private netUnsub: NetInfoSubscription | null = null;
+  private appStateSub: NativeEventSubscription | null = null;
+  private appState: AppStateStatus = AppState.currentState;
+  private locationRequestedThisForeground = false;
 
   // GPS
   lastFix: GeoPosition | null = null;
@@ -269,20 +279,24 @@ export class CoreStore {
    * @returns {Promise<void>} Resolves when polling is started or an error is handled.
    */
   private async startGpsPolling(): Promise<void> {
-    try {
-      const auth = await Geolocation.requestAuthorization('whenInUse');
-      if (auth === 'granted') {
-        this.gpsGetFix();
-        if (this.gpsIv) clearInterval(this.gpsIv);
-        this.gpsIv = setInterval(() => this.gpsGetFix(), 60000);
-      } else {
-        runInAction(() => {
-          this.locationError = 'Location permission not granted';
-        });
-      }
-    } catch {
+    if (Platform.OS === 'android' && this.locationRequestedThisForeground) {
+      return;
+    }
+    if (Platform.OS === 'android') {
+      this.locationRequestedThisForeground = true;
+    }
+
+    const auth = await requestForegroundLocationPermission();
+    if (auth === 'granted') {
       runInAction(() => {
-        this.locationError = 'Location permission error';
+        this.locationError = null;
+      });
+      this.gpsGetFix();
+      if (this.gpsIv) clearInterval(this.gpsIv);
+      this.gpsIv = setInterval(() => this.gpsGetFix(), 60000);
+    } else {
+      runInAction(() => {
+        this.locationError = 'Location permission not granted';
       });
     }
   }
@@ -298,6 +312,30 @@ export class CoreStore {
     this.gpsIv = null;
   }
 
+  private startAppStateSubscription = () => {
+    if (this.appStateSub) return;
+    this.appStateSub = AppState.addEventListener(
+      'change',
+      this.handleAppStateChange,
+    );
+  };
+
+  private stopAppStateSubscription = () => {
+    this.appStateSub?.remove();
+    this.appStateSub = null;
+  };
+
+  private handleAppStateChange = (nextState: AppStateStatus) => {
+    const wasActive = this.appState === 'active';
+    this.appState = nextState;
+    if (!wasActive && nextState === 'active') {
+      this.locationRequestedThisForeground = false;
+      if (!this.gpsIv) {
+        this.startGpsPolling();
+      }
+    }
+  };
+
   /**
    * Initiates monitoring of device status by starting battery sampling,
    * refreshing storage information, subscribing to network status updates,
@@ -311,6 +349,7 @@ export class CoreStore {
     this.startBatterySampling();
     this.refreshStorage();
     this.startNetSubscription();
+    this.startAppStateSubscription();
     this.startGpsPolling();
   };
 
@@ -326,6 +365,7 @@ export class CoreStore {
     this.clearBatteryIntervals();
     this.stopNetSubscription();
     this.stopGpsPolling();
+    this.stopAppStateSubscription();
   };
 
   // --------------------------------------------------------------------
