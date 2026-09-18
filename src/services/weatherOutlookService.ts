@@ -23,13 +23,25 @@ export interface MonthlyOutlookEntry {
   month: string;
   /** Ensemble-mean monthly temperature in °C */
   tempMeanC: number;
-  /** Ensemble-mean total precipitation in mm */
+  /**
+   * Ensemble-mean monthly precipitation total in mm.
+   * Open-Meteo's `precipitation_mean` monthly field is returned in aggregated
+   * monthly units, so this stays a monthly total for the UI.
+   */
   precipMm: number;
-  /** Ensemble-mean total snowfall in cm */
+  /**
+   * Ensemble-mean monthly snowfall total in cm.
+   * Open-Meteo's `snowfall_mean` monthly field is returned in aggregated
+   * monthly units, so this stays a monthly total for the UI.
+   */
   snowfallCm: number;
   /** Ensemble-mean wind speed in km/h */
   windSpeedMeanKmh: number;
-  /** Ensemble-mean total shortwave radiation in MJ/m² */
+  /**
+   * Ensemble-mean monthly shortwave radiation total in MJ/m².
+   * Open-Meteo's `shortwave_radiation_mean` monthly field is returned in
+   * aggregated monthly units, so this stays a monthly total for the UI.
+   */
   shortwaveRadiationSum: number;
 }
 
@@ -54,12 +66,11 @@ export interface SeasonalOutlook {
 const SEASONAL_API_BASE = 'https://seasonal-api.open-meteo.com/v1/seasonal';
 const MONTHLY_VARIABLES = [
   'temperature_2m_mean',
-  'precipitation_sum',
-  'snowfall_sum',
+  'precipitation_mean',
+  'snowfall_mean',
   'wind_speed_10m_mean',
-  'shortwave_radiation_sum',
+  'shortwave_radiation_mean',
 ];
-const ENSEMBLE_MEMBER_COUNT = 51;
 /** Cache is valid for 30 days in milliseconds. */
 export const CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const TABLE_NAME = 'seasonal_outlook_cache_v2';
@@ -89,13 +100,112 @@ export function shouldRefresh(cachedAt: string): boolean {
   return Date.now() - fetchedMs > CACHE_MAX_AGE_MS;
 }
 
-/**
- * Computes the arithmetic mean of an array of numbers.
- * Returns 0 for empty arrays.
- */
-function mean(values: number[]): number {
-  if (values.length === 0) return 0;
-  return values.reduce((a, b) => a + b, 0) / values.length;
+function getMonthDays(month: string): number {
+  const [year, monthNumber] = month.split('-').map(Number);
+  return new Date(Date.UTC(year, monthNumber, 0)).getUTCDate();
+}
+
+function canonicalUnit(unit: unknown): string {
+  if (typeof unit !== 'string') {
+    return '';
+  }
+  return unit
+    .toLowerCase()
+    .replaceAll(' ', '')
+    .replaceAll('²', '2')
+    .replaceAll('³', '3');
+}
+
+function isPerDayUnit(unit: string): boolean {
+  return (
+    unit.includes('/day') || unit.includes('/d') || unit.includes('perday')
+  );
+}
+
+function convertTemperatureToCelsius(value: number, unit: unknown): number {
+  const normalizedUnit = canonicalUnit(unit);
+  if (normalizedUnit.includes('f')) {
+    return ((value - 32) * 5) / 9;
+  }
+  return value;
+}
+
+function convertPrecipitationToMm(
+  value: number,
+  unit: unknown,
+  monthDays: number,
+): number {
+  const normalizedUnit = canonicalUnit(unit);
+  const dayFactor = isPerDayUnit(normalizedUnit) ? monthDays : 1;
+
+  if (normalizedUnit.includes('inch') || normalizedUnit === 'in') {
+    return value * 25.4 * dayFactor;
+  }
+  if (normalizedUnit.includes('cm')) {
+    return value * 10 * dayFactor;
+  }
+  return value * dayFactor;
+}
+
+function convertSnowfallToCm(
+  value: number,
+  unit: unknown,
+  monthDays: number,
+): number {
+  const normalizedUnit = canonicalUnit(unit);
+  const dayFactor = isPerDayUnit(normalizedUnit) ? monthDays : 1;
+
+  if (normalizedUnit.includes('inch') || normalizedUnit === 'in') {
+    return value * 2.54 * dayFactor;
+  }
+  if (normalizedUnit.includes('mm')) {
+    return (value / 10) * dayFactor;
+  }
+  return value * dayFactor;
+}
+
+function convertWindSpeedToKmh(value: number, unit: unknown): number {
+  const normalizedUnit = canonicalUnit(unit);
+  if (normalizedUnit === 'ms' || normalizedUnit.includes('m/s')) {
+    return value * 3.6;
+  }
+  if (normalizedUnit.includes('mph')) {
+    return value * 1.609344;
+  }
+  if (normalizedUnit.includes('kn')) {
+    return value * 1.852;
+  }
+  return value;
+}
+
+function convertShortwaveRadiationToMjPerSquareMetre(
+  value: number,
+  unit: unknown,
+  monthDays: number,
+): number {
+  const normalizedUnit = canonicalUnit(unit);
+
+  if (normalizedUnit.includes('w/m2')) {
+    return (value * monthDays * 24 * 60 * 60) / 1_000_000;
+  }
+  if (normalizedUnit.includes('kwh/m2')) {
+    return value * 3.6;
+  }
+  if (normalizedUnit.includes('mj/m2')) {
+    return isPerDayUnit(normalizedUnit) ? value * monthDays : value;
+  }
+
+  return value;
+}
+
+function getMonthlySeries(
+  monthly: Record<string, unknown>,
+  variable: string,
+): number[] {
+  const values = monthly[variable];
+  return Array.isArray(values)
+    ? values.map((value) => (typeof value === 'number' ? value : 0))
+    : [];
 }
 
 // ---------------------------------------------------------------------------
@@ -103,54 +213,55 @@ function mean(values: number[]): number {
 // ---------------------------------------------------------------------------
 
 /**
- * Given the raw Open-Meteo `monthly` object, compute ensemble-mean monthly
- * entries for each of the returned months.
- *
- * The SEAS5 API returns per-member arrays named `<variable>_member01` …
- * `<variable>_member51`.  We average across all available members.
+ * Given the raw Open-Meteo `monthly` object, compute processed monthly entries
+ * for each returned month. The ensemble-mean model returns one series per
+ * variable, already averaged across members.
  */
 export function parseMonthlyResponse(
   monthly: Record<string, unknown>,
+  monthlyUnits: Record<string, unknown> = {},
 ): MonthlyOutlookEntry[] {
   const times = (monthly.time as string[]) ?? [];
-  const entries: MonthlyOutlookEntry[] = [];
+  const temperatures = getMonthlySeries(monthly, 'temperature_2m_mean');
+  const precipitation = getMonthlySeries(monthly, 'precipitation_mean');
+  const snowfall = getMonthlySeries(monthly, 'snowfall_mean');
+  const windSpeed = getMonthlySeries(monthly, 'wind_speed_10m_mean');
+  const shortwaveRadiation = getMonthlySeries(
+    monthly,
+    'shortwave_radiation_mean',
+  );
 
-  const memberValues = (
-    variable: string,
-    t: number,
-    memberCount: number,
-  ): number[] => {
-    const vals: number[] = [];
-    for (let m = 1; m <= memberCount; m++) {
-      const key = `${variable}_member${String(m).padStart(2, '0')}`;
-      const arr = monthly[key] as number[] | undefined;
-      if (arr && arr[t] != null && !isNaN(arr[t])) {
-        vals.push(arr[t]);
-      }
-    }
-    return vals;
-  };
+  return times.map((time, index) => {
+    const month = time.slice(0, 7);
+    const monthDays = getMonthDays(month);
 
-  for (let t = 0; t < times.length; t++) {
-    entries.push({
-      month: times[t].slice(0, 7), // "YYYY-MM"
-      tempMeanC: mean(
-        memberValues('temperature_2m_mean', t, ENSEMBLE_MEMBER_COUNT),
+    return {
+      month,
+      tempMeanC: convertTemperatureToCelsius(
+        temperatures[index] ?? 0,
+        monthlyUnits.temperature_2m_mean,
       ),
-      precipMm: mean(
-        memberValues('precipitation_sum', t, ENSEMBLE_MEMBER_COUNT),
+      precipMm: convertPrecipitationToMm(
+        precipitation[index] ?? 0,
+        monthlyUnits.precipitation_mean,
+        monthDays,
       ),
-      snowfallCm: mean(memberValues('snowfall_sum', t, ENSEMBLE_MEMBER_COUNT)),
-      windSpeedMeanKmh: mean(
-        memberValues('wind_speed_10m_mean', t, ENSEMBLE_MEMBER_COUNT),
+      snowfallCm: convertSnowfallToCm(
+        snowfall[index] ?? 0,
+        monthlyUnits.snowfall_mean,
+        monthDays,
       ),
-      shortwaveRadiationSum: mean(
-        memberValues('shortwave_radiation_sum', t, ENSEMBLE_MEMBER_COUNT),
+      windSpeedMeanKmh: convertWindSpeedToKmh(
+        windSpeed[index] ?? 0,
+        monthlyUnits.wind_speed_10m_mean,
       ),
-    });
-  }
-
-  return entries;
+      shortwaveRadiationSum: convertShortwaveRadiationToMjPerSquareMetre(
+        shortwaveRadiation[index] ?? 0,
+        monthlyUnits.shortwave_radiation_mean,
+        monthDays,
+      ),
+    };
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -170,19 +281,41 @@ export async function fetchSeasonalData(
     latitude: String(lat),
     longitude: String(lon),
     monthly: MONTHLY_VARIABLES.join(','),
-    models: 'seas5',
+    models: 'ecmwf_seas5_ensemble_mean',
+    temperature_unit: 'celsius',
+    wind_speed_unit: 'kmh',
+    precipitation_unit: 'mm',
+    timezone: 'GMT',
   });
 
   const url = `${SEASONAL_API_BASE}?${params.toString()}`;
   const response = await fetchWithTimeout(url);
 
   if (!response.ok) {
+    let reason: string | null = null;
+    try {
+      const errorJson = (await response.json()) as { reason?: unknown };
+      if (typeof errorJson.reason === 'string' && errorJson.reason.trim()) {
+        reason = errorJson.reason.trim();
+      }
+    } catch {
+      reason = null;
+    }
+
+    const fallbackReason = response.statusText?.trim() ?? '';
+    const detail =
+      reason ?? (fallbackReason.length > 0 ? fallbackReason : null);
     throw new Error(
-      `Open-Meteo seasonal API error: ${response.status} ${response.statusText}`,
+      detail
+        ? `Open-Meteo seasonal API error ${response.status}: ${detail}`
+        : `Open-Meteo seasonal API error ${response.status}`,
     );
   }
 
-  const json = (await response.json()) as { monthly?: Record<string, unknown> };
+  const json = (await response.json()) as {
+    monthly?: Record<string, unknown>;
+    monthly_units?: Record<string, unknown>;
+  };
 
   if (!json.monthly) {
     throw new Error('Open-Meteo seasonal API returned no monthly data');
@@ -194,7 +327,7 @@ export async function fetchSeasonalData(
     lon: roundCoord(lon),
     fetchedAt: now.toISOString(),
     fetchMonth: toYearMonth(now),
-    months: parseMonthlyResponse(json.monthly),
+    months: parseMonthlyResponse(json.monthly, json.monthly_units),
   };
 }
 
