@@ -106,6 +106,19 @@ describe('requestForegroundLocationPermission', () => {
     await expectResult('denied');
   });
 
+  test('returns granted on Android when coarse becomes granted after fine request', async () => {
+    Platform.OS = 'android';
+    PermissionsAndroid.check
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(false)
+      .mockResolvedValueOnce(true);
+    PermissionsAndroid.request.mockResolvedValue(
+      PermissionsAndroid.RESULTS.DENIED,
+    );
+
+    await expectResult('granted');
+  });
+
   test('returns denied on Android when fine request is never ask again', async () => {
     Platform.OS = 'android';
     PermissionsAndroid.check

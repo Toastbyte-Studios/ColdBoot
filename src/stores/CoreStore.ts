@@ -7,6 +7,7 @@ import {
   AppState,
   AppStateStatus,
   NativeEventSubscription,
+  PermissionsAndroid,
   Platform,
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
@@ -280,7 +281,17 @@ export class CoreStore {
    */
   private async startGpsPolling(): Promise<void> {
     if (Platform.OS === 'android' && this.locationRequestedThisForeground) {
-      return;
+      const [fineGranted, coarseGranted] = await Promise.all([
+        PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION,
+        ),
+        PermissionsAndroid.check(
+          PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
+        ),
+      ]);
+      if (!fineGranted && !coarseGranted) {
+        return;
+      }
     }
     if (Platform.OS === 'android') {
       this.locationRequestedThisForeground = true;
