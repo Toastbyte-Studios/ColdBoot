@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, TextProps } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
+import { onColor } from '../theme/colorUtils';
 import { Text } from './ScaledText';
 
 type Props = TextProps & { title?: string };
@@ -15,6 +16,10 @@ type Props = TextProps & { title?: string };
  * @param children - Alternative content to display if `title` is not specified.
  * @param style - Custom styles to apply to the header.
  * @param rest - Additional props to pass to the `Text` component.
+ *
+ * The label colour is picked against the teal fill with `onColor`. It used to
+ * be `PRIMARY_DARK`, which is ink on the light scheme's dark teal (2.9:1) and
+ * pale ice on the dark scheme's light teal (2.6:1) — below 4.5:1 in both.
  */
 export default function SectionSubHeader({
   title,
@@ -30,7 +35,7 @@ export default function SectionSubHeader({
       style={[
         styles.header,
         {
-          color: COLORS.PRIMARY_DARK,
+          color: onColor(COLORS.SECONDARY_ACCENT),
           backgroundColor: COLORS.SECONDARY_ACCENT,
           borderColor: COLORS.BRAND,
         },

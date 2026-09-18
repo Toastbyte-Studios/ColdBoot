@@ -6,16 +6,21 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import React, { JSX, useMemo } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import CardTopic from '../../../components/CardTopic';
-import Grid from '../../../components/Grid';
+import { Platform, StyleSheet } from 'react-native';
+import GroupContainer from '../../../components/GroupContainer';
+import ModuleRow from '../../../components/ModuleRow';
 import { Text } from '../../../components/ScaledText';
-import ScreenBody from '../../../components/ScreenBody';
-import SectionHeader from '../../../components/SectionHeader';
-import SectionSubHeader from '../../../components/SectionSubHeader';
-import { useFooterClearance } from '../../../hooks/useFooterClearance';
-import { FOOTER_HEIGHT } from '../../../theme';
+import StackScreen from '../../../components/StackScreen';
+import { useTheme } from '../../../hooks/useTheme';
+import { TEXT_GUTTER } from '../../../theme';
+import { ColorScheme } from '../../../theme/colors';
 import ReferenceEntryType from '../../../types/data-type';
+
+const isAndroid = Platform.OS === 'android';
+
+/** Muted text on the bare screen ground — see `MUTED_ON_GROUND`. */
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 type CategoryScreenRouteProp = RouteProp<
   {
@@ -31,81 +36,60 @@ type CategoryScreenRouteProp = RouteProp<
 /**
  * Displays a list of reference entries filtered by category.
  *
- * This screen retrieves the `title` and `data` from the navigation route parameters,
- * filters the entries to only those matching the selected category, and displays them in a grid layout.
- * If no entries are found for the category, a helper message is shown.
+ * Retrieves `title` and `data` from the navigation route parameters, keeps
+ * only the entries whose `category` matches the title, and lists them
+ * alphabetically as rows in one grouped list — the same component the module
+ * screens use for tools. If no entries match, a helper message is shown.
  *
  * @returns {JSX.Element} The rendered category screen component.
  *
  * @remarks
- * - Navigates to the 'Entry' screen when a topic card is pressed, passing the selected entry as a parameter.
+ * - Navigates to the 'Entry' screen when a row is pressed, passing the selected entry as a parameter.
  * - Expects `route.params` to contain `title` (category name) and `data` (ReferenceEntryType[]).
  */
 export default function CategoryScreen(): JSX.Element {
+  const COLORS = useTheme();
   const route = useRoute<CategoryScreenRouteProp>();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const footerClearance = useFooterClearance();
   const { title, data, disclaimer } = route.params || {};
 
   const entries = useMemo(() => {
-    return (data ?? []).filter((e: ReferenceEntryType) => e.category === title);
+    return (data ?? [])
+      .filter((e: ReferenceEntryType) => e.category === title)
+      .sort((a: ReferenceEntryType, b: ReferenceEntryType) =>
+        a.title.localeCompare(b.title),
+      );
   }, [title, data]);
 
+  const subtitle = `${entries.length} topic${entries.length === 1 ? '' : 's'}`;
+
   return (
-    <ScreenBody>
-      <SectionHeader>{title}</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {entries.length === 0 && (
-            <Text style={styles.helperText}>No topics found.</Text>
-          )}
-          {disclaimer ? (
-            <SectionSubHeader>{disclaimer}</SectionSubHeader>
-          ) : null}
-          <Grid>
-            {entries
-              .slice()
-              .sort((a: ReferenceEntryType, b: ReferenceEntryType) =>
-                a.title.localeCompare(b.title),
-              )
-              .map((item: ReferenceEntryType) => (
-                <CardTopic
-                  key={item.id}
-                  title={item.title}
-                  icon="document-text-outline"
-                  onPress={() => navigation.navigate('Entry', { entry: item })}
-                />
-              ))}
-          </Grid>
-        </ScrollView>
-      </View>
-    </ScreenBody>
+    <StackScreen title={title} subtitle={subtitle} note={disclaimer}>
+      {entries.length === 0 ? (
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          No topics found.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {entries.map((item: ReferenceEntryType, index: number) => (
+            <ModuleRow
+              key={item.id}
+              title={item.title}
+              icon="document-text-outline"
+              variant="tool"
+              showSeparator={index < entries.length - 1}
+              onPress={() => navigation.navigate('Entry', { entry: item })}
+            />
+          ))}
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingBottom: 24,
-    alignItems: 'center',
-  },
   helperText: {
     fontSize: 16,
-    opacity: 0.8,
-    marginHorizontal: 6,
-    marginBottom: 12,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });

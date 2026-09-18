@@ -40,6 +40,13 @@ const LIGHT_COLORS = {
   BORDER: '#A9C5DA',
   /** De-emphasised labels, timestamps, placeholder text. */
   MUTED: '#557286',
+  /**
+   * De-emphasised text sitting directly on the screen ground rather than on a
+   * card — header subtitles, notes, empty-state lines. On iOS the ground is
+   * BACKGROUND_GRADIENT, whose top stops sit behind the header and are dark
+   * enough that MUTED falls to 2.8–3.7:1. This clears 4.5:1 on every stop.
+   */
+  MUTED_ON_GROUND: '#384F60',
 
   /**
    * Row separator inside a grouped list. Lighter than BORDER, which outlines
@@ -103,6 +110,8 @@ const DARK_COLORS: typeof LIGHT_COLORS = {
   SURFACE: '#17232E',
   BORDER: '#2C4256',
   MUTED: '#8CA3B4',
+  // MUTED already clears 4.5:1 on the dark gradient's lightest stop (#22394D).
+  MUTED_ON_GROUND: '#8CA3B4',
 
   SEPARATOR: '#22313D',
   CHEVRON: '#557286',

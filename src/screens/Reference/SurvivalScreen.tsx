@@ -1,7 +1,5 @@
 import React, { JSX } from 'react';
 import CategoryList from '../../components/CategoryList';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import data from '../../data/survival.json';
 import { CategoryType } from '../../types/common-types';
 
@@ -53,8 +51,8 @@ const survivalCategories: CategoryType[] = [
 
 /**
  * Renders the Survival Guide screen, providing quick access to essential survival topics.
- * Displays a header, section title, and a grid of topic cards (Fire, Water, Shelter, Food & Foraging, Tracking & Awareness).
- * Each card navigates to a detailed category screen with relevant data when pressed.
+ * Displays a header, section title, and a list of categories (Fire, Water, Shelter, Food & Foraging, Tracking & Awareness).
+ * Each row navigates to a detailed category screen with relevant data when pressed.
  *
  * @returns {JSX.Element} The rendered Survival Guide screen component.
  */
@@ -62,9 +60,11 @@ export default function SurvivalScreen(): JSX.Element {
   const disclaimer: string = data.metadata?.disclaimer ?? '';
 
   return (
-    <ScreenBody>
-      <SectionHeader>Survival Guide</SectionHeader>
-      <CategoryList disclaimer={disclaimer} categories={survivalCategories} />
-    </ScreenBody>
+    <CategoryList
+      title="Survival Guide"
+      icon="leaf-outline"
+      disclaimer={disclaimer}
+      categories={survivalCategories}
+    />
   );
 }

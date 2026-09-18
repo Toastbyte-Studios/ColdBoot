@@ -82,7 +82,13 @@ export default function SectionHeader({
               {title ?? children}
             </Text>
             {subtitle ? (
-              <Text style={[styles.subtitle, { color: COLORS.MUTED }]}>
+              <Text
+                style={[
+                  styles.subtitle,
+                  // On iOS the subtitle sits on the gradient's darkest stops.
+                  { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+                ]}
+              >
                 {subtitle}
               </Text>
             ) : null}

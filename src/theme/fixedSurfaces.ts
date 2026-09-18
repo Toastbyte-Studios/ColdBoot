@@ -14,7 +14,10 @@
  *   kinds of sketch, and every existing one would replay onto the wrong
  *   background.
  * - `KnotStepCarousel` shows knot diagrams sourced from Wikimedia, which are
- *   dark line art on transparency. On a dark card they disappear.
+ *   dark line art on transparency. On a dark card they disappear. Its step
+ *   dots sit on the same paper, so they are `INK`.
+ * - `EntryScreen` (Reference) shows single tool and knot SVG diagrams on a
+ *   `PAPER` plate for the same reason.
  * - `MoonPhaseGlyph` draws the physical moon: the lit side is `PAPER` and the
  *   shadowed side `INK`, so a waxing crescent reads the same way round in
  *   both schemes. Following the scheme would invert the phase.
