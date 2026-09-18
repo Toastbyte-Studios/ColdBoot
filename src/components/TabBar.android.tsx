@@ -47,7 +47,6 @@ type Props = {
 /**
  * The Material 3 navigation bar.
  *
- * Two structural differences from the iOS tab bar, beyond the obvious paint:
  * One structural difference from the iOS tab bar, beyond the obvious paint:
  *
  * - **The pill, not a tint.** Material marks the active destination with a
