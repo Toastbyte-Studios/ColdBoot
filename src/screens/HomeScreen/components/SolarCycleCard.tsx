@@ -1,6 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path } from 'react-native-svg';
 import * as SunCalc from 'suncalc';
 import Chip from '../../../components/Chip';
@@ -55,8 +55,8 @@ function arcPath(from: number, to: number): string {
  *
  * Everything here is computed from the last GPS fix and the device clock, so
  * it keeps working with no signal — which is the only condition this app
- * assumes. Renders nothing until there is a fix to compute from, rather than
- * showing placeholder times that would be wrong.
+ * assumes. Without a fix yet, the card stays visible and explains that solar
+ * details will appear once GPS is available.
  */
 const SolarCycleCard = observer(() => {
   const COLORS = useTheme();
@@ -74,28 +74,29 @@ const SolarCycleCard = observer(() => {
   const snapshot = fix
     ? getSolarSnapshot(fix.coords.latitude, fix.coords.longitude, now)
     : null;
-
-  if (!snapshot) {
-    return null;
-  }
+  const hasSnapshot = !!snapshot;
 
   const isDaylight =
-    now >= snapshot.sunrise && now < snapshot.sunset ? true : false;
+    snapshot && now >= snapshot.sunrise && now < snapshot.sunset ? true : false;
   const headlineEvent = isDaylight ? 'Sunset' : 'Sunrise';
-  const headlineTime = isDaylight
-    ? snapshot.sunset
-    : now < snapshot.sunrise
-      ? snapshot.sunrise
-      : snapshot.nextSunrise;
+  const headlineTime = !snapshot
+    ? null
+    : isDaylight
+      ? snapshot.sunset
+      : now < snapshot.sunrise
+        ? snapshot.sunrise
+        : snapshot.nextSunrise;
 
   // Split the meridiem so it can sit smaller than the time itself.
-  const formatted = formatTime(headlineTime);
+  const formatted = headlineTime ? formatTime(headlineTime) : '';
   const [clock, meridiem] = formatted.split(' ');
 
-  const untilMs = headlineTime.getTime() - now.getTime();
+  const untilMs = headlineTime ? headlineTime.getTime() - now.getTime() : 0;
   const countdown =
     untilMs > 0 ? `in ${formatDuration(untilMs)}` : `${headlineEvent} now`;
-  const goldenHour = `golden hour from ${formatTime(snapshot.goldenHour)}`;
+  const goldenHour = snapshot
+    ? `golden hour from ${formatTime(snapshot.goldenHour)}`
+    : null;
 
   const pressure = barometer.currentPressure;
   const pressureText =
@@ -119,7 +120,8 @@ const SolarCycleCard = observer(() => {
     moon.fraction * 100,
   )}%`;
 
-  const sun = arcPoint(snapshot.progress);
+  const sun = snapshot ? arcPoint(snapshot.progress) : null;
+  const permissionDenied = !!core.locationError;
 
   return (
     <View
@@ -136,13 +138,39 @@ const SolarCycleCard = observer(() => {
       <View style={styles.headlineRow}>
         <View style={styles.headline}>
           <SectionEyebrow inline>Solar cycle</SectionEyebrow>
-          <Text style={[styles.time, { color: COLORS.PRIMARY_DARK }]}>
-            {headlineEvent} {clock}
-            {meridiem ? <Text style={styles.meridiem}> {meridiem}</Text> : null}
-          </Text>
-          <Text style={[styles.detail, { color: COLORS.MUTED }]}>
-            {countdown} · {goldenHour}
-          </Text>
+          {hasSnapshot ? (
+            <>
+              <Text style={[styles.time, { color: COLORS.PRIMARY_DARK }]}>
+                {headlineEvent} {clock}
+                {meridiem ? (
+                  <Text style={styles.meridiem}> {meridiem}</Text>
+                ) : null}
+              </Text>
+              <Text style={[styles.detail, { color: COLORS.MUTED }]}>
+                {countdown} · {goldenHour}
+              </Text>
+            </>
+          ) : (
+            <>
+              <Text style={[styles.time, { color: COLORS.PRIMARY_DARK }]}>
+                {permissionDenied ? 'Location off' : 'Waiting for GPS…'}
+              </Text>
+              <Text style={[styles.detail, { color: COLORS.MUTED }]}>
+                Sunrise and sunset appear once your location is known.
+              </Text>
+              {permissionDenied ? (
+                <Text
+                  style={[styles.link, { color: COLORS.BRAND }]}
+                  accessibilityRole="button"
+                  onPress={() => {
+                    Linking.openSettings();
+                  }}
+                >
+                  Open Settings
+                </Text>
+              ) : null}
+            </>
+          )}
         </View>
 
         <Svg width={ARC_WIDTH} height={ARC_HEIGHT} accessibilityElementsHidden>
@@ -155,20 +183,23 @@ const SolarCycleCard = observer(() => {
             fill="none"
           />
           {/* Solid over the portion already traversed. */}
-          <Path
-            d={arcPath(0, snapshot.progress)}
-            stroke={COLORS.BRAND}
-            strokeWidth={2}
-            fill="none"
-            strokeLinecap="round"
-          />
+          {snapshot ? (
+            <Path
+              d={arcPath(0, snapshot.progress)}
+              stroke={COLORS.BRAND}
+              strokeWidth={2}
+              fill="none"
+              strokeLinecap="round"
+            />
+          ) : null}
           <Path
             d={`M0 ${ARC_BASELINE + 4} H${ARC_WIDTH}`}
             stroke={COLORS.BORDER}
             strokeWidth={1.5}
           />
-
-          <Circle cx={sun.x} cy={sun.y} r={5.5} fill={COLORS.ACCENT} />
+          {sun ? (
+            <Circle cx={sun.x} cy={sun.y} r={5.5} fill={COLORS.ACCENT} />
+          ) : null}
         </Svg>
       </View>
 
@@ -283,6 +314,11 @@ const styles = StyleSheet.create({
     fontSize: isAndroid ? 14 : 13,
     fontWeight: isAndroid ? '400' : '500',
     marginTop: 3,
+  },
+  link: {
+    fontSize: isAndroid ? 14 : 13,
+    fontWeight: '600',
+    marginTop: 5,
   },
   divider: {
     height: StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth,
