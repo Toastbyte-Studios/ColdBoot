@@ -16,7 +16,7 @@ import { useChecklistStore } from '../../stores';
  *
  * @remarks
  * Presents a dashboard of checklist-related actions and routes:
- * - **New Checklist** → navigates to the `ComingSoon` screen (for now)
+ * - **New Checklist** → navigates to the `NewChecklist` screen
  * - **Checklist Cards** → listed as rows in one grouped list that navigate to individual checklist screens
  *
  * Uses React Navigation to perform screen transitions from row taps.
@@ -26,6 +26,9 @@ import { useChecklistStore } from '../../stores';
 export default observer(function ChecklistScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const checklistStore = useChecklistStore();
+  const sortedChecklists = [...checklistStore.checklists].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
+  );
 
   const checklistIcons: Record<string, string> = {
     'Bug-out bag': 'bag-outline',
@@ -43,13 +46,13 @@ export default observer(function ChecklistScreen() {
             name="add-circle-outline"
             size={22}
             accessibilityLabel="New Checklist"
-            onPress={() => navigation.navigate('ComingSoon')}
+            onPress={() => navigation.navigate('NewChecklist')}
           />
         </>
       }
     >
       <GroupContainer>
-        {checklistStore.checklists.map((checklist, index, all) => (
+        {sortedChecklists.map((checklist, index, all) => (
           <ModuleRow
             key={checklist.id}
             title={checklist.name}

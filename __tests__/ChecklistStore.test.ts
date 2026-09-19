@@ -9,6 +9,14 @@ function emptyRows() {
   return { length: 0, item: (_index: number): Record<string, unknown> => ({}) };
 }
 
+function deferred() {
+  let resolve!: () => void;
+  const promise = new Promise<void>((res) => {
+    resolve = res;
+  });
+  return { promise, resolve };
+}
+
 describe('ChecklistStore', () => {
   let checklistStore: ChecklistStore;
 
@@ -20,10 +28,16 @@ describe('ChecklistStore', () => {
     checklistStore.dispose();
   });
 
-  it('creates a checklist with default items and returns them alphabetically', async () => {
-    await checklistStore.createChecklist('Supplies', false, ['Bravo', 'alpha']);
+  it('creates a checklist with default items, returns it, and trims the name', async () => {
+    const created = await checklistStore.createChecklist(
+      '  Supplies  ',
+      false,
+      ['Bravo', 'alpha'],
+    );
 
     expect(checklistStore.checklists).toHaveLength(1);
+    expect(created.name).toBe('Supplies');
+    expect(checklistStore.checklists[0].name).toBe('Supplies');
 
     const items = checklistStore.getChecklistItems(
       checklistStore.checklists[0].id,
@@ -68,6 +82,74 @@ describe('ChecklistStore', () => {
       checklistStore.checklists.map((checklist) => checklist.name),
     ).toEqual(['Bug-out bag', 'First-aid kit', 'Evacuation kit']);
     expect(checklistStore.checklistItems.length).toBeGreaterThan(0);
+  });
+
+  it('throws when checklist name is empty or whitespace only', async () => {
+    await expect(checklistStore.createChecklist('')).rejects.toThrow(
+      'Checklist name cannot be empty',
+    );
+    await expect(checklistStore.createChecklist('   ')).rejects.toThrow(
+      'Checklist name cannot be empty',
+    );
+  });
+
+  it('throws when checklist name duplicates an existing checklist ignoring case and whitespace', async () => {
+    await checklistStore.createChecklist('Bug-out bag');
+
+    await expect(
+      checklistStore.createChecklist('  bug-out BAG  '),
+    ).rejects.toThrow('A checklist named "bug-out BAG" already exists');
+  });
+
+  it('waits for checklist loading before creating a new checklist', async () => {
+    const loadGate = deferred();
+    const executeSql = jest.fn(async (sql: string) => {
+      if (sql === 'SELECT * FROM checklists ORDER BY createdAt ASC') {
+        await loadGate.promise;
+        return [
+          {
+            rows: {
+              length: 1,
+              item: () => ({
+                id: 'existing-checklist',
+                name: 'Existing',
+                createdAt: 1,
+                isDefault: 0,
+              }),
+            },
+          },
+        ];
+      }
+
+      return [{ rows: emptyRows() }];
+    });
+    const database: SQLiteDatabase = { executeSql };
+
+    await checklistStore.initDatabase(database);
+    const loadPromise = checklistStore.loadChecklists();
+    const createPromise = checklistStore.createChecklist(' existing ');
+
+    await Promise.resolve();
+    loadGate.resolve();
+
+    await loadPromise;
+    await expect(createPromise).rejects.toThrow(
+      'A checklist named "existing" already exists',
+    );
+    expect(
+      checklistStore.checklists.map((checklist) => checklist.name),
+    ).toEqual(['Existing']);
+    expect(
+      executeSql.mock.calls.some(([sql]) =>
+        sql.includes('INSERT OR REPLACE INTO checklists'),
+      ),
+    ).toBe(false);
+  });
+
+  it('throws when checklist name exceeds the max length', async () => {
+    await expect(
+      checklistStore.createChecklist('x'.repeat(61)),
+    ).rejects.toThrow('Checklist name cannot exceed 60 characters');
   });
 
   it('merges imported checklist data without duplicating existing ids', async () => {
