@@ -47,8 +47,10 @@ export class WeatherOutlookStore {
   private db: SQLiteDatabase | null = null;
   private _coreLastFixDisposer: IReactionDisposer | null = null;
   private _appStateSubscription: { remove: () => void } | null = null;
-  private _lastLoadedLocation: { latitude: number; longitude: number } | null =
-    null;
+  private _lastAttemptedLocation: {
+    latitude: number;
+    longitude: number;
+  } | null = null;
 
   constructor() {
     makeAutoObservable(
@@ -56,7 +58,7 @@ export class WeatherOutlookStore {
       {
         _coreLastFixDisposer: false,
         _appStateSubscription: false,
-        _lastLoadedLocation: false,
+        _lastAttemptedLocation: false,
       } as never,
       { autoBind: true },
     );
@@ -105,7 +107,7 @@ export class WeatherOutlookStore {
     this._coreLastFixDisposer = null;
     this._appStateSubscription?.remove();
     this._appStateSubscription = null;
-    this._lastLoadedLocation = null;
+    this._lastAttemptedLocation = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -124,9 +126,9 @@ export class WeatherOutlookStore {
    * @param lat - Device latitude
    * @param lon - Device longitude
    */
-  async loadOutlook(lat: number, lon: number): Promise<void> {
+  async loadOutlook(lat: number, lon: number): Promise<boolean> {
     if (this.isLoading) {
-      return;
+      return false;
     }
 
     runInAction(() => {
@@ -143,7 +145,7 @@ export class WeatherOutlookStore {
         this.isStale = false;
         this.isLoading = false;
       });
-      return;
+      return true;
     }
 
     // 2. Attempt network fetch
@@ -157,6 +159,7 @@ export class WeatherOutlookStore {
         this.isStale = false;
         this.isLoading = false;
       });
+      return true;
     } catch (err) {
       // 3. Degrade gracefully
       const msg =
@@ -173,6 +176,7 @@ export class WeatherOutlookStore {
         }
         this.isLoading = false;
       });
+      return Boolean(cached);
     }
   }
 
@@ -187,17 +191,17 @@ export class WeatherOutlookStore {
     const { latitude, longitude } = lastFix.coords;
     if (
       requireMeaningfulMove &&
-      this._lastLoadedLocation &&
-      Math.abs(latitude - this._lastLoadedLocation.latitude) <=
+      this._lastAttemptedLocation &&
+      Math.abs(latitude - this._lastAttemptedLocation.latitude) <=
         LOCATION_CHANGE_THRESHOLD_DEGREES &&
-      Math.abs(longitude - this._lastLoadedLocation.longitude) <=
+      Math.abs(longitude - this._lastAttemptedLocation.longitude) <=
         LOCATION_CHANGE_THRESHOLD_DEGREES
     ) {
       return;
     }
 
+    this._lastAttemptedLocation = { latitude, longitude };
     await this.loadOutlook(latitude, longitude);
-    this._lastLoadedLocation = { latitude, longitude };
   }
 
   /**
