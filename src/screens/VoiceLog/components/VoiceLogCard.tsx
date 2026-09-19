@@ -29,9 +29,10 @@ export default function VoiceLogCard({
 }: VoiceLogCardProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const accentForeground = onColor(COLORS.ACCENT);
   // While playing the card fills with ACCENT, so its content colour is
   // measured against that fill rather than assumed.
-  const onPlaying = isPlaying ? { color: onColor(COLORS.ACCENT) } : null;
+  const onPlaying = isPlaying ? { color: accentForeground } : null;
 
   return (
     <View
@@ -60,7 +61,7 @@ export default function VoiceLogCard({
               <View
                 style={[
                   styles.playingDot,
-                  { backgroundColor: onColor(COLORS.ACCENT) },
+                  { backgroundColor: accentForeground },
                 ]}
               />
               <Text style={[styles.playingText, onPlaying]}>Playing...</Text>
@@ -72,9 +73,7 @@ export default function VoiceLogCard({
             <IconButton
               name={isPlaying ? 'pause-outline' : 'play-outline'}
               size={24}
-              color={
-                isPlaying ? onColor(COLORS.ACCENT) : COLORS.SECONDARY_ACCENT
-              }
+              color={isPlaying ? accentForeground : COLORS.SECONDARY_ACCENT}
               accessibilityLabel={isPlaying ? 'Stop playing' : 'Play voice log'}
               onPress={onPlay}
               style={styles.actionButton}
@@ -83,7 +82,7 @@ export default function VoiceLogCard({
           <IconButton
             name="trash-outline"
             size={24}
-            color={isPlaying ? onColor(COLORS.ACCENT) : COLORS.ERROR}
+            color={isPlaying ? accentForeground : COLORS.ERROR}
             accessibilityLabel="Delete voice log"
             onPress={onDelete}
             style={styles.actionButton}
