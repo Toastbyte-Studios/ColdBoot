@@ -15,14 +15,19 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     rootStore.solarCycleNotificationStore.start(rootStore.coreStore);
 
     // Load persisted data asynchronously
+    const startupPromise = rootStore.startupPromise;
     (async () => {
       try {
-        await rootStore.startupPromise;
+        await startupPromise;
+        if (rootStore.startupPromise !== startupPromise) {
+          return;
+        }
         if (rootStore.notesStore.notesDb) {
           // Start barometer collection now that the DB is available so pressure
           // history accumulates while the user uses the app, not just while the
           // Barometric Pressure screen is open.
           rootStore.barometerStore.start(rootStore.notesStore.notesDb);
+          rootStore.weatherOutlookStore.start(rootStore.coreStore);
         }
         await rootStore.notesStore.loadNotes();
         await rootStore.checklistStore.loadChecklists();
@@ -37,6 +42,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
       rootStore.astronomyEventStore.stop();
       rootStore.solarCycleNotificationStore.stop();
       rootStore.barometerStore.stop();
+      rootStore.weatherOutlookStore.stop();
     };
   }, [rootStore]);
 
