@@ -3,8 +3,8 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
-
 import { AstronomyEventStore } from '../src/stores/AstronomyEventStore';
+import type { CoreStore } from '../src/stores/CoreStore';
 
 const mockRemoveAppStateListener = jest.fn();
 let appStateChangeHandler: ((nextState: string) => void) | null = null;
@@ -33,19 +33,28 @@ jest.mock('react-native', () => ({
 }));
 
 class FakeCoreStore {
-  lastFix:
-    | {
-        coords: {
-          latitude: number;
-          longitude: number;
-        };
-      }
-    | null = null;
+  lastFix: {
+    coords: {
+      latitude: number;
+      longitude: number;
+    };
+  } | null = null;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
   }
 }
+
+const getLastComputeDate = (target: AstronomyEventStore): Date | null =>
+  Reflect.get(target as object, '_lastComputeDate') as Date | null;
+
+const getLastComputeLocation = (
+  target: AstronomyEventStore,
+): { lat: number; lon: number } | null =>
+  Reflect.get(target as object, '_lastComputeLocation') as {
+    lat: number;
+    lon: number;
+  } | null;
 
 describe('AstronomyEventStore', () => {
   let store: AstronomyEventStore;
@@ -298,7 +307,7 @@ describe('AstronomyEventStore', () => {
     test('start with no fix computes no-location events and next event', () => {
       const core = new FakeCoreStore();
 
-      store.start(core as any);
+      store.start(core as unknown as CoreStore);
 
       expect(store.events.length).toBeGreaterThan(0);
       expect(store.events.some((e) => e.type === 'planet_rise')).toBe(false);
@@ -308,7 +317,7 @@ describe('AstronomyEventStore', () => {
     test('start then fix update computes with coordinates', () => {
       const core = new FakeCoreStore();
 
-      store.start(core as any);
+      store.start(core as unknown as CoreStore);
       const before = store.events;
       runInAction(() => {
         core.lastFix = {
@@ -319,7 +328,7 @@ describe('AstronomyEventStore', () => {
         };
       });
 
-      expect((store as any)._lastComputeLocation).toEqual({
+      expect(getLastComputeLocation(store)).toEqual({
         lat: 40.7128,
         lon: -74.006,
       });
@@ -328,7 +337,7 @@ describe('AstronomyEventStore', () => {
 
     test('lastFix change below 0.5° does not trigger recompute work', () => {
       const core = new FakeCoreStore();
-      store.start(core as any);
+      store.start(core as unknown as CoreStore);
 
       runInAction(() => {
         core.lastFix = {
@@ -339,7 +348,7 @@ describe('AstronomyEventStore', () => {
         };
       });
 
-      const lastComputeDate = (store as any)._lastComputeDate;
+      const lastComputeDate = getLastComputeDate(store);
       const priorEvents = store.events;
 
       runInAction(() => {
@@ -351,13 +360,13 @@ describe('AstronomyEventStore', () => {
         };
       });
 
-      expect((store as any)._lastComputeDate).toBe(lastComputeDate);
+      expect(getLastComputeDate(store)).toBe(lastComputeDate);
       expect(store.events).toBe(priorEvents);
     });
 
     test('app becomes active on a new day triggers recompute', () => {
       const core = new FakeCoreStore();
-      store.start(core as any);
+      store.start(core as unknown as CoreStore);
       runInAction(() => {
         core.lastFix = {
           coords: {
@@ -367,12 +376,12 @@ describe('AstronomyEventStore', () => {
         };
       });
 
-      const previousComputeDate = (store as any)._lastComputeDate as Date;
+      const previousComputeDate = getLastComputeDate(store) as Date;
 
       jest.setSystemTime(new Date('2025-03-02T08:00:00Z'));
       appStateChangeHandler?.('active');
 
-      const nextComputeDate = (store as any)._lastComputeDate as Date;
+      const nextComputeDate = getLastComputeDate(store) as Date;
       expect(nextComputeDate).not.toBe(previousComputeDate);
       expect(nextComputeDate.toDateString()).toBe(
         new Date('2025-03-02T08:00:00Z').toDateString(),
@@ -381,7 +390,7 @@ describe('AstronomyEventStore', () => {
 
     test('stop disposes observers and is idempotent', () => {
       const core = new FakeCoreStore();
-      store.start(core as any);
+      store.start(core as unknown as CoreStore);
       runInAction(() => {
         core.lastFix = {
           coords: {
@@ -390,7 +399,7 @@ describe('AstronomyEventStore', () => {
           },
         };
       });
-      const lastComputeLocation = (store as any)._lastComputeLocation;
+      const lastComputeLocation = getLastComputeLocation(store);
 
       store.stop();
       store.stop();
@@ -403,7 +412,7 @@ describe('AstronomyEventStore', () => {
         };
       });
 
-      expect((store as any)._lastComputeLocation).toEqual(lastComputeLocation);
+      expect(getLastComputeLocation(store)).toEqual(lastComputeLocation);
       expect(mockRemoveAppStateListener).toHaveBeenCalledTimes(1);
     });
   });

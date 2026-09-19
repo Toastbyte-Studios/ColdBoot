@@ -12,10 +12,14 @@ import { Planet } from 'astronomia/planetposition';
 import { approxTimes, Stdh0Stellar } from 'astronomia/rise';
 import { mean as siderealMean } from 'astronomia/sidereal';
 import * as solsticeModule from 'astronomia/solstice';
-import { IReactionDisposer, makeAutoObservable, reaction, runInAction } from 'mobx';
+import {
+  IReactionDisposer,
+  makeAutoObservable,
+  reaction,
+  runInAction,
+} from 'mobx';
 import { AppState, AppStateStatus, InteractionManager } from 'react-native';
 import * as SunCalc from 'suncalc';
-
 import type { CoreStore } from './CoreStore';
 
 export type AstronomyEventType =
@@ -122,9 +126,9 @@ export class AstronomyEventStore {
   private _earthPlanet: Planet | null = null;
   private _coreLastFixDisposer: IReactionDisposer | null = null;
   private _appStateSubscription: { remove: () => void } | null = null;
-  private _interactionHandle:
-    | ReturnType<typeof InteractionManager.runAfterInteractions>
-    | null = null;
+  private _interactionHandle: ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null = null;
 
   constructor() {
     makeAutoObservable(
