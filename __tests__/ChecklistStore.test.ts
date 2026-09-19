@@ -93,6 +93,12 @@ describe('ChecklistStore', () => {
     ).rejects.toThrow('A checklist named "bug-out BAG" already exists');
   });
 
+  it('throws when checklist name exceeds the max length', async () => {
+    await expect(
+      checklistStore.createChecklist('x'.repeat(61)),
+    ).rejects.toThrow('Checklist name cannot exceed 60 characters');
+  });
+
   it('merges imported checklist data without duplicating existing ids', async () => {
     await checklistStore.importChecklistsData(
       [

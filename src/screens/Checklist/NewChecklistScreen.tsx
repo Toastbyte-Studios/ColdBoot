@@ -1,4 +1,4 @@
-import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
@@ -8,16 +8,23 @@ import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useChecklistStore } from '../../stores';
+import {
+  Checklist,
+  MAX_CHECKLIST_NAME_LENGTH,
+} from '../../stores/ChecklistStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { FormInput } from '../Shared/Prepper';
 
-const MAX_CHECKLIST_NAME_LENGTH = 60;
 const isAndroid = Platform.OS === 'android';
+type ChecklistStackParamList = {
+  ChecklistEntry: { checklist: Checklist };
+};
 
 export default observer(function NewChecklistScreen(): React.JSX.Element {
   const COLORS = useTheme();
   const checklistStore = useChecklistStore();
-  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
+  const navigation =
+    useNavigation<NativeStackNavigationProp<ChecklistStackParamList>>();
   const [name, setName] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);

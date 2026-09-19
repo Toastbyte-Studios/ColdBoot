@@ -97,7 +97,7 @@ const DEFAULT_CHECKLISTS = [
     ],
   },
 ];
-const MAX_CHECKLIST_NAME_LENGTH = 60;
+export const MAX_CHECKLIST_NAME_LENGTH = 60;
 
 export interface ChecklistItem {
   id: string;
