@@ -57,7 +57,8 @@ export function useAllNotifications(): AppNotification[] {
       icon: iconMap[n.eventType] ?? 'sunny-outline',
       iconColor: COLORS.ACCENT,
       message: solarStore.getNotificationMessage(n),
-      dismissible: n.eventType !== 'sunrise' && n.eventType !== 'sunset',
+      // Keys include the event time, so dismissing hides today's alert only.
+      dismissible: true,
     });
   }
 
