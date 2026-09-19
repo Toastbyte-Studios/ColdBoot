@@ -14,9 +14,9 @@ import { PantryItem } from '../../stores/PantryStore';
 import { TEXT_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
 import {
-  formatPantryItemQuantity,
-  formatPantryItemSubtitle,
-} from './pantryRowFormatters';
+  formatItemQuantity,
+  formatItemSubtitle,
+} from '../Shared/Prepper/itemRowFormatters';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -112,8 +112,8 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
               key={item.id}
               title={item.name}
               icon="restaurant-outline"
-              subtitle={formatPantryItemSubtitle(item, category)}
-              value={formatPantryItemQuantity(item)}
+              subtitle={formatItemSubtitle(item, category)}
+              value={formatItemQuantity(item)}
               variant="tool"
               showSeparator={index < sortedItems.length - 1}
               onPress={() => handleItemPress(item)}
