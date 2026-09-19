@@ -4,6 +4,7 @@ import Geolocation from 'react-native-geolocation-service';
 import { NEIGHBORING_STATES } from '../data/neighboringStates';
 import { distanceMiles } from '../utils/distanceMiles';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
+import { requestForegroundLocationPermission } from '../utils/locationPermission';
 import { stateFromCoordinates } from '../utils/stateFromCoordinates';
 
 const CACHE_KEY = '@repeaterbook/cache';
@@ -382,47 +383,65 @@ export class RepeaterBookStore {
    * error message so the UI can explain the empty state to the user.
    */
   async checkAndFetchIfNeeded(): Promise<void> {
-    const auth = await Geolocation.requestAuthorization('whenInUse');
-    if (auth !== 'granted') {
+    try {
+      const auth = await requestForegroundLocationPermission();
+      if (auth !== 'granted') {
+        runInAction(() => {
+          if (this.repeaters.length === 0) {
+            this.error =
+              'Location permission denied. Enable location access to load repeaters.';
+          }
+        });
+        return;
+      }
+
+      await new Promise<void>((resolve, reject) => {
+        Geolocation.getCurrentPosition(
+          async (position) => {
+            try {
+              const { latitude, longitude } = position.coords;
+              const needsFetch =
+                this.queryLat === null ||
+                this.queryLng === null ||
+                this.repeaters.length === 0 ||
+                distanceMiles(
+                  latitude,
+                  longitude,
+                  this.queryLat,
+                  this.queryLng,
+                ) > REFETCH_THRESHOLD_MILES;
+
+              if (needsFetch) {
+                await this.fetchRepeaters(latitude, longitude);
+              }
+              resolve();
+            } catch (error) {
+              reject(error);
+            }
+          },
+          () => {
+            // Location unavailable – keep cached data if present, otherwise
+            // surface an error so the user knows why the list is empty.
+            runInAction(() => {
+              if (this.repeaters.length === 0) {
+                this.error =
+                  'Unable to determine location. Connect to the internet and enable location access.';
+              }
+            });
+            resolve();
+          },
+          { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
+        );
+      });
+    } catch {
       runInAction(() => {
         if (this.repeaters.length === 0) {
           this.error =
-            'Location permission denied. Enable location access to load repeaters.';
+            'Unable to load repeaters. Please confirm location access and try again.';
+          this.isLoading = false;
         }
       });
-      return;
     }
-
-    return new Promise((resolve) => {
-      Geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          const needsFetch =
-            this.queryLat === null ||
-            this.queryLng === null ||
-            this.repeaters.length === 0 ||
-            distanceMiles(latitude, longitude, this.queryLat, this.queryLng) >
-              REFETCH_THRESHOLD_MILES;
-
-          if (needsFetch) {
-            await this.fetchRepeaters(latitude, longitude);
-          }
-          resolve();
-        },
-        () => {
-          // Location unavailable – keep cached data if present, otherwise
-          // surface an error so the user knows why the list is empty.
-          runInAction(() => {
-            if (this.repeaters.length === 0) {
-              this.error =
-                'Unable to determine location. Connect to the internet and enable location access.';
-            }
-          });
-          resolve();
-        },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 },
-      );
-    });
   }
 
   /**
