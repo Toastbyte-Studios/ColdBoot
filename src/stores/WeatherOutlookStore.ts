@@ -55,6 +55,8 @@ export class WeatherOutlookStore {
     fix: CoreStore['lastFix'];
     forceRefresh: boolean;
   } | null = null;
+  private _lifecycleToken: number = 0;
+  private _isStarted: boolean = false;
 
   constructor() {
     makeAutoObservable(
@@ -64,6 +66,8 @@ export class WeatherOutlookStore {
         _appStateSubscription: false,
         _lastAttemptedLocation: false,
         _pendingRefresh: false,
+        _lifecycleToken: false,
+        _isStarted: false,
       } as never,
       { autoBind: true },
     );
@@ -90,24 +94,35 @@ export class WeatherOutlookStore {
 
   start(core: CoreStore): void {
     this.stop();
-    this._refreshForFix(core.lastFix).catch(() => undefined);
+    this._isStarted = true;
+    this._lifecycleToken += 1;
+    const lifecycleToken = this._lifecycleToken;
+    this._refreshForFix(core.lastFix, false, lifecycleToken).catch(
+      () => undefined,
+    );
     this._coreLastFixDisposer = reaction(
       () => core.lastFix,
       (lastFix) => {
-        this._refreshForFix(lastFix, true).catch(() => undefined);
+        this._refreshForFix(lastFix, true, lifecycleToken).catch(
+          () => undefined,
+        );
       },
     );
     this._appStateSubscription = AppState.addEventListener(
       'change',
       (nextState: AppStateStatus) => {
         if (nextState === 'active') {
-          this._refreshForFix(core.lastFix).catch(() => undefined);
+          this._refreshForFix(core.lastFix, false, lifecycleToken).catch(
+            () => undefined,
+          );
         }
       },
     );
   }
 
   stop(): void {
+    this._isStarted = false;
+    this._lifecycleToken += 1;
     this._coreLastFixDisposer?.();
     this._coreLastFixDisposer = null;
     this._appStateSubscription?.remove();
@@ -189,8 +204,13 @@ export class WeatherOutlookStore {
   private async _refreshForFix(
     lastFix: CoreStore['lastFix'],
     requireMeaningfulMove: boolean = false,
+    lifecycleToken: number = this._lifecycleToken,
   ): Promise<void> {
-    if (!lastFix) {
+    if (
+      !lastFix ||
+      !this._isStarted ||
+      lifecycleToken !== this._lifecycleToken
+    ) {
       return;
     }
 
@@ -218,12 +238,17 @@ export class WeatherOutlookStore {
     this._lastAttemptedLocation = { latitude, longitude };
     await this.loadOutlook(latitude, longitude);
 
+    if (!this._isStarted || lifecycleToken !== this._lifecycleToken) {
+      return;
+    }
+
     const pendingRefresh = this._pendingRefresh;
     this._pendingRefresh = null;
     if (pendingRefresh) {
       await this._refreshForFix(
         pendingRefresh.fix,
         !pendingRefresh.forceRefresh,
+        lifecycleToken,
       );
     }
   }
