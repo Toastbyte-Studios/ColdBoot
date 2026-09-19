@@ -183,6 +183,9 @@ export default observer(
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          accessibilityRole="menu"
+          accessibilityLabel="Category filters"
+          accessibilityHint="Shows pantry items for the selected category"
           style={styles.filterRow}
           contentContainerStyle={styles.filterContent}
         >

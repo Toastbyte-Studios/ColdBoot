@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { TextInput } from 'react-native';
+import { KeyboardAvoidingView, TextInput } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import NewPantryItemScreen from '../src/screens/Pantry/NewPantryItemScreen';
 
@@ -127,5 +127,19 @@ describe('NewPantryItemScreen', () => {
     });
 
     expect(saveState().props.children).toBe('enabled');
+  });
+
+  it('renders the keyboard-avoiding form card wrapper', () => {
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(<NewPantryItemScreen />);
+    });
+
+    expect(tree.root.findByType(KeyboardAvoidingView).props.testID).toBe(
+      'pantry-item-form-keyboard',
+    );
+    expect(
+      tree.root.findByProps({ testID: 'pantry-item-form-card' }),
+    ).toBeTruthy();
   });
 });

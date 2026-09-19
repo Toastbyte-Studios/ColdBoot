@@ -144,9 +144,14 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
       keyboardShouldPersistTaps="handled"
     >
       <KeyboardAvoidingView
+        testID="pantry-item-form-keyboard"
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
       >
-        <View style={[styles.formCard, cardSurface(COLORS)]}>
+        <View
+          testID="pantry-item-form-card"
+          style={[styles.formCard, cardSurface(COLORS)]}
+        >
           <FormInput
             label="Item Name *"
             placeholder="Enter item name..."
@@ -192,6 +197,10 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
 });
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+  },
   formCard: {
     marginTop: SPACING.md,
     marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,

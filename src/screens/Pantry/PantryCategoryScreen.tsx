@@ -20,7 +20,7 @@ const groundInk = (colors: ColorScheme) =>
   isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 function quantityLabel(item: PantryItem): string {
-  return `${item.quantity}${item.unit ? ` ${item.unit}` : ''}`;
+  return `Quantity: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}`;
 }
 
 type PantryCategoryParamList = {
