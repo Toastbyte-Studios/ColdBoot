@@ -7,18 +7,23 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import CardTopic from '../../../components/CardTopic';
-import Grid from '../../../components/Grid';
-import { HorizontalRule } from '../../../components/HorizontalRule';
+import { Platform, StyleSheet, View } from 'react-native';
+import GroupContainer from '../../../components/GroupContainer';
+import ModuleRow from '../../../components/ModuleRow';
 import { NoteSortSelector } from '../../../components/NoteSortSelector';
 import { Text } from '../../../components/ScaledText';
-import ScreenBody from '../../../components/ScreenBody';
-import SectionHeader from '../../../components/SectionHeader';
-import { useFooterClearance } from '../../../hooks/useFooterClearance';
+import StackScreen from '../../../components/StackScreen';
+import { useTheme } from '../../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../../stores';
-import { FOOTER_HEIGHT } from '../../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../../theme';
+import { ColorScheme } from '../../../theme/colors';
 import { sortNotes } from '../../../utils/noteSorting';
+
+const isAndroid = Platform.OS === 'android';
+
+/** Muted text on the bare screen ground — see `MUTED_ON_GROUND`. */
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 type NoteCategoryRouteProp = RouteProp<
   { NoteCategory: { category: string } },
@@ -29,7 +34,7 @@ type NoteCategoryRouteProp = RouteProp<
  * Displays all notes for a specific category.
  *
  * This screen retrieves the category name from the navigation route parameters
- * and displays all notes belonging to that category in a grid layout using CardTopic components.
+ * and displays all notes belonging to that category as rows in one grouped list.
  * If no notes are found for the category, a helper message is shown.
  *
  * @returns {JSX.Element} The rendered note category screen component.
@@ -44,7 +49,7 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const core = useNotesStore();
   const settings = useSettingsStore();
-  const footerClearance = useFooterClearance();
+  const COLORS = useTheme();
 
   const { category } = route.params || {};
   // Filter out Voice Logs from NotePad screens
@@ -61,61 +66,44 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
   );
 
   return (
-    <ScreenBody>
-      <SectionHeader>{category}</SectionHeader>
-      <NoteSortSelector />
-      <HorizontalRule />
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {sortedNotes.length === 0 && (
-            <Text style={styles.helperText}>
-              No notes in this category yet.
-            </Text>
-          )}
-          <Grid>
-            {sortedNotes.map((note) => {
-              const titleText = note.title || '(Untitled)';
-              return (
-                <CardTopic
-                  key={note.id}
-                  title={titleText}
-                  icon="document-text-outline"
-                  onPress={() => {
-                    navigation.navigate('NoteEntry', { note });
-                  }}
-                />
-              );
-            })}
-          </Grid>
-        </ScrollView>
+    <StackScreen
+      title={category}
+      subtitle={`${sortedNotes.length} note${sortedNotes.length === 1 ? '' : 's'}`}
+    >
+      <View style={styles.sort}>
+        <NoteSortSelector />
       </View>
-    </ScreenBody>
+      {sortedNotes.length === 0 ? (
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          No notes in this category yet.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {sortedNotes.map((note, index) => (
+            <ModuleRow
+              key={note.id}
+              title={note.title || '(Untitled)'}
+              icon="document-text-outline"
+              variant="tool"
+              showSeparator={index < sortedNotes.length - 1}
+              onPress={() => navigation.navigate('NoteEntry', { note })}
+            />
+          ))}
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingBottom: 24,
-    alignItems: 'center',
+  sort: {
+    // StackScreen's Android content is full-bleed; controls carry the gutter.
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
   },
   helperText: {
     fontSize: 16,
-    opacity: 0.8,
-    marginHorizontal: 6,
-    marginBottom: 12,
+    lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });
