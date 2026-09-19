@@ -188,22 +188,6 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
                 />
               ))
             )}
-
-            <View style={styles.alwaysOn}>
-              <View
-                style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
-              />
-              <Text style={[styles.alwaysOnLabel, { color: COLORS.MUTED }]}>
-                ALWAYS ON
-              </Text>
-              <View
-                style={[styles.rule, { backgroundColor: COLORS.SEPARATOR }]}
-              />
-            </View>
-            <Text style={[styles.explainer, { color: COLORS.MUTED }]}>
-              Sunrise and sunset alerts cannot be turned off — they are the
-              app's one guaranteed signal. Everything else here is dismissible.
-            </Text>
           </ScrollView>
         </View>
       </View>
@@ -345,25 +329,5 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-  },
-  alwaysOn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.sm,
-    marginTop: SPACING.lg,
-  },
-  rule: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-  },
-  alwaysOnLabel: {
-    fontSize: 10,
-    fontWeight: '600',
-    letterSpacing: 0.7,
-  },
-  explainer: {
-    fontSize: 12.5,
-    lineHeight: 18,
-    marginTop: SPACING.sm,
   },
 });
