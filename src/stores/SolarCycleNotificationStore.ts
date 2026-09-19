@@ -1,7 +1,14 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import {
+  IReactionDisposer,
+  makeAutoObservable,
+  reaction,
+  runInAction,
+} from 'mobx';
+import { AppState, AppStateStatus } from 'react-native';
 import * as SunCalc from 'suncalc';
 import { SQLiteDatabase } from '../types/database-types';
 import { getLunarPhaseName } from '../utils/lunarPhase';
+import type { CoreStore } from './CoreStore';
 
 export type SolarEventType = 'sunrise' | 'sunset' | 'dawn' | 'dusk';
 
@@ -10,6 +17,9 @@ export type SolarEventType = 'sunrise' | 'sunset' | 'dawn' | 'dusk';
 // Sun times change by approximately 1 minute per 15km of east-west movement
 // and 4 minutes per degree of north-south movement at mid-latitudes
 const LOCATION_CHANGE_THRESHOLD_DEGREES = 0.01;
+
+/** How often countdowns refresh and the calendar date is re-checked. */
+const TICK_INTERVAL_MS = 60 * 1000;
 
 export interface SolarNotificationSettings {
   enabled: boolean;
@@ -56,9 +66,114 @@ export class SolarCycleNotificationStore {
   currentTime: Date = new Date();
 
   private db: SQLiteDatabase | null = null;
+  private _coreLastFixDisposer: IReactionDisposer | null = null;
+  private _appStateSubscription: { remove: () => void } | null = null;
+  private _tick: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
-    makeAutoObservable(this, {}, { autoBind: true });
+    makeAutoObservable(
+      this,
+      {
+        _coreLastFixDisposer: false,
+        _appStateSubscription: false,
+        _tick: false,
+      } as never,
+      { autoBind: true },
+    );
+  }
+
+  /**
+   * Keeps sunrise, sunset, dawn and dusk alerts current for the app's lifetime.
+   *
+   * Until this existed, the only caller of {@link updateNotifications} and
+   * {@link updateCurrentTime} was the old footer's SolarCycleNotification
+   * component. When the tab bar replaced the footer, nothing created solar
+   * alerts any more, so none ever appeared in the Alerts sheet (and the lunar
+   * phase alert, which needs a calculated location, never appeared either).
+   *
+   * Mirrors {@link AstronomyEventStore.start}: recompute when a GPS fix arrives
+   * or changes, and when the app returns to the foreground. A one-minute tick
+   * also refreshes the countdown text and picks up the calendar date rolling
+   * over. Each refresh is cheap, because `updateNotifications` returns early
+   * unless the day or the location has changed.
+   *
+   * Safe to call again; it stops any previous run first.
+   */
+  start(core: CoreStore): void {
+    this.stop();
+    this._refresh(core);
+    this._coreLastFixDisposer = reaction(
+      () => core.lastFix,
+      () => this._refresh(core),
+    );
+    this._tick = setInterval(() => this._refresh(core), TICK_INTERVAL_MS);
+    this._appStateSubscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'active') {
+          this._refresh(core);
+        }
+      },
+    );
+  }
+
+  /** Stops everything {@link start} set up. Idempotent. */
+  stop(): void {
+    this._coreLastFixDisposer?.();
+    this._coreLastFixDisposer = null;
+    this._appStateSubscription?.remove();
+    this._appStateSubscription = null;
+    if (this._tick) {
+      clearInterval(this._tick);
+      this._tick = null;
+    }
+  }
+
+  private _refresh(core: CoreStore): void {
+    this.updateCurrentTime();
+    const lastFix = core.lastFix;
+    if (
+      lastFix &&
+      this._needsNotificationRecalculation(
+        lastFix.coords.latitude,
+        lastFix.coords.longitude,
+      )
+    ) {
+      this.updateNotifications(
+        lastFix.coords.latitude,
+        lastFix.coords.longitude,
+      );
+    }
+  }
+
+  private _needsNotificationRecalculation(
+    latitude: number,
+    longitude: number,
+    now: Date = new Date(),
+  ): boolean {
+    return (
+      !this.lastCalculationDate ||
+      this.lastCalculationDate.toDateString() !== now.toDateString() ||
+      !this.lastCalculationLocation ||
+      Math.abs(this.lastCalculationLocation.latitude - latitude) >
+        LOCATION_CHANGE_THRESHOLD_DEGREES ||
+      Math.abs(this.lastCalculationLocation.longitude - longitude) >
+        LOCATION_CHANGE_THRESHOLD_DEGREES
+    );
+  }
+
+  /**
+   * Today's alerts that have not been dismissed and have not happened yet.
+   *
+   * `activeNotifications` holds every event calculated for the day, so after
+   * sunset it still contains sunset until the date rolls over. Reads
+   * `currentTime` so observers re-evaluate on each tick.
+   */
+  get upcomingNotifications(): SolarNotification[] {
+    const now = this.currentTime.getTime();
+    return this.activeNotifications.filter(
+      (n) => !n.dismissed && n.eventTime.getTime() > now,
+    );
   }
 
   /**
@@ -179,24 +294,13 @@ export class SolarCycleNotificationStore {
     }
 
     const now = new Date();
-    const sunTimes = this.calculateSunTimes(latitude, longitude);
-
-    if (!sunTimes) {
+    if (!this._needsNotificationRecalculation(latitude, longitude, now)) {
       return;
     }
 
-    // Check if we need to recalculate (new day or significant location change)
-    // Location threshold is ~1.1km to provide accurate times while minimizing recalculations
-    const needsRecalculation =
-      !this.lastCalculationDate ||
-      this.lastCalculationDate.toDateString() !== now.toDateString() ||
-      !this.lastCalculationLocation ||
-      Math.abs(this.lastCalculationLocation.latitude - latitude) >
-        LOCATION_CHANGE_THRESHOLD_DEGREES ||
-      Math.abs(this.lastCalculationLocation.longitude - longitude) >
-        LOCATION_CHANGE_THRESHOLD_DEGREES;
+    const sunTimes = this.calculateSunTimes(latitude, longitude);
 
-    if (!needsRecalculation) {
+    if (!sunTimes) {
       return;
     }
 
@@ -438,6 +542,7 @@ export class SolarCycleNotificationStore {
    * Dispose of resources.
    */
   dispose() {
+    this.stop();
     this.db = null;
     runInAction(() => {
       this.activeNotifications = [];

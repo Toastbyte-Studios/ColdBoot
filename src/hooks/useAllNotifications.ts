@@ -49,15 +49,16 @@ export function useAllNotifications(): AppNotification[] {
     dusk: 'moon-outline',
   };
 
-  for (const n of solarStore.activeNotifications) {
-    if (n.dismissed) continue;
+  // Upcoming only: a sunset that has already happened is not an alert.
+  for (const n of solarStore.upcomingNotifications) {
     notifications.push({
       key: `solar-${n.id}`,
       type: 'solar',
       icon: iconMap[n.eventType] ?? 'sunny-outline',
       iconColor: COLORS.ACCENT,
       message: solarStore.getNotificationMessage(n),
-      dismissible: n.eventType !== 'sunrise' && n.eventType !== 'sunset',
+      // Keys include the event time, so dismissing hides today's alert only.
+      dismissible: true,
     });
   }
 
