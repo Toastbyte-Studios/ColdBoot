@@ -7,6 +7,7 @@ import {
   ScrollView,
   Text as RNText,
   Linking,
+  Platform,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
@@ -139,8 +140,13 @@ export const HelpModal = ({
     {
       id: 'how',
       title: 'How to use',
-      content:
-        'Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. Swipe left or right to navigate between screens. Tap on any tool to open it. Use the settings button (top right) to customize your experience.',
+      // Screen-to-screen swiping is iOS only: on Android the edge drag
+      // belongs to the system back gesture (see AppShell).
+      content: `Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. ${
+        Platform.OS === 'android'
+          ? "Use your phone's back gesture or button to return to the previous screen."
+          : 'Swipe left or right to navigate between screens.'
+      } Tap on any tool to open it. Use the settings button (top right) to customize your experience.`,
     },
     {
       id: 'privacy',

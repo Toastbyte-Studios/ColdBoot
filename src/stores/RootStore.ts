@@ -11,7 +11,6 @@ import { NotesStore } from './NotesStore';
 import { NotificationsStore } from './NotificationsStore';
 import { OfflineDownloadStore } from './OfflineDownloadStore';
 import { PantryStore } from './PantryStore';
-import { ReferenceStore } from './ReferenceStore';
 import { RepeaterBookStore } from './RepeaterBookStore';
 import { SettingsStore } from './SettingsStore';
 import { SignalingStore } from './SignalingStore';
@@ -30,7 +29,6 @@ export class RootStore {
   pantryStore: PantryStore;
   emergencyPlanStore: EmergencyPlanStore;
   navigationStore: NavigationStore;
-  referenceStore: ReferenceStore;
   settingsStore: SettingsStore;
   signalingStore: SignalingStore;
   signalsStore: SignalsStore;
@@ -54,7 +52,6 @@ export class RootStore {
     this.pantryStore = new PantryStore();
     this.emergencyPlanStore = new EmergencyPlanStore();
     this.navigationStore = new NavigationStore();
-    this.referenceStore = new ReferenceStore();
     this.settingsStore = new SettingsStore();
     this.signalingStore = new SignalingStore();
     this.signalsStore = new SignalsStore();
@@ -141,7 +138,6 @@ export class RootStore {
     this.pantryStore = new PantryStore();
     this.emergencyPlanStore = new EmergencyPlanStore();
     this.navigationStore = new NavigationStore();
-    this.referenceStore = new ReferenceStore();
     this.settingsStore = new SettingsStore();
     this.signalingStore = new SignalingStore();
     this.signalsStore = new SignalsStore();
