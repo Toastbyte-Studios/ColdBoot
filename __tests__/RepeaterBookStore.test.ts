@@ -551,21 +551,25 @@ describe('RepeaterBookStore', () => {
 
   it('checkAndFetchIfNeeded sets error when authorization is denied and no cache', async () => {
     mockRequestForegroundLocationPermission.mockResolvedValueOnce('denied');
+    store.isLoading = true;
 
     await store.checkAndFetchIfNeeded();
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(store.error).toContain('Location permission denied');
+    expect(store.isLoading).toBe(false);
   });
 
   it('checkAndFetchIfNeeded keeps cache when authorization is denied with cached data', async () => {
     store.repeaters = mockCache.repeaters;
     mockRequestForegroundLocationPermission.mockResolvedValueOnce('denied');
+    store.isLoading = true;
 
     await store.checkAndFetchIfNeeded();
 
     expect(store.repeaters).toHaveLength(1);
     expect(store.error).toBeNull();
+    expect(store.isLoading).toBe(false);
   });
 
   it('checkAndFetchIfNeeded fetches when no cache exists', async () => {
@@ -726,6 +730,7 @@ describe('RepeaterBookStore', () => {
     mockRequestForegroundLocationPermission.mockRejectedValueOnce(
       new Error('boom'),
     );
+    store.isLoading = true;
 
     await expect(store.checkAndFetchIfNeeded()).resolves.toBeUndefined();
 

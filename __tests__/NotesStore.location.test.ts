@@ -18,20 +18,22 @@ jest.mock('../src/utils/locationPermission', () => ({
   requestForegroundLocationPermission: jest.fn(),
 }));
 
-const mockExecuteSql = jest.fn(() =>
-  Promise.resolve([{ rows: { length: 0, item: () => null, raw: () => [] } }]),
-);
+jest.mock('react-native-sqlite-storage', () => {
+  const mockExecuteSql = jest.fn(() =>
+    Promise.resolve([{ rows: { length: 0, item: () => null, raw: () => [] } }]),
+  );
 
-jest.mock('react-native-sqlite-storage', () => ({
-  openDatabase: jest.fn(() =>
-    Promise.resolve({
-      executeSql: mockExecuteSql,
-      close: jest.fn(() => Promise.resolve()),
-    }),
-  ),
-  enablePromise: jest.fn(),
-  DEBUG: jest.fn(),
-}));
+  return {
+    openDatabase: jest.fn(() =>
+      Promise.resolve({
+        executeSql: mockExecuteSql,
+        close: jest.fn(() => Promise.resolve()),
+      }),
+    ),
+    enablePromise: jest.fn(),
+    DEBUG: jest.fn(),
+  };
+});
 
 describe('NotesStore location capture', () => {
   let store: NotesStore;
