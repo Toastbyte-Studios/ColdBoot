@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -9,6 +8,7 @@ import { useDeviceStatus } from '../../hooks/useDeviceStatus';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 
 /**
  * DeviceStatusScreen
@@ -23,8 +23,8 @@ import { FOOTER_HEIGHT } from '../../theme';
  * - Connectivity/offline status
  *
  * Data is sourced from {@link useDeviceStatus}, which provides pre-formatted
- * strings for display. Each metric is presented in a styled card with a shared
- * gradient background and consistent label/value typography.
+ * strings for display. Each metric is presented on the shared card surface
+ * (see `cardSurface`) with consistent label/value typography.
  *
  * @returns A React element containing the Device Status screen UI.
  */
@@ -47,15 +47,7 @@ function DeviceStatusScreen() {
               Device Metrics
             </Text>
 
-            <View
-              style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-            >
-              <LinearGradient
-                colors={COLORS.BRAND_GRADIENT}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardBackground}
-              />
+            <View style={[styles.card, cardSurface(COLORS)]}>
               <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
                 Battery
               </Text>
@@ -64,15 +56,7 @@ function DeviceStatusScreen() {
               </Text>
             </View>
 
-            <View
-              style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-            >
-              <LinearGradient
-                colors={COLORS.BRAND_GRADIENT}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardBackground}
-              />
+            <View style={[styles.card, cardSurface(COLORS)]}>
               <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
                 Last GPS Fix
               </Text>
@@ -81,15 +65,7 @@ function DeviceStatusScreen() {
               </Text>
             </View>
 
-            <View
-              style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-            >
-              <LinearGradient
-                colors={COLORS.BRAND_GRADIENT}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardBackground}
-              />
+            <View style={[styles.card, cardSurface(COLORS)]}>
               <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
                 Storage
               </Text>
@@ -98,15 +74,7 @@ function DeviceStatusScreen() {
               </Text>
             </View>
 
-            <View
-              style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-            >
-              <LinearGradient
-                colors={COLORS.BRAND_GRADIENT}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardBackground}
-              />
+            <View style={[styles.card, cardSurface(COLORS)]}>
               <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
                 Connectivity
               </Text>
@@ -150,14 +118,9 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   card: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
-  },
-  cardBackground: {
-    ...StyleSheet.absoluteFill,
   },
   label: {
     fontSize: 14,

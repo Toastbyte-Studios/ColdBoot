@@ -1,10 +1,10 @@
 import React, { useMemo } from 'react';
 import { StyleSheet } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../../components/ScaledText';
 import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
+import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 
 type VoiceLogModeButtonProps = {
@@ -27,24 +27,13 @@ export default function VoiceLogModeButton({
 
   return (
     <Touchable
-      style={styles.container}
+      style={[styles.container, cardSurface(COLORS)]}
       rippleColor={COLORS.PRIMARY_DARK}
       onPress={onPress}
       accessibilityLabel={accessibilityLabel}
       accessibilityRole="button"
     >
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.background}
-      />
-      <Icon
-        name={icon}
-        size={48}
-        color={COLORS.PRIMARY_LIGHT}
-        style={styles.icon}
-      />
+      <Icon name={icon} size={48} color={COLORS.BRAND} style={styles.icon} />
       <Text style={styles.title}>{title}</Text>
       <Text style={styles.subtitle}>{subtitle}</Text>
     </Touchable>
@@ -55,16 +44,10 @@ const makeStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
     container: {
       width: '100%',
-      borderRadius: 12,
-      borderWidth: 2,
-      borderColor: COLORS.SECONDARY_ACCENT,
       padding: 20,
       marginBottom: 16,
       alignItems: 'center',
       overflow: 'hidden',
-    },
-    background: {
-      ...StyleSheet.absoluteFillObject,
     },
     icon: {
       marginBottom: 12,
