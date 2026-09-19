@@ -124,6 +124,8 @@ export class ChecklistStore {
   checklistDb: SQLiteDatabase | null = null;
   private databaseInitialized: boolean = false;
   private databaseInitPromise: Promise<void> | null = null;
+  private checklistsLoaded: boolean = false;
+  private checklistsLoadPromise: Promise<void> | null = null;
 
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -133,6 +135,8 @@ export class ChecklistStore {
     if (this.checklistDb !== db) {
       this.databaseInitialized = false;
       this.databaseInitPromise = null;
+      this.checklistsLoaded = false;
+      this.checklistsLoadPromise = null;
     }
     this.checklistDb = db;
     if (!this.checklistDb) return;
@@ -169,55 +173,70 @@ export class ChecklistStore {
    */
   async loadChecklists(): Promise<void> {
     if (!this.checklistDb) return;
-
-    if (!this.databaseInitialized) {
-      await this.initDatabase(this.checklistDb);
+    if (this.checklistsLoaded) return;
+    if (this.checklistsLoadPromise) {
+      await this.checklistsLoadPromise;
+      return;
     }
-    if (!this.databaseInitialized) return;
 
-    try {
-      const checklistsRes = await this.checklistDb.executeSql(
-        'SELECT * FROM checklists ORDER BY createdAt ASC',
-      );
-      const checklistRows = checklistsRes[0].rows;
-      const loadedChecklists: Checklist[] = [];
-      for (let i = 0; i < checklistRows.length; i++) {
-        const row = checklistRows.item(i);
-        loadedChecklists.push({
-          id: row.id as string,
-          name: row.name as string,
-          createdAt: row.createdAt as number,
-          isDefault: row.isDefault === 1,
+    this.checklistsLoadPromise = (async () => {
+      const database = this.checklistDb;
+      if (!database) return;
+      if (!this.databaseInitialized) {
+        await this.initDatabase(database);
+      }
+      if (!this.databaseInitialized) return;
+
+      try {
+        const checklistsRes = await database.executeSql(
+          'SELECT * FROM checklists ORDER BY createdAt ASC',
+        );
+        const checklistRows = checklistsRes[0].rows;
+        const loadedChecklists: Checklist[] = [];
+        for (let i = 0; i < checklistRows.length; i++) {
+          const row = checklistRows.item(i);
+          loadedChecklists.push({
+            id: row.id as string,
+            name: row.name as string,
+            createdAt: row.createdAt as number,
+            isDefault: row.isDefault === 1,
+          });
+        }
+
+        const itemsRes = await database.executeSql(
+          'SELECT * FROM checklist_items ORDER BY checklistId, "order" ASC',
+        );
+        const itemRows = itemsRes[0].rows;
+        const loadedItems: ChecklistItem[] = [];
+        for (let i = 0; i < itemRows.length; i++) {
+          const row = itemRows.item(i);
+          loadedItems.push({
+            id: row.id as string,
+            checklistId: row.checklistId as string,
+            text: row.text as string,
+            checked: row.checked === 1,
+            order: row.order as number,
+          });
+        }
+
+        runInAction(() => {
+          this.checklists = loadedChecklists;
+          this.checklistItems = loadedItems;
         });
-      }
 
-      const itemsRes = await this.checklistDb.executeSql(
-        'SELECT * FROM checklist_items ORDER BY checklistId, "order" ASC',
-      );
-      const itemRows = itemsRes[0].rows;
-      const loadedItems: ChecklistItem[] = [];
-      for (let i = 0; i < itemRows.length; i++) {
-        const row = itemRows.item(i);
-        loadedItems.push({
-          id: row.id as string,
-          checklistId: row.checklistId as string,
-          text: row.text as string,
-          checked: row.checked === 1,
-          order: row.order as number,
-        });
-      }
+        if (loadedChecklists.length === 0) {
+          await this.createDefaultChecklists();
+        }
 
-      runInAction(() => {
-        this.checklists = loadedChecklists;
-        this.checklistItems = loadedItems;
-      });
-
-      if (loadedChecklists.length === 0) {
-        await this.createDefaultChecklists();
+        this.checklistsLoaded = true;
+      } catch (error) {
+        console.error('Failed to load checklists:', error);
+      } finally {
+        this.checklistsLoadPromise = null;
       }
-    } catch (error) {
-      console.error('Failed to load checklists:', error);
-    }
+    })();
+
+    await this.checklistsLoadPromise;
   }
 
   /**
@@ -225,8 +244,17 @@ export class ChecklistStore {
    */
   async createDefaultChecklists(): Promise<void> {
     for (const checklist of DEFAULT_CHECKLISTS) {
-      await this.createChecklist(checklist.name, true, checklist.items);
+      await this.createChecklist(checklist.name, true, checklist.items, true);
     }
+  }
+
+  private async ensureChecklistsLoaded(): Promise<void> {
+    if (!this.checklistDb || this.checklistsLoaded) return;
+    if (this.checklistsLoadPromise) {
+      await this.checklistsLoadPromise;
+      return;
+    }
+    await this.loadChecklists();
   }
 
   /**
@@ -236,7 +264,12 @@ export class ChecklistStore {
     name: string,
     isDefault: boolean = false,
     defaultItems: string[] = [],
+    skipLoadCheck: boolean = false,
   ): Promise<Checklist> {
+    if (!skipLoadCheck) {
+      await this.ensureChecklistsLoaded();
+    }
+
     const normalizedName = name.trim();
     if (!normalizedName) {
       throw new Error('Checklist name cannot be empty');
@@ -508,5 +541,7 @@ export class ChecklistStore {
     this.checklistDb = null;
     this.databaseInitialized = false;
     this.databaseInitPromise = null;
+    this.checklistsLoaded = false;
+    this.checklistsLoadPromise = null;
   }
 }

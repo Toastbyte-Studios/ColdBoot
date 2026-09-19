@@ -10,6 +10,7 @@ import NewChecklistScreen from '../src/screens/Checklist/NewChecklistScreen';
 const mockCreateChecklist = jest.fn();
 const mockReplace = jest.fn();
 const mockAppButton = jest.fn();
+const mockStackScreen = jest.fn();
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
@@ -29,18 +30,19 @@ jest.mock('../src/stores', () => ({
 
 jest.mock('../src/components/StackScreen', () => {
   const { View: MockView, Text: MockText } = require('react-native');
-  return ({
-    title,
-    children,
-  }: {
+  return (props: {
     title: string;
     children: React.ReactNode;
-  }) => (
-    <MockView>
-      <MockText>{title}</MockText>
-      {children}
-    </MockView>
-  );
+    keyboardShouldPersistTaps?: string;
+  }) => {
+    mockStackScreen(props);
+    return (
+      <MockView>
+        <MockText>{props.title}</MockText>
+        {props.children}
+      </MockView>
+    );
+  };
 });
 
 jest.mock('../src/screens/Shared/Prepper', () => {
@@ -89,6 +91,7 @@ describe('NewChecklistScreen', () => {
     mockCreateChecklist.mockReset();
     mockReplace.mockReset();
     mockAppButton.mockReset();
+    mockStackScreen.mockReset();
   });
 
   it('disables create until name has non-whitespace content', () => {
@@ -128,5 +131,13 @@ describe('NewChecklistScreen', () => {
       'A checklist named "bug-out BAG" already exists',
     );
     expect(mockReplace).not.toHaveBeenCalled();
+  });
+
+  it('keeps taps handled while the keyboard is open', () => {
+    renderScreen();
+
+    expect(mockStackScreen).toHaveBeenLastCalledWith(
+      expect.objectContaining({ keyboardShouldPersistTaps: 'handled' }),
+    );
   });
 });

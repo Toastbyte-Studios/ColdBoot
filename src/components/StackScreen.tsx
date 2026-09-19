@@ -21,6 +21,9 @@ type Props = PropsWithChildren<{
   subtitle?: string;
   /** Rendered at the trailing edge of the title row — a glyph, an action. */
   trailing?: React.ReactNode;
+  keyboardShouldPersistTaps?: React.ComponentProps<
+    typeof ScrollView
+  >['keyboardShouldPersistTaps'];
   /**
    * Supporting copy shown between the header and the content, such as a
    * dataset's disclaimer. Quiet muted text: it qualifies the content below,
@@ -48,6 +51,7 @@ export default function StackScreen({
   title,
   subtitle,
   trailing,
+  keyboardShouldPersistTaps,
   note,
   children,
 }: Props) {
@@ -63,6 +67,7 @@ export default function StackScreen({
           styles.content,
           { paddingBottom: footerClearance },
         ]}
+        keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       >
         <SectionHeader
           containerStyle={isAndroid ? styles.headline : undefined}

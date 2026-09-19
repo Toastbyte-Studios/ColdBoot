@@ -4,7 +4,7 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React from 'react';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
@@ -26,12 +26,8 @@ import { useChecklistStore } from '../../stores';
 export default observer(function ChecklistScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const checklistStore = useChecklistStore();
-  const sortedChecklists = useMemo(
-    () =>
-      [...checklistStore.checklists].sort((a, b) =>
-        a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
-      ),
-    [checklistStore.checklists],
+  const sortedChecklists = [...checklistStore.checklists].sort((a, b) =>
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
   );
 
   const checklistIcons: Record<string, string> = {

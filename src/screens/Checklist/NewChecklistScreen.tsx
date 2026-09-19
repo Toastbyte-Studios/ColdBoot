@@ -52,7 +52,7 @@ export default observer(function NewChecklistScreen(): React.JSX.Element {
   };
 
   return (
-    <StackScreen title="New Checklist">
+    <StackScreen title="New Checklist" keyboardShouldPersistTaps="handled">
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
