@@ -1,16 +1,26 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
+import {
+  ROW_MIN_HEIGHT,
+  ROW_PADDING_HORIZONTAL,
+  ROW_PADDING_VERTICAL,
+  SCREEN_GUTTER,
+  SPACING,
+  TEXT_GUTTER,
+} from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+import { FormInput } from '../Shared/Prepper';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * Screen for managing pantry categories.
@@ -26,7 +36,6 @@ export default observer(
   function ManagePantryCategoriesScreen(): React.JSX.Element {
     const pantry = usePantryStore();
     const COLORS = useTheme();
-    const footerClearance = useFooterClearance();
     const [newCategoryName, setNewCategoryName] = useState<string>('');
     const [isAdding, setIsAdding] = useState<boolean>(false);
 
@@ -132,76 +141,78 @@ export default observer(
     };
 
     return (
-      <ScreenBody>
-        <SectionHeader>Manage Pantry Categories</SectionHeader>
-        <View style={[styles.container, { paddingBottom: footerClearance }]}>
-          <View style={styles.headerSection}>
+      <StackScreen
+        title="Manage Pantry Categories"
+        subtitle={`${pantry.categories.length} categor${pantry.categories.length === 1 ? 'y' : 'ies'}`}
+        keyboardShouldPersistTaps="handled"
+        trailing={
+          <IconButton
+            name={isAdding ? 'close-outline' : 'add-circle-outline'}
+            size={22}
+            accessibilityLabel={
+              isAdding ? 'Cancel adding category' : 'Add new category'
+            }
+            onPress={() => setIsAdding((current) => !current)}
+          />
+        }
+      >
+        {isAdding ? (
+          <View style={[styles.addCategoryForm, cardSurface(COLORS)]}>
+            <FormInput
+              label="Category name"
+              placeholder="Category name..."
+              value={newCategoryName}
+              onChangeText={setNewCategoryName}
+              autoFocus
+              accessibilityLabel="Enter category name"
+            />
             <AppButton
-              label={isAdding ? 'Cancel' : 'Add category'}
-              icon={isAdding ? 'close-outline' : 'add-outline'}
-              variant={isAdding ? 'tinted' : 'filled'}
+              label="Save category"
+              onPress={handleAddCategory}
+              disabled={!newCategoryName.trim()}
+              accessibilityLabel="Save new category"
               fullWidth
-              onPress={() => setIsAdding(!isAdding)}
-              accessibilityLabel={
-                isAdding ? 'Cancel adding category' : 'Add new category'
-              }
             />
           </View>
+        ) : null}
 
-          {isAdding && (
-            <View style={styles.addCategoryForm}>
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    backgroundColor: COLORS.PRIMARY_LIGHT,
-                    borderColor: COLORS.SECONDARY_ACCENT,
-                    color: COLORS.PRIMARY_DARK,
-                  },
-                ]}
-                placeholder="Category name..."
-                placeholderTextColor={COLORS.MUTED}
-                value={newCategoryName}
-                onChangeText={setNewCategoryName}
-                autoFocus
-                accessibilityLabel="Enter category name"
-              />
-              <AppButton
-                label="Save"
-                onPress={handleAddCategory}
-                disabled={!newCategoryName.trim()}
-                accessibilityLabel="Save new category"
-              />
-            </View>
-          )}
-
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
+        {pantry.categories.length === 0 ? (
+          <Text
+            style={[
+              styles.emptyText,
+              { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+            ]}
           >
-            {pantry.categories.length === 0 ? (
-              <Text style={styles.emptyText}>No categories yet.</Text>
-            ) : (
-              pantry.categories.map((category) => {
-                const itemCount = pantry.getCategoryItemCount(category);
-                return (
-                  <View
-                    key={category}
-                    style={[
-                      styles.categoryItem,
-                      {
-                        backgroundColor: COLORS.PRIMARY_LIGHT,
-                        borderColor: COLORS.SECONDARY_ACCENT,
-                      },
-                    ]}
-                  >
+            No categories yet.
+          </Text>
+        ) : (
+          <GroupContainer>
+            {pantry.categories.map((category, index) => {
+              const itemCount = pantry.getCategoryItemCount(category);
+              return (
+                <View key={category}>
+                  <View style={styles.categoryRow}>
                     <View style={styles.categoryInfo}>
-                      <Icon
-                        name="folder-outline"
-                        size={24}
-                        color={COLORS.PRIMARY_DARK}
-                        style={styles.categoryIcon}
-                      />
+                      <View
+                        style={[
+                          styles.iconTile,
+                          {
+                            backgroundColor: isAndroid
+                              ? COLORS.SECONDARY_CONTAINER
+                              : COLORS.SURFACE_CONTAINER,
+                          },
+                        ]}
+                      >
+                        <Icon
+                          name="folder-outline"
+                          size={20}
+                          color={
+                            isAndroid
+                              ? COLORS.ON_SECONDARY_CONTAINER
+                              : COLORS.BRAND
+                          }
+                        />
+                      </View>
                       <View style={styles.categoryTextContainer}>
                         <Text
                           style={[
@@ -214,7 +225,7 @@ export default observer(
                         <Text
                           style={[
                             styles.categoryCount,
-                            { color: COLORS.PRIMARY_DARK },
+                            { color: COLORS.MUTED },
                           ]}
                         >
                           {itemCount} item{itemCount !== 1 ? 's' : ''}
@@ -229,73 +240,60 @@ export default observer(
                       onPress={() => handleDeleteCategory(category)}
                     />
                   </View>
-                );
-              })
-            )}
-          </ScrollView>
-        </View>
-      </ScreenBody>
+                  {index < pantry.categories.length - 1 ? (
+                    <View
+                      style={[
+                        styles.separator,
+                        {
+                          backgroundColor: isAndroid
+                            ? COLORS.OUTLINE_VARIANT
+                            : COLORS.SEPARATOR,
+                        },
+                      ]}
+                    />
+                  ) : null}
+                </View>
+              );
+            })}
+          </GroupContainer>
+        )}
+      </StackScreen>
     );
   },
 );
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  headerSection: {
-    width: '100%',
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-  },
   addCategoryForm: {
-    width: '100%',
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 6,
-    paddingBottom: 12,
-  },
-  input: {
-    flex: 1,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 6,
-    paddingBottom: 24,
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
+    gap: SPACING.sm,
   },
   emptyText: {
     fontSize: 16,
-    opacity: 0.7,
-    textAlign: 'center',
-    marginTop: 24,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
-  categoryItem: {
+  categoryRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 12,
-    marginBottom: 8,
+    minHeight: ROW_MIN_HEIGHT,
+    paddingVertical: ROW_PADDING_VERTICAL,
+    paddingHorizontal: ROW_PADDING_HORIZONTAL,
   },
   categoryInfo: {
     flexDirection: 'row',
     alignItems: 'center',
     flex: 1,
+    gap: isAndroid ? 16 : 13,
   },
-  categoryIcon: {
-    marginRight: 12,
+  iconTile: {
+    width: isAndroid ? 40 : 34,
+    height: isAndroid ? 40 : 34,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   categoryTextContainer: {
     flex: 1,
@@ -307,6 +305,9 @@ const styles = StyleSheet.create({
   },
   categoryCount: {
     fontSize: 13,
-    opacity: 0.7,
+  },
+  separator: {
+    height: isAndroid ? 1 : StyleSheet.hairlineWidth,
+    marginLeft: isAndroid ? 72 : 61,
   },
 });
