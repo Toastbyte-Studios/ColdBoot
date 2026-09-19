@@ -13,15 +13,15 @@ import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
 import { TEXT_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
+import {
+  formatPantryItemQuantity,
+  formatPantryItemSubtitle,
+} from './pantryRowFormatters';
 
 const isAndroid = Platform.OS === 'android';
 
 const groundInk = (colors: ColorScheme) =>
   isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
-
-function quantityLabel(item: PantryItem): string {
-  return `Quantity: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}`;
-}
 
 type PantryCategoryParamList = {
   PantryCategory: { category: string };
@@ -112,8 +112,8 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
               key={item.id}
               title={item.name}
               icon="restaurant-outline"
-              subtitle={item.notes}
-              value={quantityLabel(item)}
+              subtitle={formatPantryItemSubtitle(item, category)}
+              value={formatPantryItemQuantity(item)}
               variant="tool"
               showSeparator={index < sortedItems.length - 1}
               onPress={() => handleItemPress(item)}

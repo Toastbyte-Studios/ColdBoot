@@ -38,6 +38,14 @@ export default observer(
     const COLORS = useTheme();
     const [newCategoryName, setNewCategoryName] = useState<string>('');
     const [isAdding, setIsAdding] = useState<boolean>(false);
+    const handleToggleAddCategory = () => {
+      setIsAdding((current) => {
+        if (current) {
+          setNewCategoryName('');
+        }
+        return !current;
+      });
+    };
 
     const handleAddCategory = async () => {
       const trimmedName = newCategoryName.trim();
@@ -152,7 +160,7 @@ export default observer(
             accessibilityLabel={
               isAdding ? 'Cancel adding category' : 'Add new category'
             }
-            onPress={() => setIsAdding((current) => !current)}
+            onPress={handleToggleAddCategory}
           />
         }
       >

@@ -120,7 +120,7 @@ describe('PantryAllItemsScreen', () => {
       ),
     );
     expect(rowLabels).toEqual([
-      'Beans | Canned Goods · Rotate soon | Quantity: 4 cans',
+      'Beans | Canned Goods. Notes: Rotate soon | Quantity: 4 cans',
       'Rice | Dry Goods | Quantity: 10 lbs',
     ]);
   });

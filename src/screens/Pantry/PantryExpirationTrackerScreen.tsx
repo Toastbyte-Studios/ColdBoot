@@ -49,15 +49,24 @@ function formatExpiration(month?: number, year?: number): string {
 }
 
 /** Returns a human-readable label for how many days remain. */
-function formatDaysRemaining(days: number | null): string {
+function formatDaysRemaining(
+  days: number | null,
+  status: ExpirationStatus,
+): string {
   if (days === null) {
     return '';
   }
   if (days < 0) {
-    return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`;
+    return `Expired · ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`;
   }
   if (days === 0) {
     return 'Expires today!';
+  }
+  if (status === 'yellow') {
+    return `Expiring soon · ${days} day${days === 1 ? '' : 's'} remaining`;
+  }
+  if (status === 'green') {
+    return `In date · ${days} day${days === 1 ? '' : 's'} remaining`;
   }
   return `${days} day${days === 1 ? '' : 's'} remaining`;
 }
@@ -183,7 +192,6 @@ export default observer(
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
-          accessibilityRole="menu"
           accessibilityLabel="Category filters"
           accessibilityHint="Shows pantry items for the selected category"
           style={styles.filterRow}
@@ -280,7 +288,10 @@ export default observer(
                   key={item.id}
                   style={[styles.itemCard, cardSurface(COLORS, { accent })]}
                   onPress={() => handleItemPress(item)}
-                  accessibilityLabel={`Edit ${item.name}`}
+                  accessibilityLabel={`Edit ${item.name}. ${item.category}. Quantity: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}. ${formatExpiration(
+                    item.expirationMonth,
+                    item.expirationYear,
+                  )}.${days !== null ? ` ${formatDaysRemaining(days, status)}` : ''}`}
                   accessibilityRole="button"
                 >
                   <View style={styles.itemRow}>
@@ -321,7 +332,7 @@ export default observer(
                       </Text>
                       {days !== null ? (
                         <Text style={[styles.daysText, { color: accent }]}>
-                          {formatDaysRemaining(days)}
+                          {formatDaysRemaining(days, status)}
                         </Text>
                       ) : null}
                     </View>
