@@ -1,5 +1,5 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
@@ -128,18 +128,6 @@ function SkyEventsScreen() {
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const core = useCoreStore();
   const astronomyStore = useAstronomyEventStore();
-
-  // Trigger event computation when location becomes available
-  useEffect(() => {
-    if (core.lastFix) {
-      const { latitude, longitude } = core.lastFix.coords;
-      astronomyStore.computeEvents(latitude, longitude);
-    } else {
-      // Compute without location (planet rise times will be skipped)
-      astronomyStore.computeEventsWithoutLocation();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [core.lastFix]);
 
   const upcomingEvents = astronomyStore.getUpcomingEvents(12);
   const hasLocation = !!core.lastFix;

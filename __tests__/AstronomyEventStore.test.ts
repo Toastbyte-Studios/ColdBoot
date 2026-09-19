@@ -2,7 +2,50 @@
  * @format
  */
 
+import { makeAutoObservable, runInAction } from 'mobx';
+
 import { AstronomyEventStore } from '../src/stores/AstronomyEventStore';
+
+const mockRemoveAppStateListener = jest.fn();
+let appStateChangeHandler: ((nextState: string) => void) | null = null;
+
+const mockRunAfterInteractions = jest.fn((callback: () => void) => {
+  callback();
+  return { cancel: jest.fn() };
+});
+
+const mockAddEventListener = jest.fn(
+  (_event: string, handler: (nextState: string) => void) => {
+    appStateChangeHandler = handler;
+    return { remove: mockRemoveAppStateListener };
+  },
+);
+
+jest.mock('react-native', () => ({
+  AppState: {
+    addEventListener: (...args: [string, (nextState: string) => void]) =>
+      mockAddEventListener(...args),
+  },
+  InteractionManager: {
+    runAfterInteractions: (...args: [() => void]) =>
+      mockRunAfterInteractions(...args),
+  },
+}));
+
+class FakeCoreStore {
+  lastFix:
+    | {
+        coords: {
+          latitude: number;
+          longitude: number;
+        };
+      }
+    | null = null;
+
+  constructor() {
+    makeAutoObservable(this, {}, { autoBind: true });
+  }
+}
 
 describe('AstronomyEventStore', () => {
   let store: AstronomyEventStore;
@@ -235,6 +278,133 @@ describe('AstronomyEventStore', () => {
       store.computeEvents(40.7128, -74.006);
       store.dispose();
       expect(store.getNextAstronomyEvent(400)).toBeNull();
+    });
+  });
+
+  describe('start/stop lifecycle', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date('2025-03-01T08:00:00Z'));
+      appStateChangeHandler = null;
+      mockAddEventListener.mockClear();
+      mockRemoveAppStateListener.mockClear();
+      mockRunAfterInteractions.mockClear();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    test('start with no fix computes no-location events and next event', () => {
+      const core = new FakeCoreStore();
+
+      store.start(core as any);
+
+      expect(store.events.length).toBeGreaterThan(0);
+      expect(store.events.some((e) => e.type === 'planet_rise')).toBe(false);
+      expect(store.getNextAstronomyEvent()).not.toBeNull();
+    });
+
+    test('start then fix update computes with coordinates', () => {
+      const core = new FakeCoreStore();
+
+      store.start(core as any);
+      const before = store.events;
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 40.7128,
+            longitude: -74.006,
+          },
+        };
+      });
+
+      expect((store as any)._lastComputeLocation).toEqual({
+        lat: 40.7128,
+        lon: -74.006,
+      });
+      expect(store.events).not.toBe(before);
+    });
+
+    test('lastFix change below 0.5° does not trigger recompute work', () => {
+      const core = new FakeCoreStore();
+      store.start(core as any);
+
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 40.7128,
+            longitude: -74.006,
+          },
+        };
+      });
+
+      const lastComputeDate = (store as any)._lastComputeDate;
+      const priorEvents = store.events;
+
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 40.9,
+            longitude: -74.2,
+          },
+        };
+      });
+
+      expect((store as any)._lastComputeDate).toBe(lastComputeDate);
+      expect(store.events).toBe(priorEvents);
+    });
+
+    test('app becomes active on a new day triggers recompute', () => {
+      const core = new FakeCoreStore();
+      store.start(core as any);
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 40.7128,
+            longitude: -74.006,
+          },
+        };
+      });
+
+      const previousComputeDate = (store as any)._lastComputeDate as Date;
+
+      jest.setSystemTime(new Date('2025-03-02T08:00:00Z'));
+      appStateChangeHandler?.('active');
+
+      const nextComputeDate = (store as any)._lastComputeDate as Date;
+      expect(nextComputeDate).not.toBe(previousComputeDate);
+      expect(nextComputeDate.toDateString()).toBe(
+        new Date('2025-03-02T08:00:00Z').toDateString(),
+      );
+    });
+
+    test('stop disposes observers and is idempotent', () => {
+      const core = new FakeCoreStore();
+      store.start(core as any);
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 35.6762,
+            longitude: 139.6503,
+          },
+        };
+      });
+      const lastComputeLocation = (store as any)._lastComputeLocation;
+
+      store.stop();
+      store.stop();
+      runInAction(() => {
+        core.lastFix = {
+          coords: {
+            latitude: 48.8566,
+            longitude: 2.3522,
+          },
+        };
+      });
+
+      expect((store as any)._lastComputeLocation).toEqual(lastComputeLocation);
+      expect(mockRemoveAppStateListener).toHaveBeenCalledTimes(1);
     });
   });
 
