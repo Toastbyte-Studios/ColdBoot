@@ -23,6 +23,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
           // history accumulates while the user uses the app, not just while the
           // Barometric Pressure screen is open.
           rootStore.barometerStore.start(rootStore.notesStore.notesDb);
+          rootStore.weatherOutlookStore.start(rootStore.coreStore);
         }
         await rootStore.notesStore.loadNotes();
         await rootStore.checklistStore.loadChecklists();
@@ -37,6 +38,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
       rootStore.astronomyEventStore.stop();
       rootStore.solarCycleNotificationStore.stop();
       rootStore.barometerStore.stop();
+      rootStore.weatherOutlookStore.stop();
     };
   }, [rootStore]);
 

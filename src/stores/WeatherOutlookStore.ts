@@ -1,4 +1,10 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import {
+  IReactionDisposer,
+  makeAutoObservable,
+  reaction,
+  runInAction,
+} from 'mobx';
+import { AppState, AppStateStatus } from 'react-native';
 import {
   fetchSeasonalData,
   getCachedOutlook,
@@ -8,6 +14,9 @@ import {
   shouldRefresh,
 } from '../services/weatherOutlookService';
 import { SQLiteDatabase } from '../types/database-types';
+import type { CoreStore } from './CoreStore';
+
+const LOCATION_CHANGE_THRESHOLD_DEGREES = 0.5;
 
 /**
  * MobX store for the seasonal weather outlook feature.
@@ -19,7 +28,8 @@ import { SQLiteDatabase } from '../types/database-types';
  *
  * Lifecycle:
  *  - Call `initDatabase(db)` once (from RootStore) to set up the cache table.
- *  - Call `loadOutlook(lat, lon)` whenever the user's location is known.
+ *  - Call `start(core)` after the shared database is ready.
+ *  - Call `stop()` on app unmount / store reset.
  */
 export class WeatherOutlookStore {
   /** The currently loaded seasonal outlook, or null if not yet fetched. */
@@ -35,9 +45,21 @@ export class WeatherOutlookStore {
   isStale: boolean = false;
 
   private db: SQLiteDatabase | null = null;
+  private _coreLastFixDisposer: IReactionDisposer | null = null;
+  private _appStateSubscription: { remove: () => void } | null = null;
+  private _lastLoadedLocation: { latitude: number; longitude: number } | null =
+    null;
 
   constructor() {
-    makeAutoObservable(this, {}, { autoBind: true });
+    makeAutoObservable(
+      this,
+      {
+        _coreLastFixDisposer: false,
+        _appStateSubscription: false,
+        _lastLoadedLocation: false,
+      } as never,
+      { autoBind: true },
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -59,6 +81,33 @@ export class WeatherOutlookStore {
     }
   }
 
+  start(core: CoreStore): void {
+    this.stop();
+    void this._refreshForFix(core.lastFix);
+    this._coreLastFixDisposer = reaction(
+      () => core.lastFix,
+      (lastFix) => {
+        void this._refreshForFix(lastFix, true);
+      },
+    );
+    this._appStateSubscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'active') {
+          void this._refreshForFix(core.lastFix);
+        }
+      },
+    );
+  }
+
+  stop(): void {
+    this._coreLastFixDisposer?.();
+    this._coreLastFixDisposer = null;
+    this._appStateSubscription?.remove();
+    this._appStateSubscription = null;
+    this._lastLoadedLocation = null;
+  }
+
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
@@ -76,6 +125,10 @@ export class WeatherOutlookStore {
    * @param lon - Device longitude
    */
   async loadOutlook(lat: number, lon: number): Promise<void> {
+    if (this.isLoading) {
+      return;
+    }
+
     runInAction(() => {
       this.isLoading = true;
       this.error = null;
@@ -123,6 +176,30 @@ export class WeatherOutlookStore {
     }
   }
 
+  private async _refreshForFix(
+    lastFix: CoreStore['lastFix'],
+    requireMeaningfulMove: boolean = false,
+  ): Promise<void> {
+    if (!lastFix || this.isLoading) {
+      return;
+    }
+
+    const { latitude, longitude } = lastFix.coords;
+    if (
+      requireMeaningfulMove &&
+      this._lastLoadedLocation &&
+      Math.abs(latitude - this._lastLoadedLocation.latitude) <=
+        LOCATION_CHANGE_THRESHOLD_DEGREES &&
+      Math.abs(longitude - this._lastLoadedLocation.longitude) <=
+        LOCATION_CHANGE_THRESHOLD_DEGREES
+    ) {
+      return;
+    }
+
+    await this.loadOutlook(latitude, longitude);
+    this._lastLoadedLocation = { latitude, longitude };
+  }
+
   /**
    * Returns a brief, human-readable summary of the current month's outlook,
    * suitable for the footer notification rotation.
@@ -146,6 +223,7 @@ export class WeatherOutlookStore {
 
   /** Resets store state. */
   dispose(): void {
+    this.stop();
     this.outlook = null;
     this.isLoading = false;
     this.error = null;
