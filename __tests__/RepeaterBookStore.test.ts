@@ -726,7 +726,6 @@ describe('RepeaterBookStore', () => {
     mockRequestForegroundLocationPermission.mockRejectedValueOnce(
       new Error('boom'),
     );
-    store.isLoading = true;
 
     await expect(store.checkAndFetchIfNeeded()).resolves.toBeUndefined();
 

@@ -438,8 +438,8 @@ export class RepeaterBookStore {
         if (this.repeaters.length === 0) {
           this.error =
             'Unable to load repeaters. Please confirm location access and try again.';
+          this.isLoading = false;
         }
-        this.isLoading = false;
       });
     }
   }
