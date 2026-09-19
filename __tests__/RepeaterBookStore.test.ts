@@ -106,6 +106,7 @@ function mockFetchSuccess(rows: Record<string, string>[] = [makeApiRow()]) {
 
 describe('RepeaterBookStore', () => {
   let store: RepeaterBookStore;
+  const originalPlatformOS = Platform.OS;
   const mockRequestForegroundLocationPermission =
     requestForegroundLocationPermission as jest.MockedFunction<
       typeof requestForegroundLocationPermission
@@ -118,6 +119,10 @@ describe('RepeaterBookStore', () => {
   });
 
   afterEach(() => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: originalPlatformOS,
+    });
     store.dispose();
   });
 

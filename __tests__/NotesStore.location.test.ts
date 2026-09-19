@@ -3,7 +3,9 @@
  * Tests for NotesStore location capture
  */
 
-import Geolocation, { type GeoPosition } from 'react-native-geolocation-service';
+import Geolocation, {
+  type GeoPosition,
+} from 'react-native-geolocation-service';
 import { NotesStore } from '../src/stores/NotesStore';
 import { requestForegroundLocationPermission } from '../src/utils/locationPermission';
 
@@ -41,9 +43,7 @@ describe('NotesStore location capture', () => {
 
   const mockPosition = (latitude: number, longitude: number) => {
     geo.getCurrentPosition.mockImplementationOnce(
-      (
-        success: (position: GeoPosition) => void,
-      ) => {
+      (success: (position: GeoPosition) => void) => {
         success({
           coords: {
             latitude,
