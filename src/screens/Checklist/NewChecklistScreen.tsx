@@ -71,7 +71,7 @@ export default observer(function NewChecklistScreen(): React.JSX.Element {
             autoFocus
             returnKeyType="done"
             onSubmitEditing={handleCreate}
-            blurOnSubmit={false}
+            submitBehavior="submit"
           />
           {errorMessage ? (
             <Text style={styles.errorText}>{errorMessage}</Text>
