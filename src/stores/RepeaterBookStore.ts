@@ -404,8 +404,12 @@ export class RepeaterBookStore {
                 this.queryLat === null ||
                 this.queryLng === null ||
                 this.repeaters.length === 0 ||
-                distanceMiles(latitude, longitude, this.queryLat, this.queryLng) >
-                  REFETCH_THRESHOLD_MILES;
+                distanceMiles(
+                  latitude,
+                  longitude,
+                  this.queryLat,
+                  this.queryLng,
+                ) > REFETCH_THRESHOLD_MILES;
 
               if (needsFetch) {
                 await this.fetchRepeaters(latitude, longitude);
