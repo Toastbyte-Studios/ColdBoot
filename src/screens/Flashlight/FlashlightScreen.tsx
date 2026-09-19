@@ -65,21 +65,21 @@ const FlashlightScreenImpl = () => {
           title="Flashlight On"
           icon="flashlight-outline"
           variant="tool"
-          value={mode === FlashlightModes.ON ? 'On' : undefined}
+          value={mode === FlashlightModes.ON ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.ON)}
         />
         <ModuleRow
           title="SOS"
           icon="alert-outline"
           variant="tool"
-          value={mode === FlashlightModes.SOS ? 'On' : undefined}
+          value={mode === FlashlightModes.SOS ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.SOS)}
         />
         <ModuleRow
           title="Strobe"
           icon="flash-outline"
           variant="tool"
-          value={mode === FlashlightModes.STROBE ? 'On' : undefined}
+          value={mode === FlashlightModes.STROBE ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.STROBE)}
         />
         <ModuleRow

@@ -53,7 +53,12 @@ jest.mock('../src/components/GroupContainer', () => {
   );
 });
 
-jest.mock('../src/components/ModuleRow', () => 'ModuleRow');
+jest.mock('../src/components/ModuleRow', () => {
+  const { Text: MockText } = require('react-native');
+  return ({ title, value }: { title: string; value?: string }) => (
+    <MockText>{value ? `${title}: ${value}` : title}</MockText>
+  );
+});
 jest.mock('../src/components/SectionEyebrow', () => 'SectionEyebrow');
 jest.mock('../src/components/AppSwitch', () => 'AppSwitch');
 jest.mock('@react-native-community/slider', () => 'Slider');
@@ -94,5 +99,15 @@ describe('FlashlightScreen header subtitle', () => {
     expect(texts.map((node) => node.props.children)).toContain(
       'Strobe at 11 Hz',
     );
+  });
+
+  test('announces On or Off for each flashlight mode row', () => {
+    const tree = render(FlashlightModes.SOS);
+    const texts = tree.root.findAllByType(Text);
+    const labels = texts.map((node) => node.props.children);
+
+    expect(labels).toContain('Flashlight On: Off');
+    expect(labels).toContain('SOS: On');
+    expect(labels).toContain('Strobe: Off');
   });
 });
