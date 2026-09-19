@@ -160,7 +160,7 @@ export default observer(
                   },
                 ]}
                 placeholder="Category name..."
-                placeholderTextColor={COLORS.PRIMARY_DARK}
+                placeholderTextColor={COLORS.MUTED}
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
                 autoFocus

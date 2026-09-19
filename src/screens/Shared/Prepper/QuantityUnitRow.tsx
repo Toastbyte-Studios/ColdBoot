@@ -39,7 +39,7 @@ export function QuantityUnitRow({
             },
           ]}
           placeholder="Quantity..."
-          placeholderTextColor={COLORS.PRIMARY_DARK}
+          placeholderTextColor={COLORS.MUTED}
           value={quantity}
           onChangeText={onQuantityChange}
           keyboardType="numeric"
@@ -56,7 +56,7 @@ export function QuantityUnitRow({
             },
           ]}
           placeholder="Unit (optional)..."
-          placeholderTextColor={COLORS.PRIMARY_DARK}
+          placeholderTextColor={COLORS.MUTED}
           value={unit}
           onChangeText={onUnitChange}
           accessibilityLabel="Unit"
