@@ -14,12 +14,18 @@ jest.mock('../src/utils/stateFromCoordinates', () => ({
   stateFromCoordinates: jest.fn().mockReturnValue('Florida'),
 }));
 
+jest.mock('../src/utils/locationPermission', () => ({
+  requestForegroundLocationPermission: jest.fn(),
+}));
+
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 import Geolocation from 'react-native-geolocation-service';
 import {
   RepeaterBookStore,
   RepeaterCache,
 } from '../src/stores/RepeaterBookStore';
+import { requestForegroundLocationPermission } from '../src/utils/locationPermission';
 import { stateFromCoordinates } from '../src/utils/stateFromCoordinates';
 
 // Tampa, FL coordinates used throughout
@@ -100,13 +106,23 @@ function mockFetchSuccess(rows: Record<string, string>[] = [makeApiRow()]) {
 
 describe('RepeaterBookStore', () => {
   let store: RepeaterBookStore;
+  const originalPlatformOS = Platform.OS;
+  const mockRequestForegroundLocationPermission =
+    requestForegroundLocationPermission as jest.MockedFunction<
+      typeof requestForegroundLocationPermission
+    >;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockRequestForegroundLocationPermission.mockResolvedValue('granted');
     store = new RepeaterBookStore();
   });
 
   afterEach(() => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: originalPlatformOS,
+    });
     store.dispose();
   });
 
@@ -511,7 +527,7 @@ describe('RepeaterBookStore', () => {
 
   // ── checkAndFetchIfNeeded ──────────────────────────────────────────────────
 
-  it('checkAndFetchIfNeeded requests location authorization', async () => {
+  it('checkAndFetchIfNeeded requests foreground location permission', async () => {
     mockFetchSuccess();
 
     (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce(
@@ -530,30 +546,30 @@ describe('RepeaterBookStore', () => {
 
     await store.checkAndFetchIfNeeded();
 
-    expect(Geolocation.requestAuthorization).toHaveBeenCalledWith('whenInUse');
+    expect(requestForegroundLocationPermission).toHaveBeenCalledTimes(1);
   });
 
   it('checkAndFetchIfNeeded sets error when authorization is denied and no cache', async () => {
-    (Geolocation.requestAuthorization as jest.Mock).mockResolvedValueOnce(
-      'denied',
-    );
+    mockRequestForegroundLocationPermission.mockResolvedValueOnce('denied');
+    store.isLoading = true;
 
     await store.checkAndFetchIfNeeded();
 
     expect(global.fetch).not.toHaveBeenCalled();
     expect(store.error).toContain('Location permission denied');
+    expect(store.isLoading).toBe(false);
   });
 
   it('checkAndFetchIfNeeded keeps cache when authorization is denied with cached data', async () => {
     store.repeaters = mockCache.repeaters;
-    (Geolocation.requestAuthorization as jest.Mock).mockResolvedValueOnce(
-      'denied',
-    );
+    mockRequestForegroundLocationPermission.mockResolvedValueOnce('denied');
+    store.isLoading = true;
 
     await store.checkAndFetchIfNeeded();
 
     expect(store.repeaters).toHaveLength(1);
     expect(store.error).toBeNull();
+    expect(store.isLoading).toBe(false);
   });
 
   it('checkAndFetchIfNeeded fetches when no cache exists', async () => {
@@ -576,6 +592,33 @@ describe('RepeaterBookStore', () => {
     await store.checkAndFetchIfNeeded();
 
     expect(global.fetch).toHaveBeenCalledTimes(FL_TOTAL_STATES);
+  });
+
+  it('checkAndFetchIfNeeded no longer calls Geolocation.requestAuthorization on Android', async () => {
+    Object.defineProperty(Platform, 'OS', {
+      configurable: true,
+      value: 'android',
+    });
+    mockFetchSuccess();
+
+    (Geolocation.getCurrentPosition as jest.Mock).mockImplementationOnce(
+      (
+        success: (pos: {
+          coords: { latitude: number; longitude: number };
+          timestamp: number;
+        }) => void,
+      ) => {
+        success({
+          coords: { latitude: TEST_LAT, longitude: TEST_LNG },
+          timestamp: Date.now(),
+        });
+      },
+    );
+
+    await store.checkAndFetchIfNeeded();
+
+    expect(Geolocation.requestAuthorization).not.toHaveBeenCalled();
+    expect(requestForegroundLocationPermission).toHaveBeenCalledTimes(1);
   });
 
   it('checkAndFetchIfNeeded skips fetch when within threshold', async () => {
@@ -666,6 +709,34 @@ describe('RepeaterBookStore', () => {
     expect(global.fetch).not.toHaveBeenCalled();
     expect(store.repeaters).toHaveLength(1);
     expect(store.error).toBeNull();
+  });
+
+  it('checkAndFetchIfNeeded traps unexpected permission lookup failures', async () => {
+    mockRequestForegroundLocationPermission.mockRejectedValueOnce(
+      new Error('boom'),
+    );
+    store.isLoading = true;
+
+    await expect(store.checkAndFetchIfNeeded()).resolves.toBeUndefined();
+
+    expect(store.error).toBe(
+      'Unable to load repeaters. Please confirm location access and try again.',
+    );
+    expect(store.isLoading).toBe(false);
+  });
+
+  it('checkAndFetchIfNeeded keeps cached repeaters on unexpected permission lookup failures', async () => {
+    store.repeaters = mockCache.repeaters;
+    mockRequestForegroundLocationPermission.mockRejectedValueOnce(
+      new Error('boom'),
+    );
+    store.isLoading = true;
+
+    await expect(store.checkAndFetchIfNeeded()).resolves.toBeUndefined();
+
+    expect(store.repeaters).toHaveLength(1);
+    expect(store.error).toBeNull();
+    expect(store.isLoading).toBe(false);
   });
 
   // ── custom repeater CRUD ───────────────────────────────────────────────────

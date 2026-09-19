@@ -8,6 +8,7 @@ import {
   getTableDDL,
   runMigrations,
 } from '../utils/dbMigrations';
+import { requestForegroundLocationPermission } from '../utils/locationPermission';
 import { formatTime } from '../utils/timeFormat';
 
 let SQLite: SQLiteStatic | null = null;
@@ -205,7 +206,7 @@ export class NotesStore {
     let longitude: number | undefined;
 
     try {
-      const auth = await Geolocation.requestAuthorization('whenInUse');
+      const auth = await requestForegroundLocationPermission();
       if (auth === 'granted') {
         await new Promise<void>((resolve) => {
           Geolocation.getCurrentPosition(
@@ -267,7 +268,7 @@ export class NotesStore {
 
     // Try to get current location with a shorter timeout for voice logs
     try {
-      const auth = await Geolocation.requestAuthorization('whenInUse');
+      const auth = await requestForegroundLocationPermission();
       if (auth === 'granted') {
         await new Promise<void>((resolve) => {
           Geolocation.getCurrentPosition(
