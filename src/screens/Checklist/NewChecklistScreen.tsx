@@ -1,17 +1,8 @@
-import {
-  NavigationProp,
-  ParamListBase,
-  useNavigation,
-} from '@react-navigation/native';
+import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  TextInput,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
@@ -26,7 +17,7 @@ const isAndroid = Platform.OS === 'android';
 export default observer(function NewChecklistScreen(): React.JSX.Element {
   const COLORS = useTheme();
   const checklistStore = useChecklistStore();
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const navigation = useNavigation<NativeStackNavigationProp<ParamListBase>>();
   const [name, setName] = useState('');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);

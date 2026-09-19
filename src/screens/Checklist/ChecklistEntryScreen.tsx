@@ -140,11 +140,7 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
         >
           {items.length === 0 && (
             <View style={styles.emptyState}>
-              <Icon
-                name="clipboard-outline"
-                size={48}
-                color={COLORS.MUTED}
-              />
+              <Icon name="clipboard-outline" size={48} color={COLORS.MUTED} />
               <Text style={[styles.emptyText, { color: COLORS.MUTED }]}>
                 No items yet
               </Text>

@@ -21,10 +21,11 @@ describe('ChecklistStore', () => {
   });
 
   it('creates a checklist with default items, returns it, and trims the name', async () => {
-    const created = await checklistStore.createChecklist('  Supplies  ', false, [
-      'Bravo',
-      'alpha',
-    ]);
+    const created = await checklistStore.createChecklist(
+      '  Supplies  ',
+      false,
+      ['Bravo', 'alpha'],
+    );
 
     expect(checklistStore.checklists).toHaveLength(1);
     expect(created.name).toBe('Supplies');

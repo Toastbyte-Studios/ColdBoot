@@ -29,7 +29,13 @@ jest.mock('../src/stores', () => ({
 
 jest.mock('../src/components/StackScreen', () => {
   const { View: MockView, Text: MockText } = require('react-native');
-  return ({ title, children }: { title: string; children: React.ReactNode }) => (
+  return ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
     <MockView>
       <MockText>{title}</MockText>
       {children}
