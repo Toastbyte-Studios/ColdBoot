@@ -1,18 +1,9 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Alert } from 'react-native';
 import StackScreen from '../../components/StackScreen';
-import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
-import { SCREEN_GUTTER, SPACING } from '../../theme';
-import { cardSurface } from '../../theme/cardSurface';
 import {
   FormInput,
   FormTextArea,
@@ -20,8 +11,7 @@ import {
   QuantityUnitRow,
   ExpirationDatePicker,
 } from '../Shared/Prepper';
-
-const isAndroid = Platform.OS === 'android';
+import { FormCard } from '../Shared/Prepper/FormCard';
 
 type NewInventoryItemRouteProp = RouteProp<
   { NewInventoryItem: { category: string } },
@@ -44,7 +34,6 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
   const route = useRoute<NewInventoryItemRouteProp>();
   const navigation = useNavigation();
   const inventory = useInventoryStore();
-  const COLORS = useTheme();
 
   const { category } = route.params || {};
   const [name, setName] = useState<string>('');
@@ -94,67 +83,45 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
       subtitle={category}
       keyboardShouldPersistTaps="handled"
     >
-      <KeyboardAvoidingView
-        testID="inventory-item-form-keyboard"
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={styles.container}
-      >
-        <View
-          testID="inventory-item-form-card"
-          style={[styles.formCard, cardSurface(COLORS)]}
-        >
-          <FormInput
-            label="Item Name *"
-            placeholder="Enter item name..."
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            accessibilityLabel="Item name"
-          />
+      <FormCard testID="inventory-item-form">
+        <FormInput
+          label="Item Name *"
+          placeholder="Enter item name..."
+          value={name}
+          onChangeText={setName}
+          autoFocus
+          accessibilityLabel="Item name"
+        />
 
-          <QuantityUnitRow
-            quantity={quantity}
-            unit={unit}
-            onQuantityChange={setQuantity}
-            onUnitChange={setUnit}
-          />
+        <QuantityUnitRow
+          quantity={quantity}
+          unit={unit}
+          onQuantityChange={setQuantity}
+          onUnitChange={setUnit}
+        />
 
-          <ExpirationDatePicker
-            month={expirationMonth}
-            year={expirationYear}
-            onMonthChange={setExpirationMonth}
-            onYearChange={setExpirationYear}
-          />
+        <ExpirationDatePicker
+          month={expirationMonth}
+          year={expirationYear}
+          onMonthChange={setExpirationMonth}
+          onYearChange={setExpirationYear}
+        />
 
-          <FormTextArea
-            label="Notes (optional)"
-            placeholder="Enter notes..."
-            value={notes}
-            onChangeText={setNotes}
-            accessibilityLabel="Notes"
-          />
+        <FormTextArea
+          label="Notes (optional)"
+          placeholder="Enter notes..."
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Notes"
+        />
 
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!name.trim()}
-            saveLabel="Save"
-          />
-        </View>
-      </KeyboardAvoidingView>
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!name.trim()}
+          saveLabel="Save"
+        />
+      </FormCard>
     </StackScreen>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-  },
-  formCard: {
-    marginTop: SPACING.md,
-    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
-    marginBottom: SPACING.md,
-    padding: SPACING.md,
-  },
 });

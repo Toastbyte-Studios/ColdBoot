@@ -5,20 +5,19 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import AppButton from '../../components/AppButton';
+import { Alert, Platform, StyleSheet } from 'react-native';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
+import { TEXT_GUTTER } from '../../theme';
 import { ImportModal } from './ImportModal';
 import { parseSharedRallyPoints, shareRallyPoints } from './shareUtils';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * Lists all rally points with options to add, share, or import them.
@@ -32,8 +31,9 @@ export default observer(function RallyPointsScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useEmergencyPlanStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const [importVisible, setImportVisible] = useState(false);
+
+  const rallyPoints = store.rallyPoints;
 
   const handleShare = async () => {
     if (store.rallyPoints.length === 0) {
@@ -84,98 +84,62 @@ export default observer(function RallyPointsScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Rally Points</SectionHeader>
-      <View style={styles.addRow}>
-        <IconButton
-          name="download-outline"
-          size={20}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Import rally points"
-          borderless={false}
-          onPress={() => setImportVisible(true)}
-          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-        />
-        <IconButton
-          name="share-outline"
-          size={20}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Share rally points"
-          borderless={false}
-          onPress={handleShare}
-          style={[styles.iconButton, { borderColor: COLORS.SECONDARY_ACCENT }]}
-        />
-        <AppButton
-          label="Add location"
-          icon="add-outline"
-          size="small"
-          onPress={() => navigation.navigate('NewRallyPoint')}
-          accessibilityLabel="Add Rally Point"
-        />
-      </View>
-
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+    <StackScreen
+      title="Rally Points"
+      subtitle={`${rallyPoints.length} location${rallyPoints.length === 1 ? '' : 's'}`}
+      trailing={
+        <>
+          <IconButton
+            name="download-outline"
+            size={22}
+            accessibilityLabel="Import rally points"
+            onPress={() => setImportVisible(true)}
+          />
+          <IconButton
+            name="share-outline"
+            size={22}
+            accessibilityLabel="Share rally points"
+            onPress={handleShare}
+          />
+          <IconButton
+            name="add-circle-outline"
+            size={22}
+            accessibilityLabel="Add rally point"
+            onPress={() => navigation.navigate('NewRallyPoint')}
+          />
+        </>
+      }
+    >
+      {rallyPoints.length === 0 ? (
+        <Text
+          style={[
+            styles.emptyText,
+            { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+          ]}
         >
-          {store.rallyPoints.length === 0 && (
-            <Text style={[styles.emptyText, { color: COLORS.PRIMARY_DARK }]}>
-              No rally points yet. Add a meeting location to get started.
-            </Text>
-          )}
-          {store.rallyPoints.map((point) => (
-            <Touchable
+          No rally points yet. Add a meeting location to get started.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {rallyPoints.map((point, index) => (
+            <ModuleRow
               key={point.id}
-              style={[
-                styles.card,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.SECONDARY_ACCENT,
-                },
-              ]}
+              title={point.name}
+              icon="location-outline"
+              subtitle={
+                point.coordinates
+                  ? `${point.description}. ${point.coordinates}`
+                  : point.description
+              }
+              variant="tool"
+              showSeparator={index < rallyPoints.length - 1}
               onPress={() =>
                 navigation.navigate('EditRallyPoint', { rallyPoint: point })
               }
-              accessibilityLabel={`Edit ${point.name}`}
-              accessibilityRole="button"
-            >
-              <View style={styles.cardBody}>
-                <Text style={[styles.name, { color: COLORS.PRIMARY_DARK }]}>
-                  {point.name}
-                </Text>
-                <Text
-                  style={[styles.description, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {point.description}
-                </Text>
-                {point.coordinates ? (
-                  <View style={styles.coordinatesRow}>
-                    <Ionicons
-                      name="location-outline"
-                      size={13}
-                      color={COLORS.PRIMARY_DARK}
-                    />
-                    <Text
-                      style={[
-                        styles.coordinates,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {point.coordinates}
-                    </Text>
-                  </View>
-                ) : null}
-              </View>
-              <Ionicons
-                name="chevron-forward-outline"
-                size={20}
-                color={COLORS.PRIMARY_DARK}
-              />
-            </Touchable>
+            />
           ))}
-        </ScrollView>
-      </View>
+        </GroupContainer>
+      )}
 
       <ImportModal
         visible={importVisible}
@@ -184,72 +148,13 @@ export default observer(function RallyPointsScreen() {
         onClose={() => setImportVisible(false)}
         onImport={handleImport}
       />
-    </ScreenBody>
+    </StackScreen>
   );
 });
 
 const styles = StyleSheet.create({
-  addRow: {
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    paddingBottom: 4,
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'flex-end',
-    gap: 8,
-  },
-  iconButton: {
-    borderWidth: 1,
-    borderRadius: 8,
-  },
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 12,
-    paddingBottom: 24,
-  },
   emptyText: {
     fontSize: 16,
-    opacity: 0.7,
-    marginTop: 16,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 14,
-    marginBottom: 10,
-  },
-  cardBody: {
-    flex: 1,
-  },
-  name: {
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
-  },
-  description: {
-    fontSize: 14,
-    opacity: 0.8,
-    marginBottom: 2,
-  },
-  coordinatesRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-    marginTop: 4,
-  },
-  coordinates: {
-    fontSize: 13,
-    opacity: 0.65,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });

@@ -5,14 +5,9 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { useTheme } from '../../hooks/useTheme';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { useEmergencyPlanStore } from '../../stores';
 
 /**
@@ -23,13 +18,11 @@ import { useEmergencyPlanStore } from '../../stores';
  * - Rally Points
  * - Communication Plan
  *
- * @returns A screen layout with navigation cards for each section.
+ * @returns A screen layout with navigation rows for each section.
  */
 export default observer(function EmergencyPlanScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useEmergencyPlanStore();
-  const footerClearance = useFooterClearance();
-  const COLORS = useTheme();
 
   const sections = [
     {
@@ -53,80 +46,20 @@ export default observer(function EmergencyPlanScreen() {
   ];
 
   return (
-    <ScreenBody>
-      <SectionHeader>Emergency Planner</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        {sections.map((section) => (
-          <Touchable
+    <StackScreen title="Emergency Planner" subtitle="Stored offline">
+      <GroupContainer>
+        {sections.map((section, index) => (
+          <ModuleRow
             key={section.screen}
-            style={[
-              styles.card,
-              {
-                backgroundColor: COLORS.PRIMARY_LIGHT,
-                borderColor: COLORS.SECONDARY_ACCENT,
-              },
-            ]}
+            title={section.title}
+            subtitle={section.subtitle}
+            icon={section.icon}
+            variant="tool"
+            showSeparator={index < sections.length - 1}
             onPress={() => navigation.navigate(section.screen)}
-            accessibilityLabel={section.title}
-            accessibilityRole="button"
-          >
-            <View style={styles.cardIcon}>
-              <Ionicons
-                name={section.icon}
-                size={32}
-                color={COLORS.PRIMARY_DARK}
-              />
-            </View>
-            <View style={styles.cardText}>
-              <Text style={[styles.cardTitle, { color: COLORS.PRIMARY_DARK }]}>
-                {section.title}
-              </Text>
-              <Text
-                style={[styles.cardSubtitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                {section.subtitle}
-              </Text>
-            </View>
-            <Ionicons
-              name="chevron-forward-outline"
-              size={20}
-              color={COLORS.PRIMARY_DARK}
-            />
-          </Touchable>
+          />
         ))}
-      </View>
-    </ScreenBody>
+      </GroupContainer>
+    </StackScreen>
   );
-});
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingHorizontal: 12,
-    paddingTop: 12,
-  },
-  card: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-  },
-  cardIcon: {
-    marginRight: 16,
-  },
-  cardText: {
-    flex: 1,
-  },
-  cardTitle: {
-    fontSize: 17,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  cardSubtitle: {
-    fontSize: 13,
-    opacity: 0.7,
-  },
 });
