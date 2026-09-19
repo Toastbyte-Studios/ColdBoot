@@ -1,19 +1,29 @@
-import { RouteProp, useRoute, useFocusEffect } from '@react-navigation/native';
+import {
+  RouteProp,
+  useNavigation,
+  useRoute,
+  useFocusEffect,
+} from '@react-navigation/native';
 import React, { useState, useCallback } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Platform, StyleSheet, View, ScrollView } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
+import { RADIUS, SPACING, TEXT_GUTTER } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   conversionCategories,
   ConversionUnit,
 } from '../../utils/unitConversions';
+
+const isAndroid = Platform.OS === 'android';
 
 type RouteParams = {
   ConversionCategory: {
@@ -35,10 +45,20 @@ const DECIMAL_PLACES = 6;
  * - Large numeric keypad for easy input with gloves
  * - Real-time conversion as user types
  *
+ * This is the one screen below a module that does not use `StackScreen`. The
+ * keypad fills whatever height is left and must not scroll — a glove-sized
+ * key that slides under the thumb is worse than no key — so the screen keeps
+ * its own fixed layout and takes only the headline row from the redesign. It
+ * is presented as a modal, so that row's control is a close button rather
+ * than a back chevron: the gesture that dismisses it is a downward swipe, and
+ * there is no screen behind it to go back to. The not-found state has no
+ * keypad, so that one is an ordinary `StackScreen`.
+ *
  * @returns A React element rendering the conversion interface.
  */
 export default function ConversionCategoryScreen() {
   const route = useRoute<RouteProp<RouteParams, 'ConversionCategory'>>();
+  const navigation = useNavigation();
   const { setDisableGestureNavigation } = useGestureNavigation();
   const COLORS = useTheme();
   const { categoryId } = route.params;
@@ -58,12 +78,16 @@ export default function ConversionCategoryScreen() {
 
   if (!category) {
     return (
-      <ScreenBody>
-        <SectionHeader>Error</SectionHeader>
-        <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
-          Category not found
+      <StackScreen title="Category not found">
+        <Text
+          style={[
+            styles.errorText,
+            { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+          ]}
+        >
+          This conversion category is not in the offline table.
         </Text>
-      </ScreenBody>
+      </StackScreen>
     );
   }
 
@@ -142,17 +166,14 @@ export default function ConversionCategoryScreen() {
   // Helper functions for inline styles
   const getValueContainerStyle = () => [
     styles.valueContainer,
-    {
-      borderColor: COLORS.SECONDARY_ACCENT,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-    },
+    cardSurface(COLORS),
   ];
 
   const getKeypadButtonStyle = () => [
     styles.keypadButton,
     {
-      backgroundColor: COLORS.BRAND,
-      borderColor: COLORS.SECONDARY_ACCENT,
+      backgroundColor: isAndroid ? COLORS.SECONDARY_CONTAINER : COLORS.SURFACE,
+      borderColor: COLORS.BORDER,
     },
   ];
 
@@ -165,9 +186,19 @@ export default function ConversionCategoryScreen() {
         style={StyleSheet.absoluteFill}
       />
       <ScreenBody>
-        <View style={styles.headerContainer}>
-          <SectionHeader isShowHr={false}>{category.name}</SectionHeader>
-        </View>
+        <SectionHeader
+          containerStyle={styles.headline}
+          title={category.name}
+          subtitle="Offline conversion"
+          trailing={
+            <IconButton
+              name="close-outline"
+              size={24}
+              accessibilityLabel="Close"
+              onPress={() => navigation.goBack()}
+            />
+          }
+        />
 
         {/* Unit Selection */}
         <View style={styles.unitSelectorContainer}>
@@ -182,9 +213,11 @@ export default function ConversionCategoryScreen() {
                   {
                     backgroundColor:
                       selectedUnitIndex === index
-                        ? COLORS.ACCENT
-                        : COLORS.BRAND,
-                    borderColor: COLORS.SECONDARY_ACCENT,
+                        ? COLORS.ACCENT_CONTAINER
+                        : isAndroid
+                          ? COLORS.SURFACE_CONTAINER
+                          : COLORS.SURFACE,
+                    borderColor: COLORS.BORDER,
                   },
                 ]}
                 onPress={() => {
@@ -199,7 +232,7 @@ export default function ConversionCategoryScreen() {
                     {
                       color:
                         selectedUnitIndex === index
-                          ? COLORS.PRIMARY_LIGHT
+                          ? COLORS.ON_ACCENT_CONTAINER
                           : COLORS.PRIMARY_DARK,
                     },
                   ]}
@@ -214,7 +247,7 @@ export default function ConversionCategoryScreen() {
         {/* Conversion Display */}
         <View style={styles.conversionContainer}>
           <View style={getValueContainerStyle()}>
-            <Text style={[styles.valueLabel, { color: COLORS.PRIMARY_DARK }]}>
+            <Text style={[styles.valueLabel, { color: COLORS.MUTED }]}>
               {fromUnit}
             </Text>
             <Text style={[styles.valueText, { color: COLORS.PRIMARY_DARK }]}>
@@ -232,7 +265,7 @@ export default function ConversionCategoryScreen() {
           />
 
           <View style={getValueContainerStyle()}>
-            <Text style={[styles.valueLabel, { color: COLORS.PRIMARY_DARK }]}>
+            <Text style={[styles.valueLabel, { color: COLORS.MUTED }]}>
               {toUnit}
             </Text>
             <Text style={[styles.valueText, { color: COLORS.PRIMARY_DARK }]}>
@@ -478,16 +511,13 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    textAlign: 'center',
-    marginTop: 20,
+    lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
-  headerContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginVertical: 10,
-    position: 'relative',
+  headline: {
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    paddingTop: SPACING.xs,
+    paddingBottom: SPACING.sm,
   },
   unitSelectorContainer: {
     width: '100%',
@@ -499,11 +529,11 @@ const styles = StyleSheet.create({
   unitButton: {
     minHeight: 44,
     justifyContent: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    marginHorizontal: 4,
-    borderRadius: 8,
-    borderWidth: 2,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
+    marginHorizontal: SPACING.xs,
+    borderRadius: RADIUS.tileSmall,
+    borderWidth: 1,
   },
   unitButtonText: {
     fontSize: 18,
@@ -515,10 +545,8 @@ const styles = StyleSheet.create({
   },
   valueContainer: {
     width: '100%',
-    borderRadius: 12,
-    borderWidth: 2,
-    paddingVertical: 5,
-    paddingHorizontal: 16,
+    paddingVertical: SPACING.sm,
+    paddingHorizontal: SPACING.md,
     marginVertical: 2,
   },
   valueLabel: {
@@ -546,8 +574,8 @@ const styles = StyleSheet.create({
   keypadButton: {
     width: '30%',
     aspectRatio: 1.5,
-    borderRadius: 12,
-    borderWidth: 2,
+    borderRadius: RADIUS.card,
+    borderWidth: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
