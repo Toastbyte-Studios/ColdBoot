@@ -1,9 +1,9 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import { useTheme } from '../../../hooks/useTheme';
+import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
 import { formatDateTime } from '../../../utils/timeFormat';
@@ -29,20 +29,22 @@ export default function VoiceLogCard({
 }: VoiceLogCardProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const accentForeground = onColor(COLORS.ACCENT);
   // While playing the card fills with ACCENT, so its content colour is
   // measured against that fill rather than assumed.
-  const onPlaying = isPlaying ? { color: onColor(COLORS.ACCENT) } : null;
+  const onPlaying = isPlaying ? { color: accentForeground } : null;
 
   return (
-    <View style={[styles.container, isPlaying && styles.containerPlaying]}>
-      <LinearGradient
-        colors={
-          isPlaying ? [COLORS.ACCENT, COLORS.ACCENT] : COLORS.BRAND_GRADIENT
-        }
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.background}
-      />
+    <View
+      style={[
+        styles.container,
+        cardSurface(COLORS),
+        isPlaying && {
+          backgroundColor: COLORS.ACCENT,
+          borderColor: COLORS.ACCENT,
+        },
+      ]}
+    >
       <View style={styles.content}>
         <View style={styles.info}>
           <Text style={[styles.title, onPlaying]}>{title || 'Voice Log'}</Text>
@@ -59,7 +61,7 @@ export default function VoiceLogCard({
               <View
                 style={[
                   styles.playingDot,
-                  { backgroundColor: onColor(COLORS.ACCENT) },
+                  { backgroundColor: accentForeground },
                 ]}
               />
               <Text style={[styles.playingText, onPlaying]}>Playing...</Text>
@@ -71,9 +73,7 @@ export default function VoiceLogCard({
             <IconButton
               name={isPlaying ? 'pause-outline' : 'play-outline'}
               size={24}
-              color={
-                isPlaying ? onColor(COLORS.ACCENT) : COLORS.SECONDARY_ACCENT
-              }
+              color={isPlaying ? accentForeground : COLORS.SECONDARY_ACCENT}
               accessibilityLabel={isPlaying ? 'Stop playing' : 'Play voice log'}
               onPress={onPlay}
               style={styles.actionButton}
@@ -82,7 +82,7 @@ export default function VoiceLogCard({
           <IconButton
             name="trash-outline"
             size={24}
-            color={isPlaying ? onColor(COLORS.ACCENT) : COLORS.ERROR}
+            color={isPlaying ? accentForeground : COLORS.ERROR}
             accessibilityLabel="Delete voice log"
             onPress={onDelete}
             style={styles.actionButton}
@@ -96,17 +96,8 @@ export default function VoiceLogCard({
 const makeStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
     container: {
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: COLORS.SECONDARY_ACCENT,
       marginBottom: 12,
       overflow: 'hidden',
-    },
-    containerPlaying: {
-      borderColor: COLORS.ACCENT,
-    },
-    background: {
-      ...StyleSheet.absoluteFillObject,
     },
     content: {
       flexDirection: 'row',

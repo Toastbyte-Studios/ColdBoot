@@ -4,26 +4,32 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, { JSX, useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
+import { Platform, StyleSheet } from 'react-native';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import scenarioData from '../../data/scenarioCards.json';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import { useTheme } from '../../hooks/useTheme';
 import {
   getBookmarks,
   BookmarkItem,
   clearBookmarks,
 } from '../../stores/BookmarksStore';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SPACING, TEXT_GUTTER } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import { ScenarioCardType } from '../../types/data-type';
+
+const isAndroid = Platform.OS === 'android';
+
+/** Muted text on the bare screen ground — see `MUTED_ON_GROUND`. */
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 /**
  * Displays a list of bookmarked scenario cards for the user.
  *
- * - Fetches bookmarks using `getBookmarks` and displays them in a grid.
+ * - Fetches bookmarks using `getBookmarks` and displays them in a grouped list.
  * - Navigates to the detailed view of a scenario when a bookmark is selected.
  * - Shows a helper message if there are no bookmarks.
  * - Reloads bookmarks whenever the screen gains focus.
@@ -34,7 +40,7 @@ import { ScenarioCardType } from '../../types/data-type';
 export default function ScenarioBookmarksScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [items, setItems] = useState<BookmarkItem[]>([]);
-  const footerClearance = useFooterClearance();
+  const COLORS = useTheme();
 
   // Create a Map for O(1) lookup performance instead of O(n) for each find operation
   // Using useMemo to lazily initialize only when component mounts
@@ -90,10 +96,17 @@ export default function ScenarioBookmarksScreen(): JSX.Element {
     navigation.navigate('ScenarioDetail', { scenario });
   };
 
-  return (
-    <ScreenBody>
-      <SectionHeader>Bookmarked Scenarios</SectionHeader>
+  const sorted = items.slice().sort((a, b) => a.title.localeCompare(b.title));
 
+  return (
+    <StackScreen
+      title="Bookmarked Scenarios"
+      subtitle={
+        sorted.length > 0
+          ? `${sorted.length} saved scenario${sorted.length === 1 ? '' : 's'}`
+          : undefined
+      }
+    >
       {/* DEV ONLY - Clear all bookmarks */}
       {__DEV__ && (
         <Text
@@ -101,64 +114,44 @@ export default function ScenarioBookmarksScreen(): JSX.Element {
             await clearBookmarks();
             await load();
           }}
-          style={styles.dev}
+          style={[styles.dev, { color: groundInk(COLORS) }]}
         >
           Clear all bookmarks (dev)
         </Text>
       )}
       {/* END DEV ONLY */}
 
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {items.length === 0 && (
-            <Text style={styles.helperText}>No bookmarked scenarios yet.</Text>
-          )}
-          {items.length > 0 && (
-            <Grid>
-              {items
-                .slice()
-                .sort((a, b) => a.title.localeCompare(b.title))
-                .map((item) => (
-                  <CardTopic
-                    key={item.id}
-                    title={item.title}
-                    icon="document-text-outline"
-                    onPress={() => handleOpen(item)}
-                  />
-                ))}
-            </Grid>
-          )}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+      {sorted.length === 0 ? (
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          No bookmarked scenarios yet.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {sorted.map((item, index) => (
+            <ModuleRow
+              key={item.id}
+              title={item.title}
+              icon="bookmark-outline"
+              variant="tool"
+              subtitle={item.category || undefined}
+              showSeparator={index < sorted.length - 1}
+              onPress={() => handleOpen(item)}
+            />
+          ))}
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 2,
-    paddingBottom: 24,
-    width: '100%',
-    alignItems: 'center',
-  },
   helperText: {
     fontSize: 16,
-    opacity: 0.8,
-    marginHorizontal: 2,
-    marginTop: 12,
+    lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
-  dev: { marginBottom: 8, opacity: 0.7 },
+  dev: {
+    marginBottom: SPACING.sm,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
 });

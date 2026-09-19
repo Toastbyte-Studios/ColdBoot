@@ -1,19 +1,22 @@
 import Slider from '@react-native-community/slider';
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import { FlashlightModes } from '../../../constants';
 import AppSwitch from '../../components/AppSwitch';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
-import { ColorScheme } from '../../theme/colors';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import { FlashlightModeType } from '../../types/common-types';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * Flashlight screen implementation that lets the user select a flashlight mode and adjust
@@ -26,13 +29,13 @@ import { FlashlightModeType } from '../../types/common-types';
  * - Conditionally renders:
  *   - **Strobe controls**: frequency slider (1–15 Hz) bound to `core.strobeFrequencyHz` and `core.setStrobeFrequency`.
  *   - **SOS controls**: tone toggle switch bound to `core.sosWithTone` and `core.setSosWithTone`.
- * - Highlights the active mode card using `styles.activeCard`.
+ * - Marks the active mode with an "On" value on its row, and names it in the
+ *   header subtitle.
  *
- * @returns A React element rendering the flashlight mode grid and any applicable controls.
+ * @returns A React element rendering the flashlight mode list and any applicable controls.
  */
 const FlashlightScreenImpl = () => {
   const COLORS = useTheme();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useSignalingStore();
   const navigation = useNavigation();
   const mode = core.flashlightMode;
@@ -46,112 +49,118 @@ const FlashlightScreenImpl = () => {
     navigation.navigate('Nightvision');
   };
 
-  return (
-    <ScreenBody>
-      <SectionHeader>Flashlight</SectionHeader>
+  const activeLabel =
+    mode === FlashlightModes.ON
+      ? 'Light on'
+      : mode === FlashlightModes.SOS
+        ? 'SOS signalling'
+        : mode === FlashlightModes.STROBE
+          ? `Strobe at ${core.strobeFrequencyHz} Hz`
+          : 'Off';
 
-      <Grid>
-        <CardTopic
+  return (
+    <StackScreen title="Flashlight" subtitle={activeLabel}>
+      <GroupContainer>
+        <ModuleRow
           title="Flashlight On"
           icon="flashlight-outline"
+          variant="tool"
+          value={mode === FlashlightModes.ON ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.ON)}
-          containerStyle={
-            mode === FlashlightModes.ON ? styles.activeCard : undefined
-          }
         />
-        <CardTopic
+        <ModuleRow
           title="SOS"
           icon="alert-outline"
+          variant="tool"
+          value={mode === FlashlightModes.SOS ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.SOS)}
-          containerStyle={
-            mode === FlashlightModes.SOS ? styles.activeCard : undefined
-          }
         />
-        <CardTopic
+        <ModuleRow
           title="Strobe"
           icon="flash-outline"
+          variant="tool"
+          value={mode === FlashlightModes.STROBE ? 'On' : 'Off'}
           onPress={() => selectMode(FlashlightModes.STROBE)}
-          containerStyle={
-            mode === FlashlightModes.STROBE ? styles.activeCard : undefined
-          }
         />
-        <CardTopic
+        <ModuleRow
           title="Nightvision"
           icon="moon-outline"
+          variant="tool"
+          showSeparator={false}
           onPress={openNightvision}
         />
-      </Grid>
+      </GroupContainer>
 
       {mode === FlashlightModes.STROBE && (
-        <View style={styles.controlsContainer}>
-          <SectionHeader isShowHr={false}>
-            Strobe Frequency {core.strobeFrequencyHz} Hz
-          </SectionHeader>
-          <Slider
-            style={styles.slider}
-            minimumValue={1}
-            maximumValue={15}
-            step={1}
-            value={core.strobeFrequencyHz}
-            onValueChange={(v: number) => core.setStrobeFrequency(v)}
-            minimumTrackTintColor={COLORS.ACCENT}
-            maximumTrackTintColor={COLORS.SECONDARY_ACCENT}
-          />
+        <View style={styles.controls}>
+          <SectionEyebrow>Strobe frequency</SectionEyebrow>
+          <View style={[styles.card, cardSurface(COLORS)]}>
+            <Text style={styles.value}>{core.strobeFrequencyHz} Hz</Text>
+            <Slider
+              style={styles.slider}
+              minimumValue={1}
+              maximumValue={15}
+              step={1}
+              value={core.strobeFrequencyHz}
+              onValueChange={(v: number) => core.setStrobeFrequency(v)}
+              minimumTrackTintColor={COLORS.ACCENT}
+              maximumTrackTintColor={COLORS.SECONDARY_ACCENT}
+              accessibilityLabel="Strobe frequency in hertz"
+            />
+          </View>
         </View>
       )}
 
       {mode === FlashlightModes.SOS && (
-        <View style={styles.controlsContainer}>
-          <SectionHeader isShowHr={false}>
-            <View style={styles.sectionContainer}>
-              <Text style={styles.sectionText}>SOS Tone</Text>
-              <AppSwitch
-                value={core.sosWithTone}
-                onValueChange={(v: boolean) => core.setSosWithTone(v)}
-                tint={COLORS.ACCENT}
-                offTint={COLORS.SECONDARY_ACCENT}
-                thumbColor={
-                  core.sosWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND
-                }
-                accessibilityLabel="Play a tone alongside the SOS flash"
-                style={styles.switchContainer}
-              />
-            </View>
-          </SectionHeader>
+        <View style={styles.controls}>
+          <SectionEyebrow>SOS</SectionEyebrow>
+          <View style={[styles.card, styles.switchRow, cardSurface(COLORS)]}>
+            <Text style={styles.switchLabel}>Play a tone with the flash</Text>
+            <AppSwitch
+              value={core.sosWithTone}
+              onValueChange={(v: boolean) => core.setSosWithTone(v)}
+              tint={COLORS.ACCENT}
+              offTint={COLORS.SECONDARY_ACCENT}
+              thumbColor={
+                core.sosWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND
+              }
+              accessibilityLabel="Play a tone alongside the SOS flash"
+            />
+          </View>
         </View>
       )}
-    </ScreenBody>
+    </StackScreen>
   );
 };
 
 export default observer(FlashlightScreenImpl);
 
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    activeCard: {
-      borderColor: COLORS.ACCENT,
-      borderWidth: 3,
-    },
-    controlsContainer: {
-      width: '100%',
-      paddingHorizontal: 10,
-    },
-    slider: {
-      width: '100%',
-      height: 40,
-    },
-    sectionContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      width: '100%',
-    },
-    sectionText: {
-      fontSize: 20,
-      fontWeight: '800',
-      color: COLORS.PRIMARY_DARK,
-    },
-    switchContainer: {
-      paddingHorizontal: 20,
-    },
-  });
+const styles = StyleSheet.create({
+  controls: {
+    marginTop: SPACING.lg,
+  },
+  card: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.lg,
+  },
+  value: {
+    fontSize: 22,
+    fontWeight: '700',
+    fontVariant: ['tabular-nums'],
+  },
+  slider: {
+    width: '100%',
+    height: 40,
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  switchLabel: {
+    flex: 1,
+    fontSize: 16,
+  },
+});

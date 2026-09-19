@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
@@ -17,6 +16,8 @@ import {
   useCoreStore,
 } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+import { onColor } from '../../theme/colorUtils';
 import { formatDaysUntil } from '../../utils/formatDaysUntil';
 
 const EVENT_TYPE_DETAILS: Record<
@@ -72,23 +73,23 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
   const daysUntil = formatDaysUntil(event.date);
   const isImminent = event.date.getTime() - Date.now() < 7 * 24 * 3600 * 1000;
 
-  const cardBorderStyle = {
-    borderColor: isImminent ? typeInfo.color : COLORS.SECONDARY_ACCENT,
-  };
+  // Imminence is carried by the card's accent edge and by weight, not by
+  // tinting the text: the type colours are 2-3:1 as text on the light card.
+  const cardStyle = cardSurface(
+    COLORS,
+    isImminent ? { accent: typeInfo.color } : undefined,
+  );
   const badgeStyle = { backgroundColor: typeInfo.color };
+  // White failed on five of the six type colours (as low as 2.2:1); onColor
+  // picks ink or paper, whichever reads, for each.
+  const badgeTextStyle = { color: onColor(typeInfo.color) };
   const daysUntilStyle = {
-    color: isImminent ? typeInfo.color : COLORS.PRIMARY_DARK,
+    color: COLORS.PRIMARY_DARK,
     fontWeight: (isImminent ? '700' : '500') as '700' | '500',
   };
 
   return (
-    <View style={[styles.eventCard, cardBorderStyle]}>
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.cardBackground}
-      />
+    <View style={[styles.eventCard, cardStyle]}>
       <View style={styles.cardRow}>
         <Ionicons
           name={event.icon}
@@ -100,7 +101,9 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
           <View style={styles.cardHeader}>
             <Text style={styles.eventLabel}>{event.label}</Text>
             <View style={[styles.typeBadge, badgeStyle]}>
-              <Text style={styles.typeBadgeText}>{typeInfo.description}</Text>
+              <Text style={[styles.typeBadgeText, badgeTextStyle]}>
+                {typeInfo.description}
+              </Text>
             </View>
           </View>
           <Text style={styles.eventDate}>{formatEventDate(event.date)}</Text>
@@ -141,13 +144,7 @@ function SkyEventsScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {!hasLocation && (
-            <View style={styles.locationBanner}>
-              <LinearGradient
-                colors={COLORS.BRAND_GRADIENT}
-                start={{ x: 0, y: 1 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.cardBackground}
-              />
+            <View style={[styles.locationBanner, cardSurface(COLORS)]}>
               <View style={styles.locationBannerRow}>
                 <Ionicons
                   name="location-outline"
@@ -214,9 +211,6 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
     },
     locationBanner: {
       width: '80%',
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: COLORS.SECONDARY_ACCENT,
       padding: 12,
       marginBottom: 12,
       overflow: 'hidden',
@@ -236,16 +230,11 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
     },
     eventCard: {
       width: '80%',
-      borderRadius: 12,
-      borderWidth: 2,
       paddingTop: 18,
       paddingBottom: 14,
       paddingHorizontal: 14,
       marginTop: 10,
       overflow: 'hidden',
-    },
-    cardBackground: {
-      ...StyleSheet.absoluteFill,
     },
     cardRow: {
       flexDirection: 'row',
@@ -279,7 +268,6 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
       fontSize: 11,
       fontWeight: '700',
       textTransform: 'uppercase',
-      color: '#FFFFFF',
     },
     eventDate: {
       fontSize: 13,
@@ -296,7 +284,7 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
       marginTop: 10,
       marginBottom: 8,
       borderTopWidth: StyleSheet.hairlineWidth,
-      borderTopColor: 'rgba(0,0,0,0.15)',
+      borderTopColor: COLORS.SEPARATOR,
     },
     eventDetail: {
       fontSize: 13,

@@ -4,15 +4,13 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, { JSX } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import SectionSubHeader from '../../components/SectionSubHeader';
+import { StyleSheet, View } from 'react-native';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SPACING } from '../../theme';
 
 const radioCategories = [
   { id: 'HAM', title: 'HAM', icon: 'radio-outline' },
@@ -25,17 +23,15 @@ const radioCategories = [
 /**
  * Displays radio frequency categories for different communication systems.
  *
- * Shows categories for HAM, CB, GMRS, FRS, and MURS radio frequencies as well
- * as a Local Repeaters entry (powered by RepeaterBook) in a grid layout using
- * standard cards. Content includes proper bottom padding to prevent overflow
- * into the footer.
+ * Shows categories for HAM, CB, GMRS, FRS, and MURS radio frequencies as rows
+ * in one grouped list, with a Local Repeaters entry (powered by RepeaterBook)
+ * in its own group below. StackScreen keeps the content clear of the tab bar.
  *
  * @component
  * @returns {JSX.Element} The rendered radio frequencies screen.
  */
 export default function RadioFrequenciesScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const footerClearance = useFooterClearance();
   const disclaimer: string = radioFrequenciesData.metadata?.disclaimer ?? '';
 
   const handleCategoryPress = (categoryId: string) => {
@@ -50,53 +46,44 @@ export default function RadioFrequenciesScreen(): JSX.Element {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Radio Frequencies</SectionHeader>
+    <StackScreen
+      title="Radio Frequencies"
+      subtitle={`${radioCategories.length} categories · all offline`}
+      note={disclaimer.trim() || undefined}
+    >
+      <GroupContainer>
+        {radioCategories.map((category, index) => (
+          <ModuleRow
+            key={category.id}
+            title={category.title}
+            icon={category.icon}
+            variant="tool"
+            showSeparator={index < radioCategories.length - 1}
+            onPress={() => handleCategoryPress(category.id)}
+          />
+        ))}
+      </GroupContainer>
 
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {disclaimer.trim().length > 0 && (
-            <SectionSubHeader>{disclaimer}</SectionSubHeader>
-          )}
-          <Grid>
-            {radioCategories.map((category) => (
-              <CardTopic
-                key={category.id}
-                title={category.title}
-                icon={category.icon}
-                onPress={() => handleCategoryPress(category.id)}
-              />
-            ))}
-            <CardTopic
-              title="Local Repeaters"
-              icon="location-outline"
-              onPress={() => navigation.navigate('RepeaterBook')}
-            />
-          </Grid>
-        </ScrollView>
+      {/* Not a frequency category: a lookup of nearby repeaters, so it gets
+          its own group rather than sitting last in the list above. */}
+      <View style={styles.nearby}>
+        <SectionEyebrow>Nearby</SectionEyebrow>
+        <GroupContainer>
+          <ModuleRow
+            title="Local Repeaters"
+            icon="location-outline"
+            variant="tool"
+            showSeparator={false}
+            onPress={() => navigation.navigate('RepeaterBook')}
+          />
+        </GroupContainer>
       </View>
-    </ScreenBody>
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    paddingHorizontal: 2,
-    paddingBottom: 24,
-    width: '100%',
-    alignItems: 'center',
+  nearby: {
+    marginTop: SPACING.lg,
   },
 });

@@ -4,13 +4,9 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { FOOTER_HEIGHT } from '../../theme';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { conversionCategories } from '../../utils/unitConversions';
 
 /**
@@ -20,51 +16,32 @@ import { conversionCategories } from '../../utils/unitConversions';
  * Categories include Length, Weight, Volume, Temperature, Area, Speed, Pressure,
  * Energy, Time, Compass/Angles, Fuel, and Light.
  *
- * @returns A React element rendering the unit conversion categories grid.
+ * @returns A React element rendering the unit conversion categories as a grouped list.
  */
 export default function UnitConversionScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const footerClearance = useFooterClearance();
 
   const openCategory = (categoryId: string) => {
     navigation.navigate('ConversionCategory', { categoryId });
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Unit Conversion</SectionHeader>
-      <ScrollView
-        style={[styles.container, { marginBottom: footerClearance }]}
-        contentContainerStyle={styles.contentContainer}
-      >
-        <View style={styles.gridWrapper}>
-          <Grid>
-            {conversionCategories.map((category) => (
-              <CardTopic
-                key={category.id}
-                title={category.name}
-                icon={category.icon}
-                onPress={() => openCategory(category.id)}
-              />
-            ))}
-          </Grid>
-        </View>
-      </ScrollView>
-    </ScreenBody>
+    <StackScreen
+      title="Unit Conversion"
+      subtitle={`${conversionCategories.length} converters · all offline`}
+    >
+      <GroupContainer>
+        {conversionCategories.map((category, index) => (
+          <ModuleRow
+            key={category.id}
+            title={category.name}
+            icon={category.icon}
+            variant="tool"
+            showSeparator={index < conversionCategories.length - 1}
+            onPress={() => openCategory(category.id)}
+          />
+        ))}
+      </GroupContainer>
+    </StackScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    marginBottom: FOOTER_HEIGHT,
-  },
-  contentContainer: {
-    alignItems: 'center',
-  },
-  gridWrapper: {
-    alignItems: 'center',
-  },
-});

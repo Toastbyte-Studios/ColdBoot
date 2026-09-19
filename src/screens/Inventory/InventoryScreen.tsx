@@ -5,13 +5,10 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { useInventoryStore } from '../../stores';
 
 /**
@@ -21,11 +18,11 @@ import { useInventoryStore } from '../../stores';
  * Presents a dashboard of inventory-related actions and routes:
  * - **View All** → navigates to the `InventoryAllItems` screen showing all items alphabetically
  * - **Manage Categories** → navigates to the `ManageInventoryCategories` screen
- * - **Inventory Categories** → mapped as CardTopic cards that navigate to category-specific screens
+ * - **Inventory Categories** → listed as rows in one grouped list that navigate to category-specific screens
  *
- * Uses React Navigation to perform screen transitions from card taps.
+ * Uses React Navigation to perform screen transitions from row taps.
  *
- * @returns A screen layout containing a header, action buttons, and a grid of navigation cards.
+ * @returns A screen layout containing a title row with action buttons and a grouped list of navigation rows.
  */
 export default observer(function InventoryScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
@@ -37,45 +34,40 @@ export default observer(function InventoryScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Inventory</SectionHeader>
-      <View style={styles.inventoryHeader}>
-        <IconButton
-          name="list-outline"
-          size={30}
-          accessibilityLabel="View All Items"
-          onPress={() => navigation.navigate('InventoryAllItems')}
-        />
-        <IconButton
-          name="folder-open-outline"
-          size={30}
-          accessibilityLabel="Manage Categories"
-          onPress={() => navigation.navigate('ManageInventoryCategories')}
-        />
-      </View>
-      <HorizontalRule />
-
-      <Grid>
-        {inventory.categories.map((cat) => (
-          <CardTopic
+    <StackScreen
+      title="Inventory"
+      subtitle={`${inventory.categories.length} categor${inventory.categories.length === 1 ? 'y' : 'ies'}`}
+      trailing={
+        <>
+          <IconButton
+            name="list-outline"
+            size={22}
+            accessibilityLabel="View All Items"
+            onPress={() => navigation.navigate('InventoryAllItems')}
+          />
+          <IconButton
+            name="folder-open-outline"
+            size={22}
+            accessibilityLabel="Manage Categories"
+            onPress={() => navigation.navigate('ManageInventoryCategories')}
+          />
+        </>
+      }
+    >
+      <GroupContainer>
+        {inventory.categories.map((cat, index, all) => (
+          <ModuleRow
             key={cat}
             title={cat}
             icon={categoryIcons[cat] || 'cube-outline'}
+            variant="tool"
+            showSeparator={index < all.length - 1}
             onPress={() =>
               navigation.navigate('InventoryCategory', { category: cat })
             }
           />
         ))}
-      </Grid>
-    </ScreenBody>
+      </GroupContainer>
+    </StackScreen>
   );
-});
-
-const styles = StyleSheet.create({
-  inventoryHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
 });

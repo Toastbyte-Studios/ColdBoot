@@ -104,4 +104,18 @@ describe('ModuleRow on Android', () => {
     ReactTestRenderer.act(() => buttons[0].props.onPress());
     expect(onPress).toHaveBeenCalledTimes(1);
   });
+
+  test('the accessibility label includes the right-aligned value', () => {
+    const tree = render({ value: 'On' });
+
+    const button = tree.root.find(
+      (node) =>
+        node.props.accessibilityRole === 'button' &&
+        node.props.accessibilityLabel,
+    );
+
+    expect(button.props.accessibilityLabel).toBe(
+      'Core. Flashlight · notepad · status. On',
+    );
+  });
 });

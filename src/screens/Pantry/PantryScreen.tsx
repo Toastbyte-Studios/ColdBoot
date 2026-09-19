@@ -5,13 +5,10 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { usePantryStore } from '../../stores';
 
 /**
@@ -21,11 +18,11 @@ import { usePantryStore } from '../../stores';
  * Presents a dashboard of pantry-related actions and routes:
  * - **View All** → navigates to the `PantryAllItems` screen showing all items alphabetically
  * - **Manage Categories** → navigates to the `ManagePantryCategories` screen
- * - **Pantry Categories** → mapped as CardTopic cards that navigate to category-specific screens
+ * - **Pantry Categories** → listed as rows in one grouped list that navigate to category-specific screens
  *
- * Uses React Navigation to perform screen transitions from card taps.
+ * Uses React Navigation to perform screen transitions from row taps.
  *
- * @returns A screen layout containing a header, action buttons, and a grid of navigation cards.
+ * @returns A screen layout containing a title row with action buttons and a grouped list of navigation rows.
  */
 export default observer(function PantryScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
@@ -39,51 +36,46 @@ export default observer(function PantryScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Pantry</SectionHeader>
-      <View style={styles.pantryHeader}>
-        <IconButton
-          name="list-outline"
-          size={30}
-          accessibilityLabel="View All Items"
-          onPress={() => navigation.navigate('PantryAllItems')}
-        />
-        <IconButton
-          name="time-outline"
-          size={30}
-          accessibilityLabel="Expiration Tracker"
-          onPress={() => navigation.navigate('PantryExpirationTracker')}
-        />
-        <IconButton
-          name="folder-open-outline"
-          size={30}
-          accessibilityLabel="Manage Categories"
-          onPress={() => navigation.navigate('ManagePantryCategories')}
-        />
-      </View>
-      <HorizontalRule />
-
-      <Grid>
-        {pantry.categories.map((cat) => (
-          <CardTopic
+    <StackScreen
+      title="Pantry"
+      subtitle={`${pantry.categories.length} categor${pantry.categories.length === 1 ? 'y' : 'ies'}`}
+      trailing={
+        <>
+          <IconButton
+            name="list-outline"
+            size={22}
+            accessibilityLabel="View All Items"
+            onPress={() => navigation.navigate('PantryAllItems')}
+          />
+          <IconButton
+            name="time-outline"
+            size={22}
+            accessibilityLabel="Expiration Tracker"
+            onPress={() => navigation.navigate('PantryExpirationTracker')}
+          />
+          <IconButton
+            name="folder-open-outline"
+            size={22}
+            accessibilityLabel="Manage Categories"
+            onPress={() => navigation.navigate('ManagePantryCategories')}
+          />
+        </>
+      }
+    >
+      <GroupContainer>
+        {pantry.categories.map((cat, index, all) => (
+          <ModuleRow
             key={cat}
             title={cat}
             icon={categoryIcons[cat] || 'restaurant-outline'}
+            variant="tool"
+            showSeparator={index < all.length - 1}
             onPress={() =>
               navigation.navigate('PantryCategory', { category: cat })
             }
           />
         ))}
-      </Grid>
-    </ScreenBody>
+      </GroupContainer>
+    </StackScreen>
   );
-});
-
-const styles = StyleSheet.create({
-  pantryHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
 });

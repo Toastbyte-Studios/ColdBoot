@@ -40,7 +40,7 @@ export function FormTextArea({
             color: COLORS.PRIMARY_DARK,
           },
         ]}
-        placeholderTextColor={COLORS.PRIMARY_DARK}
+        placeholderTextColor={COLORS.MUTED}
         multiline
         numberOfLines={4}
         textAlignVertical="top"

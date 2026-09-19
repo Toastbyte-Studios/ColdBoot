@@ -42,7 +42,7 @@ export function FormInput({
           },
           inputStyle,
         ]}
-        placeholderTextColor={COLORS.PRIMARY_DARK}
+        placeholderTextColor={COLORS.MUTED}
         {...textInputProps}
       />
     </View>

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ScrollView } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import * as SunCalc from 'suncalc';
 import MoonPhaseGlyph from '../../components/MoonPhaseGlyph';
 import { Text } from '../../components/ScaledText';
@@ -9,6 +8,7 @@ import SectionHeader from '../../components/SectionHeader';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import { getLunarPhaseName } from '../../utils/lunarPhase';
 
 interface MoonPhase {
@@ -158,16 +158,7 @@ function LunarCyclesScreen() {
     phase: MoonPhase | null,
     phaseValue: number,
   ) => (
-    <View
-      style={[styles.keyCard, { borderColor: COLORS.SECONDARY_ACCENT }]}
-      key={label}
-    >
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.cardBackground}
-      />
+    <View style={[styles.keyCard, cardSurface(COLORS)]} key={label}>
       <View style={styles.keyCardContent}>
         <View style={styles.keyCardGlyph}>
           <MoonPhaseGlyph phase={phaseValue} size={40} />
@@ -194,16 +185,7 @@ function LunarCyclesScreen() {
   );
 
   const renderDailyPhaseCard = (phase: MoonPhase, index: number) => (
-    <View
-      style={[styles.dailyCard, { borderColor: COLORS.SECONDARY_ACCENT }]}
-      key={index}
-    >
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.cardBackground}
-      />
+    <View style={[styles.dailyCard, cardSurface(COLORS)]} key={index}>
       <View style={styles.dailyCardContent}>
         <View style={styles.dailyGlyph}>
           <MoonPhaseGlyph phase={phase.phaseValue} size={28} />
@@ -242,18 +224,7 @@ function LunarCyclesScreen() {
               >
                 Current Moon Phase
               </Text>
-              <View
-                style={[
-                  styles.currentCard,
-                  { borderColor: COLORS.SECONDARY_ACCENT },
-                ]}
-              >
-                <LinearGradient
-                  colors={COLORS.BRAND_GRADIENT}
-                  start={{ x: 0, y: 1 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardBackground}
-                />
+              <View style={[styles.currentCard, cardSurface(COLORS)]}>
                 <View style={styles.currentGlyph}>
                   <MoonPhaseGlyph phase={currentPhase.phaseValue} size={64} />
                 </View>
@@ -341,8 +312,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   currentCard: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 24,
     overflow: 'hidden',
     alignItems: 'center',
@@ -360,8 +329,6 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   keyCard: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
@@ -390,8 +357,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   dailyCard: {
-    borderRadius: 8,
-    borderWidth: 1,
     padding: 12,
     marginTop: 8,
     overflow: 'hidden',
@@ -418,8 +383,5 @@ const styles = StyleSheet.create({
   dailyIllumination: {
     fontSize: 11,
     opacity: 0.7,
-  },
-  cardBackground: {
-    ...StyleSheet.absoluteFill,
   },
 });

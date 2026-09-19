@@ -1,7 +1,12 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
+import {
+  ActivityIndicator,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  View,
+} from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
@@ -16,6 +21,8 @@ import {
   useSettingsStore,
   useWeatherOutlookStore,
 } from '../../stores/StoreContext';
+import { cardSurface } from '../../theme/cardSurface';
+import { onColor } from '../../theme/colorUtils';
 import {
   displayPrecipitation,
   displaySpeed,
@@ -147,14 +154,19 @@ function SeasonalOutlookScreen() {
       {/* Stale data warning */}
       {weatherStore.isStale && weatherStore.outlook && (
         <View
-          style={[styles.staleWarning, { backgroundColor: COLORS.BACKGROUND }]}
+          style={[
+            styles.staleWarning,
+            { backgroundColor: COLORS.ACCENT_CONTAINER },
+          ]}
         >
           <Ionicons
             name="cloud-offline-outline"
             size={16}
-            color={COLORS.ACCENT}
+            color={COLORS.ON_ACCENT_CONTAINER}
           />
-          <Text style={[styles.staleText, { color: COLORS.ACCENT }]}>
+          <Text
+            style={[styles.staleText, { color: COLORS.ON_ACCENT_CONTAINER }]}
+          >
             {`Offline · Last updated ${new Date(
               weatherStore.outlook.fetchedAt,
             ).toLocaleDateString()}`}
@@ -213,7 +225,18 @@ function SeasonalOutlookScreen() {
             }}
             accessibilityLabel="Retry loading the seasonal outlook"
           />
-          <Text style={[styles.technicalErrorText, { color: COLORS.MUTED }]}>
+          <Text
+            style={[
+              styles.technicalErrorText,
+              // Sits on the bare ground, not a card — see MUTED_ON_GROUND.
+              {
+                color:
+                  Platform.OS === 'android'
+                    ? COLORS.MUTED
+                    : COLORS.MUTED_ON_GROUND,
+              },
+            ]}
+          >
             {weatherStore.error}
           </Text>
         </View>
@@ -240,21 +263,8 @@ function SeasonalOutlookScreen() {
                     accessibilityRole="button"
                     accessibilityState={{ expanded: isExpanded }}
                     accessibilityLabel={`${formatMonthLabel(entry.month)} outlook, ${isExpanded ? 'collapse' : 'expand'}`}
-                    style={[
-                      styles.card,
-                      {
-                        borderColor: COLORS.SECONDARY_ACCENT,
-                        backgroundColor: COLORS.BACKGROUND,
-                      },
-                    ]}
+                    style={[styles.card, cardSurface(COLORS)]}
                   >
-                    <LinearGradient
-                      colors={COLORS.BRAND_GRADIENT}
-                      start={{ x: 0, y: 1 }}
-                      end={{ x: 1, y: 0 }}
-                      style={StyleSheet.absoluteFill}
-                    />
-
                     {/* Header row */}
                     <View style={styles.cardHeader}>
                       <Text
@@ -319,9 +329,16 @@ function SeasonalOutlookScreen() {
                           <Ionicons
                             name="snow-outline"
                             size={12}
-                            color="#fff"
+                            color={onColor(COLORS.SECONDARY_ACCENT)}
                           />
-                          <Text style={styles.flagText}>Snow</Text>
+                          <Text
+                            style={[
+                              styles.flagText,
+                              { color: onColor(COLORS.SECONDARY_ACCENT) },
+                            ]}
+                          >
+                            Snow
+                          </Text>
                         </View>
                       )}
                       {entry.windSpeedMeanKmh > 50 && (
@@ -334,9 +351,16 @@ function SeasonalOutlookScreen() {
                           <Ionicons
                             name="thunderstorm-outline"
                             size={12}
-                            color="#fff"
+                            color={onColor(COLORS.ACCENT)}
                           />
-                          <Text style={styles.flagText}>High Wind</Text>
+                          <Text
+                            style={[
+                              styles.flagText,
+                              { color: onColor(COLORS.ACCENT) },
+                            ]}
+                          >
+                            High Wind
+                          </Text>
                         </View>
                       )}
                       {entry.precipMm > 150 && (
@@ -349,9 +373,16 @@ function SeasonalOutlookScreen() {
                           <Ionicons
                             name="water-outline"
                             size={12}
-                            color="#fff"
+                            color={onColor(COLORS.SECONDARY_ACCENT)}
                           />
-                          <Text style={styles.flagText}>Heavy Rain</Text>
+                          <Text
+                            style={[
+                              styles.flagText,
+                              { color: onColor(COLORS.SECONDARY_ACCENT) },
+                            ]}
+                          >
+                            Heavy Rain
+                          </Text>
                         </View>
                       )}
                     </View>
@@ -359,7 +390,12 @@ function SeasonalOutlookScreen() {
                     {/* Expanded detail */}
                     {isExpanded && (
                       <View style={styles.expandedSection}>
-                        <View style={styles.divider} />
+                        <View
+                          style={[
+                            styles.divider,
+                            { backgroundColor: COLORS.SEPARATOR },
+                          ]}
+                        />
 
                         <View style={styles.detailRow}>
                           <Text
@@ -489,8 +525,6 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '90%',
-    borderRadius: 12,
-    borderWidth: 2,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginTop: 12,
@@ -537,14 +571,12 @@ const styles = StyleSheet.create({
   flagText: {
     fontSize: 11,
     fontWeight: '700',
-    color: '#fff',
   },
   expandedSection: {
     marginTop: 8,
   },
   divider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.2)',
     marginBottom: 8,
   },
   detailRow: {

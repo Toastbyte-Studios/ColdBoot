@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
@@ -12,6 +11,7 @@ import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useSettingsStore } from '../../stores';
 import { FOOTER_HEIGHT } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   getPressureTrend,
   getTrendInterpretation,
@@ -144,15 +144,7 @@ function BarometricPressureScreen() {
                 Current Reading
               </Text>
 
-              <View
-                style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-              >
-                <LinearGradient
-                  colors={COLORS.BRAND_GRADIENT}
-                  start={{ x: 0, y: 1 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardBackground}
-                />
+              <View style={[styles.card, cardSurface(COLORS)]}>
                 <View style={styles.readingRow}>
                   <View
                     style={styles.readingBlock}
@@ -204,15 +196,7 @@ function BarometricPressureScreen() {
               >
                 Pressure Trend
               </Text>
-              <View
-                style={[styles.card, { borderColor: COLORS.SECONDARY_ACCENT }]}
-              >
-                <LinearGradient
-                  colors={COLORS.BRAND_GRADIENT}
-                  start={{ x: 0, y: 1 }}
-                  end={{ x: 1, y: 0 }}
-                  style={styles.cardBackground}
-                />
+              <View style={[styles.card, cardSurface(COLORS)]}>
                 {sufficientData ? (
                   <>
                     <View
@@ -326,13 +310,8 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   card: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 20,
     overflow: 'hidden',
-  },
-  cardBackground: {
-    ...StyleSheet.absoluteFill,
   },
   readingRow: {
     flexDirection: 'row',

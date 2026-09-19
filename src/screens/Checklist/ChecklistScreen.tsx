@@ -5,13 +5,10 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { useChecklistStore } from '../../stores';
 
 /**
@@ -20,11 +17,11 @@ import { useChecklistStore } from '../../stores';
  * @remarks
  * Presents a dashboard of checklist-related actions and routes:
  * - **New Checklist** → navigates to the `ComingSoon` screen (for now)
- * - **Checklist Cards** → mapped as CardTopic cards that navigate to individual checklist screens
+ * - **Checklist Cards** → listed as rows in one grouped list that navigate to individual checklist screens
  *
- * Uses React Navigation to perform screen transitions from card taps.
+ * Uses React Navigation to perform screen transitions from row taps.
  *
- * @returns A screen layout containing a header, action buttons, and a grid of navigation cards.
+ * @returns A screen layout containing a title row with action buttons and a grouped list of navigation rows.
  */
 export default observer(function ChecklistScreen() {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
@@ -37,37 +34,32 @@ export default observer(function ChecklistScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Checklists</SectionHeader>
-      <View style={styles.checklistHeader}>
-        <IconButton
-          name="add-circle-outline"
-          size={30}
-          accessibilityLabel="New Checklist"
-          onPress={() => navigation.navigate('ComingSoon')}
-        />
-      </View>
-      <HorizontalRule />
-
-      <Grid>
-        {checklistStore.checklists.map((checklist) => (
-          <CardTopic
+    <StackScreen
+      title="Checklists"
+      subtitle={`${checklistStore.checklists.length} list${checklistStore.checklists.length === 1 ? '' : 's'}`}
+      trailing={
+        <>
+          <IconButton
+            name="add-circle-outline"
+            size={22}
+            accessibilityLabel="New Checklist"
+            onPress={() => navigation.navigate('ComingSoon')}
+          />
+        </>
+      }
+    >
+      <GroupContainer>
+        {checklistStore.checklists.map((checklist, index, all) => (
+          <ModuleRow
             key={checklist.id}
             title={checklist.name}
             icon={checklistIcons[checklist.name] || 'list-outline'}
+            variant="tool"
+            showSeparator={index < all.length - 1}
             onPress={() => navigation.navigate('ChecklistEntry', { checklist })}
           />
         ))}
-      </Grid>
-    </ScreenBody>
+      </GroupContainer>
+    </StackScreen>
   );
-});
-
-const styles = StyleSheet.create({
-  checklistHeader: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-evenly',
-  },
 });
