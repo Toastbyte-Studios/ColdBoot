@@ -1,4 +1,10 @@
-import { makeAutoObservable, runInAction } from 'mobx';
+import {
+  IReactionDisposer,
+  makeAutoObservable,
+  reaction,
+  runInAction,
+} from 'mobx';
+import { AppState, AppStateStatus } from 'react-native';
 import {
   fetchSeasonalData,
   getCachedOutlook,
@@ -8,6 +14,9 @@ import {
   shouldRefresh,
 } from '../services/weatherOutlookService';
 import { SQLiteDatabase } from '../types/database-types';
+import type { CoreStore } from './CoreStore';
+
+const LOCATION_CHANGE_THRESHOLD_DEGREES = 0.5;
 
 /**
  * MobX store for the seasonal weather outlook feature.
@@ -19,7 +28,8 @@ import { SQLiteDatabase } from '../types/database-types';
  *
  * Lifecycle:
  *  - Call `initDatabase(db)` once (from RootStore) to set up the cache table.
- *  - Call `loadOutlook(lat, lon)` whenever the user's location is known.
+ *  - Call `start(core)` after the shared database is ready.
+ *  - Call `stop()` on app unmount / store reset.
  */
 export class WeatherOutlookStore {
   /** The currently loaded seasonal outlook, or null if not yet fetched. */
@@ -35,9 +45,32 @@ export class WeatherOutlookStore {
   isStale: boolean = false;
 
   private db: SQLiteDatabase | null = null;
+  private _coreLastFixDisposer: IReactionDisposer | null = null;
+  private _appStateSubscription: { remove: () => void } | null = null;
+  private _lastAttemptedLocation: {
+    latitude: number;
+    longitude: number;
+  } | null = null;
+  private _pendingRefresh: {
+    fix: CoreStore['lastFix'];
+    forceRefresh: boolean;
+  } | null = null;
+  private _lifecycleToken: number = 0;
+  private _isStarted: boolean = false;
 
   constructor() {
-    makeAutoObservable(this, {}, { autoBind: true });
+    makeAutoObservable(
+      this,
+      {
+        _coreLastFixDisposer: false,
+        _appStateSubscription: false,
+        _lastAttemptedLocation: false,
+        _pendingRefresh: false,
+        _lifecycleToken: false,
+        _isStarted: false,
+      } as never,
+      { autoBind: true },
+    );
   }
 
   // ---------------------------------------------------------------------------
@@ -59,6 +92,45 @@ export class WeatherOutlookStore {
     }
   }
 
+  start(core: CoreStore): void {
+    this.stop();
+    this._isStarted = true;
+    this._lifecycleToken += 1;
+    const lifecycleToken = this._lifecycleToken;
+    this._refreshForFix(core.lastFix, false, lifecycleToken).catch(
+      () => undefined,
+    );
+    this._coreLastFixDisposer = reaction(
+      () => core.lastFix,
+      (lastFix) => {
+        this._refreshForFix(lastFix, true, lifecycleToken).catch(
+          () => undefined,
+        );
+      },
+    );
+    this._appStateSubscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'active') {
+          this._refreshForFix(core.lastFix, false, lifecycleToken).catch(
+            () => undefined,
+          );
+        }
+      },
+    );
+  }
+
+  stop(): void {
+    this._isStarted = false;
+    this._lifecycleToken += 1;
+    this._coreLastFixDisposer?.();
+    this._coreLastFixDisposer = null;
+    this._appStateSubscription?.remove();
+    this._appStateSubscription = null;
+    this._lastAttemptedLocation = null;
+    this._pendingRefresh = null;
+  }
+
   // ---------------------------------------------------------------------------
   // Public API
   // ---------------------------------------------------------------------------
@@ -75,7 +147,11 @@ export class WeatherOutlookStore {
    * @param lat - Device latitude
    * @param lon - Device longitude
    */
-  async loadOutlook(lat: number, lon: number): Promise<void> {
+  async loadOutlook(lat: number, lon: number): Promise<boolean> {
+    if (this.isLoading) {
+      return false;
+    }
+
     runInAction(() => {
       this.isLoading = true;
       this.error = null;
@@ -90,7 +166,7 @@ export class WeatherOutlookStore {
         this.isStale = false;
         this.isLoading = false;
       });
-      return;
+      return true;
     }
 
     // 2. Attempt network fetch
@@ -104,6 +180,7 @@ export class WeatherOutlookStore {
         this.isStale = false;
         this.isLoading = false;
       });
+      return true;
     } catch (err) {
       // 3. Degrade gracefully
       const msg =
@@ -120,6 +197,59 @@ export class WeatherOutlookStore {
         }
         this.isLoading = false;
       });
+      return Boolean(cached);
+    }
+  }
+
+  private async _refreshForFix(
+    lastFix: CoreStore['lastFix'],
+    requireMeaningfulMove: boolean = false,
+    lifecycleToken: number = this._lifecycleToken,
+  ): Promise<void> {
+    if (
+      !lastFix ||
+      !this._isStarted ||
+      lifecycleToken !== this._lifecycleToken
+    ) {
+      return;
+    }
+
+    if (this.isLoading) {
+      this._pendingRefresh = {
+        fix: lastFix,
+        forceRefresh:
+          Boolean(this._pendingRefresh?.forceRefresh) || !requireMeaningfulMove,
+      };
+      return;
+    }
+
+    const { latitude, longitude } = lastFix.coords;
+    if (
+      requireMeaningfulMove &&
+      this._lastAttemptedLocation &&
+      Math.abs(latitude - this._lastAttemptedLocation.latitude) <=
+        LOCATION_CHANGE_THRESHOLD_DEGREES &&
+      Math.abs(longitude - this._lastAttemptedLocation.longitude) <=
+        LOCATION_CHANGE_THRESHOLD_DEGREES
+    ) {
+      return;
+    }
+
+    this._lastAttemptedLocation = { latitude, longitude };
+    await this.loadOutlook(latitude, longitude);
+
+    if (!this._isStarted || lifecycleToken !== this._lifecycleToken) {
+      return;
+    }
+
+    const pendingRefresh = this._pendingRefresh;
+    this._pendingRefresh = null;
+    if (pendingRefresh) {
+      await this._refreshForFix(
+        pendingRefresh.fix,
+        !pendingRefresh.forceRefresh,
+        lifecycleToken,
+      );
     }
   }
 
@@ -146,6 +276,7 @@ export class WeatherOutlookStore {
 
   /** Resets store state. */
   dispose(): void {
+    this.stop();
     this.outlook = null;
     this.isLoading = false;
     this.error = null;

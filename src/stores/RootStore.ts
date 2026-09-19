@@ -23,6 +23,7 @@ import { WeatherOutlookStore } from './WeatherOutlookStore';
 
 export class RootStore {
   startupPromise: Promise<void>;
+  private resetGeneration: number = 0;
   coreStore: CoreStore;
   notesStore: NotesStore;
   checklistStore: ChecklistStore;
@@ -161,6 +162,26 @@ export class RootStore {
     this.isOfflineMode = true;
     // initializeSettings is intentionally not awaited - settings have sensible
     // defaults and components will re-render when settings finish loading from DB
-    this.startupPromise = this.initializeSettings();
+    const startupPromise = this.initializeSettings();
+    const resetGeneration = ++this.resetGeneration;
+    this.startupPromise = startupPromise;
+    startupPromise
+      .then(() => {
+        if (
+          this.resetGeneration !== resetGeneration ||
+          this.startupPromise !== startupPromise
+        ) {
+          return;
+        }
+        this.weatherOutlookStore.start(this.coreStore);
+        if (this.notesStore.notesDb) {
+          this.barometerStore.start(this.notesStore.notesDb).catch((e) => {
+            console.warn('Failed to restart barometer store after reset:', e);
+          });
+        }
+      })
+      .catch((e) => {
+        console.warn('Failed to restart DB-backed stores after reset:', e);
+      });
   }
 }
