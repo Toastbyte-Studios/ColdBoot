@@ -51,7 +51,7 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
   const settings = useSettingsStore();
   const COLORS = useTheme();
 
-  const { category } = route.params || {};
+  const { category } = route.params;
   // Filter out Voice Logs from NotePad screens
   const isValidCategory =
     category && category !== 'Voice Logs' && core.categories.includes(category);

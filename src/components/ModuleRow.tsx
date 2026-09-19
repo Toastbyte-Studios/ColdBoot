@@ -87,7 +87,9 @@ export default function ModuleRow({
   const rippleColor = useRippleColor();
   const tile = TILE[variant];
 
-  const accessibilityLabel = subtitle ? `${title}. ${subtitle}` : title;
+  const accessibilityLabel = [title, subtitle, value]
+    .filter(Boolean)
+    .join('. ');
 
   return (
     <View>

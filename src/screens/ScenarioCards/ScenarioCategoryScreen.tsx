@@ -50,10 +50,10 @@ export default function ScenarioCategoryScreen(): JSX.Element {
   const route = useRoute<ScenarioCategoryRouteProp>();
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
-  const { title, data, disclaimer } = route.params || {};
+  const { title, data, disclaimer } = route.params;
 
   const entries = useMemo(() => {
-    return (data ?? []).filter((e: ScenarioCardType) => e.category === title);
+    return data.filter((e: ScenarioCardType) => e.category === title);
   }, [title, data]);
 
   const sorted = entries
@@ -66,7 +66,7 @@ export default function ScenarioCategoryScreen(): JSX.Element {
     <StackScreen
       title={title}
       subtitle={`${sorted.length} scenario${sorted.length === 1 ? '' : 's'}`}
-      note={disclaimer || undefined}
+      note={disclaimer}
     >
       {sorted.length === 0 ? (
         <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
