@@ -3,8 +3,8 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
-import type { CoreStore } from '../src/stores/CoreStore';
 import { SolarCycleNotificationStore } from '../src/stores/SolarCycleNotificationStore';
+import type { CoreStore } from '../src/stores/CoreStore';
 
 /**
  * Regression tests for sunrise/sunset alerts never appearing.
