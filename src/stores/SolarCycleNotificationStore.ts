@@ -132,12 +132,34 @@ export class SolarCycleNotificationStore {
   private _refresh(core: CoreStore): void {
     this.updateCurrentTime();
     const lastFix = core.lastFix;
-    if (lastFix) {
+    if (
+      lastFix &&
+      this._needsNotificationRecalculation(
+        lastFix.coords.latitude,
+        lastFix.coords.longitude,
+      )
+    ) {
       this.updateNotifications(
         lastFix.coords.latitude,
         lastFix.coords.longitude,
       );
     }
+  }
+
+  private _needsNotificationRecalculation(
+    latitude: number,
+    longitude: number,
+    now: Date = new Date(),
+  ): boolean {
+    return (
+      !this.lastCalculationDate ||
+      this.lastCalculationDate.toDateString() !== now.toDateString() ||
+      !this.lastCalculationLocation ||
+      Math.abs(this.lastCalculationLocation.latitude - latitude) >
+        LOCATION_CHANGE_THRESHOLD_DEGREES ||
+      Math.abs(this.lastCalculationLocation.longitude - longitude) >
+        LOCATION_CHANGE_THRESHOLD_DEGREES
+    );
   }
 
   /**
@@ -272,24 +294,13 @@ export class SolarCycleNotificationStore {
     }
 
     const now = new Date();
-    const sunTimes = this.calculateSunTimes(latitude, longitude);
-
-    if (!sunTimes) {
+    if (!this._needsNotificationRecalculation(latitude, longitude, now)) {
       return;
     }
 
-    // Check if we need to recalculate (new day or significant location change)
-    // Location threshold is ~1.1km to provide accurate times while minimizing recalculations
-    const needsRecalculation =
-      !this.lastCalculationDate ||
-      this.lastCalculationDate.toDateString() !== now.toDateString() ||
-      !this.lastCalculationLocation ||
-      Math.abs(this.lastCalculationLocation.latitude - latitude) >
-        LOCATION_CHANGE_THRESHOLD_DEGREES ||
-      Math.abs(this.lastCalculationLocation.longitude - longitude) >
-        LOCATION_CHANGE_THRESHOLD_DEGREES;
+    const sunTimes = this.calculateSunTimes(latitude, longitude);
 
-    if (!needsRecalculation) {
+    if (!sunTimes) {
       return;
     }
 

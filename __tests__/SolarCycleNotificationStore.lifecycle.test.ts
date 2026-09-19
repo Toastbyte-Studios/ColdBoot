@@ -3,6 +3,7 @@
  */
 
 import { makeAutoObservable, runInAction } from 'mobx';
+import * as SunCalc from 'suncalc';
 import { SolarCycleNotificationStore } from '../src/stores/SolarCycleNotificationStore';
 import type { CoreStore } from '../src/stores/CoreStore';
 
@@ -126,6 +127,21 @@ describe('SolarCycleNotificationStore start/stop', () => {
     expect(
       store.upcomingNotifications.some((n) => n.eventType === 'sunrise'),
     ).toBe(true);
+  });
+
+  test("the minute tick doesn't recalculate on the same day", () => {
+    const core = new FakeCoreStore();
+    runInAction(() => {
+      core.lastFix = { coords: NYC };
+    });
+    const getTimesSpy = jest.spyOn(SunCalc, 'getTimes');
+
+    store.start(core as unknown as CoreStore);
+    getTimesSpy.mockClear();
+
+    jest.advanceTimersByTime(60 * 1000);
+
+    expect(getTimesSpy).not.toHaveBeenCalled();
   });
 
   test('returning to the foreground refreshes', () => {
