@@ -1,24 +1,28 @@
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React, { useState, useCallback } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import React, { useCallback, useMemo, useState } from 'react';
+import { Alert, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { ExpirationStatus, PantryItem } from '../../stores/PantryStore';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+import { ColorScheme } from '../../theme/colors';
 
 type PantryExpirationTrackerNavigationProp = NativeStackNavigationProp<
   { EditPantryItem: { item: PantryItem } },
   'EditPantryItem'
 >;
+
+const isAndroid = Platform.OS === 'android';
+
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 const MONTH_NAMES = [
   '',
@@ -45,15 +49,24 @@ function formatExpiration(month?: number, year?: number): string {
 }
 
 /** Returns a human-readable label for how many days remain. */
-function formatDaysRemaining(days: number | null): string {
+function formatDaysRemaining(
+  days: number | null,
+  status: ExpirationStatus,
+): string {
   if (days === null) {
     return '';
   }
   if (days < 0) {
-    return `Expired ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`;
+    return `Expired · ${Math.abs(days)} day${Math.abs(days) === 1 ? '' : 's'} ago`;
   }
   if (days === 0) {
     return 'Expires today!';
+  }
+  if (status === 'yellow') {
+    return `Expiring soon · ${days} day${days === 1 ? '' : 's'} remaining`;
+  }
+  if (status === 'green') {
+    return `In date · ${days} day${days === 1 ? '' : 's'} remaining`;
   }
   return `${days} day${days === 1 ? '' : 's'} remaining`;
 }
@@ -77,9 +90,18 @@ export default observer(
     const navigation = useNavigation<PantryExpirationTrackerNavigationProp>();
     const pantry = usePantryStore();
     const COLORS = useTheme();
-    const footerClearance = useFooterClearance();
     const [selectedCategory, setSelectedCategory] = useState<string | null>(
       null,
+    );
+    const usedButtonStyle = useMemo(
+      () => [
+        styles.usedButton,
+        {
+          backgroundColor: COLORS.SECONDARY_CONTAINER,
+          borderColor: isAndroid ? 'transparent' : COLORS.BORDER,
+        },
+      ],
+      [COLORS],
     );
 
     const sortedItems = pantry.itemsSortedByExpiration();
@@ -148,42 +170,30 @@ export default observer(
       [pantry],
     );
 
-    /** Border color based on expiration status. */
-    const statusBorderColor = (status: ExpirationStatus): string => {
+    /** Accent color based on expiration status. */
+    const statusAccentColor = (status: ExpirationStatus): string => {
       switch (status) {
         case 'red':
-          return '#d32f2f';
+          return COLORS.ERROR;
         case 'yellow':
-          return '#f9a825';
+          return COLORS.ACCENT;
         case 'green':
-          return '#388e3c';
+          return COLORS.SUCCESS;
         default:
           return COLORS.SECONDARY_ACCENT;
       }
     };
 
-    /** Faint background tint based on expiration status. */
-    const statusBackgroundColor = (status: ExpirationStatus): string => {
-      switch (status) {
-        case 'red':
-          return 'rgba(211,47,47,0.08)';
-        case 'yellow':
-          return 'rgba(249,168,37,0.08)';
-        case 'green':
-          return 'rgba(56,142,60,0.08)';
-        default:
-          return COLORS.PRIMARY_LIGHT;
-      }
-    };
-
     return (
-      <ScreenBody>
-        <SectionHeader>Expiration Tracker</SectionHeader>
-
-        {/* Category filter chips */}
+      <StackScreen
+        title="Expiration Tracker"
+        subtitle={`${filteredItems.length} item${filteredItems.length === 1 ? '' : 's'}`}
+      >
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          accessibilityLabel="Category filters"
+          accessibilityHint="Shows pantry items for the selected category"
           style={styles.filterRow}
           contentContainerStyle={styles.filterContent}
         >
@@ -193,12 +203,12 @@ export default observer(
               {
                 backgroundColor:
                   selectedCategory === null
-                    ? COLORS.ACCENT
-                    : COLORS.PRIMARY_LIGHT,
+                    ? COLORS.ACCENT_CONTAINER
+                    : isAndroid
+                      ? COLORS.SURFACE_CONTAINER
+                      : COLORS.SURFACE,
                 borderColor:
-                  selectedCategory === null
-                    ? COLORS.ACCENT
-                    : COLORS.SECONDARY_ACCENT,
+                  selectedCategory === null ? COLORS.ACCENT : COLORS.BORDER,
               },
             ]}
             onPress={() => setSelectedCategory(null)}
@@ -212,7 +222,7 @@ export default observer(
                 {
                   color:
                     selectedCategory === null
-                      ? COLORS.PRIMARY_LIGHT
+                      ? COLORS.ON_ACCENT_CONTAINER
                       : COLORS.PRIMARY_DARK,
                 },
               ]}
@@ -228,12 +238,12 @@ export default observer(
                 {
                   backgroundColor:
                     selectedCategory === cat
-                      ? COLORS.ACCENT
-                      : COLORS.PRIMARY_LIGHT,
+                      ? COLORS.ACCENT_CONTAINER
+                      : isAndroid
+                        ? COLORS.SURFACE_CONTAINER
+                        : COLORS.SURFACE,
                   borderColor:
-                    selectedCategory === cat
-                      ? COLORS.ACCENT
-                      : COLORS.SECONDARY_ACCENT,
+                    selectedCategory === cat ? COLORS.ACCENT : COLORS.BORDER,
                 },
               ]}
               onPress={() =>
@@ -249,7 +259,7 @@ export default observer(
                   {
                     color:
                       selectedCategory === cat
-                        ? COLORS.PRIMARY_LIGHT
+                        ? COLORS.ON_ACCENT_CONTAINER
                         : COLORS.PRIMARY_DARK,
                   },
                 ]}
@@ -260,48 +270,33 @@ export default observer(
           ))}
         </ScrollView>
 
-        <HorizontalRule />
-
-        <View style={[styles.container, { paddingBottom: footerClearance }]}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {filteredItems.length === 0 && (
-              <Text style={[styles.emptyText, { color: COLORS.PRIMARY_DARK }]}>
-                {sortedItems.length === 0
-                  ? 'No items with expiration dates. Add expiration dates to your pantry items to track them here.'
-                  : 'No items in this category have expiration dates.'}
-              </Text>
-            )}
-
+        {filteredItems.length === 0 ? (
+          <Text style={[styles.emptyText, { color: groundInk(COLORS) }]}>
+            {sortedItems.length === 0
+              ? 'No items with expiration dates. Add expiration dates to your pantry items to track them here.'
+              : 'No items in this category have expiration dates.'}
+          </Text>
+        ) : (
+          <View style={styles.items}>
             {filteredItems.map((item) => {
               const days = pantry.getExpirationDaysRemaining(item);
               const status = pantry.getExpirationStatus(item);
-              const borderColor = statusBorderColor(status);
-              const bgColor = statusBackgroundColor(status);
+              const accent = statusAccentColor(status);
 
               return (
                 <Touchable
                   key={item.id}
-                  style={[
-                    styles.itemCard,
-                    {
-                      backgroundColor: bgColor,
-                      borderColor,
-                    },
-                  ]}
+                  style={[styles.itemCard, cardSurface(COLORS, { accent })]}
                   onPress={() => handleItemPress(item)}
-                  accessibilityLabel={`Edit ${item.name}`}
+                  accessibilityLabel={`Edit ${item.name}. ${item.category}. Quantity: ${item.quantity}${item.unit ? ` ${item.unit}` : ''}. ${formatExpiration(
+                    item.expirationMonth,
+                    item.expirationYear,
+                  )}.${days !== null ? ` ${formatDaysRemaining(days, status)}` : ''}`}
                   accessibilityRole="button"
                 >
                   <View style={styles.itemRow}>
-                    {/* Status indicator dot */}
                     <View
-                      style={[
-                        styles.statusDot,
-                        { backgroundColor: borderColor },
-                      ]}
+                      style={[styles.statusDot, { backgroundColor: accent }]}
                     />
 
                     <View style={styles.itemInfo}>
@@ -325,35 +320,29 @@ export default observer(
                         {item.unit ? ` ${item.unit}` : ''}
                       </Text>
                       <Text
-                        style={[styles.expirationText, { color: borderColor }]}
+                        style={[
+                          styles.expirationText,
+                          { color: COLORS.PRIMARY_DARK },
+                        ]}
                       >
                         {formatExpiration(
                           item.expirationMonth,
                           item.expirationYear,
                         )}
                       </Text>
-                      {days !== null && (
-                        <Text
-                          style={[
-                            styles.daysText,
-                            { color: COLORS.PRIMARY_DARK },
-                          ]}
-                        >
-                          {formatDaysRemaining(days)}
+                      {days !== null ? (
+                        <Text style={[styles.daysText, { color: accent }]}>
+                          {formatDaysRemaining(days, status)}
                         </Text>
-                      )}
+                      ) : null}
                     </View>
 
-                    {/* Used/Rotated quick action */}
                     <IconButton
                       name="checkmark-circle-outline"
                       size={28}
                       color={COLORS.PRIMARY_DARK}
                       accessibilityLabel={`Mark ${item.name} as used`}
-                      style={[
-                        styles.usedButton,
-                        { borderColor: COLORS.SECONDARY_ACCENT },
-                      ]}
+                      style={usedButtonStyle}
                       onPress={(e) => {
                         e.stopPropagation();
                         handleMarkUsed(item);
@@ -363,21 +352,21 @@ export default observer(
                 </Touchable>
               );
             })}
-          </ScrollView>
-        </View>
-      </ScreenBody>
+          </View>
+        )}
+      </StackScreen>
     );
   },
 );
 
 const styles = StyleSheet.create({
   filterRow: {
-    width: '100%',
-    flexShrink: 0,
-    paddingVertical: 8,
+    flexGrow: 0,
+    marginTop: SPACING.xs,
+    marginBottom: SPACING.md,
   },
   filterContent: {
-    paddingHorizontal: 6,
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     gap: 8,
     flexDirection: 'row',
     alignItems: 'center',
@@ -392,35 +381,17 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
   },
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingHorizontal: 6,
-    paddingTop: 8,
-    paddingBottom: 24,
+  items: {
+    gap: SPACING.sm,
   },
   emptyText: {
     fontSize: 15,
-    opacity: 0.8,
-    textAlign: 'center',
-    marginTop: 32,
-    marginHorizontal: 16,
     lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
   itemCard: {
-    borderWidth: 2,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
   },
   itemRow: {
     flexDirection: 'row',
@@ -452,10 +423,10 @@ const styles = StyleSheet.create({
   },
   daysText: {
     fontSize: 12,
-    opacity: 0.75,
+    fontWeight: '600',
   },
   usedButton: {
-    borderRadius: 6,
-    borderWidth: 1,
+    borderRadius: 999,
+    borderWidth: isAndroid ? 0 : 1,
   },
 });

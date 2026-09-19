@@ -2,19 +2,26 @@ import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import AppButton from '../../components/AppButton';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import { Platform, StyleSheet } from 'react-native';
+import GroupContainer from '../../components/GroupContainer';
+import IconButton from '../../components/IconButton';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
-import { FOOTER_HEIGHT } from '../../theme';
+import { TEXT_GUTTER } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
+import {
+  formatPantryItemQuantity,
+  formatPantryItemSubtitle,
+} from './pantryRowFormatters';
+
+const isAndroid = Platform.OS === 'android';
+
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 type PantryCategoryParamList = {
   PantryCategory: { category: string };
@@ -44,7 +51,6 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
   const navigation = useNavigation<PantryCategoryNavigationProp>();
   const pantry = usePantryStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
 
   const { category } = route.params || {};
   const isValidCategory = category && pantry.categories.includes(category);
@@ -70,14 +76,11 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
 
   if (!isValidCategory) {
     return (
-      <ScreenBody>
-        <SectionHeader>Category Not Found</SectionHeader>
-        <View style={[styles.container, { paddingBottom: footerClearance }]}>
-          <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
-            The requested category does not exist.
-          </Text>
-        </View>
-      </ScreenBody>
+      <StackScreen title="Category not found">
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          The requested category does not exist.
+        </Text>
+      </StackScreen>
     );
   }
 
@@ -86,131 +89,45 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>{category}</SectionHeader>
-      <View style={styles.actionBar}>
-        <AppButton
-          label="Add item"
-          icon="add-outline"
-          fullWidth
+    <StackScreen
+      title={category}
+      subtitle={`${sortedItems.length} item${sortedItems.length === 1 ? '' : 's'}`}
+      trailing={
+        <IconButton
+          name="add-circle-outline"
+          size={22}
+          accessibilityLabel={`Add item to ${category}`}
           onPress={handleAddItem}
-          accessibilityLabel="Add Item"
         />
-      </View>
-      <HorizontalRule />
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {sortedItems.length === 0 && (
-            <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
-              No items in this category yet.
-            </Text>
-          )}
-          {sortedItems.map((item) => (
-            <Touchable
+      }
+    >
+      {sortedItems.length === 0 ? (
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          No items in this category yet.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {sortedItems.map((item, index) => (
+            <ModuleRow
               key={item.id}
-              style={[
-                styles.itemCard,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.SECONDARY_ACCENT,
-                },
-              ]}
+              title={item.name}
+              icon="restaurant-outline"
+              subtitle={formatPantryItemSubtitle(item, category)}
+              value={formatPantryItemQuantity(item)}
+              variant="tool"
+              showSeparator={index < sortedItems.length - 1}
               onPress={() => handleItemPress(item)}
-              accessibilityLabel={`View ${item.name}`}
-              accessibilityRole="button"
-            >
-              <View style={styles.itemHeader}>
-                <Ionicons
-                  name="restaurant-outline"
-                  size={24}
-                  color={COLORS.PRIMARY_DARK}
-                />
-                <Text style={[styles.itemName, { color: COLORS.PRIMARY_DARK }]}>
-                  {item.name}
-                </Text>
-              </View>
-              <View style={styles.itemDetails}>
-                <Text
-                  style={[styles.itemQuantity, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  Quantity: {item.quantity}
-                  {item.unit ? ` ${item.unit}` : ''}
-                </Text>
-                {item.notes && (
-                  <Text
-                    style={[styles.itemNotes, { color: COLORS.PRIMARY_DARK }]}
-                    numberOfLines={2}
-                  >
-                    {item.notes}
-                  </Text>
-                )}
-              </View>
-            </Touchable>
+            />
           ))}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  actionBar: {
-    width: '100%',
-    paddingVertical: 12,
-    paddingHorizontal: 6,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingHorizontal: 6,
-    paddingBottom: 24,
-  },
   helperText: {
     fontSize: 16,
-    opacity: 0.8,
-    marginHorizontal: 6,
-    marginBottom: 12,
-    textAlign: 'center',
-    marginTop: 24,
-  },
-  itemCard: {
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
-  },
-  itemHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
-  },
-  itemName: {
-    fontSize: 18,
-    fontWeight: '600',
-    flex: 1,
-  },
-  itemDetails: {
-    gap: 4,
-  },
-  itemQuantity: {
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  itemNotes: {
-    fontSize: 13,
-    opacity: 0.7,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });

@@ -62,21 +62,30 @@ src/
 - Each screen lives at `src/screens/<Feature>/<FeatureScreen>.tsx`
 - Screens are always wrapped with `observer()` from `mobx-react-lite`
 - Screens access state via store hooks, not raw context
-- Layout: `ScreenBody` > content — never build your own scroll/padding wrapper
+- Screens pushed below a module should use `StackScreen` for the shared page frame (back control, large title, subtitle/note, Android bleed, footer clearance)
+- Lists of tappable tools/items should use `GroupContainer` + `ModuleRow variant="tool"`
+- Card content should use `cardSurface(COLORS)` and carry its own `SCREEN_GUTTER` on Android
+- Use `SectionEyebrow` for labels inside a screen; `SectionHeader` is the page title owned by `StackScreen`
 
 ```tsx
 import { observer } from 'mobx-react-lite';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
+import StackScreen from '../../components/StackScreen';
 import { useCoreStore } from '../../stores/StoreContext';
 
 const MyScreen = observer(() => {
   const core = useCoreStore();
   return (
-    <ScreenBody>
-      <SectionHeader>My Feature</SectionHeader>
-      {/* content */}
-    </ScreenBody>
+    <StackScreen title="My Feature" subtitle={`${core.tools.length} tools`}>
+      <GroupContainer>
+        <ModuleRow
+          title="Example tool"
+          icon="construct-outline"
+          variant="tool"
+        />
+      </GroupContainer>
+    </StackScreen>
   );
 });
 

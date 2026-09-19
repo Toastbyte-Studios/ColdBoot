@@ -1,10 +1,18 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
+import StackScreen from '../../components/StackScreen';
+import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   FormInput,
   FormTextArea,
@@ -12,7 +20,8 @@ import {
   QuantityUnitRow,
   ExpirationDatePicker,
 } from '../Shared/Prepper';
-import { pantryFormStyles as styles } from './pantryFormStyles';
+
+const isAndroid = Platform.OS === 'android';
 
 type NewPantryItemRouteProp = RouteProp<
   { NewPantryItem: { category: string } },
@@ -35,6 +44,7 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   const route = useRoute<NewPantryItemRouteProp>();
   const navigation = useNavigation();
   const pantry = usePantryStore();
+  const COLORS = useTheme();
 
   const { category } = route.params || {};
   const [name, setName] = useState<string>('');
@@ -84,12 +94,19 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Add Item to {category}</SectionHeader>
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+    <StackScreen
+      title="Add Pantry Item"
+      subtitle={category}
+      keyboardShouldPersistTaps="handled"
+    >
+      <KeyboardAvoidingView
+        testID="pantry-item-form-keyboard"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <View
+          testID="pantry-item-form-card"
+          style={[styles.formCard, cardSurface(COLORS)]}
         >
           <FormInput
             label="Item Name *"
@@ -128,8 +145,21 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
             saveDisabled={!name.trim()}
             saveLabel="Save"
           />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        </View>
+      </KeyboardAvoidingView>
+    </StackScreen>
   );
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+  },
+  formCard: {
+    marginTop: SPACING.md,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+  },
 });

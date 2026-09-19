@@ -1,13 +1,20 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  View,
+} from 'react-native';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   FormInput,
   FormTextArea,
@@ -16,7 +23,8 @@ import {
   QuantityUnitRow,
   ExpirationDatePicker,
 } from '../Shared/Prepper';
-import { pantryFormStyles as styles } from './pantryFormStyles';
+
+const isAndroid = Platform.OS === 'android';
 
 type EditPantryItemRouteProp = RouteProp<
   { EditPantryItem: { item: PantryItem } },
@@ -121,26 +129,28 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
 
   if (!item) {
     return (
-      <ScreenBody>
-        <SectionHeader>Edit Item</SectionHeader>
-        <View style={styles.container}>
-          <Text
-            style={[styles.errorText, { color: COLORS.ERROR || '#d32f2f' }]}
-          >
-            Item not found
-          </Text>
-        </View>
-      </ScreenBody>
+      <StackScreen title="Edit Item">
+        <Text style={[styles.errorText, { color: COLORS.ERROR }]}>
+          Item not found
+        </Text>
+      </StackScreen>
     );
   }
 
   return (
-    <ScreenBody>
-      <SectionHeader>Edit Item</SectionHeader>
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+    <StackScreen
+      title="Edit Item"
+      subtitle={item.category}
+      keyboardShouldPersistTaps="handled"
+    >
+      <KeyboardAvoidingView
+        testID="pantry-item-form-keyboard"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        style={styles.container}
+      >
+        <View
+          testID="pantry-item-form-card"
+          style={[styles.formCard, cardSurface(COLORS)]}
         >
           <FormInput
             label="Item Name *"
@@ -180,8 +190,25 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
           />
 
           <DeleteButton onPress={handleDelete} />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        </View>
+      </KeyboardAvoidingView>
+    </StackScreen>
   );
+});
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    width: '100%',
+  },
+  formCard: {
+    marginTop: SPACING.md,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
+  },
+  errorText: {
+    fontSize: 16,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
 });
