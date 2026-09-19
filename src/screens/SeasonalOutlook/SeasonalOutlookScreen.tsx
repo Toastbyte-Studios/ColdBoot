@@ -1,8 +1,9 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
@@ -64,49 +65,52 @@ function SeasonalOutlookScreen() {
 
   const measurementSystem = settings.measurementSystem;
 
-  useEffect(() => {
-    let isMounted = true;
-
-    const load = async () => {
-      if (!isMounted) return;
+  const loadOutlook = useCallback(
+    async (isMounted: () => boolean = () => true) => {
+      if (!isMounted()) {
+        return;
+      }
 
       setLocationError(null);
 
-      // Wait briefly for a GPS fix
-      if (!core.lastFix) {
+      let fix = core.lastFix;
+      if (!fix) {
         let elapsed = 0;
-        while (
-          !core.lastFix &&
-          elapsed < LOCATION_WAIT_TIMEOUT_MS &&
-          isMounted
-        ) {
+        while (!fix && elapsed < LOCATION_WAIT_TIMEOUT_MS && isMounted()) {
           await new Promise<void>((resolve) =>
             setTimeout(resolve, LOCATION_CHECK_INTERVAL_MS),
           );
           elapsed += LOCATION_CHECK_INTERVAL_MS;
+          fix = core.lastFix;
         }
       }
 
-      if (!isMounted) return;
+      if (!isMounted()) {
+        return;
+      }
 
-      if (!core.lastFix) {
+      if (!fix) {
         setLocationError(
           'Unable to get location. Please enable location services.',
         );
         return;
       }
 
-      const { latitude, longitude } = core.lastFix.coords;
+      const { latitude, longitude } = fix.coords;
       await weatherStore.loadOutlook(latitude, longitude);
-    };
+    },
+    [core, weatherStore],
+  );
 
-    load();
+  useEffect(() => {
+    let isMounted = true;
+
+    loadOutlook(() => isMounted).catch(() => undefined);
 
     return () => {
       isMounted = false;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [loadOutlook]);
 
   const toggleMonth = (month: string) => {
     setExpandedMonth((prev) => (prev === month ? null : month));
@@ -184,13 +188,32 @@ function SeasonalOutlookScreen() {
 
       {/* Network error (no cached data) */}
       {weatherStore.error && !weatherStore.isLoading && (
-        <View style={styles.centerContainer}>
+        <View
+          style={styles.centerContainer}
+          accessibilityLiveRegion="assertive"
+        >
           <Ionicons
             name="cloud-offline-outline"
             size={40}
             color={COLORS.SECONDARY_ACCENT}
           />
+          <Text style={[styles.errorTitle, { color: COLORS.PRIMARY_DARK }]}>
+            Seasonal outlook unavailable
+          </Text>
           <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
+            Couldn't load the forecast. It will retry next time you're online.
+          </Text>
+          <AppButton
+            label="Retry"
+            variant="plain"
+            size="small"
+            tint={COLORS.SECONDARY_ACCENT}
+            onPress={() => {
+              loadOutlook().catch(() => undefined);
+            }}
+            accessibilityLabel="Retry loading the seasonal outlook"
+          />
+          <Text style={[styles.technicalErrorText, { color: COLORS.MUTED }]}>
             {weatherStore.error}
           </Text>
         </View>
@@ -452,6 +475,17 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     paddingHorizontal: 20,
+  },
+  errorTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    textAlign: 'center',
+    paddingHorizontal: 20,
+  },
+  technicalErrorText: {
+    fontSize: 12,
+    textAlign: 'center',
+    paddingHorizontal: 24,
   },
   card: {
     width: '90%',

@@ -2,6 +2,7 @@
  * @format
  */
 
+import { weatherOutlookSeasonalResponseFixture } from '../src/services/testFixtures/weatherOutlookSeasonalResponse';
 import {
   CACHE_MAX_AGE_MS,
   fetchSeasonalData,
@@ -104,48 +105,69 @@ describe('shouldRefresh', () => {
 });
 
 describe('parseMonthlyResponse', () => {
-  test('computes ensemble mean for one month across 3 members', () => {
-    const monthly: Record<string, unknown> = {
-      time: ['2024-03-01'],
-      temperature_2m_mean_member01: [10],
-      temperature_2m_mean_member02: [20],
-      temperature_2m_mean_member03: [30],
-      precipitation_sum_member01: [5],
-      precipitation_sum_member02: [15],
-      precipitation_sum_member03: [10],
-      snowfall_sum_member01: [0],
-      snowfall_sum_member02: [0],
-      snowfall_sum_member03: [0],
-      wind_speed_10m_mean_member01: [30],
-      wind_speed_10m_mean_member02: [60],
-      wind_speed_10m_mean_member03: [90],
-      shortwave_radiation_sum_member01: [100],
-      shortwave_radiation_sum_member02: [200],
-      shortwave_radiation_sum_member03: [300],
-    };
+  test('reads ensemble-mean monthly series from a fixture response', () => {
+    const entries = parseMonthlyResponse(
+      weatherOutlookSeasonalResponseFixture.monthly,
+      weatherOutlookSeasonalResponseFixture.monthly_units,
+    );
 
-    const entries = parseMonthlyResponse(monthly);
-    expect(entries).toHaveLength(1);
-    const entry = entries[0];
-    expect(entry.month).toBe('2024-03');
-    // Members 1–3 present; members 4–51 absent so only 3 values averaged
-    expect(entry.tempMeanC).toBeCloseTo(20, 5); // (10+20+30)/3 = 20
-    expect(entry.precipMm).toBeCloseTo(10, 5); // (5+15+10)/3 = 10
-    expect(entry.windSpeedMeanKmh).toBeCloseTo(60, 5); // (30+60+90)/3 = 60
-    expect(entry.shortwaveRadiationSum).toBeCloseTo(200, 5);
+    expect(entries).toEqual([
+      {
+        month: '2026-10',
+        tempMeanC: 19.2,
+        precipMm: 14.6,
+        snowfallCm: 0,
+        windSpeedMeanKmh: 24.9,
+        shortwaveRadiationSum: 512.3,
+      },
+      {
+        month: '2026-11',
+        tempMeanC: 12.4,
+        precipMm: 22.1,
+        snowfallCm: 1.8,
+        windSpeedMeanKmh: 31.4,
+        shortwaveRadiationSum: 381.7,
+      },
+    ]);
   });
 
   test('handles empty time array', () => {
     expect(parseMonthlyResponse({ time: [] })).toEqual([]);
   });
 
-  test('handles missing member keys gracefully (returns 0)', () => {
+  test('handles missing monthly series gracefully (returns 0)', () => {
     const monthly: Record<string, unknown> = {
       time: ['2024-03-01'],
     };
     const entries = parseMonthlyResponse(monthly);
     expect(entries).toHaveLength(1);
     expect(entries[0].tempMeanC).toBe(0);
+  });
+
+  test('converts per-day and power units to existing UI semantics', () => {
+    const monthly: Record<string, unknown> = {
+      time: ['2024-02-01'],
+      temperature_2m_mean: [68],
+      precipitation_mean: [2],
+      snowfall_mean: [0.5],
+      wind_speed_10m_mean: [10],
+      shortwave_radiation_mean: [100],
+    };
+    const monthlyUnits: Record<string, unknown> = {
+      temperature_2m_mean: '°F',
+      precipitation_mean: 'mm/day',
+      snowfall_mean: 'inch/day',
+      wind_speed_10m_mean: 'mph',
+      shortwave_radiation_mean: 'W/m²',
+    };
+
+    const [entry] = parseMonthlyResponse(monthly, monthlyUnits);
+
+    expect(entry.tempMeanC).toBeCloseTo(20, 5);
+    expect(entry.precipMm).toBeCloseTo(58, 5);
+    expect(entry.snowfallCm).toBeCloseTo(36.83, 2);
+    expect(entry.windSpeedMeanKmh).toBeCloseTo(16.09, 2);
+    expect(entry.shortwaveRadiationSum).toBeCloseTo(250.56, 2);
   });
 
   test('slices YYYY-MM from the time string', () => {
@@ -167,9 +189,27 @@ describe('fetchSeasonalData', () => {
       ok: false,
       status: 503,
       statusText: 'Service Unavailable',
+      json: async () => ({ error: true, reason: 'Upstream unavailable' }),
     });
 
-    await expect(fetchSeasonalData(36.17, -115.14)).rejects.toThrow(/503/);
+    await expect(fetchSeasonalData(36.17, -115.14)).rejects.toThrow(
+      /503: Upstream unavailable/,
+    );
+  });
+
+  test('falls back to a sensible message when the error body is not JSON', async () => {
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: false,
+      status: 400,
+      statusText: 'Bad Request',
+      json: async () => {
+        throw new Error('not json');
+      },
+    });
+
+    await expect(fetchSeasonalData(36.17, -115.14)).rejects.toThrow(
+      /400: Bad Request/,
+    );
   });
 
   test('throws when response contains no monthly data', async () => {
@@ -186,25 +226,20 @@ describe('fetchSeasonalData', () => {
   test('returns SeasonalOutlook with rounded coords on success', async () => {
     global.fetch = jest.fn().mockResolvedValueOnce({
       ok: true,
-      json: async () => ({
-        monthly: {
-          time: ['2024-03-01'],
-          temperature_2m_mean_member01: [20],
-          precipitation_sum_member01: [50],
-          snowfall_sum_member01: [0],
-          wind_speed_10m_mean_member01: [40],
-          shortwave_radiation_sum_member01: [300],
-        },
-      }),
+      json: async () => weatherOutlookSeasonalResponseFixture,
     });
 
     const result = await fetchSeasonalData(36.17, -115.14);
     expect(result.lat).toBe(36.2);
     expect(result.lon).toBe(-115.1);
-    expect(result.months).toHaveLength(1);
+    expect(result.months).toHaveLength(2);
+    expect(result.months[0]).toMatchObject({
+      month: '2026-10',
+      precipMm: 14.6,
+    });
   });
 
-  test('includes models=seas5 in the request URL', async () => {
+  test('uses the ensemble-mean model and current monthly variable names in the request URL', async () => {
     global.fetch = jest.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({
@@ -215,7 +250,18 @@ describe('fetchSeasonalData', () => {
     await fetchSeasonalData(36.2, -115.1);
 
     const calledUrl = (global.fetch as jest.Mock).mock.calls[0][0] as string;
-    expect(calledUrl).toContain('models=seas5');
+    expect(calledUrl).toContain('models=ecmwf_seas5_ensemble_mean');
+    expect(calledUrl).toContain(
+      'monthly=temperature_2m_mean%2Cprecipitation_mean%2Csnowfall_mean%2Cwind_speed_10m_mean%2Cshortwave_radiation_mean',
+    );
+    expect(calledUrl).toContain('temperature_unit=celsius');
+    expect(calledUrl).toContain('wind_speed_unit=kmh');
+    expect(calledUrl).toContain('precipitation_unit=mm');
+    expect(calledUrl).toContain('timezone=GMT');
+    expect(calledUrl).not.toContain('models=seas5');
+    expect(calledUrl).not.toContain('precipitation_sum');
+    expect(calledUrl).not.toContain('snowfall_sum');
+    expect(calledUrl).not.toContain('shortwave_radiation_sum');
   });
 });
 
@@ -325,13 +371,20 @@ describe('WeatherOutlookStore', () => {
     global.fetch = jest.fn().mockResolvedValueOnce({
       ok: true,
       json: async () => ({
+        monthly_units: {
+          temperature_2m_mean: '°C',
+          precipitation_mean: 'mm',
+          snowfall_mean: 'cm',
+          wind_speed_10m_mean: 'km/h',
+          shortwave_radiation_mean: 'MJ/m²',
+        },
         monthly: {
           time: ['2024-03-01'],
-          temperature_2m_mean_member01: [22],
-          precipitation_sum_member01: [40],
-          snowfall_sum_member01: [0],
-          wind_speed_10m_mean_member01: [30],
-          shortwave_radiation_sum_member01: [300],
+          temperature_2m_mean: [22],
+          precipitation_mean: [40],
+          snowfall_mean: [0],
+          wind_speed_10m_mean: [30],
+          shortwave_radiation_mean: [300],
         },
       }),
     });
