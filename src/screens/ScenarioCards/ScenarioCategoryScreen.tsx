@@ -6,16 +6,21 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import React, { JSX, useMemo } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import CardTopic from '../../components/CardTopic';
-import Grid from '../../components/Grid';
+import { Platform, StyleSheet } from 'react-native';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import SectionSubHeader from '../../components/SectionSubHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { FOOTER_HEIGHT } from '../../theme';
+import StackScreen from '../../components/StackScreen';
+import { useTheme } from '../../hooks/useTheme';
+import { TEXT_GUTTER } from '../../theme';
+import { ColorScheme } from '../../theme/colors';
 import { ScenarioCardType } from '../../types/data-type';
+
+const isAndroid = Platform.OS === 'android';
+
+/** Muted text on the bare screen ground — see `MUTED_ON_GROUND`. */
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 type ScenarioCategoryRouteProp = RouteProp<
   {
@@ -32,18 +37,18 @@ type ScenarioCategoryRouteProp = RouteProp<
  * Displays a list of scenario cards filtered by category.
  *
  * This screen retrieves the `title` and `data` from the navigation route parameters,
- * filters the entries to only those matching the selected category, and displays them in a grid layout.
+ * filters the entries to only those matching the selected category, and lists them as rows in a grouped list.
  * If no entries are found for the category, a helper message is shown.
  *
  * @returns {JSX.Element} The rendered scenario category screen component.
  *
  * @remarks
- * - Navigates to the 'ScenarioDetail' screen when a topic card is pressed, passing the selected scenario as a parameter.
+ * - Navigates to the 'ScenarioDetail' screen when a row is pressed, passing the selected scenario as a parameter.
  * - Expects `route.params` to contain `title` (category name) and `data` (ScenarioCardType[]).
  */
 export default function ScenarioCategoryScreen(): JSX.Element {
   const route = useRoute<ScenarioCategoryRouteProp>();
-  const footerClearance = useFooterClearance();
+  const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const { title, data, disclaimer } = route.params || {};
 
@@ -51,63 +56,45 @@ export default function ScenarioCategoryScreen(): JSX.Element {
     return (data ?? []).filter((e: ScenarioCardType) => e.category === title);
   }, [title, data]);
 
+  const sorted = entries
+    .slice()
+    .sort((a: ScenarioCardType, b: ScenarioCardType) =>
+      a.title.localeCompare(b.title),
+    );
+
   return (
-    <ScreenBody>
-      <SectionHeader>{title}</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {entries.length === 0 && (
-            <Text style={styles.helperText}>No scenarios found.</Text>
-          )}
-          {disclaimer ? (
-            <SectionSubHeader>{disclaimer}</SectionSubHeader>
-          ) : null}
-          <Grid>
-            {entries
-              .slice()
-              .sort((a: ScenarioCardType, b: ScenarioCardType) =>
-                a.title.localeCompare(b.title),
-              )
-              .map((item: ScenarioCardType) => (
-                <CardTopic
-                  key={item.id}
-                  title={item.title}
-                  icon="document-text-outline"
-                  onPress={() =>
-                    navigation.navigate('ScenarioDetail', { scenario: item })
-                  }
-                />
-              ))}
-          </Grid>
-        </ScrollView>
-      </View>
-    </ScreenBody>
+    <StackScreen
+      title={title}
+      subtitle={`${sorted.length} scenario${sorted.length === 1 ? '' : 's'}`}
+      note={disclaimer || undefined}
+    >
+      {sorted.length === 0 ? (
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          No scenarios found.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {sorted.map((item: ScenarioCardType, index: number) => (
+            <ModuleRow
+              key={item.id}
+              title={item.title}
+              icon="document-text-outline"
+              variant="tool"
+              showSeparator={index < sorted.length - 1}
+              onPress={() =>
+                navigation.navigate('ScenarioDetail', { scenario: item })
+              }
+            />
+          ))}
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingBottom: 24,
-    alignItems: 'center',
-  },
   helperText: {
     fontSize: 16,
-    opacity: 0.8,
-    marginHorizontal: 6,
-    marginBottom: 12,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });
