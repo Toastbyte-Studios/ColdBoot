@@ -735,12 +735,20 @@ describe('WeatherOutlookStore', () => {
       await store.initDatabase(db as SQLiteDatabase);
 
       let resolveFetch: ((value: Response) => void) | null = null;
-      global.fetch = jest.fn(
-        () =>
-          new Promise<Response>((resolve) => {
-            resolveFetch = resolve;
-          }),
-      ) as typeof fetch;
+      // Only the first call stays in flight; later calls resolve immediately so
+      // the replayed fetch cannot leave a pending fetchWithTimeout timer behind.
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((resolve) => {
+              resolveFetch = resolve;
+            }),
+        )
+        .mockResolvedValue({
+          ok: true,
+          json: async () => weatherOutlookSeasonalResponseFixture,
+        } as Response);
 
       runInAction(() => {
         core.lastFix = {

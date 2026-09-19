@@ -103,9 +103,6 @@ const setupRootStoreModule = async ({
   jest.doMock('../src/stores/PantryStore', () => ({
     PantryStore: makeInitDatabaseStore(),
   }));
-  jest.doMock('../src/stores/ReferenceStore', () => ({
-    ReferenceStore: makeDisposableStore(),
-  }));
   jest.doMock('../src/stores/RepeaterBookStore', () => ({
     RepeaterBookStore: makeDisposableStore(),
   }));
