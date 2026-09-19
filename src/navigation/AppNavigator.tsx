@@ -42,7 +42,6 @@ import NewInventoryItemScreen from '../screens/Inventory/NewInventoryItemScreen'
 import LunarCyclesScreen from '../screens/LunarCycles/LunarCyclesScreen';
 import DownloadConfirmScreen from '../screens/Map/components/offline/DownloadConfirmScreen';
 import MapScreen from '../screens/Map/MapScreen';
-import MapSpikeScreen from '../screens/MapSpikeScreen';
 import AlphaToMorseScreen from '../screens/MorseCode/AlphaToMorseScreen';
 import MorseCodeCheatSheet from '../screens/MorseCode/MorseCodeCheatSheet';
 import MorseCodeScreen from '../screens/MorseCode/MorseCodeScreen';
@@ -160,10 +159,6 @@ function NavigatorContent(): JSX.Element {
               <DownloadConfirmScreen onDismiss={() => navigation.goBack()} />
             )}
           </Stack.Screen>
-          {/* Dev-only spike screens — route excluded from production builds; import remains in bundle */}
-          {__DEV__ && (
-            <Stack.Screen name="MapSpike" component={MapSpikeScreen} />
-          )}
           {/* Shared */}
           <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
