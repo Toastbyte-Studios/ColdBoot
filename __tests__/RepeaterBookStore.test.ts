@@ -721,6 +721,20 @@ describe('RepeaterBookStore', () => {
     expect(store.isLoading).toBe(false);
   });
 
+  it('checkAndFetchIfNeeded keeps cached repeaters on unexpected permission lookup failures', async () => {
+    store.repeaters = mockCache.repeaters;
+    mockRequestForegroundLocationPermission.mockRejectedValueOnce(
+      new Error('boom'),
+    );
+    store.isLoading = true;
+
+    await expect(store.checkAndFetchIfNeeded()).resolves.toBeUndefined();
+
+    expect(store.repeaters).toHaveLength(1);
+    expect(store.error).toBeNull();
+    expect(store.isLoading).toBe(false);
+  });
+
   // ── custom repeater CRUD ───────────────────────────────────────────────────
 
   it('starts with empty customRepeaters list', () => {

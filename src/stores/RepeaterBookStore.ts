@@ -435,8 +435,10 @@ export class RepeaterBookStore {
       });
     } catch {
       runInAction(() => {
-        this.error =
-          'Unable to load repeaters. Please confirm location access and try again.';
+        if (this.repeaters.length === 0) {
+          this.error =
+            'Unable to load repeaters. Please confirm location access and try again.';
+        }
         this.isLoading = false;
       });
     }
