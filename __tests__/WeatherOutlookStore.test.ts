@@ -728,7 +728,7 @@ describe('WeatherOutlookStore', () => {
       expect(fetch).toHaveBeenCalledTimes(1);
     });
 
-    test('concurrent triggers while loading do not start a second fetch', async () => {
+    test('concurrent triggers wait for the current fetch, then replay the latest significant fix', async () => {
       const store = new WeatherOutlookStore();
       const core = new FakeCoreStore();
       const db = makeDb([]);
@@ -771,6 +771,7 @@ describe('WeatherOutlookStore', () => {
         json: async () => weatherOutlookSeasonalResponseFixture,
       } as Response);
       await flushPromises();
+      expect(fetch).toHaveBeenCalledTimes(2);
       expect(store.outlook).not.toBeNull();
     });
 

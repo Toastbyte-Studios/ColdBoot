@@ -51,6 +51,7 @@ export class WeatherOutlookStore {
     latitude: number;
     longitude: number;
   } | null = null;
+  private _pendingRefreshFix: CoreStore['lastFix'] = null;
 
   constructor() {
     makeAutoObservable(
@@ -59,6 +60,7 @@ export class WeatherOutlookStore {
         _coreLastFixDisposer: false,
         _appStateSubscription: false,
         _lastAttemptedLocation: false,
+        _pendingRefreshFix: false,
       } as never,
       { autoBind: true },
     );
@@ -108,6 +110,7 @@ export class WeatherOutlookStore {
     this._appStateSubscription?.remove();
     this._appStateSubscription = null;
     this._lastAttemptedLocation = null;
+    this._pendingRefreshFix = null;
   }
 
   // ---------------------------------------------------------------------------
@@ -184,7 +187,12 @@ export class WeatherOutlookStore {
     lastFix: CoreStore['lastFix'],
     requireMeaningfulMove: boolean = false,
   ): Promise<void> {
-    if (!lastFix || this.isLoading) {
+    if (!lastFix) {
+      return;
+    }
+
+    if (this.isLoading) {
+      this._pendingRefreshFix = lastFix;
       return;
     }
 
@@ -202,6 +210,12 @@ export class WeatherOutlookStore {
 
     this._lastAttemptedLocation = { latitude, longitude };
     await this.loadOutlook(latitude, longitude);
+
+    const pendingRefreshFix = this._pendingRefreshFix;
+    this._pendingRefreshFix = null;
+    if (pendingRefreshFix) {
+      await this._refreshForFix(pendingRefreshFix, true);
+    }
   }
 
   /**
