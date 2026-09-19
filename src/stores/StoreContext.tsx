@@ -11,6 +11,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Start device status monitoring immediately (synchronously)
     rootStore.coreStore.startDeviceStatusMonitoring();
+    rootStore.astronomyEventStore.start(rootStore.coreStore);
 
     // Load persisted data asynchronously
     (async () => {
@@ -32,6 +33,7 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     // Cleanup device status monitoring on unmount
     return () => {
       rootStore.coreStore.stopDeviceStatusMonitoring();
+      rootStore.astronomyEventStore.stop();
       rootStore.barometerStore.stop();
     };
   }, [rootStore]);

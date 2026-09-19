@@ -12,8 +12,15 @@ import { Planet } from 'astronomia/planetposition';
 import { approxTimes, Stdh0Stellar } from 'astronomia/rise';
 import { mean as siderealMean } from 'astronomia/sidereal';
 import * as solsticeModule from 'astronomia/solstice';
-import { makeAutoObservable, runInAction } from 'mobx';
+import {
+  IReactionDisposer,
+  makeAutoObservable,
+  reaction,
+  runInAction,
+} from 'mobx';
+import { AppState, AppStateStatus, InteractionManager } from 'react-native';
 import * as SunCalc from 'suncalc';
+import type { CoreStore } from './CoreStore';
 
 export type AstronomyEventType =
   | 'solar_eclipse'
@@ -109,19 +116,31 @@ function formatRiseTime(
  * - Planet rise times (Venus, Mars, Jupiter, Saturn)
  *
  * All calculations are performed offline using the `astronomia` library.
- * Results are cached in memory and recomputed only on significant location
- * change (>0.5°) or calendar date rollover.
+ * Events are computed automatically on app start, then recomputed only on
+ * significant location change (>0.5°) or calendar date rollover.
  */
 export class AstronomyEventStore {
   private _events: AstronomyEvent[] = [];
   private _lastComputeDate: Date | null = null;
   private _lastComputeLocation: { lat: number; lon: number } | null = null;
   private _earthPlanet: Planet | null = null;
+  private _coreLastFixDisposer: IReactionDisposer | null = null;
+  private _appStateSubscription: { remove: () => void } | null = null;
+  private _interactionHandle: ReturnType<
+    typeof InteractionManager.runAfterInteractions
+  > | null = null;
 
   constructor() {
-    makeAutoObservable(this, { _earthPlanet: false } as never, {
-      autoBind: true,
-    });
+    makeAutoObservable(
+      this,
+      {
+        _earthPlanet: false,
+        _coreLastFixDisposer: false,
+        _appStateSubscription: false,
+        _interactionHandle: false,
+      } as never,
+      { autoBind: true },
+    );
     try {
       this._earthPlanet = new Planet(vsopEarth);
     } catch (e) {
@@ -130,6 +149,50 @@ export class AstronomyEventStore {
         e,
       );
     }
+  }
+
+  start(core: CoreStore): void {
+    this.stop();
+    this._scheduleCompute(core);
+    this._coreLastFixDisposer = reaction(
+      () => core.lastFix,
+      (lastFix) => {
+        if (!lastFix) {
+          return;
+        }
+        this._scheduleCompute(core);
+      },
+    );
+    this._appStateSubscription = AppState.addEventListener(
+      'change',
+      (nextState: AppStateStatus) => {
+        if (nextState === 'active') {
+          this._scheduleCompute(core);
+        }
+      },
+    );
+  }
+
+  stop(): void {
+    this._coreLastFixDisposer?.();
+    this._coreLastFixDisposer = null;
+    this._appStateSubscription?.remove();
+    this._appStateSubscription = null;
+    this._interactionHandle?.cancel();
+    this._interactionHandle = null;
+  }
+
+  private _scheduleCompute(core: CoreStore): void {
+    this._interactionHandle?.cancel();
+    this._interactionHandle = InteractionManager.runAfterInteractions(() => {
+      this._interactionHandle = null;
+      const lastFix = core.lastFix;
+      if (lastFix) {
+        this.computeEvents(lastFix.coords.latitude, lastFix.coords.longitude);
+      } else {
+        this.computeEventsWithoutLocation();
+      }
+    });
   }
 
   /**
@@ -569,6 +632,7 @@ export class AstronomyEventStore {
    * Clears cached events and resets computation state.
    */
   dispose(): void {
+    this.stop();
     runInAction(() => {
       this._events = [];
       this._lastComputeDate = null;

@@ -155,6 +155,8 @@ export class RootStore {
     this.astronomyEventStore = new AstronomyEventStore();
     this.offlineDownloadStore = new OfflineDownloadStore();
     this.devToolsStore = new DevToolsStore();
+    this.coreStore.startDeviceStatusMonitoring();
+    this.astronomyEventStore.start(this.coreStore);
     this.isOfflineMode = true;
     // initializeSettings is intentionally not awaited - settings have sensible
     // defaults and components will re-render when settings finish loading from DB
