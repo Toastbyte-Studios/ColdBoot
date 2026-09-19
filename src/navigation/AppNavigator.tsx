@@ -12,6 +12,7 @@ import ReferenceModule from '../modules/Reference/ReferenceModule';
 import BarometricPressureScreen from '../screens/BarometricPressure/BarometricPressureScreen';
 import BarterEstimatorScreen from '../screens/BarterEstimator/BarterEstimatorScreen';
 import ChecklistEntryScreen from '../screens/Checklist/ChecklistEntryScreen';
+import NewChecklistScreen from '../screens/Checklist/NewChecklistScreen';
 import ChecklistScreen from '../screens/Checklist/ChecklistScreen';
 import ComingSoonScreen from '../screens/Common/ComingSoonScreen';
 import SearchScreen from '../screens/Common/SearchScreen';
@@ -230,6 +231,7 @@ function NavigatorContent(): JSX.Element {
             component={ManageCategoriesScreen}
           />
           <Stack.Screen name="Checklist" component={ChecklistScreen} />
+          <Stack.Screen name="NewChecklist" component={NewChecklistScreen} />
           <Stack.Screen
             name="ChecklistEntry"
             component={ChecklistEntryScreen}

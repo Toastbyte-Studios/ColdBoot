@@ -97,6 +97,7 @@ const DEFAULT_CHECKLISTS = [
     ],
   },
 ];
+const MAX_CHECKLIST_NAME_LENGTH = 60;
 
 export interface ChecklistItem {
   id: string;
@@ -235,10 +236,29 @@ export class ChecklistStore {
     name: string,
     isDefault: boolean = false,
     defaultItems: string[] = [],
-  ): Promise<void> {
+  ): Promise<Checklist> {
+    const normalizedName = name.trim();
+    if (!normalizedName) {
+      throw new Error('Checklist name cannot be empty');
+    }
+    if (normalizedName.length > MAX_CHECKLIST_NAME_LENGTH) {
+      throw new Error(
+        `Checklist name cannot exceed ${MAX_CHECKLIST_NAME_LENGTH} characters`,
+      );
+    }
+
+    const duplicateChecklist = this.checklists.find(
+      (checklist) =>
+        checklist.name.trim().toLocaleLowerCase() ===
+        normalizedName.toLocaleLowerCase(),
+    );
+    if (duplicateChecklist) {
+      throw new Error(`A checklist named "${normalizedName}" already exists`);
+    }
+
     const checklist: Checklist = {
       id: generateId(),
-      name,
+      name: normalizedName,
       createdAt: Date.now(),
       isDefault,
     };
@@ -252,6 +272,8 @@ export class ChecklistStore {
     for (const itemText of defaultItems) {
       await this.addChecklistItem(checklist.id, itemText);
     }
+
+    return checklist;
   }
 
   /**

@@ -66,6 +66,7 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
 
   const checklistName = checklist.name || '(Untitled)';
   const items = checklistStore.getChecklistItems(checklist.id);
+  const shouldShowAddItemInput = isAddingItem || items.length === 0;
 
   const handleAddItem = async () => {
     if (newItemText.trim()) {
@@ -137,28 +138,23 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
         >
-          {items.length === 0 && !isAddingItem && (
+          {items.length === 0 && (
             <View style={styles.emptyState}>
               <Icon
                 name="clipboard-outline"
                 size={48}
-                color={COLORS.PRIMARY_DARK}
+                color={COLORS.MUTED}
               />
-              <Text style={[styles.emptyText, { color: COLORS.PRIMARY_DARK }]}>
+              <Text style={[styles.emptyText, { color: COLORS.MUTED }]}>
                 No items yet
               </Text>
-              <Text
-                style={[
-                  styles.emptySubtext,
-                  { color: COLORS.PRIMARY_DARK + '80' },
-                ]}
-              >
-                Tap the + button to add items
+              <Text style={[styles.emptySubtext, { color: COLORS.MUTED }]}>
+                Add your first item below.
               </Text>
             </View>
           )}
 
-          {isAddingItem && (
+          {shouldShowAddItemInput && (
             <View
               style={[
                 styles.addItemRow,
@@ -196,7 +192,9 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
                 accessibilityLabel="Cancel"
                 onPress={() => {
                   setNewItemText('');
-                  setIsAddingItem(false);
+                  if (items.length > 0) {
+                    setIsAddingItem(false);
+                  }
                 }}
               />
             </View>
