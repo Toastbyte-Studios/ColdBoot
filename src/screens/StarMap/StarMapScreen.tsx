@@ -1,7 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import LinearGradient from 'react-native-linear-gradient';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import constellationImages from '../../assets/constellationImages';
 import { Text } from '../../components/ScaledText';
@@ -11,6 +10,7 @@ import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
 import { FOOTER_HEIGHT } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   ConstellationGuide,
   NavigationalStar,
@@ -63,16 +63,7 @@ function StarMapScreen() {
   );
 
   const renderStepCard = (step: string, index: number) => (
-    <View
-      key={index}
-      style={[styles.stepCard, { borderColor: COLORS.SECONDARY_ACCENT }]}
-    >
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.cardBackground}
-      />
+    <View key={index} style={[styles.stepCard, cardSurface(COLORS)]}>
       <Text style={[styles.stepText, { color: COLORS.PRIMARY_DARK }]}>
         {step}
       </Text>
@@ -80,16 +71,7 @@ function StarMapScreen() {
   );
 
   const renderStarCard = (star: NavigationalStar, index: number) => (
-    <View
-      key={index}
-      style={[styles.starCard, { borderColor: COLORS.SECONDARY_ACCENT }]}
-    >
-      <LinearGradient
-        colors={COLORS.BRAND_GRADIENT}
-        start={{ x: 0, y: 1 }}
-        end={{ x: 1, y: 0 }}
-        style={styles.cardBackground}
-      />
+    <View key={index} style={[styles.starCard, cardSurface(COLORS)]}>
       <View style={styles.starCardHeader}>
         <Ionicons
           name="star-outline"
@@ -120,19 +102,7 @@ function StarMapScreen() {
   ) => {
     const SvgDiagram = constellationImages[guide.imageKey];
     return (
-      <View
-        key={index}
-        style={[
-          styles.constellationCard,
-          { borderColor: COLORS.SECONDARY_ACCENT },
-        ]}
-      >
-        <LinearGradient
-          colors={COLORS.BRAND_GRADIENT}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 0 }}
-          style={styles.cardBackground}
-        />
+      <View key={index} style={[styles.constellationCard, cardSurface(COLORS)]}>
         <Text
           style={[styles.constellationName, { color: COLORS.PRIMARY_DARK }]}
         >
@@ -169,18 +139,7 @@ function StarMapScreen() {
           contentContainerStyle={styles.scrollContent}
         >
           {/* Context banner */}
-          <View
-            style={[
-              styles.contextBanner,
-              { borderColor: COLORS.SECONDARY_ACCENT },
-            ]}
-          >
-            <LinearGradient
-              colors={COLORS.BRAND_GRADIENT}
-              start={{ x: 0, y: 1 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.cardBackground}
-            />
+          <View style={[styles.contextBanner, cardSurface(COLORS)]}>
             <View style={styles.contextRow}>
               <Ionicons
                 name="earth-outline"
@@ -274,8 +233,6 @@ const styles = StyleSheet.create({
   },
   contextBanner: {
     width: '90%',
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     overflow: 'hidden',
     alignItems: 'center',
@@ -298,8 +255,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   stepCard: {
-    borderRadius: 8,
-    borderWidth: 1,
     padding: 14,
     marginTop: 8,
     overflow: 'hidden',
@@ -309,8 +264,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   starCard: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
@@ -341,8 +294,6 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   constellationCard: {
-    borderRadius: 12,
-    borderWidth: 2,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
@@ -369,8 +320,5 @@ const styles = StyleSheet.create({
   guideText: {
     fontSize: 13,
     lineHeight: 19,
-  },
-  cardBackground: {
-    ...StyleSheet.absoluteFill,
   },
 });
