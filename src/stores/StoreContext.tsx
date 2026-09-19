@@ -15,9 +15,13 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     rootStore.solarCycleNotificationStore.start(rootStore.coreStore);
 
     // Load persisted data asynchronously
+    const startupPromise = rootStore.startupPromise;
     (async () => {
       try {
-        await rootStore.startupPromise;
+        await startupPromise;
+        if (rootStore.startupPromise !== startupPromise) {
+          return;
+        }
         if (rootStore.notesStore.notesDb) {
           // Start barometer collection now that the DB is available so pressure
           // history accumulates while the user uses the app, not just while the

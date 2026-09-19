@@ -173,8 +173,8 @@ export class RootStore {
         ) {
           return;
         }
-        this.weatherOutlookStore.start(this.coreStore);
         if (this.notesStore.notesDb) {
+          this.weatherOutlookStore.start(this.coreStore);
           this.barometerStore.start(this.notesStore.notesDb).catch((e) => {
             console.warn('Failed to restart barometer store after reset:', e);
           });
