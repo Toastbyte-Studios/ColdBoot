@@ -824,6 +824,60 @@ describe('WeatherOutlookStore', () => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
 
+    test('a queued foreground refresh is preserved even if a small location update arrives later', async () => {
+      const store = new WeatherOutlookStore();
+      const core = new FakeCoreStore();
+      const db = makeDb([]);
+      await store.initDatabase(db as SQLiteDatabase);
+
+      let resolveFirstFetch: ((value: Response) => void) | null = null;
+      global.fetch = jest
+        .fn()
+        .mockImplementationOnce(
+          () =>
+            new Promise<Response>((resolve) => {
+              resolveFirstFetch = resolve;
+            }),
+        )
+        .mockResolvedValue({
+          ok: true,
+          json: async () => weatherOutlookSeasonalResponseFixture,
+        } as Response);
+
+      runInAction(() => {
+        core.lastFix = {
+          coords: { latitude: 36.2, longitude: -115.1 },
+        };
+      });
+      store.start(core as unknown as CoreStore);
+      await flushPromises();
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      appStateChangeHandler?.('active');
+      runInAction(() => {
+        core.lastFix = {
+          coords: { latitude: 36.4, longitude: -115.0 },
+        };
+      });
+      await flushPromises();
+      expect(fetch).toHaveBeenCalledTimes(1);
+
+      const finishFirstFetch = resolveFirstFetch as
+        | ((value: Response) => void)
+        | null;
+      if (!finishFirstFetch) {
+        throw new Error('First fetch promise was not created');
+      }
+
+      finishFirstFetch({
+        ok: true,
+        json: async () => weatherOutlookSeasonalResponseFixture,
+      } as Response);
+      await flushPromises();
+
+      expect(fetch).toHaveBeenCalledTimes(2);
+    });
+
     test('stop removes listeners and is idempotent', async () => {
       const store = new WeatherOutlookStore();
       const core = new FakeCoreStore();

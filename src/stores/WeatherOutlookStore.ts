@@ -53,7 +53,7 @@ export class WeatherOutlookStore {
   } | null = null;
   private _pendingRefresh: {
     fix: CoreStore['lastFix'];
-    requireMeaningfulMove: boolean;
+    forceRefresh: boolean;
   } | null = null;
 
   constructor() {
@@ -197,9 +197,8 @@ export class WeatherOutlookStore {
     if (this.isLoading) {
       this._pendingRefresh = {
         fix: lastFix,
-        requireMeaningfulMove:
-          (this._pendingRefresh?.requireMeaningfulMove ?? true) &&
-          requireMeaningfulMove,
+        forceRefresh:
+          Boolean(this._pendingRefresh?.forceRefresh) || !requireMeaningfulMove,
       };
       return;
     }
@@ -224,7 +223,7 @@ export class WeatherOutlookStore {
     if (pendingRefresh) {
       await this._refreshForFix(
         pendingRefresh.fix,
-        pendingRefresh.requireMeaningfulMove,
+        !pendingRefresh.forceRefresh,
       );
     }
   }

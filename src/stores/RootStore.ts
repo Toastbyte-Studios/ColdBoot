@@ -164,11 +164,11 @@ export class RootStore {
     this.startupPromise = this.initializeSettings();
     this.startupPromise
       .then(() => {
+        this.weatherOutlookStore.start(this.coreStore);
         if (this.notesStore.notesDb) {
           this.barometerStore.start(this.notesStore.notesDb).catch((e) => {
             console.warn('Failed to restart barometer store after reset:', e);
           });
-          this.weatherOutlookStore.start(this.coreStore);
         }
       })
       .catch((e) => {
