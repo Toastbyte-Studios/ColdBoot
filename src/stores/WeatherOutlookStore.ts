@@ -83,18 +83,18 @@ export class WeatherOutlookStore {
 
   start(core: CoreStore): void {
     this.stop();
-    void this._refreshForFix(core.lastFix);
+    this._refreshForFix(core.lastFix).catch(() => undefined);
     this._coreLastFixDisposer = reaction(
       () => core.lastFix,
       (lastFix) => {
-        void this._refreshForFix(lastFix, true);
+        this._refreshForFix(lastFix, true).catch(() => undefined);
       },
     );
     this._appStateSubscription = AppState.addEventListener(
       'change',
       (nextState: AppStateStatus) => {
         if (nextState === 'active') {
-          void this._refreshForFix(core.lastFix);
+          this._refreshForFix(core.lastFix).catch(() => undefined);
         }
       },
     );

@@ -162,10 +162,12 @@ export class RootStore {
     // initializeSettings is intentionally not awaited - settings have sensible
     // defaults and components will re-render when settings finish loading from DB
     this.startupPromise = this.initializeSettings();
-    void this.startupPromise
+    this.startupPromise
       .then(() => {
         if (this.notesStore.notesDb) {
-          void this.barometerStore.start(this.notesStore.notesDb);
+          this.barometerStore.start(this.notesStore.notesDb).catch((e) => {
+            console.warn('Failed to restart barometer store after reset:', e);
+          });
           this.weatherOutlookStore.start(this.coreStore);
         }
       })

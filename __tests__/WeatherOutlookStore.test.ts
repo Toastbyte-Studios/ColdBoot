@@ -16,9 +16,9 @@ import {
   shouldRefresh,
   toYearMonth,
 } from '../src/services/weatherOutlookService';
-import type { CoreStore } from '../src/stores/CoreStore';
 import { WeatherOutlookStore } from '../src/stores/WeatherOutlookStore';
 import { SQLiteDatabase } from '../src/types/database-types';
+import type { CoreStore } from '../src/stores/CoreStore';
 
 const mockRemoveAppStateListener = jest.fn();
 let appStateChangeHandler: ((nextState: string) => void) | null = null;
@@ -694,7 +694,7 @@ describe('WeatherOutlookStore', () => {
       expect(fetch).toHaveBeenCalledTimes(2);
     });
 
-    test("returning to the foreground refreshes expired cache", async () => {
+    test('returning to the foreground refreshes expired cache', async () => {
       const staleOutlook: SeasonalOutlook = {
         ...sampleOutlook,
         fetchedAt: new Date(Date.now() - CACHE_MAX_AGE_MS - 1000).toISOString(),
@@ -734,13 +734,13 @@ describe('WeatherOutlookStore', () => {
       const db = makeDb([]);
       await store.initDatabase(db as SQLiteDatabase);
 
-      let resolveFetch: ((value: unknown) => void) | null = null;
+      let resolveFetch: ((value: Response) => void) | null = null;
       global.fetch = jest.fn(
         () =>
-          new Promise((resolve) => {
+          new Promise<Response>((resolve) => {
             resolveFetch = resolve;
           }),
-      );
+      ) as typeof fetch;
 
       runInAction(() => {
         core.lastFix = {
@@ -761,10 +761,15 @@ describe('WeatherOutlookStore', () => {
 
       expect(fetch).toHaveBeenCalledTimes(1);
 
-      resolveFetch?.({
+      const finishFetch = resolveFetch as ((value: Response) => void) | null;
+      if (!finishFetch) {
+        throw new Error('Fetch promise was not created');
+      }
+
+      finishFetch({
         ok: true,
         json: async () => weatherOutlookSeasonalResponseFixture,
-      });
+      } as Response);
       await flushPromises();
       expect(store.outlook).not.toBeNull();
     });
