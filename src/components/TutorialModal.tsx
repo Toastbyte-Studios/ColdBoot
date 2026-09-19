@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View, Text as RNText } from 'react-native';
+import { Platform, StyleSheet, View, Text as RNText } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
 import { FOOTER_HEIGHT } from '../theme/constants';
@@ -26,11 +26,20 @@ const TUTORIAL_STEPS: TutorialStep[] = [
     title: 'Welcome',
     description: "Welcome to ColdBoot. Here's a quick tour.",
   },
-  {
-    icon: 'swap-horizontal-outline',
-    title: 'Swipe to Navigate',
-    description: 'Swipe left or right to move between sections and tools.',
-  },
+  // Screen-to-screen swiping is iOS only: on Android the edge drag belongs to
+  // the system back gesture (see AppShell), so that step says so instead.
+  Platform.OS === 'android'
+    ? {
+        icon: 'arrow-back-outline',
+        title: 'Go Back',
+        description:
+          "Use your phone's back gesture or button to return to the previous screen.",
+      }
+    : {
+        icon: 'swap-horizontal-outline',
+        title: 'Swipe to Navigate',
+        description: 'Swipe left or right to move between sections and tools.',
+      },
   {
     icon: 'home-outline',
     title: 'Tap the Logo',
