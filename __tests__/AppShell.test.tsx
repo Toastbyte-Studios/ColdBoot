@@ -49,8 +49,8 @@ jest.mock('../src/components/HelpModal', () => ({
 jest.mock('../src/components/ScreenContainer', () => ({
   __esModule: true,
   default: ({ children }: { children: React.ReactNode }) => {
-    const React = require('react');
-    return React.createElement(React.Fragment, null, children);
+    const ReactModule = require('react');
+    return ReactModule.createElement(ReactModule.Fragment, null, children);
   },
 }));
 jest.mock('../src/components/SettingsModal', () => ({
@@ -59,10 +59,16 @@ jest.mock('../src/components/SettingsModal', () => ({
 jest.mock('../src/components/ShortcutBar', () => () => null);
 jest.mock('../src/components/TutorialModal', () => () => null);
 
-type RenderedNode = ReactTestRenderer.ReactTestRendererJSON | null;
+type RenderedNode =
+  | ReactTestRenderer.ReactTestRendererJSON
+  | ReactTestRenderer.ReactTestRendererJSON[]
+  | null;
 
 function hasTransformStyle(node: RenderedNode): boolean {
   if (!node) return false;
+  if (Array.isArray(node)) {
+    return node.some((child) => hasTransformStyle(child));
+  }
 
   const styles = Array.isArray(node.props.style)
     ? node.props.style
