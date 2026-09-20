@@ -312,4 +312,44 @@ describe('MapLibraryScreen', () => {
       'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
     );
   });
+
+  it('does not navigate when stored region metadata is invalid', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([
+      {
+        id: 'pack-1',
+        metadata: {
+          name: 'Area Download 9/20/2026',
+          createdAt: '2026-09-12T00:00:00.000Z',
+          radiusMiles: 10,
+          centerLat: Number.NaN,
+          centerLng: -115.13,
+        },
+        status: {
+          state: 'complete',
+          completedResourceCount: 10,
+          requiredResourceCount: 10,
+          completedResourceSize: 82 * 1024 * 1024,
+        },
+      },
+    ]);
+
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(<MapLibraryScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      await Promise.resolve();
+    });
+
+    const row = tree.root.findByProps({ testID: 'map-library-row' });
+    await ReactTestRenderer.act(async () => {
+      row.props.onPress();
+    });
+
+    expect(navigate).not.toHaveBeenCalled();
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Area Unavailable',
+      'This offline map is missing the location data needed to reopen it. Delete it and download it again.',
+    );
+  });
 });

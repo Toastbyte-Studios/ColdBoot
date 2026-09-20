@@ -53,6 +53,34 @@ type MapLibraryRoutes = {
 
 type MapLibraryNavigationProp = NativeStackNavigationProp<MapLibraryRoutes>;
 
+function getValidRegionMetadata(pack: OfflineMapPack): {
+  center: { latitude: number; longitude: number };
+  radiusMiles: number;
+} | null {
+  const { centerLng, centerLat, radiusMiles } = pack.metadata;
+  const isValid =
+    Number.isFinite(centerLng) &&
+    centerLng >= -180 &&
+    centerLng <= 180 &&
+    Number.isFinite(centerLat) &&
+    centerLat >= -90 &&
+    centerLat <= 90 &&
+    Number.isFinite(radiusMiles) &&
+    radiusMiles > 0;
+
+  if (!isValid) {
+    return null;
+  }
+
+  return {
+    center: {
+      latitude: centerLat,
+      longitude: centerLng,
+    },
+    radiusMiles,
+  };
+}
+
 function formatDownloadedDate(createdAt: string): string {
   const date = new Date(createdAt);
   if (isNaN(date.getTime())) {
@@ -267,17 +295,8 @@ function MapLibraryScreen() {
     async (pack: OfflineMapPack) => {
       setBusyPackId(pack.id);
       try {
-        const { centerLng, centerLat, radiusMiles } = pack.metadata;
-        const hasValidRefreshRegion =
-          Number.isFinite(centerLng) &&
-          centerLng >= -180 &&
-          centerLng <= 180 &&
-          Number.isFinite(centerLat) &&
-          centerLat >= -90 &&
-          centerLat <= 90 &&
-          Number.isFinite(radiusMiles) &&
-          radiusMiles > 0;
-        if (!hasValidRefreshRegion) {
+        const regionMetadata = getValidRegionMetadata(pack);
+        if (!regionMetadata) {
           Alert.alert(
             'Refresh Unavailable',
             'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
@@ -285,8 +304,11 @@ function MapLibraryScreen() {
           return;
         }
         const bounds = boundsFromRadius(
-          { longitude: centerLng, latitude: centerLat },
-          radiusMiles,
+          {
+            longitude: regionMetadata.center.longitude,
+            latitude: regionMetadata.center.latitude,
+          },
+          regionMetadata.radiusMiles,
         );
         const zoomRange = settingsStore.highDetailOffline
           ? HIGH_DETAIL_OFFLINE_ZOOM
@@ -297,9 +319,9 @@ function MapLibraryScreen() {
           metadata: {
             name: pack.metadata.name,
             createdAt: new Date().toISOString(),
-            centerLng,
-            centerLat,
-            radiusMiles,
+            centerLng: regionMetadata.center.longitude,
+            centerLat: regionMetadata.center.latitude,
+            radiusMiles: regionMetadata.radiusMiles,
           },
           zoomRange,
         });
@@ -428,13 +450,15 @@ function MapLibraryScreen() {
                   subtitle={subtitleParts.join(' · ')}
                   showSeparator={false}
                   onPress={() => {
-                    navigation.navigate('MapScreen', {
-                      center: {
-                        latitude: pack.metadata.centerLat,
-                        longitude: pack.metadata.centerLng,
-                      },
-                      radiusMiles: pack.metadata.radiusMiles,
-                    });
+                    const regionMetadata = getValidRegionMetadata(pack);
+                    if (!regionMetadata) {
+                      Alert.alert(
+                        'Area Unavailable',
+                        'This offline map is missing the location data needed to reopen it. Delete it and download it again.',
+                      );
+                      return;
+                    }
+                    navigation.navigate('MapScreen', regionMetadata);
                   }}
                 />
                 <View style={styles.actions}>
