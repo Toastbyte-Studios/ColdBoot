@@ -1,7 +1,7 @@
 import React from 'react';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
-import AppShell from '../src/components/AppShell';
+const originalPlatform = Platform.OS;
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
@@ -15,7 +15,7 @@ jest.mock('@react-native-async-storage/async-storage', () => ({
 }));
 
 jest.mock('../src/hooks/useActiveRouteName', () => ({
-  useActiveRouteName: () => undefined,
+  useActiveRouteName: jest.fn(() => undefined),
 }));
 
 jest.mock('../src/hooks/useIsDarkMode', () => ({
@@ -59,10 +59,22 @@ jest.mock('../src/components/SettingsModal', () => ({
 jest.mock('../src/components/ShortcutBar', () => () => null);
 jest.mock('../src/components/TutorialModal', () => () => null);
 
+const AppShell = require('../src/components/AppShell')
+  .default as typeof import('../src/components/AppShell').default;
+const mockUseActiveRouteName = require('../src/hooks/useActiveRouteName')
+  .useActiveRouteName as jest.Mock;
+
 type RenderedNode =
   | ReactTestRenderer.ReactTestRendererJSON
   | ReactTestRenderer.ReactTestRendererJSON[]
   | null;
+
+function setPlatform(os: typeof Platform.OS) {
+  Object.defineProperty(Platform, 'OS', {
+    configurable: true,
+    value: os,
+  });
+}
 
 function hasTransformStyle(node: RenderedNode): boolean {
   if (!node) return false;
@@ -99,6 +111,11 @@ function hasTransformStyle(node: RenderedNode): boolean {
   });
 }
 
+afterEach(() => {
+  mockUseActiveRouteName.mockReturnValue(undefined);
+  setPlatform(originalPlatform);
+});
+
 test('AppShell renders its children without a translate transform', () => {
   let tree!: ReactTestRenderer.ReactTestRenderer;
 
@@ -112,5 +129,27 @@ test('AppShell renders its children without a translate transform', () => {
 
   expect(tree.root.findByProps({ accessibilityLabel: 'App bar' })).toBeTruthy();
   expect(tree.root.findByProps({ children: 'Screen content' })).toBeTruthy();
+  expect(hasTransformStyle(tree.toJSON())).toBe(false);
+});
+
+test('AppShell keeps full-screen Android routes unshifted', () => {
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  setPlatform('android');
+  mockUseActiveRouteName.mockReturnValue('Search');
+
+  ReactTestRenderer.act(() => {
+    tree = ReactTestRenderer.create(
+      <AppShell>
+        <Text>Full-screen content</Text>
+      </AppShell>,
+    );
+  });
+
+  expect(() =>
+    tree.root.findByProps({ accessibilityLabel: 'App bar' }),
+  ).toThrow();
+  expect(
+    tree.root.findByProps({ children: 'Full-screen content' }),
+  ).toBeTruthy();
   expect(hasTransformStyle(tree.toJSON())).toBe(false);
 });
