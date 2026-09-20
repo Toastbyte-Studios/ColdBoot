@@ -30,7 +30,6 @@ import canGoBack, { goBack } from '../navigation/navigationRef';
 import AlertsSheet from './AlertsSheet';
 import AppBar from './AppBar';
 import { HelpModal } from './HelpModal';
-import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import ShortcutBar from './ShortcutBar';
@@ -47,6 +46,7 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
   Home: undefined;
   Search: undefined;
   DownloadArea: undefined;
+  MapLibrary: undefined;
 }>;
 
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
@@ -99,7 +99,6 @@ export default function AppShell({ children }: Props) {
     FULL_SCREEN_ROUTES.has(activeRouteName);
   const translateYRef = useRef(new Animated.Value(0)).current;
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
-  const [isManageOfflineVisible, setIsManageOfflineVisible] = useState(false);
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const [isAlertsVisible, setIsAlertsVisible] = useState(false);
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
@@ -387,14 +386,8 @@ export default function AppShell({ children }: Props) {
       <SettingsModal
         visible={isSettingsVisible}
         onClose={() => setIsSettingsVisible(false)}
-        onManageOfflineMaps={() => setIsManageOfflineVisible(true)}
+        onManageOfflineMaps={() => navigation.navigate('MapLibrary')}
         onOpenHelp={() => setIsHelpVisible(true)}
-      />
-
-      <ManageOfflineMapsModal
-        visible={isManageOfflineVisible}
-        onClose={() => setIsManageOfflineVisible(false)}
-        onDownloadArea={() => navigation.navigate('DownloadArea')}
       />
 
       <HelpModal

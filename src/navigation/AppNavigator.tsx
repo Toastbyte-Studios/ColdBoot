@@ -39,6 +39,7 @@ import ManageInventoryCategoriesScreen from '../screens/Inventory/ManageInventor
 import NewInventoryItemScreen from '../screens/Inventory/NewInventoryItemScreen';
 import LunarCyclesScreen from '../screens/LunarCycles/LunarCyclesScreen';
 import DownloadConfirmScreen from '../screens/Map/components/offline/DownloadConfirmScreen';
+import MapLibraryScreen from '../screens/Map/MapLibraryScreen';
 import MapScreen from '../screens/Map/MapScreen';
 import AlphaToMorseScreen from '../screens/MorseCode/AlphaToMorseScreen';
 import MorseCodeCheatSheet from '../screens/MorseCode/MorseCodeCheatSheet';
@@ -141,6 +142,7 @@ function NavigatorContent(): JSX.Element {
           <Stack.Screen name="EarthModule" component={EarthModule} />
           {/* Navigation Module Screens */}
           <Stack.Screen name="MapScreen" component={MapScreen} />
+          <Stack.Screen name="MapLibrary" component={MapLibraryScreen} />
           <Stack.Screen name="StarMap" component={StarMapScreen} />
           <Stack.Screen name="GridReference" component={GridReferenceScreen} />
           <Stack.Screen
