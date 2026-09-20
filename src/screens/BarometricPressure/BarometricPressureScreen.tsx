@@ -1,16 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import SegmentedControl from '../../components/SegmentedControl';
+import StackScreen from '../../components/StackScreen';
 import { useBarometricPressure } from '../../hooks/useBarometricPressure';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useSettingsStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
   getPressureTrend,
@@ -21,6 +20,8 @@ import {
   PressureTrend,
 } from '../../utils/barometricPressure';
 import { displayPressure } from '../../utils/unitConversions';
+
+const isAndroid = Platform.OS === 'android';
 
 /** Available history window options in hours */
 const WINDOW_OPTIONS = [1, 3, 6, 12, 24] as const;
@@ -50,7 +51,6 @@ const TREND_ICON: Record<PressureTrend, string> = {
  */
 function BarometricPressureScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const settingsStore = useSettingsStore();
   const { pressure, available, loading, history, error } =
     useBarometricPressure();
@@ -110,9 +110,14 @@ function BarometricPressureScreen() {
     pressure !== null ? (isImperial ? 'inHg' : 'hPa') : '';
 
   return (
-    <ScreenBody>
-      <SectionHeader>Barometric Pressure</SectionHeader>
-
+    <StackScreen
+      title="Barometric Pressure"
+      subtitle={
+        pressure !== null
+          ? `${pressureValueStr} ${pressureUnitStr}`
+          : 'Device sensor'
+      }
+    >
       {loading && (
         <View style={styles.centerContainer}>
           <ActivityIndicator size="large" color={COLORS.ACCENT} />
@@ -131,165 +136,124 @@ function BarometricPressureScreen() {
       )}
 
       {available && !loading && pressure !== null && (
-        <View style={[styles.container, { paddingBottom: footerClearance }]}>
-          <ScrollView
-            style={styles.scrollView}
-            contentContainerStyle={styles.scrollContent}
-          >
-            {/* Current Reading */}
-            <View style={styles.section}>
-              <Text
-                style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Current Reading
-              </Text>
+        <>
+          {/* Current Reading */}
+          <View style={styles.section}>
+            <SectionEyebrow>Current Reading</SectionEyebrow>
 
-              <View style={[styles.card, cardSurface(COLORS)]}>
-                <View style={styles.readingRow}>
-                  <View
-                    style={styles.readingBlock}
-                    accessible={true}
-                    accessibilityLabel={`Current pressure: ${pressureDisplay}`}
+            <View style={[styles.card, cardSurface(COLORS)]}>
+              <View style={styles.readingRow}>
+                <View
+                  style={styles.readingBlock}
+                  accessible={true}
+                  accessibilityLabel={`Current pressure: ${pressureDisplay}`}
+                >
+                  <Text
+                    style={[
+                      styles.readingValue,
+                      { color: COLORS.PRIMARY_DARK },
+                    ]}
                   >
-                    <Text
-                      style={[
-                        styles.readingValue,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {pressureValueStr}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.readingUnit,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {pressureUnitStr}
-                    </Text>
-                  </View>
+                    {pressureValueStr}
+                  </Text>
+                  <Text
+                    style={[styles.readingUnit, { color: COLORS.PRIMARY_DARK }]}
+                  >
+                    {pressureUnitStr}
+                  </Text>
                 </View>
               </View>
             </View>
+          </View>
 
-            {/* Trend Window Selector */}
-            <View style={styles.section}>
-              <Text
-                style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Trend Window
-              </Text>
-              <SegmentedControl
-                options={WINDOW_SEGMENTS}
-                value={String(windowHours)}
-                onChange={(hours) =>
-                  setWindowHours(Number(hours) as WindowHours)
-                }
-                accessibilityLabel="Trend window in hours"
-              />
-            </View>
+          {/* Trend Window Selector */}
+          <View style={styles.section}>
+            <SectionEyebrow>Trend Window</SectionEyebrow>
+            <SegmentedControl
+              options={WINDOW_SEGMENTS}
+              value={String(windowHours)}
+              onChange={(hours) => setWindowHours(Number(hours) as WindowHours)}
+              accessibilityLabel="Trend window in hours"
+            />
+          </View>
 
-            {/* Trend Indicator */}
-            <View style={styles.section}>
-              <Text
-                style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Pressure Trend
-              </Text>
-              <View style={[styles.card, cardSurface(COLORS)]}>
-                {sufficientData ? (
-                  <>
-                    <View
-                      style={styles.trendRow}
-                      accessible={true}
-                      accessibilityLabel={`Pressure trend: ${trend}`}
-                    >
-                      <Ionicons
-                        name={TREND_ICON[trend]}
-                        size={24}
-                        color={COLORS.PRIMARY_DARK}
-                      />
-                      <Text
-                        style={[
-                          styles.trendLabel,
-                          styles.trendLabelInRow,
-                          { color: COLORS.PRIMARY_DARK },
-                        ]}
-                      >
-                        {trend}
-                      </Text>
-                    </View>
-                    <Text
-                      style={[
-                        styles.trendInterpretation,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                      accessibilityLabel={interpretation}
-                    >
-                      {interpretation}
-                    </Text>
-                  </>
-                ) : (
-                  <>
+          {/* Trend Indicator */}
+          <View style={styles.section}>
+            <SectionEyebrow>Pressure Trend</SectionEyebrow>
+            <View style={[styles.card, cardSurface(COLORS)]}>
+              {sufficientData ? (
+                <>
+                  <View
+                    style={styles.trendRow}
+                    accessible={true}
+                    accessibilityLabel={`Pressure trend: ${trend}`}
+                  >
+                    <Ionicons
+                      name={TREND_ICON[trend]}
+                      size={24}
+                      color={COLORS.PRIMARY_DARK}
+                    />
                     <Text
                       style={[
                         styles.trendLabel,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                      accessibilityLabel="Gathering pressure data"
-                    >
-                      Gathering Data…
-                    </Text>
-                    <Text
-                      style={[
-                        styles.trendInterpretation,
+                        styles.trendLabelInRow,
                         { color: COLORS.PRIMARY_DARK },
                       ]}
                     >
-                      Not enough data for a reliable {windowHours}h trend yet.
-                      About {neededHours}h of readings needed.
+                      {trend}
                     </Text>
-                    <Text
-                      style={[styles.trendNote, { color: COLORS.PRIMARY_DARK }]}
-                    >
-                      {dataSpanLabel} Readings are saved each time you open the
-                      app.
-                    </Text>
-                  </>
-                )}
-              </View>
+                  </View>
+                  <Text
+                    style={[
+                      styles.trendInterpretation,
+                      { color: COLORS.PRIMARY_DARK },
+                    ]}
+                    accessibilityLabel={interpretation}
+                  >
+                    {interpretation}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <Text
+                    style={[styles.trendLabel, { color: COLORS.PRIMARY_DARK }]}
+                    accessibilityLabel="Gathering pressure data"
+                  >
+                    Gathering Data…
+                  </Text>
+                  <Text
+                    style={[
+                      styles.trendInterpretation,
+                      { color: COLORS.PRIMARY_DARK },
+                    ]}
+                  >
+                    Not enough data for a reliable {windowHours}h trend yet.
+                    About {neededHours}h of readings needed.
+                  </Text>
+                  <Text
+                    style={[styles.trendNote, { color: COLORS.PRIMARY_DARK }]}
+                  >
+                    {dataSpanLabel} Readings are saved each time you open the
+                    app.
+                  </Text>
+                </>
+              )}
             </View>
-          </ScrollView>
-        </View>
+          </View>
+        </>
       )}
-    </ScreenBody>
+    </StackScreen>
   );
 }
 
 export default observer(BarometricPressureScreen);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
   centerContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    paddingVertical: 40,
   },
   loadingText: {
     marginTop: 12,
@@ -300,17 +264,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     paddingHorizontal: 20,
   },
+  // StackScreen's Android content is full-bleed. The eyebrow brings its own
+  // text gutter and the card brings the screen gutter, so the section itself
+  // only spaces the groups apart.
   section: {
-    width: '90%',
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    marginTop: SPACING.lg,
   },
   card: {
-    padding: 20,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.lg,
     overflow: 'hidden',
   },
   readingRow: {

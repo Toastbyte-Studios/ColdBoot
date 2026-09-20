@@ -1,26 +1,18 @@
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Platform,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import SectionSubHeader from '../../components/SectionSubHeader';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import {
   useCoreStore,
   useSettingsStore,
   useWeatherOutlookStore,
 } from '../../stores/StoreContext';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import { onColor } from '../../theme/colorUtils';
 import {
@@ -28,6 +20,8 @@ import {
   displaySpeed,
   displayTemp,
 } from '../../utils/unitConversions';
+
+const isAndroid = Platform.OS === 'android';
 
 /** Converts cm to inches. */
 function cmToInches(cm: number): number {
@@ -65,7 +59,6 @@ function SeasonalOutlookScreen() {
   const settings = useSettingsStore();
   const weatherStore = useWeatherOutlookStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
 
   const [locationError, setLocationError] = useState<string | null>(null);
   const [expandedMonth, setExpandedMonth] = useState<string | null>(null);
@@ -143,14 +136,10 @@ function SeasonalOutlookScreen() {
   // ---------- render ----------
 
   return (
-    <ScreenBody>
-      <SectionHeader>Seasonal Outlook</SectionHeader>
-
-      {/* Disclaimer banner */}
-      <SectionSubHeader>
-        Ensemble estimates · Not a precise forecast
-      </SectionSubHeader>
-
+    <StackScreen
+      title="Seasonal Outlook"
+      note="Ensemble estimates, not a precise forecast."
+    >
       {/* Stale data warning */}
       {weatherStore.isStale && weatherStore.outlook && (
         <View
@@ -247,250 +236,229 @@ function SeasonalOutlookScreen() {
         !locationError &&
         !weatherStore.error &&
         weatherStore.outlook && (
-          <View
-            style={[styles.container, { paddingBottom: footerClearance + 16 }]}
-          >
-            <ScrollView
-              style={styles.scrollView}
-              contentContainerStyle={styles.scrollContent}
-            >
-              {weatherStore.outlook.months.map((entry) => {
-                const isExpanded = expandedMonth === entry.month;
-                return (
-                  <Touchable
-                    key={entry.month}
-                    onPress={() => toggleMonth(entry.month)}
-                    accessibilityRole="button"
-                    accessibilityState={{ expanded: isExpanded }}
-                    accessibilityLabel={`${formatMonthLabel(entry.month)} outlook, ${isExpanded ? 'collapse' : 'expand'}`}
-                    style={[styles.card, cardSurface(COLORS)]}
-                  >
-                    {/* Header row */}
-                    <View style={styles.cardHeader}>
+          <>
+            {weatherStore.outlook.months.map((entry) => {
+              const isExpanded = expandedMonth === entry.month;
+              return (
+                <Touchable
+                  key={entry.month}
+                  onPress={() => toggleMonth(entry.month)}
+                  accessibilityRole="button"
+                  accessibilityState={{ expanded: isExpanded }}
+                  accessibilityLabel={`${formatMonthLabel(entry.month)} outlook, ${isExpanded ? 'collapse' : 'expand'}`}
+                  style={[styles.card, cardSurface(COLORS)]}
+                >
+                  {/* Header row */}
+                  <View style={styles.cardHeader}>
+                    <Text
+                      style={[
+                        styles.monthLabel,
+                        { color: COLORS.PRIMARY_DARK },
+                      ]}
+                    >
+                      {`${formatMonthLabel(entry.month)} Avg`}
+                    </Text>
+                    <Ionicons
+                      name={isExpanded ? 'chevron-up' : 'chevron-down'}
+                      size={18}
+                      color={COLORS.PRIMARY_DARK}
+                    />
+                  </View>
+
+                  {/* Summary row — always visible */}
+                  <View style={styles.summaryRow}>
+                    <View style={styles.summaryItem}>
+                      <Ionicons
+                        name="thermometer-outline"
+                        size={16}
+                        color={COLORS.SECONDARY_ACCENT}
+                      />
                       <Text
                         style={[
-                          styles.monthLabel,
+                          styles.summaryText,
                           { color: COLORS.PRIMARY_DARK },
                         ]}
                       >
-                        {`${formatMonthLabel(entry.month)} Avg`}
+                        {displayTemp(entry.tempMeanC, measurementSystem)}
                       </Text>
+                    </View>
+
+                    <View style={styles.summaryItem}>
                       <Ionicons
-                        name={isExpanded ? 'chevron-up' : 'chevron-down'}
-                        size={18}
-                        color={COLORS.PRIMARY_DARK}
+                        name="rainy-outline"
+                        size={16}
+                        color={COLORS.SECONDARY_ACCENT}
                       />
+                      <Text
+                        style={[
+                          styles.summaryText,
+                          { color: COLORS.PRIMARY_DARK },
+                        ]}
+                      >
+                        {renderPrecipLine(entry.precipMm)}
+                      </Text>
                     </View>
+                  </View>
 
-                    {/* Summary row — always visible */}
-                    <View style={styles.summaryRow}>
-                      <View style={styles.summaryItem}>
+                  {/* Risk flags */}
+                  <View style={styles.flagRow}>
+                    {entry.snowfallCm > 1 && (
+                      <View
+                        style={[
+                          styles.flag,
+                          { backgroundColor: COLORS.SECONDARY_ACCENT },
+                        ]}
+                      >
                         <Ionicons
-                          name="thermometer-outline"
-                          size={16}
-                          color={COLORS.SECONDARY_ACCENT}
+                          name="snow-outline"
+                          size={12}
+                          color={onColor(COLORS.SECONDARY_ACCENT)}
                         />
                         <Text
                           style={[
-                            styles.summaryText,
-                            { color: COLORS.PRIMARY_DARK },
+                            styles.flagText,
+                            { color: onColor(COLORS.SECONDARY_ACCENT) },
                           ]}
                         >
-                          {displayTemp(entry.tempMeanC, measurementSystem)}
+                          Snow
                         </Text>
-                      </View>
-
-                      <View style={styles.summaryItem}>
-                        <Ionicons
-                          name="rainy-outline"
-                          size={16}
-                          color={COLORS.SECONDARY_ACCENT}
-                        />
-                        <Text
-                          style={[
-                            styles.summaryText,
-                            { color: COLORS.PRIMARY_DARK },
-                          ]}
-                        >
-                          {renderPrecipLine(entry.precipMm)}
-                        </Text>
-                      </View>
-                    </View>
-
-                    {/* Risk flags */}
-                    <View style={styles.flagRow}>
-                      {entry.snowfallCm > 1 && (
-                        <View
-                          style={[
-                            styles.flag,
-                            { backgroundColor: COLORS.SECONDARY_ACCENT },
-                          ]}
-                        >
-                          <Ionicons
-                            name="snow-outline"
-                            size={12}
-                            color={onColor(COLORS.SECONDARY_ACCENT)}
-                          />
-                          <Text
-                            style={[
-                              styles.flagText,
-                              { color: onColor(COLORS.SECONDARY_ACCENT) },
-                            ]}
-                          >
-                            Snow
-                          </Text>
-                        </View>
-                      )}
-                      {entry.windSpeedMeanKmh > 50 && (
-                        <View
-                          style={[
-                            styles.flag,
-                            { backgroundColor: COLORS.ACCENT },
-                          ]}
-                        >
-                          <Ionicons
-                            name="thunderstorm-outline"
-                            size={12}
-                            color={onColor(COLORS.ACCENT)}
-                          />
-                          <Text
-                            style={[
-                              styles.flagText,
-                              { color: onColor(COLORS.ACCENT) },
-                            ]}
-                          >
-                            High Wind
-                          </Text>
-                        </View>
-                      )}
-                      {entry.precipMm > 150 && (
-                        <View
-                          style={[
-                            styles.flag,
-                            { backgroundColor: COLORS.SECONDARY_ACCENT },
-                          ]}
-                        >
-                          <Ionicons
-                            name="water-outline"
-                            size={12}
-                            color={onColor(COLORS.SECONDARY_ACCENT)}
-                          />
-                          <Text
-                            style={[
-                              styles.flagText,
-                              { color: onColor(COLORS.SECONDARY_ACCENT) },
-                            ]}
-                          >
-                            Heavy Rain
-                          </Text>
-                        </View>
-                      )}
-                    </View>
-
-                    {/* Expanded detail */}
-                    {isExpanded && (
-                      <View style={styles.expandedSection}>
-                        <View
-                          style={[
-                            styles.divider,
-                            { backgroundColor: COLORS.SEPARATOR },
-                          ]}
-                        />
-
-                        <View style={styles.detailRow}>
-                          <Text
-                            style={[
-                              styles.detailLabel,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            Snowfall
-                          </Text>
-                          <Text
-                            style={[
-                              styles.detailValue,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            {renderSnowLine(entry.snowfallCm)}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailRow}>
-                          <Text
-                            style={[
-                              styles.detailLabel,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            Wind Speed
-                          </Text>
-                          <Text
-                            style={[
-                              styles.detailValue,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            {renderWindLine(entry.windSpeedMeanKmh)}
-                          </Text>
-                        </View>
-
-                        <View style={styles.detailRow}>
-                          <Text
-                            style={[
-                              styles.detailLabel,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            Solar Radiation
-                          </Text>
-                          <Text
-                            style={[
-                              styles.detailValue,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            {`${Math.round(entry.shortwaveRadiationSum)} MJ/m²`}
-                          </Text>
-                        </View>
                       </View>
                     )}
-                  </Touchable>
-                );
-              })}
-            </ScrollView>
-          </View>
+                    {entry.windSpeedMeanKmh > 50 && (
+                      <View
+                        style={[
+                          styles.flag,
+                          { backgroundColor: COLORS.ACCENT },
+                        ]}
+                      >
+                        <Ionicons
+                          name="thunderstorm-outline"
+                          size={12}
+                          color={onColor(COLORS.ACCENT)}
+                        />
+                        <Text
+                          style={[
+                            styles.flagText,
+                            { color: onColor(COLORS.ACCENT) },
+                          ]}
+                        >
+                          High Wind
+                        </Text>
+                      </View>
+                    )}
+                    {entry.precipMm > 150 && (
+                      <View
+                        style={[
+                          styles.flag,
+                          { backgroundColor: COLORS.SECONDARY_ACCENT },
+                        ]}
+                      >
+                        <Ionicons
+                          name="water-outline"
+                          size={12}
+                          color={onColor(COLORS.SECONDARY_ACCENT)}
+                        />
+                        <Text
+                          style={[
+                            styles.flagText,
+                            { color: onColor(COLORS.SECONDARY_ACCENT) },
+                          ]}
+                        >
+                          Heavy Rain
+                        </Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Expanded detail */}
+                  {isExpanded && (
+                    <View style={styles.expandedSection}>
+                      <View
+                        style={[
+                          styles.divider,
+                          { backgroundColor: COLORS.SEPARATOR },
+                        ]}
+                      />
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[
+                            styles.detailLabel,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          Snowfall
+                        </Text>
+                        <Text
+                          style={[
+                            styles.detailValue,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          {renderSnowLine(entry.snowfallCm)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[
+                            styles.detailLabel,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          Wind Speed
+                        </Text>
+                        <Text
+                          style={[
+                            styles.detailValue,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          {renderWindLine(entry.windSpeedMeanKmh)}
+                        </Text>
+                      </View>
+
+                      <View style={styles.detailRow}>
+                        <Text
+                          style={[
+                            styles.detailLabel,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          Solar Radiation
+                        </Text>
+                        <Text
+                          style={[
+                            styles.detailValue,
+                            { color: COLORS.PRIMARY_DARK },
+                          ]}
+                        >
+                          {`${Math.round(entry.shortwaveRadiationSum)} MJ/m²`}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+                </Touchable>
+              );
+            })}
+          </>
         )}
-    </ScreenBody>
+    </StackScreen>
   );
 }
 
 export default observer(SeasonalOutlookScreen);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
   staleWarning: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginHorizontal: 16,
-    marginTop: 6,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    gap: SPACING.xs + 2,
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs + 2,
     borderRadius: 8,
   },
   staleText: {
@@ -498,11 +466,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   centerContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 40,
-    gap: 12,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    paddingVertical: 40,
+    gap: SPACING.md,
   },
   loadingText: {
     fontSize: 16,
@@ -510,7 +478,6 @@ const styles = StyleSheet.create({
   errorText: {
     fontSize: 16,
     textAlign: 'center',
-    paddingHorizontal: 20,
   },
   errorTitle: {
     fontSize: 18,
@@ -524,10 +491,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   card: {
-    width: '90%',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    marginTop: 12,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.md,
+    marginBottom: SPACING.md,
     overflow: 'hidden',
   },
   cardHeader: {
