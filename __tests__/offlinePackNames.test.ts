@@ -78,4 +78,23 @@ describe('offlinePackNames', () => {
       'pack-1': 'Near Red Rock Canyon',
     });
   });
+
+  it('recovers the write queue after a failed write', async () => {
+    (AsyncStorage.setItem as jest.Mock)
+      .mockRejectedValueOnce(new Error('write failed'))
+      .mockImplementation(async (key: string, value: string) => {
+        storage[key] = value;
+      });
+
+    await expect(
+      setPackNameOverride('pack-1', 'Near Red Rock Canyon'),
+    ).rejects.toThrow('write failed');
+
+    await expect(
+      setPackNameOverride('pack-2', 'Valley of Fire'),
+    ).resolves.toBeUndefined();
+    await expect(loadPackNameOverrides()).resolves.toEqual({
+      'pack-2': 'Valley of Fire',
+    });
+  });
 });

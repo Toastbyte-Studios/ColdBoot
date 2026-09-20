@@ -32,12 +32,18 @@ async function writeOverrides(overrides: PackNameOverrides): Promise<void> {
 function enqueueWrite(
   updater: (overrides: PackNameOverrides) => void,
 ): Promise<void> {
-  writeQueue = writeQueue.then(async () => {
-    const next = await readOverrides();
-    updater(next);
-    await writeOverrides(next);
-  });
-  return writeQueue;
+  const operation = writeQueue
+    .catch(() => undefined)
+    .then(async () => {
+      const next = await readOverrides();
+      updater(next);
+      await writeOverrides(next);
+    });
+  writeQueue = operation.then(
+    () => undefined,
+    () => undefined,
+  );
+  return operation;
 }
 
 export function getPackDisplayName(
