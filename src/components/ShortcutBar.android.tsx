@@ -143,6 +143,7 @@ const ShortcutBar = observer(
           <Destination
             key={item.key}
             icon={item.icon}
+            isAlerts={item.key === 'alerts'}
             isActive={activeKey === item.key}
             label={item.label}
             notificationCount={notificationCount}
@@ -160,6 +161,7 @@ const ShortcutBar = observer(
 
 function Destination({
   icon,
+  isAlerts,
   isActive,
   label,
   notificationCount,
@@ -168,6 +170,7 @@ function Destination({
   rippleColor,
 }: {
   icon: string;
+  isAlerts: boolean;
   isActive: boolean;
   label: string;
   notificationCount: number;
@@ -202,7 +205,7 @@ function Destination({
   });
 
   const tint = isActive ? COLORS.ON_SECONDARY_CONTAINER : COLORS.MUTED;
-  const showBadge = label === 'Alerts' && notificationCount > 0;
+  const showBadge = isAlerts && notificationCount > 0;
 
   return (
     <Pressable

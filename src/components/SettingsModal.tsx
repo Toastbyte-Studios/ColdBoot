@@ -36,9 +36,11 @@ import {
   getBookmarks,
 } from '../stores/BookmarksStore';
 import {
+  DEFAULT_SHORTCUTS,
   FontSize,
   MeasurementSystem,
   ThemeMode,
+  resolveShortcutIds,
 } from '../stores/SettingsStore';
 import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
 import { withAlpha } from '../theme/colorUtils';
@@ -557,47 +559,51 @@ export const SettingsModal = observer(
 
               <GroupLabel>SHORTCUTS</GroupLabel>
               <View style={[styles.group, t.groupThemed]}>
-                {settingsStore.shortcuts.map((toolId, index) => {
-                  const tool = getToolById(toolId);
-                  if (!tool) {
-                    return null;
-                  }
+                {resolveShortcutIds(settingsStore.shortcuts).map(
+                  (toolId, index) => {
+                    const tool =
+                      getToolById(toolId) ??
+                      getToolById(DEFAULT_SHORTCUTS[index]) ??
+                      getToolById(DEFAULT_SHORTCUTS[0]);
+                    const label =
+                      tool?.shortName ?? tool?.name ?? 'Choose tool';
 
-                  return (
-                    <React.Fragment key={toolId}>
-                      <Touchable
-                        style={styles.row}
-                        onPress={() =>
-                          setShortcutPickerSlot(index as 0 | 1 | 2)
-                        }
-                        accessibilityRole="button"
-                        accessibilityLabel={`Shortcut ${index + 1}, ${
-                          tool.name
-                        }`}
-                      >
-                        <RNText style={[styles.rowTitle, t.primaryText]}>
-                          Shortcut {index + 1}
-                        </RNText>
-                        <RNText style={[styles.rowValue, t.mutedText]}>
-                          {tool.shortName ?? tool.name}
-                        </RNText>
-                        <IconButton
-                          name="chevron-forward-outline"
-                          size={16}
-                          color={COLORS.CHEVRON}
-                          onPress={(event) => {
-                            event.stopPropagation();
-                            setShortcutPickerSlot(index as 0 | 1 | 2);
-                          }}
-                          accessibilityLabel={`Choose shortcut ${index + 1}`}
-                        />
-                      </Touchable>
-                      {index < settingsStore.shortcuts.length - 1 ? (
-                        <View style={[styles.separator, t.separatorThemed]} />
-                      ) : null}
-                    </React.Fragment>
-                  );
-                })}
+                    return (
+                      <React.Fragment key={`shortcut-slot-${index}`}>
+                        <Touchable
+                          style={styles.row}
+                          onPress={() =>
+                            setShortcutPickerSlot(index as 0 | 1 | 2)
+                          }
+                          accessibilityRole="button"
+                          accessibilityLabel={`Shortcut ${index + 1}, ${
+                            tool?.name ?? 'Choose tool'
+                          }`}
+                        >
+                          <RNText style={[styles.rowTitle, t.primaryText]}>
+                            Shortcut {index + 1}
+                          </RNText>
+                          <RNText style={[styles.rowValue, t.mutedText]}>
+                            {label}
+                          </RNText>
+                          <IconButton
+                            name="chevron-forward-outline"
+                            size={16}
+                            color={COLORS.CHEVRON}
+                            onPress={(event) => {
+                              event.stopPropagation();
+                              setShortcutPickerSlot(index as 0 | 1 | 2);
+                            }}
+                            accessibilityLabel={`Choose shortcut ${index + 1}`}
+                          />
+                        </Touchable>
+                        {index < DEFAULT_SHORTCUTS.length - 1 ? (
+                          <View style={[styles.separator, t.separatorThemed]} />
+                        ) : null}
+                      </React.Fragment>
+                    );
+                  },
+                )}
 
                 <View style={[styles.separator, t.separatorThemed]} />
 

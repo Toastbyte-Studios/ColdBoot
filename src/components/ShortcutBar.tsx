@@ -136,18 +136,18 @@ const ShortcutBar = observer(
       >
         {items.map((item) => {
           const isFlashlight = item.toolId === 'core_flashlight';
+          const isAlerts = item.key === 'alerts';
           const isActive = activeKey === item.key;
           const tint = isActive ? COLORS.BRAND : COLORS.MUTED;
-          const showBadge = item.key === 'alerts' && notificationCount > 0;
 
           return (
             <ShortcutButton
               key={item.key}
               label={item.label}
               icon={item.icon}
+              isAlerts={isAlerts}
               isActive={isActive}
               tint={tint}
-              showBadge={showBadge}
               notificationCount={notificationCount}
               onPress={() => handlePress(item)}
               onLongPress={isFlashlight ? toggleFlashlight : undefined}
@@ -168,9 +168,9 @@ const ShortcutBar = observer(
 function ShortcutButton({
   label,
   icon,
+  isAlerts,
   isActive,
   tint,
-  showBadge,
   notificationCount,
   onPress,
   onLongPress,
@@ -179,9 +179,9 @@ function ShortcutButton({
 }: {
   label: string;
   icon: string;
+  isAlerts: boolean;
   isActive: boolean;
   tint: string;
-  showBadge: boolean;
   notificationCount: number;
   onPress: () => void;
   onLongPress?: () => void;
@@ -189,6 +189,7 @@ function ShortcutButton({
   accessibilityHint?: string;
 }) {
   const skipNextPress = useRef(false);
+  const showBadge = isAlerts && notificationCount > 0;
 
   return (
     <Pressable
