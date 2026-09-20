@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import LevelMeter from '../../../components/LevelMeter';
 import { Text } from '../../../components/ScaledText';
 import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
@@ -12,6 +13,8 @@ type RecordingControlsProps = {
   recordingTime: number;
   progress: number;
   maxDuration: number;
+  /** Live microphone level, 0-100. Only meaningful while recording. */
+  level: number;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
@@ -21,6 +24,7 @@ export default function RecordingControls({
   recordingTime,
   progress,
   maxDuration,
+  level,
   onStartRecording,
   onStopRecording,
 }: RecordingControlsProps) {
@@ -45,6 +49,11 @@ export default function RecordingControls({
             />
           </View>
           <Text style={styles.timerText}>{formatTime(recordingTime)}</Text>
+          {/* Shows the mic is picking the voice up; the number itself is the
+              Decibel Meter's job, so this is bars only. */}
+          <View style={styles.meterContainer}>
+            <LevelMeter level={level} accessibilityLabel="Microphone level" />
+          </View>
         </>
       )}
 
@@ -97,6 +106,10 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 24,
       fontWeight: 'bold',
       color: COLORS.PRIMARY_DARK,
+      marginBottom: 12,
+    },
+    meterContainer: {
+      width: 200,
       marginBottom: 20,
     },
     recordButton: {
