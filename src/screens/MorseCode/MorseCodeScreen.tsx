@@ -1,6 +1,5 @@
 import React from 'react';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import ToolList from '../../components/ToolList';
 import { ToolType } from '../../types/common-types';
 
@@ -34,16 +33,16 @@ const morseCodeTools: ToolType[] = [
 /**
  * Renders the Morse Code screen.
  *
- * Displays a section header labeled "Morse Code" and a list of available
- * morse code-related tools within a standard screen layout.
+ * A menu: the shared stack frame over the module's tools as grouped rows.
+ * `scrollable={false}` because `StackScreen` already scrolls, and two nested
+ * scroll views would fight each other.
  *
  * @returns A React element containing the Morse Code screen UI.
  */
 export default function MorseCodeScreen() {
   return (
-    <ScreenBody>
-      <SectionHeader>Morse Code</SectionHeader>
-      <ToolList tools={morseCodeTools} />
-    </ScreenBody>
+    <StackScreen title="Morse Code" subtitle="4 tools">
+      <ToolList tools={morseCodeTools} scrollable={false} />
+    </StackScreen>
   );
 }

@@ -1,14 +1,7 @@
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, ScrollView, View } from 'react-native';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import AppButton from '../../components/AppButton';
-import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
-import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
-import { ColorScheme } from '../../theme/colors';
+import React, { useState } from 'react';
+import IconButton from '../../components/IconButton';
+import ReferenceTable from '../../components/ReferenceTable';
+import StackScreen from '../../components/StackScreen';
 import { morseCodeData, MorseItem } from '../../utils/morseCodeMapping';
 
 type SortType = 'alphabetical' | 'morse';
@@ -23,9 +16,6 @@ type SortType = 'alphabetical' | 'morse';
  * @returns A React element containing the Morse Code Cheat Sheet screen.
  */
 export default function MorseCodeCheatSheet() {
-  const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [sortType, setSortType] = useState<SortType>('alphabetical');
 
   const getSortedData = (): MorseItem[] => {
@@ -48,99 +38,30 @@ export default function MorseCodeCheatSheet() {
 
   const sortedData = getSortedData();
 
+  const isAlphabetical = sortType === 'alphabetical';
+
   return (
-    <ScreenBody>
-      <SectionHeader>Morse Code Cheat Sheet</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <View style={styles.sortButton}>
-          <AppButton
-            label={`Sort: ${sortType === 'alphabetical' ? 'Alphabetical' : 'By Pattern'}`}
-            tint={COLORS.BRAND}
-            fullWidth
-            onPress={toggleSort}
-            accessibilityLabel={`Sorted ${sortType === 'alphabetical' ? 'alphabetically' : 'by pattern'}. Tap to change.`}
-          />
-        </View>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {sortedData.map((item) => (
-            <View key={item.char} style={styles.card}>
-              <Text style={styles.char}>{item.char}</Text>
-              <Ionicons
-                name="arrow-forward-outline"
-                size={18}
-                color={COLORS.PRIMARY_DARK}
-                style={styles.separator}
-              />
-              <Text style={styles.morse}>{item.morse}</Text>
-              <Ionicons
-                name="arrow-forward-outline"
-                size={18}
-                color={COLORS.PRIMARY_DARK}
-                style={styles.separator}
-              />
-              <Text style={styles.spellOut}>{item.spellOut}</Text>
-            </View>
-          ))}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+    <StackScreen
+      title="Morse Cheat Sheet"
+      subtitle={isAlphabetical ? 'A–Z, then 0–9' : 'Shortest pattern first'}
+      trailing={
+        <IconButton
+          name="swap-vertical-outline"
+          size={22}
+          accessibilityLabel={`Sorted ${
+            isAlphabetical ? 'alphabetically' : 'by pattern'
+          }. Tap to change.`}
+          onPress={toggleSort}
+        />
+      }
+    >
+      <ReferenceTable
+        monospaceColumn={0}
+        rows={sortedData.map((item) => ({
+          key: item.char,
+          values: [item.morse, item.spellOut],
+        }))}
+      />
+    </StackScreen>
   );
 }
-
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      alignSelf: 'stretch',
-      paddingBottom: FOOTER_HEIGHT,
-    },
-    sortButton: {
-      marginHorizontal: 14,
-      marginTop: 8,
-      marginBottom: 8,
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      paddingTop: 8,
-      paddingHorizontal: 14,
-      paddingBottom: 24,
-    },
-    card: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      borderWidth: 1,
-      borderColor: COLORS.BRAND,
-      borderRadius: 12,
-      padding: 16,
-      marginBottom: 8,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-    },
-    char: {
-      fontSize: 24,
-      fontWeight: '700',
-      color: COLORS.PRIMARY_DARK,
-      width: 40,
-    },
-    separator: {
-      marginHorizontal: 5,
-    },
-    morse: {
-      fontSize: 30,
-      fontFamily: 'monospace',
-      color: COLORS.PRIMARY_DARK,
-      marginHorizontal: 5,
-      minWidth: 60,
-    },
-    spellOut: {
-      fontSize: 18,
-      color: COLORS.PRIMARY_DARK,
-      flex: 1,
-    },
-  });
