@@ -8,7 +8,7 @@ const mockOnAlertsClose = jest.fn();
 const mockSetFlashlightMode = jest.fn();
 
 let mockNotificationCount = 3;
-let currentRouteName = 'Home';
+let mockCurrentRouteName = 'Home';
 
 const mockSettingsStore = {
   shortcuts: ['core_flashlight', 'nav_map', 'core_voice_log'],
@@ -51,7 +51,7 @@ jest.mock('../src/components/ScaledText', () => ({
 jest.mock('../src/navigation/navigationRef', () => ({
   navigationRef: {
     isReady: () => true,
-    getCurrentRoute: () => ({ name: currentRouteName }),
+    getCurrentRoute: () => ({ name: mockCurrentRouteName }),
     addListener: () => jest.fn(),
   },
 }));
@@ -60,7 +60,7 @@ describe('ShortcutBar', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockNotificationCount = 3;
-    currentRouteName = 'Home';
+    mockCurrentRouteName = 'Home';
     mockSettingsStore.shortcuts = [
       'core_flashlight',
       'nav_map',

@@ -55,8 +55,8 @@ import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
 import IconButton from './IconButton';
-import ShortcutPicker from './ShortcutPicker';
 import SegmentedControl from './SegmentedControl';
+import ShortcutPicker from './ShortcutPicker';
 import Touchable from './Touchable';
 
 const isAndroid = Platform.OS === 'android';
@@ -186,9 +186,9 @@ export const SettingsModal = observer(
     const [offlinePacks, setOfflinePacks] = useState<OfflineMapPack[] | null>(
       null,
     );
-    const [shortcutPickerSlot, setShortcutPickerSlot] = useState<0 | 1 | 2 | null>(
-      null,
-    );
+    const [shortcutPickerSlot, setShortcutPickerSlot] = useState<
+      0 | 1 | 2 | null
+    >(null);
 
     // Summarise downloaded maps for the row's value. A Modal has no navigation
     // focus event, so visibility is the equivalent trigger.
@@ -567,7 +567,9 @@ export const SettingsModal = observer(
                     <React.Fragment key={toolId}>
                       <Touchable
                         style={styles.row}
-                        onPress={() => setShortcutPickerSlot(index as 0 | 1 | 2)}
+                        onPress={() =>
+                          setShortcutPickerSlot(index as 0 | 1 | 2)
+                        }
                         accessibilityRole="button"
                         accessibilityLabel={`Shortcut ${index + 1}, ${
                           tool.name

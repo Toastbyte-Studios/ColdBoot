@@ -1,11 +1,5 @@
 import React, { useMemo } from 'react';
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  View,
-} from 'react-native';
+import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
@@ -13,8 +7,8 @@ import { ToolWithModule, ALL_TOOLS } from '../utils/tools';
 import GroupContainer from './GroupContainer';
 import IconButton from './IconButton';
 import ModuleRow from './ModuleRow';
-import SectionEyebrow from './SectionEyebrow';
 import { Text } from './ScaledText';
+import SectionEyebrow from './SectionEyebrow';
 
 type Props = {
   visible: boolean;
@@ -80,12 +74,7 @@ export default function ShortcutPicker({
             },
           ]}
         >
-          <View
-            style={[
-              styles.grabber,
-              { backgroundColor: COLORS.BORDER },
-            ]}
-          />
+          <View style={[styles.grabber, { backgroundColor: COLORS.BORDER }]} />
 
           <View style={styles.header}>
             <View style={styles.headerText}>

@@ -2,10 +2,7 @@
  * @format
  */
 
-import {
-  DEFAULT_SHORTCUTS,
-  SettingsStore,
-} from '../src/stores/SettingsStore';
+import { DEFAULT_SHORTCUTS, SettingsStore } from '../src/stores/SettingsStore';
 
 // Mock database for testing
 const createMockDatabase = () => {
@@ -449,13 +446,7 @@ describe('SettingsStore', () => {
     it('recovers from unknown shortcut ids without duplicates', async () => {
       await mockDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
-        [
-          JSON.stringify([
-            'nav_map',
-            'missing_tool',
-            'nav_map',
-          ]),
-        ],
+        [JSON.stringify(['nav_map', 'missing_tool', 'nav_map'])],
       );
 
       const newStore = new SettingsStore();

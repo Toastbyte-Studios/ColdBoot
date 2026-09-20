@@ -20,13 +20,16 @@ function getFallbackShortcut(slot: number, used: Set<string>): string {
   }
 
   return (
-    DEFAULT_SHORTCUTS.find((toolId) => !used.has(toolId)) ?? DEFAULT_SHORTCUTS[0]
+    DEFAULT_SHORTCUTS.find((toolId) => !used.has(toolId)) ??
+    DEFAULT_SHORTCUTS[0]
   );
 }
 
 export function resolveShortcutIds(value: unknown): string[] {
   const stored =
-    Array.isArray(value) && value.length === DEFAULT_SHORTCUTS.length ? value : [];
+    Array.isArray(value) && value.length === DEFAULT_SHORTCUTS.length
+      ? value
+      : [];
   const used = new Set<string>();
 
   return DEFAULT_SHORTCUTS.map((_, slot) => {
@@ -63,7 +66,7 @@ export class SettingsStore {
   themeMode: ThemeMode = 'system';
   noteSortOrder: NoteSortOrder = 'newest-oldest';
   measurementSystem: MeasurementSystem = 'imperial';
-  shortcuts = [...DEFAULT_SHORTCUTS];
+  shortcuts: string[] = [...DEFAULT_SHORTCUTS];
   lastBackupAt: number | null = null;
   /**
    * When true, new offline map downloads default to the high-detail zoom
@@ -358,7 +361,7 @@ export class SettingsStore {
         const value = shortcutsRes[0].rows.item(0).value;
         let parsed: unknown;
         try {
-          parsed = JSON.parse(value);
+          parsed = typeof value === 'string' ? JSON.parse(value) : null;
         } catch {
           parsed = null;
         }

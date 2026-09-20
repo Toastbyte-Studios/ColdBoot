@@ -229,7 +229,8 @@ describe('BackupService', () => {
         },
       };
 
-      delete (legacySettings.data.settings as { shortcuts?: string[] }).shortcuts;
+      delete (legacySettings.data.settings as { shortcuts?: string[] })
+        .shortcuts;
 
       expect(validateBackup(legacySettings)).toBe(true);
       expect(legacySettings.data.settings.shortcuts).toBeUndefined();

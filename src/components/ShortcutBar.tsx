@@ -24,6 +24,12 @@ type ShortcutDefinition = {
   toolId?: string;
 };
 
+const SHORTCUT_KEYS: Array<Exclude<ShortcutKey, 'alerts'>> = [
+  'shortcut-0',
+  'shortcut-1',
+  'shortcut-2',
+];
+
 type Props = {
   onAlertsPress: () => void;
   onAlertsClose: () => void;
@@ -39,13 +45,17 @@ const ShortcutBar = observer(
     const settingsStore = useSettingsStore();
     const signalingStore = useSignalingStore();
     const [currentRoute, setCurrentRoute] = useState<string | undefined>(() =>
-      navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined,
+      navigationRef.isReady()
+        ? navigationRef.getCurrentRoute()?.name
+        : undefined,
     );
 
     useEffect(() => {
       const syncCurrentRoute = () => {
         setCurrentRoute(
-          navigationRef.isReady() ? navigationRef.getCurrentRoute()?.name : undefined,
+          navigationRef.isReady()
+            ? navigationRef.getCurrentRoute()?.name
+            : undefined,
         );
       };
 
@@ -53,22 +63,22 @@ const ShortcutBar = observer(
       return navigationRef.addListener('state', syncCurrentRoute);
     }, []);
 
-    const shortcuts: ShortcutDefinition[] = settingsStore.shortcuts
-      .map((toolId, index) => {
-        const tool = getToolById(toolId);
-        if (!tool) {
-          return null;
-        }
+    const shortcuts = settingsStore.shortcuts.flatMap((toolId, index) => {
+      const tool = getToolById(toolId);
+      if (!tool) {
+        return [];
+      }
 
-        return {
-          key: `shortcut-${index}` as const,
+      return [
+        {
+          key: SHORTCUT_KEYS[index],
           label: tool.shortName ?? tool.name,
           icon: tool.icon,
           route: tool.screen,
           toolId: tool.id,
-        };
-      })
-      .filter((shortcut): shortcut is ShortcutDefinition => shortcut !== null);
+        },
+      ];
+    });
 
     const items: ShortcutDefinition[] = [
       ...shortcuts,
@@ -81,9 +91,7 @@ const ShortcutBar = observer(
 
     const activeKey: ShortcutKey | undefined = alertsActive
       ? 'alerts'
-      : (items.find((item) => item.route === currentRoute)?.key as
-            | ShortcutKey
-            | undefined);
+      : items.find((item) => item.route === currentRoute)?.key;
 
     const toggleFlashlight = () => {
       signalingStore.setFlashlightMode(
