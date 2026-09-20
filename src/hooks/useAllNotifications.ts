@@ -13,8 +13,8 @@ import { useTheme } from './useTheme';
 /**
  * Count of notifications the user has not hidden.
  *
- * Derived from {@link useAllNotifications} so the tab bar badge and the alerts
- * sheet can never disagree about how many there are.
+ * Derived from {@link useAllNotifications} so the shortcut bar badge and the
+ * alerts sheet can never disagree about how many there are.
  */
 export function useVisibleNotificationCount(): number {
   const allNotifications = useAllNotifications();
@@ -29,7 +29,7 @@ export function useVisibleNotificationCount(): number {
  *
  * Each entry carries a stable `key` that NotificationsStore uses to persist
  * dismissed state.  Filtering by hidden keys is intentionally left to the
- * caller so that both the tab bar badge count and the alerts sheet can share
+ * caller so that both the shortcut bar badge count and the alerts sheet can share
  * the same canonical list without duplicating source logic.
  */
 export function useAllNotifications(): AppNotification[] {

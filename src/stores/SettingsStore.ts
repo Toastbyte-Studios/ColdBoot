@@ -1,16 +1,60 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { SQLiteDatabase } from '../types/database-types';
+import { getToolById } from '../utils/tools';
 
 export type FontSize = 'small' | 'medium' | 'large';
 export type ThemeMode = 'light' | 'dark' | 'system';
 export type NoteSortOrder = 'newest-oldest' | 'oldest-newest' | 'a-z' | 'z-a';
 export type MeasurementSystem = 'imperial' | 'metric';
 
+export const DEFAULT_SHORTCUTS = [
+  'core_flashlight',
+  'nav_map',
+  'core_voice_log',
+] as const;
+
+function getFallbackShortcut(slot: number, used: Set<string>): string {
+  const preferred = DEFAULT_SHORTCUTS[slot];
+  if (!used.has(preferred)) {
+    return preferred;
+  }
+
+  return (
+    DEFAULT_SHORTCUTS.find((toolId) => !used.has(toolId)) ??
+    DEFAULT_SHORTCUTS[0]
+  );
+}
+
+export function resolveShortcutIds(value: unknown): string[] {
+  const stored =
+    Array.isArray(value) && value.length === DEFAULT_SHORTCUTS.length
+      ? value
+      : [];
+  const used = new Set<string>();
+
+  return DEFAULT_SHORTCUTS.map((_, slot) => {
+    const candidate = stored[slot];
+    if (
+      typeof candidate === 'string' &&
+      getToolById(candidate) &&
+      !used.has(candidate)
+    ) {
+      used.add(candidate);
+      return candidate;
+    }
+
+    const fallback = getFallbackShortcut(slot, used);
+    used.add(fallback);
+    return fallback;
+  });
+}
+
 export interface Settings {
   fontSize: FontSize;
   themeMode: ThemeMode;
   noteSortOrder: NoteSortOrder;
   measurementSystem: MeasurementSystem;
+  shortcuts: string[];
 }
 
 /**
@@ -22,6 +66,7 @@ export class SettingsStore {
   themeMode: ThemeMode = 'system';
   noteSortOrder: NoteSortOrder = 'newest-oldest';
   measurementSystem: MeasurementSystem = 'imperial';
+  shortcuts: string[] = [...DEFAULT_SHORTCUTS];
   lastBackupAt: number | null = null;
   /**
    * When true, new offline map downloads default to the high-detail zoom
@@ -79,6 +124,36 @@ export class SettingsStore {
     await this.persistSettings();
   }
 
+  async setShortcut(slot: 0 | 1 | 2, toolId: string) {
+    if (!getToolById(toolId)) {
+      return;
+    }
+
+    const nextShortcuts = [...this.shortcuts];
+    const existingSlot = nextShortcuts.indexOf(toolId);
+
+    if (existingSlot >= 0 && existingSlot !== slot) {
+      [nextShortcuts[slot], nextShortcuts[existingSlot]] = [
+        nextShortcuts[existingSlot],
+        nextShortcuts[slot],
+      ];
+    } else {
+      nextShortcuts[slot] = toolId;
+    }
+
+    runInAction(() => {
+      this.shortcuts = nextShortcuts;
+    });
+    await this.persistSettings();
+  }
+
+  async resetShortcuts() {
+    runInAction(() => {
+      this.shortcuts = [...DEFAULT_SHORTCUTS];
+    });
+    await this.persistSettings();
+  }
+
   /**
    * Sets whether new offline map downloads should use the high-detail zoom range.
    * @param enabled - True to default future downloads to z8–14, false for z8–13.
@@ -97,6 +172,13 @@ export class SettingsStore {
   async setLastBackupAt(timestamp: number) {
     runInAction(() => {
       this.lastBackupAt = timestamp;
+    });
+    await this.persistSettings();
+  }
+
+  async restoreShortcuts(shortcuts: unknown) {
+    runInAction(() => {
+      this.shortcuts = resolveShortcutIds(shortcuts);
     });
     await this.persistSettings();
   }
@@ -271,6 +353,22 @@ export class SettingsStore {
           });
         }
       }
+
+      const shortcutsRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'shortcuts'",
+      );
+      if (shortcutsRes[0].rows.length > 0) {
+        const value = shortcutsRes[0].rows.item(0).value;
+        let parsed: unknown;
+        try {
+          parsed = typeof value === 'string' ? JSON.parse(value) : null;
+        } catch {
+          parsed = null;
+        }
+        runInAction(() => {
+          this.shortcuts = resolveShortcutIds(parsed);
+        });
+      }
     } catch (error) {
       console.error('Failed to load settings:', error);
     }
@@ -298,6 +396,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('measurementSystem', ?)",
         [this.measurementSystem],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        [JSON.stringify(this.shortcuts)],
       );
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('highDetailOffline', ?)",

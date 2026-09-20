@@ -66,7 +66,7 @@ type Props = {
 };
 
 /**
- * The alerts sheet, opened from the Alerts tab.
+ * The alerts sheet, opened from the Alerts shortcut.
  *
  * Each notification is a card whose colour names its source, so a glance
  * separates a solar countdown from a pantry warning without reading either.

@@ -149,17 +149,18 @@ describe('Tutorial flow components', () => {
 
     const renderedStep = JSON.stringify(tree.toJSON());
 
-    expect(renderedStep).toContain('Tab Bar');
-    expect(renderedStep).not.toContain('Tab Bar and SOS');
+    expect(renderedStep).toContain('Shortcuts');
+    expect(renderedStep).not.toContain('Tab Bar');
     expect(
       tree.root.findByProps({
-        accessibilityLabel: 'Switch between Home, Modules and Alerts below.',
+        accessibilityLabel:
+          'Your most-used tools and Alerts, one tap away. Change them in Settings.',
       }),
     ).toBeTruthy();
     expect(() =>
       tree.root.findByProps({
         accessibilityLabel:
-          'Switch between Home, Modules and Alerts below. Hold the red SOS button for one second in an emergency.',
+          'Your most-used tools and Alerts, one tap away. Change them in Settings. Hold the red SOS button for one second in an emergency.',
       }),
     ).toThrow();
 

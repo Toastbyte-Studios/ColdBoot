@@ -103,7 +103,7 @@ export default observer(function SearchScreen(): JSX.Element {
   const navigation = useNavigation<SearchScreenNavigationProp>();
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
-  // Android's full-screen search view has no tab bar, so there is nothing to
+  // Android's full-screen search view has no shortcut bar, so there is nothing to
   // clear beneath it.
   const footerClearance = useFooterClearance();
   const bottomClearance = { paddingBottom: isAndroid ? 0 : footerClearance };

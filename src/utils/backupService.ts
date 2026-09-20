@@ -39,6 +39,7 @@ export interface BackupSettings {
   themeMode: ThemeMode;
   noteSortOrder: NoteSortOrder;
   measurementSystem?: MeasurementSystem;
+  shortcuts?: string[];
 }
 
 /**
@@ -126,6 +127,7 @@ const BackupDataSchema = z.object({
         .enum(['imperial', 'metric'])
         .catch('imperial')
         .optional(),
+      shortcuts: z.array(z.string()).optional(),
     }),
     // v2.0 fields – optional with defaults so v1.0 files pass validation
     waypoints: z
