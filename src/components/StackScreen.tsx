@@ -22,6 +22,16 @@ type Props = PropsWithChildren<{
   /** Rendered at the trailing edge of the title row — a glyph, an action. */
   trailing?: React.ReactNode;
   /**
+   * Actions for the screen as a whole, laid out in their own row under the
+   * title rather than beside it.
+   *
+   * The title row has room for one or two glyphs before it starts eating the
+   * title: Notepad's four actions squeezed "Notepad" into a column. Anything
+   * past a couple of actions belongs here, where the row is full width and
+   * the title keeps its size.
+   */
+  actions?: React.ReactNode;
+  /**
    * What the back control does, when going back is not popping the screen —
    * a screen that holds several steps of its own, such as Voice Log's record
    * and playback modes, returns to its own starting point instead. The
@@ -59,6 +69,7 @@ export default function StackScreen({
   title,
   subtitle,
   trailing,
+  actions,
   onBack,
   keyboardShouldPersistTaps,
   note,
@@ -97,6 +108,8 @@ export default function StackScreen({
             trailing ? <View style={styles.trailing}>{trailing}</View> : null
           }
         />
+
+        {actions ? <View style={styles.actions}>{actions}</View> : null}
 
         {note ? (
           <Text
@@ -139,6 +152,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: SPACING.xs,
+  },
+  actions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: SPACING.xs,
+    // Pulls up under the headline, which carries its own bottom padding.
+    marginTop: -SPACING.sm,
+    marginBottom: SPACING.md,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
   note: {
     fontSize: 13.5,

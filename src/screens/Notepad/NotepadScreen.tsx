@@ -39,7 +39,7 @@ export default observer(function NotepadScreen() {
     <StackScreen
       title="Notepad"
       subtitle={`${core.categories.length} categor${core.categories.length === 1 ? 'y' : 'ies'}`}
-      trailing={
+      actions={
         <>
           <IconButton
             name="create-outline"
