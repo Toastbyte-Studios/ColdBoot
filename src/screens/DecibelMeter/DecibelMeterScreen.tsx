@@ -15,6 +15,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
+import { normalizeMeteringLevel } from '../../utils/audioLevel';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -94,25 +95,7 @@ const DecibelMeterScreenImpl = () => {
         // currentMetering provides actual dB levels from the microphone
         // On iOS: ranges from -160 dB (silence) to 0 dB (max)
         // On Android: provides amplitude value that we normalize
-        const metering = e.currentMetering || -160;
-
-        // Convert metering to a 0-100 scale for display with adjusted sensitivity
-        // Sensitivity set to 75% of original (halfway between 100% and 50%)
-        let normalizedLevel;
-        if (Platform.OS === 'ios') {
-          // iOS: -160 to 0 dB range
-          // Apply adjusted mapping: use -80 to -10 dB range mapped to 0-100, then scale to 75%
-          const adjustedMetering = Math.max(-80, Math.min(-10, metering));
-          normalizedLevel = ((adjustedMetering + 80) / 70) * 75; // 75% sensitivity (halfway between 100 and 50)
-        } else {
-          // Android: amplitude value, normalize to 0-100
-          // Reduce sensitivity by scaling the divisor to 75% level
-          const adjustedAmplitude = Math.min(metering, 16000); // Cap at half max
-          normalizedLevel = adjustedAmplitude / 240; // 75% sensitivity (halfway between 160 and 320)
-        }
-
-        // Clamp to 0-100 range
-        normalizedLevel = Math.max(0, Math.min(100, normalizedLevel));
+        const normalizedLevel = normalizeMeteringLevel(e.currentMetering);
 
         // Update core store so footer can display the level
         core.setCurrentDecibelLevel(normalizedLevel);

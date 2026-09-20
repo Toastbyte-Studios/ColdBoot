@@ -49,7 +49,10 @@ export default function LevelMeter({
         const barLevel = ((index + 1) / barCount) * 100;
         const isActive = level >= barLevel;
         // Shortest bar is a third of the tallest, so the row reads as a ramp.
-        const barHeight = (0.33 + (index / (barCount - 1)) * 0.67) * height;
+        const barHeight =
+          barCount === 1
+            ? height
+            : (0.33 + (index / (barCount - 1)) * 0.67) * height;
 
         return (
           <View
