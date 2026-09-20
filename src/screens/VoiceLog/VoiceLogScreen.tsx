@@ -1,4 +1,3 @@
-import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
   useState,
@@ -29,6 +28,7 @@ import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
 import { SCREEN_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
+import { normalizeMeteringLevel, smoothLevel } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import InfoBox from './components/InfoBox';
 import RecordingControls from './components/RecordingControls';
@@ -58,11 +58,11 @@ export default observer(function VoiceLogScreen() {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
-  const navigation = useNavigation();
   const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
   const [isRecording, setIsRecording] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
   const [audioPath, setAudioPath] = useState<string | null>(null);
+  const [micLevel, setMicLevel] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const soundRef = useRef<Sound | null>(null);
   const stopRecorderRef = useRef<(() => Promise<string | undefined>) | null>(
@@ -99,6 +99,7 @@ export default observer(function VoiceLogScreen() {
         setIsRecording(false);
         setRecordingTime(0);
         setAudioPath(null);
+        setMicLevel(0);
         return;
       }
 
@@ -115,24 +116,27 @@ export default observer(function VoiceLogScreen() {
         transcription: undefined, // Transcription not implemented yet
       });
 
-      // Show success message and navigate back
+      // Back to the Voice Logs menu, not out of the tool: the three views
+      // here are local state, so goBack() used to leave for the Core module.
       Alert.alert('Saved', 'Voice log saved successfully', [
         {
           text: 'OK',
-          onPress: () => navigation.goBack(),
+          onPress: () => setMode('select'),
         },
       ]);
 
       setRecordingTime(0);
       setAudioPath(null);
+      setMicLevel(0);
     } catch (error) {
       console.error('Failed to save voice log:', error);
       Alert.alert('Error', 'Failed to save voice log. Please try again.');
       // Ensure recording state is reset even when saving fails
       setRecordingTime(0);
       setAudioPath(null);
+      setMicLevel(0);
     }
-  }, [audioPath, recordingTime, core, navigation]);
+  }, [audioPath, recordingTime, core]);
 
   // Store handleStopRecording in ref for use in callback
   useEffect(() => {
@@ -144,6 +148,9 @@ export default observer(function VoiceLogScreen() {
     onRecord: (e) => {
       const currentTime = Math.floor(e.currentPosition / 1000);
       setRecordingTime(currentTime);
+      setMicLevel((previous) =>
+        smoothLevel(previous, normalizeMeteringLevel(e.currentMetering)),
+      );
 
       // Auto-stop at max duration - use ref to avoid stale closure
       if (
@@ -220,7 +227,8 @@ export default observer(function VoiceLogScreen() {
       setRecordingTime(0);
 
       // Start recording - library uses default writable cache directory
-      const path = await startRecorder();
+      // Third argument enables metering, which feeds the level meter.
+      const path = await startRecorder(undefined, undefined, true);
 
       setAudioPath(path);
     } catch (error) {
@@ -354,6 +362,7 @@ export default observer(function VoiceLogScreen() {
             recordingTime={recordingTime}
             progress={progress}
             maxDuration={MAX_DURATION_SECONDS}
+            level={micLevel}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
           />
