@@ -63,14 +63,7 @@ export default function ToolList({
           value={values?.[tool.id]}
           subtitle={subtitles?.[tool.id]}
           showSeparator={index < sortedTools.length - 1}
-          onPress={() =>
-            tool.screen === 'ComingSoon'
-              ? navigation.navigate('ComingSoon', {
-                  title: tool.name,
-                  icon: tool.icon,
-                })
-              : navigation.navigate(tool.screen)
-          }
+          onPress={() => navigation.navigate(tool.screen)}
         />
       ))}
     </GroupContainer>

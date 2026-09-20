@@ -11,6 +11,11 @@ import {
   type CameraRef,
   useCurrentPosition,
 } from '@maplibre/maplibre-react-native';
+import {
+  NavigationProp,
+  ParamListBase,
+  useNavigation,
+} from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
   useCallback,
@@ -49,7 +54,7 @@ import {
   useDevToolsStore,
 } from '../../stores/StoreContext';
 import { Track, TrackPoint } from '../../stores/TrackStore';
-import { FOOTER_HEIGHT } from '../../theme';
+import { FOOTER_HEIGHT, TEXT_GUTTER } from '../../theme';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
 import MapPanel, {
@@ -296,8 +301,11 @@ const POLYLINE_UPDATE_INTERVAL = 3;
 /** Minimum coordinate delta (~100 m) before triggering a new reverse-geocode request. */
 const GEOCODE_THRESHOLD = 0.001;
 
+const isAndroid = Platform.OS === 'android';
+
 export default observer(function MapScreen() {
   const COLORS = useTheme();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { setDisableGestureNavigation } = useGestureNavigation();
@@ -736,7 +744,27 @@ export default observer(function MapScreen() {
 
   return (
     <ScreenBody>
-      <SectionHeader>Map</SectionHeader>
+      {/* This screen keeps its own frame rather than using `StackScreen`: the
+          map and the compass below it divide whatever height is left, and a
+          scroll view would let the map slide out from under the thumb. It
+          takes the headline row on its own, back control included, so the
+          screen is still escapable without the system gesture. */}
+      <SectionHeader
+        containerStyle={styles.headline}
+        leading={
+          navigation.canGoBack() ? (
+            <IconButton
+              name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
+              size={isAndroid ? 24 : 20}
+              color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
+              onPress={() => navigation.goBack()}
+              accessibilityLabel="Go back"
+            />
+          ) : undefined
+        }
+        title="Map"
+        subtitle="Offline tiles and compass"
+      />
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
         <View
@@ -824,6 +852,9 @@ export default observer(function MapScreen() {
 
 function makeStyles(colors: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
+    headline: {
+      paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    },
     wrapper: {
       flex: 1,
       width: '100%',

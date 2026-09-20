@@ -1,14 +1,14 @@
 import Clipboard from '@react-native-clipboard/clipboard';
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Platform, StyleSheet, TextInput, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import SegmentedControl from '../../components/SegmentedControl';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   ddToMgrs,
   ddToDms,
@@ -16,6 +16,8 @@ import {
   mgrsToDD,
   parseDdString,
 } from '../../utils/gridReference';
+
+const isAndroid = Platform.OS === 'android';
 
 type InputFormat = 'DD' | 'DMS' | 'MGRS';
 
@@ -85,7 +87,6 @@ function convertFromMGRS(mgrsStr: string): ConversionResults {
  */
 export default function GridReferenceScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
 
   const [inputFormat, setInputFormat] = useState<InputFormat>('DD');
   const [inputText, setInputText] = useState('');
@@ -144,18 +145,15 @@ export default function GridReferenceScreen() {
   const outputFormats: InputFormat[] = ['DD', 'DMS', 'MGRS'];
 
   return (
-    <ScreenBody>
-      <SectionHeader>Grid Reference</SectionHeader>
-      <ScrollView
-        style={[styles.container, { paddingBottom: footerClearance }]}
-        contentContainerStyle={styles.contentContainer}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Format Selector */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-            Input Format
-          </Text>
+    <StackScreen
+      title="Grid Reference"
+      note="Converts a coordinate between decimal degrees, degrees-minutes-seconds and MGRS. All offline."
+      keyboardShouldPersistTaps="handled"
+    >
+      {/* Format Selector */}
+      <View style={styles.section}>
+        <SectionEyebrow>Input Format</SectionEyebrow>
+        <View style={styles.control}>
           <SegmentedControl
             options={FORMAT_OPTIONS}
             value={inputFormat}
@@ -163,136 +161,108 @@ export default function GridReferenceScreen() {
             accessibilityLabel="Input format"
           />
         </View>
+      </View>
 
-        {/* Input Field */}
-        <View style={styles.section}>
-          <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-            {FORMAT_LABELS[inputFormat]}
+      {/* Input Field */}
+      <View style={styles.section}>
+        <SectionEyebrow>{FORMAT_LABELS[inputFormat]}</SectionEyebrow>
+        <TextInput
+          style={[
+            styles.input,
+            cardSurface(COLORS),
+            {
+              color: COLORS.PRIMARY_DARK,
+              // cardSurface draws no outline on Android, so an error state
+              // has to bring its own.
+              ...(error ? { borderWidth: 1, borderColor: COLORS.ERROR } : null),
+            },
+          ]}
+          placeholder={FORMAT_PLACEHOLDERS[inputFormat]}
+          placeholderTextColor={COLORS.MUTED}
+          value={inputText}
+          onChangeText={(text) => handleConvert(text, inputFormat)}
+          autoCapitalize="characters"
+          autoCorrect={false}
+          accessibilityLabel={`${FORMAT_LABELS[inputFormat]} coordinate input`}
+        />
+        {error && (
+          <Text
+            style={[styles.errorText, { color: COLORS.ERROR }]}
+            accessibilityRole="alert"
+          >
+            {error}
           </Text>
-          <TextInput
-            style={[
-              styles.input,
-              {
-                borderColor: error ? COLORS.ERROR : COLORS.SECONDARY_ACCENT,
-                color: COLORS.PRIMARY_DARK,
-                backgroundColor: COLORS.PRIMARY_LIGHT,
-              },
-            ]}
-            placeholder={FORMAT_PLACEHOLDERS[inputFormat]}
-            placeholderTextColor={COLORS.SECONDARY_ACCENT}
-            value={inputText}
-            onChangeText={(text) => handleConvert(text, inputFormat)}
-            autoCapitalize="characters"
-            autoCorrect={false}
-            accessibilityLabel={`${FORMAT_LABELS[inputFormat]} coordinate input`}
-          />
-          {error && (
-            <Text
-              style={[styles.errorText, { color: COLORS.ERROR }]}
-              accessibilityRole="alert"
-            >
-              {error}
-            </Text>
-          )}
-        </View>
-
-        {/* Output Rows */}
-        {results && (
-          <View style={styles.section}>
-            <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-              Converted Output
-            </Text>
-            {outputFormats.map((fmt) => {
-              const value =
-                results[fmt.toLowerCase() as keyof ConversionResults];
-              const isCopied = copiedKey === fmt;
-              return (
-                <View
-                  key={fmt}
-                  style={[
-                    styles.outputRow,
-                    { borderColor: COLORS.SECONDARY_ACCENT },
-                  ]}
-                >
-                  <View style={styles.outputLabelContainer}>
-                    <Text
-                      style={[
-                        styles.outputLabel,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                    >
-                      {FORMAT_LABELS[fmt]}
-                    </Text>
-                    <Text
-                      style={[
-                        styles.outputValue,
-                        { color: COLORS.PRIMARY_DARK },
-                      ]}
-                      selectable
-                    >
-                      {value}
-                    </Text>
-                  </View>
-                  <AppButton
-                    label={isCopied ? 'Copied' : 'Copy'}
-                    icon={isCopied ? 'checkmark-outline' : 'copy-outline'}
-                    variant="tinted"
-                    size="small"
-                    onPress={() => handleCopy(fmt, value)}
-                    accessibilityLabel={
-                      isCopied
-                        ? `${FORMAT_LABELS[fmt]} result copied`
-                        : `Copy ${FORMAT_LABELS[fmt]} result`
-                    }
-                  />
-                </View>
-              );
-            })}
-          </View>
         )}
-      </ScrollView>
-    </ScreenBody>
+      </View>
+
+      {/* Output Rows */}
+      {results && (
+        <View style={styles.section}>
+          <SectionEyebrow>Converted Output</SectionEyebrow>
+          {outputFormats.map((fmt) => {
+            const value = results[fmt.toLowerCase() as keyof ConversionResults];
+            const isCopied = copiedKey === fmt;
+            return (
+              <View key={fmt} style={[styles.outputRow, cardSurface(COLORS)]}>
+                <View style={styles.outputLabelContainer}>
+                  <Text style={[styles.outputLabel, { color: COLORS.MUTED }]}>
+                    {FORMAT_LABELS[fmt]}
+                  </Text>
+                  <Text
+                    style={[styles.outputValue, { color: COLORS.PRIMARY_DARK }]}
+                    selectable
+                  >
+                    {value}
+                  </Text>
+                </View>
+                <AppButton
+                  label={isCopied ? 'Copied' : 'Copy'}
+                  icon={isCopied ? 'checkmark-outline' : 'copy-outline'}
+                  variant="tinted"
+                  size="small"
+                  onPress={() => handleCopy(fmt, value)}
+                  accessibilityLabel={
+                    isCopied
+                      ? `${FORMAT_LABELS[fmt]} result copied`
+                      : `Copy ${FORMAT_LABELS[fmt]} result`
+                  }
+                />
+              </View>
+            );
+          })}
+        </View>
+      )}
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  contentContainer: {
-    alignItems: 'center',
-    paddingBottom: 24,
-  },
+  // StackScreen's Android content is full-bleed. The eyebrow brings its own
+  // text gutter, so the gutter goes on the controls below it.
   section: {
-    width: '90%',
-    marginTop: 16,
+    marginBottom: SPACING.lg,
   },
-  label: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 8,
+  control: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
   },
   input: {
-    borderWidth: 1.5,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm + 2,
     fontSize: 15,
-    fontFamily: 'monospace',
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
   },
   errorText: {
     fontSize: 13,
-    marginTop: 6,
+    marginTop: SPACING.xs + 2,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
   },
   outputRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 10,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
   },
   outputLabelContainer: {
     flex: 1,
@@ -302,11 +272,10 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '700',
     textTransform: 'uppercase',
-    opacity: 0.7,
     marginBottom: 2,
   },
   outputValue: {
     fontSize: 14,
-    fontFamily: 'monospace',
+    fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
   },
 });
