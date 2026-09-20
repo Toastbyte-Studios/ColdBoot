@@ -482,7 +482,13 @@ function MapLibraryScreen() {
                   {/* The spinner replaces the glyph in place, so the row of
                       actions keeps its width while a refresh runs. */}
                   {isBusy ? (
-                    <View style={styles.busyIndicator}>
+                    <View
+                      style={styles.busyIndicator}
+                      accessible
+                      accessibilityRole="progressbar"
+                      accessibilityLabel={`Refreshing ${displayName}`}
+                      accessibilityState={{ busy: true }}
+                    >
                       <ActivityIndicator size="small" color={COLORS.BRAND} />
                     </View>
                   ) : (
