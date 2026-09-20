@@ -268,6 +268,22 @@ function MapLibraryScreen() {
       setBusyPackId(pack.id);
       try {
         const { centerLng, centerLat, radiusMiles } = pack.metadata;
+        const hasValidRefreshRegion =
+          Number.isFinite(centerLng) &&
+          centerLng >= -180 &&
+          centerLng <= 180 &&
+          Number.isFinite(centerLat) &&
+          centerLat >= -90 &&
+          centerLat <= 90 &&
+          Number.isFinite(radiusMiles) &&
+          radiusMiles > 0;
+        if (!hasValidRefreshRegion) {
+          Alert.alert(
+            'Refresh Unavailable',
+            'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
+          );
+          return;
+        }
         const bounds = boundsFromRadius(
           { longitude: centerLng, latitude: centerLat },
           radiusMiles,
@@ -279,8 +295,11 @@ function MapLibraryScreen() {
         const replacementPack = await OfflineMapService.downloadRegion({
           bounds,
           metadata: {
-            ...pack.metadata,
+            name: pack.metadata.name,
             createdAt: new Date().toISOString(),
+            centerLng,
+            centerLat,
+            radiusMiles,
           },
           zoomRange,
         });
