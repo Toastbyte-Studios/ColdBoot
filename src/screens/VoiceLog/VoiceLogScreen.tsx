@@ -225,6 +225,7 @@ export default observer(function VoiceLogScreen() {
 
       setIsRecording(true);
       setRecordingTime(0);
+      setMicLevel(0);
 
       // Start recording - library uses default writable cache directory
       // Third argument enables metering, which feeds the level meter.
