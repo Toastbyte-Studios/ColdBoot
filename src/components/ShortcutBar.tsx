@@ -104,9 +104,9 @@ const ShortcutBar = observer(
 
     const toggleFlashlight = () => {
       signalingStore.setFlashlightMode(
-        signalingStore.flashlightMode === FlashlightModes.ON
-          ? FlashlightModes.OFF
-          : FlashlightModes.ON,
+        signalingStore.flashlightMode === FlashlightModes.OFF
+          ? FlashlightModes.ON
+          : FlashlightModes.OFF,
       );
     };
 

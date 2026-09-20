@@ -143,6 +143,22 @@ describe('ShortcutBar', () => {
     expect(mockNavigate).not.toHaveBeenCalled();
   });
 
+  it('long-presses Flashlight from non-off mode to turn it off', () => {
+    mockSignalingStore.flashlightMode = 'sos';
+    const tree = render();
+    const flashlightButton = tree.root.findByProps({
+      accessibilityLabel: 'Flashlight',
+    });
+
+    ReactTestRenderer.act(() => {
+      flashlightButton.props.onLongPress();
+      flashlightButton.props.onPress();
+    });
+
+    expect(mockSetFlashlightMode).toHaveBeenCalledWith('off');
+    expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
   it('marks Alerts as active while the alerts sheet is open', () => {
     mockCurrentRouteName = 'MapScreen';
     const tree = renderWithProps(true);
