@@ -285,8 +285,8 @@ function MapLibraryScreen() {
           zoomRange,
         });
 
-        await transferPackNameOverride(pack.id, replacementPack.id);
         await OfflineMapService.deletePack(pack.id);
+        await transferPackNameOverride(pack.id, replacementPack.id);
         await loadData();
       } catch (error) {
         console.error('Failed to refresh offline pack:', error);

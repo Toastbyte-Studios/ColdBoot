@@ -121,6 +121,11 @@ export async function reverseGeocode(
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   const onAbort = () => controller.abort();
 
+  if (options?.signal?.aborted) {
+    clearTimeout(timeout);
+    return null;
+  }
+
   options?.signal?.addEventListener('abort', onAbort);
 
   try {

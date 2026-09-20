@@ -1,9 +1,13 @@
 import { useNavigation } from '@react-navigation/native';
 import React from 'react';
+import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import { OfflineMapService } from '../src/navigation/services/OfflineMapService';
 import MapLibraryScreen from '../src/screens/Map/MapLibraryScreen';
-import { loadPackNameOverrides } from '../src/utils/offlinePackNames';
+import {
+  loadPackNameOverrides,
+  transferPackNameOverride,
+} from '../src/utils/offlinePackNames';
 
 jest.mock('../src/hooks/useTheme', () => ({
   useTheme: () => ({
@@ -75,7 +79,7 @@ jest.mock('../src/components/ModuleRow', () => {
 jest.mock('../src/components/AppButton', () => {
   const { Text: MockText, TouchableOpacity } = require('react-native');
   return ({ label, onPress }: { label: string; onPress?: () => void }) => (
-    <TouchableOpacity onPress={onPress}>
+    <TouchableOpacity onPress={onPress} testID={`app-button-${label}`}>
       <MockText>{label}</MockText>
     </TouchableOpacity>
   );
@@ -111,6 +115,7 @@ describe('MapLibraryScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useNavigation as jest.Mock).mockReturnValue({ navigate });
+    jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     (loadPackNameOverrides as jest.Mock).mockResolvedValue({
       'pack-1': 'Near Red Rock Canyon',
     });
@@ -202,5 +207,59 @@ describe('MapLibraryScreen', () => {
       center: { latitude: 36.17, longitude: -115.13 },
       radiusMiles: 10,
     });
+  });
+
+  it('keeps the existing override in place when refresh delete fails', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([
+      {
+        id: 'pack-1',
+        metadata: {
+          name: 'Area Download 9/20/2026',
+          createdAt: '2026-09-12T00:00:00.000Z',
+          radiusMiles: 10,
+          centerLat: 36.17,
+          centerLng: -115.13,
+        },
+        status: {
+          state: 'complete',
+          completedResourceCount: 10,
+          requiredResourceCount: 10,
+          completedResourceSize: 82 * 1024 * 1024,
+        },
+      },
+    ]);
+    (OfflineMapService.downloadRegion as jest.Mock).mockResolvedValue({
+      id: 'pack-2',
+    });
+    (OfflineMapService.deletePack as jest.Mock).mockRejectedValue(
+      new Error('delete failed'),
+    );
+    (Alert.alert as jest.Mock).mockImplementation(
+      (title, _message, buttons) => {
+        if (title === 'Refresh Offline Map') {
+          buttons?.[1]?.onPress?.();
+        }
+      },
+    );
+
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(<MapLibraryScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      await Promise.resolve();
+    });
+
+    const refreshButton = tree.root.findByProps({
+      testID: 'app-button-Refresh',
+    });
+    await ReactTestRenderer.act(async () => {
+      refreshButton.props.onPress();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(OfflineMapService.deletePack).toHaveBeenCalledWith('pack-1');
+    expect(transferPackNameOverride).not.toHaveBeenCalled();
   });
 });

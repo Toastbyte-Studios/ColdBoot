@@ -48,6 +48,7 @@ import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
 import { navigationRef } from '../../navigation/navigationRef';
+import { boundsFromRadius } from '../../navigation/utils/boundsFromRadius';
 import {
   useTrackStore,
   useWaypointStore,
@@ -637,9 +638,15 @@ export default observer(function MapScreen() {
       return;
     }
     lastCenteredKeyRef.current = centerKey;
+    const radiusMiles = route.params?.radiusMiles;
+    let targetLatitudeDelta = DELTA.latitudeDelta;
+    if (typeof radiusMiles === 'number' && radiusMiles > 0) {
+      const [, south, , north] = boundsFromRadius(center, radiusMiles);
+      targetLatitudeDelta = Math.max(DELTA.latitudeDelta, north - south);
+    }
     cameraRef.current.setStop({
       center: [center.longitude, center.latitude],
-      zoom: zoomFromDelta(DELTA.latitudeDelta),
+      zoom: zoomFromDelta(targetLatitudeDelta),
       duration: MAP_ANIMATE_DURATION_MS,
       easing: 'fly',
     });

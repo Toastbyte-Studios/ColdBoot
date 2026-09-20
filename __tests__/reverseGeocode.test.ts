@@ -86,6 +86,21 @@ describe('reverseGeocode', () => {
     expect(addSpy).toHaveBeenCalledWith('abort', expect.any(Function));
     expect(removeSpy).toHaveBeenCalledWith('abort', expect.any(Function));
   });
+
+  it('returns null without starting fetch when given an already-aborted signal', async () => {
+    jest.useFakeTimers();
+    global.fetch = jest.fn();
+    const controller = new AbortController();
+    controller.abort();
+
+    await expect(
+      reverseGeocode(36.17, -115.13, {
+        signal: controller.signal,
+      }),
+    ).resolves.toBeNull();
+    expect(global.fetch).not.toHaveBeenCalled();
+    expect(jest.getTimerCount()).toBe(0);
+  });
 });
 
 describe('buildOfflineAreaFallbackName', () => {
