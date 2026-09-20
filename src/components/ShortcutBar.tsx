@@ -9,6 +9,7 @@ import { useVisibleNotificationCount } from '../hooks/useAllNotifications';
 import { useTheme } from '../hooks/useTheme';
 import { navigationRef } from '../navigation/navigationRef';
 import { useSettingsStore, useSignalingStore } from '../stores';
+import { DEFAULT_SHORTCUTS, resolveShortcutIds } from '../stores/SettingsStore';
 import { FOOTER_HEIGHT } from '../theme';
 import { onColor, withAlpha } from '../theme/colorUtils';
 import { getToolById } from '../utils/tools';
@@ -63,22 +64,30 @@ const ShortcutBar = observer(
       return navigationRef.addListener('state', syncCurrentRoute);
     }, []);
 
-    const shortcuts = settingsStore.shortcuts.flatMap((toolId, index) => {
-      const tool = getToolById(toolId);
-      if (!tool) {
-        return [];
-      }
+    const shortcuts = resolveShortcutIds(settingsStore.shortcuts).map(
+      (toolId, index) => {
+        const tool =
+          getToolById(toolId) ??
+          getToolById(DEFAULT_SHORTCUTS[index]) ??
+          getToolById(DEFAULT_SHORTCUTS[0]);
 
-      return [
-        {
+        if (!tool) {
+          return {
+            key: SHORTCUT_KEYS[index],
+            label: 'Shortcut',
+            icon: 'construct-outline',
+          };
+        }
+
+        return {
           key: SHORTCUT_KEYS[index],
           label: tool.shortName ?? tool.name,
           icon: tool.icon,
           route: tool.screen,
           toolId: tool.id,
-        },
-      ];
-    });
+        };
+      },
+    );
 
     const items: ShortcutDefinition[] = [
       ...shortcuts,

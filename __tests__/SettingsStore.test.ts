@@ -299,6 +299,30 @@ describe('SettingsStore', () => {
 
       expect(settingsStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
     });
+
+    it('restores shortcuts through the backup-import path', async () => {
+      await settingsStore.restoreShortcuts([
+        'nav_map',
+        'missing_tool',
+        'nav_map',
+      ]);
+      expect(settingsStore.shortcuts).toEqual([
+        'nav_map',
+        'core_flashlight',
+        'core_voice_log',
+      ]);
+
+      await settingsStore.restoreShortcuts([
+        'comm_radio_frequency',
+        'nav_grid_reference',
+        'earth_sun_time',
+      ]);
+      expect(settingsStore.shortcuts).toEqual([
+        'comm_radio_frequency',
+        'nav_grid_reference',
+        'earth_sun_time',
+      ]);
+    });
   });
 
   describe('database initialization', () => {
