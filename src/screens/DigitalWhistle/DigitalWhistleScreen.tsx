@@ -1,12 +1,15 @@
 import React, { useEffect } from 'react';
-import { View, Alert } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import Sound from 'react-native-sound';
 import AppButton from '../../components/AppButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { createStyles } from './styles';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * DigitalWhistleScreen component
@@ -31,7 +34,6 @@ export default function DigitalWhistleScreen() {
   const [isPlayingDog, setIsPlayingDog] = React.useState(false);
   const normalSoundRef = React.useRef<Sound | null>(null);
   const dogSoundRef = React.useRef<Sound | null>(null);
-  const styles = createStyles(COLORS);
 
   /**
    * Initialize sounds on component mount
@@ -159,74 +161,89 @@ export default function DigitalWhistleScreen() {
   }, []);
 
   return (
-    <ScreenBody>
-      <SectionHeader>Digital Whistle</SectionHeader>
-
-      <View style={styles.container}>
-        {/* Normal Whistle Section */}
-        <View style={styles.whistleSection}>
-          <Text style={styles.whistleTitle}>Normal Whistle</Text>
-          <Text style={styles.whistleDescription}>
-            Standard whistle tone - Audible to humans
-          </Text>
-
-          <View style={styles.buttonRow}>
-            <AppButton
-              label="Short Burst"
-              onPress={() => playShortBurst(true)}
-              icon="flash-outline"
-              style={styles.buttonFlex}
-            />
-
-            <AppButton
-              label={isPlayingNormal ? 'Stop' : 'Continuous'}
-              onPress={() => {
-                if (isPlayingNormal) {
-                  stopContinuous(true);
-                } else {
-                  startContinuous(true);
-                }
-              }}
-              variant={isPlayingNormal ? 'destructive' : 'primary'}
-              icon={isPlayingNormal ? 'stop' : 'play'}
-              style={styles.buttonFlex}
-            />
-          </View>
-        </View>
-
-        <View style={styles.separator} />
-
-        {/* Dog Whistle Section */}
-        <View style={styles.whistleSection}>
-          <Text style={styles.whistleTitle}>Dog Whistle</Text>
-          <Text style={styles.whistleDescription}>
-            High frequency tone - May be less audible to humans
-          </Text>
-
-          <View style={styles.buttonRow}>
-            <AppButton
-              label="Short Burst"
-              onPress={() => playShortBurst(false)}
-              icon="flash-outline"
-              style={styles.buttonFlex}
-            />
-
-            <AppButton
-              label={isPlayingDog ? 'Stop' : 'Continuous'}
-              onPress={() => {
-                if (isPlayingDog) {
-                  stopContinuous(false);
-                } else {
-                  startContinuous(false);
-                }
-              }}
-              variant={isPlayingDog ? 'destructive' : 'primary'}
-              icon={isPlayingDog ? 'stop' : 'play'}
-              style={styles.buttonFlex}
-            />
-          </View>
+    <StackScreen
+      title="Digital Whistle"
+      note="Placeholder tones for now. Hold the phone away from your ears before starting a continuous whistle."
+    >
+      <SectionEyebrow>Normal whistle</SectionEyebrow>
+      <View style={[styles.card, cardSurface(COLORS)]}>
+        <Text style={[styles.description, { color: COLORS.MUTED }]}>
+          Standard whistle tone — audible to humans.
+        </Text>
+        <View style={styles.buttonRow}>
+          <AppButton
+            label="Short Burst"
+            onPress={() => playShortBurst(true)}
+            icon="flash-outline"
+            style={styles.buttonFlex}
+          />
+          <AppButton
+            label={isPlayingNormal ? 'Stop' : 'Continuous'}
+            onPress={() => {
+              if (isPlayingNormal) {
+                stopContinuous(true);
+              } else {
+                startContinuous(true);
+              }
+            }}
+            variant={isPlayingNormal ? 'destructive' : 'primary'}
+            icon={isPlayingNormal ? 'stop' : 'play'}
+            style={styles.buttonFlex}
+          />
         </View>
       </View>
-    </ScreenBody>
+
+      <SectionEyebrow style={styles.eyebrow}>Dog whistle</SectionEyebrow>
+      <View style={[styles.card, cardSurface(COLORS)]}>
+        <Text style={[styles.description, { color: COLORS.MUTED }]}>
+          High frequency tone — may be less audible to humans.
+        </Text>
+        <View style={styles.buttonRow}>
+          <AppButton
+            label="Short Burst"
+            onPress={() => playShortBurst(false)}
+            icon="flash-outline"
+            style={styles.buttonFlex}
+          />
+          <AppButton
+            label={isPlayingDog ? 'Stop' : 'Continuous'}
+            onPress={() => {
+              if (isPlayingDog) {
+                stopContinuous(false);
+              } else {
+                startContinuous(false);
+              }
+            }}
+            variant={isPlayingDog ? 'destructive' : 'primary'}
+            icon={isPlayingDog ? 'stop' : 'play'}
+            style={styles.buttonFlex}
+          />
+        </View>
+      </View>
+    </StackScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  card: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
+    gap: SPACING.md,
+  },
+  eyebrow: {
+    marginTop: SPACING.lg,
+  },
+  description: {
+    fontSize: 14,
+    lineHeight: 19,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+  },
+  buttonFlex: {
+    flex: 1,
+  },
+});

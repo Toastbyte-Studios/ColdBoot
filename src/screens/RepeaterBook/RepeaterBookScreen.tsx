@@ -10,26 +10,26 @@ import {
   ActivityIndicator,
   Linking,
   Modal,
-  ScrollView,
+  Platform,
   StyleSheet,
   View,
 } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
 import AppSwitch from '../../components/AppSwitch';
-import { HorizontalRule } from '../../components/HorizontalRule';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import SelectMenu from '../../components/SelectMenu';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT } from '../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+
+const isAndroid = Platform.OS === 'android';
 
 const DISCLAIMER_KEY = '@repeaterbook/disclaimer_dismissed';
 const hamData =
@@ -52,7 +52,6 @@ const gmrsData =
  */
 const RepeaterBookScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
@@ -108,10 +107,28 @@ const RepeaterBookScreen = observer((): JSX.Element => {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Local Repeaters</SectionHeader>
-
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
+    <StackScreen
+      title="Local Repeaters"
+      subtitle={`${store.filteredRepeaters.length} nearby`}
+      trailing={
+        <>
+          <IconButton
+            name="information-circle-outline"
+            size={22}
+            color={COLORS.ERROR}
+            onPress={() => setDisclaimerVisible(true)}
+            accessibilityLabel="View HAM and GMRS license requirements"
+          />
+          <IconButton
+            name="add-circle-outline"
+            size={22}
+            onPress={() => navigation.navigate('AddCustomRepeater')}
+            accessibilityLabel="Add custom repeater"
+          />
+        </>
+      }
+    >
+      <View style={styles.column}>
         {/* Filter row: mode dropdown + on-air toggle */}
         <View style={styles.filterRow}>
           {/* Mode filter */}
@@ -127,8 +144,10 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               style={[
                 styles.dropdown,
                 {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.BRAND,
+                  backgroundColor: isAndroid
+                    ? COLORS.SURFACE_CONTAINER
+                    : COLORS.SURFACE,
+                  borderColor: COLORS.BORDER,
                 },
               ]}
             >
@@ -140,7 +159,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               <Ionicons
                 name="chevron-down-outline"
                 size={14}
-                color={COLORS.PRIMARY_DARK}
+                color={COLORS.MUTED}
               />
             </View>
           </SelectMenu>
@@ -179,245 +198,193 @@ const RepeaterBookScreen = observer((): JSX.Element => {
               />
             </View>
           </View>
+        </View>
 
-          {/* Icons column: license info + add repeater stacked */}
-          <View style={styles.iconColumn}>
-            <IconButton
-              name="information-circle-outline"
-              size={28}
-              color={COLORS.ERROR}
-              onPress={() => setDisclaimerVisible(true)}
-              accessibilityLabel="View HAM and GMRS license requirements"
-            />
-            <IconButton
-              name="add-circle-outline"
-              size={28}
-              color={COLORS.ACCENT}
-              onPress={() => navigation.navigate('AddCustomRepeater')}
-              accessibilityLabel="Add custom repeater"
-            />
+        {/* Loading spinner */}
+        {store.isLoading && store.repeaters.length === 0 && (
+          <View style={styles.centered}>
+            <ActivityIndicator size="large" color={COLORS.ACCENT} />
+            <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
+              Loading repeaters…
+            </Text>
           </View>
-        </View>
+        )}
 
-        {/* Divider */}
-        <View style={styles.ruleWrap}>
-          <HorizontalRule />
-        </View>
+        {/* Error message */}
+        {store.error && store.repeaters.length === 0 && (
+          <View
+            style={[
+              styles.errorCard,
+              {
+                backgroundColor: COLORS.ERROR_LIGHT,
+                borderColor: COLORS.ERROR,
+              },
+            ]}
+          >
+            <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
+              {store.error}
+            </Text>
+            <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
+              Connect to the internet to load repeater data.
+            </Text>
+          </View>
+        )}
 
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Loading spinner */}
-          {store.isLoading && store.repeaters.length === 0 && (
-            <View style={styles.centered}>
-              <ActivityIndicator size="large" color={COLORS.ACCENT} />
-              <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
-                Loading repeaters…
-              </Text>
-            </View>
-          )}
+        {/* Empty state */}
+        {!store.isLoading && !store.error && store.repeaters.length === 0 && (
+          <View style={styles.centered}>
+            <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
+              No repeaters found nearby.
+            </Text>
+          </View>
+        )}
 
-          {/* Error message */}
-          {store.error && store.repeaters.length === 0 && (
+        {/* Repeater list */}
+        {store.filteredRepeaters.map((repeater, index) => (
+          <Touchable
+            key={repeater.id || index}
+            onPress={() => handleRepeaterPress(repeater)}
+            accessibilityRole="button"
+            style={[styles.row, cardSurface(COLORS)]}
+          >
+            {/* Operational status dot */}
             <View
               style={[
-                styles.errorCard,
+                styles.statusDot,
                 {
-                  backgroundColor: COLORS.ERROR_LIGHT,
-                  borderColor: COLORS.ERROR,
+                  backgroundColor:
+                    repeater.operationalStatus === 'On-air'
+                      ? COLORS.SUCCESS
+                      : COLORS.BRAND,
                 },
               ]}
-            >
-              <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
-                {store.error}
-              </Text>
-              <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
-                Connect to the internet to load repeater data.
-              </Text>
-            </View>
-          )}
+            />
 
-          {/* Empty state */}
-          {!store.isLoading && !store.error && store.repeaters.length === 0 && (
-            <View style={styles.centered}>
-              <Text style={[styles.helperText, { color: COLORS.PRIMARY_DARK }]}>
-                No repeaters found nearby.
-              </Text>
-            </View>
-          )}
+            <View style={styles.rowBody}>
+              <View style={styles.rowTop}>
+                <Text style={[styles.callSign, { color: COLORS.PRIMARY_DARK }]}>
+                  {repeater.callSign}
+                </Text>
+                <Text style={[styles.distance, { color: COLORS.PRIMARY_DARK }]}>
+                  {repeater.distance} mi
+                </Text>
+              </View>
 
-          {/* Repeater list */}
-          {store.filteredRepeaters.map((repeater, index) => (
-            <Touchable
-              key={repeater.id || index}
-              onPress={() => handleRepeaterPress(repeater)}
-              accessibilityRole="button"
-              style={[
-                styles.row,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.BRAND,
-                },
-              ]}
-            >
-              {/* Operational status dot */}
-              <View
-                style={[
-                  styles.statusDot,
-                  {
-                    backgroundColor:
-                      repeater.operationalStatus === 'On-air'
-                        ? COLORS.SUCCESS
-                        : COLORS.BRAND,
-                  },
-                ]}
-              />
-
-              <View style={styles.rowBody}>
-                <View style={styles.rowTop}>
-                  <Text
-                    style={[styles.callSign, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {repeater.callSign}
-                  </Text>
-                  <Text
-                    style={[styles.distance, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {repeater.distance} mi
-                  </Text>
-                </View>
-
-                <View style={styles.rowMeta}>
+              <View style={styles.rowMeta}>
+                <Text style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}>
+                  {repeater.frequency} MHz
+                </Text>
+                {repeater.offset ? (
                   <Text
                     style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
                   >
-                    {repeater.frequency} MHz
+                    {' '}
+                    · {repeater.offset}
                   </Text>
-                  {repeater.offset ? (
-                    <Text
-                      style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
-                    >
-                      {' '}
-                      · {repeater.offset}
-                    </Text>
-                  ) : null}
-                  {repeater.tone ? (
-                    <Text
-                      style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
-                    >
-                      {' '}
-                      · PL {repeater.tone}
-                    </Text>
-                  ) : null}
-                </View>
-
-                <View style={styles.rowBottom}>
-                  <View
-                    style={[styles.modeBadge, { borderColor: COLORS.ACCENT }]}
-                  >
-                    <Text style={[styles.modeText, { color: COLORS.ACCENT }]}>
-                      {repeater.mode}
-                    </Text>
-                  </View>
-                  {repeater.isCustom && (
-                    <View
-                      style={[
-                        styles.customBadge,
-                        { borderColor: COLORS.SUCCESS },
-                      ]}
-                    >
-                      <Text
-                        style={[
-                          styles.customBadgeText,
-                          { color: COLORS.SUCCESS },
-                        ]}
-                      >
-                        Custom
-                      </Text>
-                    </View>
-                  )}
-                  {repeater.emcomm ? (
-                    <View
-                      style={[
-                        styles.emcommBadge,
-                        { borderColor: COLORS.ERROR },
-                      ]}
-                    >
-                      <Ionicons
-                        name="warning-outline"
-                        size={11}
-                        color={COLORS.ERROR}
-                      />
-                      <Text
-                        style={[styles.emcommText, { color: COLORS.ERROR }]}
-                      >
-                        {repeater.emcomm}
-                      </Text>
-                    </View>
-                  ) : null}
+                ) : null}
+                {repeater.tone ? (
                   <Text
+                    style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
+                  >
+                    {' '}
+                    · PL {repeater.tone}
+                  </Text>
+                ) : null}
+              </View>
+
+              <View style={styles.rowBottom}>
+                <View
+                  style={[styles.modeBadge, { borderColor: COLORS.ACCENT }]}
+                >
+                  <Text style={[styles.modeText, { color: COLORS.ACCENT }]}>
+                    {repeater.mode}
+                  </Text>
+                </View>
+                {repeater.isCustom && (
+                  <View
                     style={[
-                      styles.locationText,
-                      { color: COLORS.PRIMARY_DARK },
+                      styles.customBadge,
+                      { borderColor: COLORS.SUCCESS },
                     ]}
                   >
-                    {repeater.city}
-                    {repeater.state ? `, ${repeater.state}` : ''}
-                  </Text>
-                </View>
+                    <Text
+                      style={[
+                        styles.customBadgeText,
+                        { color: COLORS.SUCCESS },
+                      ]}
+                    >
+                      Custom
+                    </Text>
+                  </View>
+                )}
+                {repeater.emcomm ? (
+                  <View
+                    style={[styles.emcommBadge, { borderColor: COLORS.ERROR }]}
+                  >
+                    <Ionicons
+                      name="warning-outline"
+                      size={11}
+                      color={COLORS.ERROR}
+                    />
+                    <Text style={[styles.emcommText, { color: COLORS.ERROR }]}>
+                      {repeater.emcomm}
+                    </Text>
+                  </View>
+                ) : null}
+                <Text
+                  style={[styles.locationText, { color: COLORS.PRIMARY_DARK }]}
+                >
+                  {repeater.city}
+                  {repeater.state ? `, ${repeater.state}` : ''}
+                </Text>
               </View>
-            </Touchable>
-          ))}
-
-          {/* Background refresh indicator */}
-          {store.isLoading && store.repeaters.length > 0 && (
-            <View style={styles.refreshRow}>
-              <ActivityIndicator size="small" color={COLORS.ACCENT} />
-              <Text
-                style={[styles.refreshText, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Refreshing…
-              </Text>
             </View>
-          )}
-
-          {/* Data source disclaimer */}
-          <Touchable
-            onPress={() => Linking.openURL('https://www.repeaterbook.com')}
-            accessibilityRole="link"
-            accessibilityLabel="Open RepeaterBook.com"
-            style={styles.disclaimerLinkTarget}
-          >
-            <Text
-              style={[styles.disclaimerText, { color: COLORS.PRIMARY_DARK }]}
-            >
-              Data sourced from{' '}
-              <Text style={styles.disclaimerLink}>RepeaterBook.com</Text>
-            </Text>
           </Touchable>
+        ))}
 
-          {/* Cache / live data status */}
-          {(store.lastUpdated || store.isCachedData) && (
-            <View style={styles.cacheStatusRow}>
-              <Ionicons
-                name={
-                  store.isCachedData ? 'archive-outline' : 'cloud-done-outline'
-                }
-                size={12}
-                color={COLORS.PRIMARY_DARK}
-              />
-              <Text
-                style={[styles.cacheStatusText, { color: COLORS.PRIMARY_DARK }]}
-              >
-                {store.isCachedData ? 'Cached data' : 'Live data'}
-                {store.lastUpdated
-                  ? `  ·  Updated ${formatLastUpdated(store.lastUpdated)}`
-                  : ''}
-              </Text>
-            </View>
-          )}
-        </ScrollView>
+        {/* Background refresh indicator */}
+        {store.isLoading && store.repeaters.length > 0 && (
+          <View style={styles.refreshRow}>
+            <ActivityIndicator size="small" color={COLORS.ACCENT} />
+            <Text style={[styles.refreshText, { color: COLORS.PRIMARY_DARK }]}>
+              Refreshing…
+            </Text>
+          </View>
+        )}
+
+        {/* Data source disclaimer */}
+        <Touchable
+          onPress={() => Linking.openURL('https://www.repeaterbook.com')}
+          accessibilityRole="link"
+          accessibilityLabel="Open RepeaterBook.com"
+          style={styles.disclaimerLinkTarget}
+        >
+          <Text style={[styles.disclaimerText, { color: COLORS.PRIMARY_DARK }]}>
+            Data sourced from{' '}
+            <Text style={styles.disclaimerLink}>RepeaterBook.com</Text>
+          </Text>
+        </Touchable>
+
+        {/* Cache / live data status */}
+        {(store.lastUpdated || store.isCachedData) && (
+          <View style={styles.cacheStatusRow}>
+            <Ionicons
+              name={
+                store.isCachedData ? 'archive-outline' : 'cloud-done-outline'
+              }
+              size={12}
+              color={COLORS.PRIMARY_DARK}
+            />
+            <Text
+              style={[styles.cacheStatusText, { color: COLORS.PRIMARY_DARK }]}
+            >
+              {store.isCachedData ? 'Cached data' : 'Live data'}
+              {store.lastUpdated
+                ? `  ·  Updated ${formatLastUpdated(store.lastUpdated)}`
+                : ''}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* HAM & GMRS license disclaimer modal */}
@@ -432,8 +399,8 @@ const RepeaterBookScreen = observer((): JSX.Element => {
             style={[
               styles.modalSheet,
               {
-                backgroundColor: COLORS.PRIMARY_LIGHT,
-                borderColor: COLORS.BRAND,
+                backgroundColor: COLORS.SURFACE,
+                borderColor: COLORS.BORDER,
               },
             ]}
           >
@@ -479,7 +446,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
           </View>
         </View>
       </Modal>
-    </ScreenBody>
+    </StackScreen>
   );
 });
 
@@ -487,19 +454,17 @@ export default RepeaterBookScreen;
 
 // Static: every colour here is applied inline from useTheme at render time.
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
+  column: {
+    // StackScreen's Android content is full-bleed; this screen's cards and
+    // controls carry the gutter.
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
   },
   filterRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginHorizontal: 14,
-    marginTop: 10,
-    gap: 12,
+    marginBottom: SPACING.md,
+    gap: SPACING.md,
   },
   dropdownMenu: {
     flex: 1,
@@ -510,10 +475,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: RADIUS.tileSmall,
     minHeight: 44,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   dropdownText: {
     fontSize: 14,
@@ -532,22 +497,6 @@ const styles = StyleSheet.create({
   toggleLabel: {
     fontSize: 14,
     fontWeight: '600',
-  },
-  iconColumn: {
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  ruleWrap: {
-    marginTop: 10,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-    paddingTop: 8,
-  },
-  scrollContent: {
-    paddingHorizontal: 14,
-    paddingBottom: 24,
   },
   centered: {
     paddingTop: 40,
@@ -573,11 +522,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    borderWidth: 1,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 8,
-    gap: 10,
+    padding: SPACING.md,
+    marginBottom: SPACING.sm,
+    gap: SPACING.sm,
   },
   statusDot: {
     width: 10,

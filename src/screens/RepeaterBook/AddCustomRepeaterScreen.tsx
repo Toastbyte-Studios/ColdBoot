@@ -1,20 +1,22 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { JSX, useMemo, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppSwitch from '../../components/AppSwitch';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import SelectMenu from '../../components/SelectMenu';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT } from '../../theme';
+import { RADIUS, SPACING } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
 import { FormButtonRow, FormInput, FormTextArea } from '../Shared/Prepper';
+import { FormCard } from '../Shared/Prepper/FormCard';
+
+const isAndroid = Platform.OS === 'android';
 
 type AddCustomRepeaterRouteProp = RouteProp<
   { AddCustomRepeater: { repeater?: Repeater } },
@@ -36,7 +38,6 @@ const STATUS_OPTIONS = STATUSES.map((s) => ({ value: s, label: s }));
  */
 const AddCustomRepeaterScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const navigation = useNavigation();
   const route = useRoute<AddCustomRepeaterRouteProp>();
@@ -95,198 +96,175 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>
-        {isEditing ? 'Edit Repeater' : 'Add Repeater'}
-      </SectionHeader>
+    <StackScreen
+      title={isEditing ? 'Edit Repeater' : 'Add Repeater'}
+      subtitle="Saved on this device only"
+      keyboardShouldPersistTaps="handled"
+    >
+      <FormCard testID="custom-repeater-form">
+        {/* Required fields header */}
+        <SectionEyebrow inline>Required</SectionEyebrow>
 
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
-        >
-          {/* Required fields header */}
-          <Text style={[styles.sectionLabel, { color: COLORS.PRIMARY_DARK }]}>
-            Required
+        <FormInput
+          label="Frequency (MHz) *"
+          placeholder="e.g. 146.520"
+          value={frequency}
+          onChangeText={setFrequency}
+          keyboardType="decimal-pad"
+          accessibilityLabel="Frequency"
+        />
+
+        <FormInput
+          label="Offset *"
+          placeholder="e.g. -0.600 or +0.600"
+          value={offset}
+          onChangeText={setOffset}
+          keyboardType="default"
+          accessibilityLabel="Offset"
+        />
+
+        <FormInput
+          label="PL / Tone *"
+          placeholder="e.g. 100.0 or DCS023"
+          value={tone}
+          onChangeText={setTone}
+          accessibilityLabel="PL Tone"
+        />
+
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
+            Mode *
           </Text>
-
-          <FormInput
-            label="Frequency (MHz) *"
-            placeholder="e.g. 146.520"
-            value={frequency}
-            onChangeText={setFrequency}
-            keyboardType="decimal-pad"
-            accessibilityLabel="Frequency"
-          />
-
-          <FormInput
-            label="Offset *"
-            placeholder="e.g. -0.600 or +0.600"
-            value={offset}
-            onChangeText={setOffset}
-            keyboardType="default"
-            accessibilityLabel="Offset"
-          />
-
-          <FormInput
-            label="PL / Tone *"
-            placeholder="e.g. 100.0 or DCS023"
-            value={tone}
-            onChangeText={setTone}
-            accessibilityLabel="PL Tone"
-          />
-
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-              Mode *
-            </Text>
-            <SelectMenu
-              title="Mode"
-              options={MODE_OPTIONS}
-              value={mode}
-              onSelect={setMode}
-              accessibilityLabel={`Mode: ${mode}`}
-            >
-              <View style={styles.pickerField}>
-                <Text
-                  style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {mode}
-                </Text>
-                <Ionicons
-                  name="chevron-down-outline"
-                  size={16}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </View>
-            </SelectMenu>
-          </View>
-
-          <FormInput
-            label="City / Location *"
-            placeholder="e.g. Tampa"
-            value={city}
-            onChangeText={setCity}
-            accessibilityLabel="City or location"
-          />
-
-          {/* Optional fields header */}
-          <Text
-            style={[
-              styles.sectionLabel,
-              styles.sectionLabelOptional,
-              { color: COLORS.PRIMARY_DARK },
-            ]}
+          <SelectMenu
+            title="Mode"
+            options={MODE_OPTIONS}
+            value={mode}
+            onSelect={setMode}
+            accessibilityLabel={`Mode: ${mode}`}
           >
-            Optional
-          </Text>
+            <View style={styles.pickerField}>
+              <Text style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}>
+                {mode}
+              </Text>
+              <Ionicons
+                name="chevron-down-outline"
+                size={16}
+                color={COLORS.PRIMARY_DARK}
+              />
+            </View>
+          </SelectMenu>
+        </View>
 
-          <FormInput
-            label="Call Sign"
-            placeholder="e.g. W4TST"
-            value={callSign}
-            onChangeText={setCallSign}
-            autoCapitalize="characters"
-            accessibilityLabel="Call sign"
-          />
+        <FormInput
+          label="City / Location *"
+          placeholder="e.g. Tampa"
+          value={city}
+          onChangeText={setCity}
+          accessibilityLabel="City or location"
+        />
 
-          {/* Emergency Comms toggle */}
-          <View style={styles.formGroup}>
-            <View style={styles.switchRow}>
-              <View style={styles.switchLabelGroup}>
-                <View style={styles.labelRow}>
-                  <Ionicons
-                    name="alert-circle-outline"
-                    size={16}
-                    color={COLORS.ERROR}
-                  />
-                  <Text
-                    style={[
-                      styles.label,
-                      styles.labelInline,
-                      { color: COLORS.PRIMARY_DARK },
-                    ]}
-                  >
-                    Emergency Comms
-                  </Text>
-                </View>
+        {/* Optional fields header */}
+        <SectionEyebrow inline style={styles.optionalEyebrow}>
+          Optional
+        </SectionEyebrow>
+
+        <FormInput
+          label="Call Sign"
+          placeholder="e.g. W4TST"
+          value={callSign}
+          onChangeText={setCallSign}
+          autoCapitalize="characters"
+          accessibilityLabel="Call sign"
+        />
+
+        {/* Emergency Comms toggle */}
+        <View style={styles.formGroup}>
+          <View style={styles.switchRow}>
+            <View style={styles.switchLabelGroup}>
+              <View style={styles.labelRow}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={16}
+                  color={COLORS.ERROR}
+                />
                 <Text
                   style={[
-                    styles.switchSubLabel,
+                    styles.label,
+                    styles.labelInline,
                     { color: COLORS.PRIMARY_DARK },
                   ]}
                 >
-                  Mark as ARES / RACES / SKYWARN / etc.
+                  Emergency Comms
                 </Text>
               </View>
-              <AppSwitch
-                value={isEmcomm}
-                onValueChange={(v) => {
-                  setIsEmcomm(v);
-                  if (!v) setEmcomm('');
-                }}
-                tint={COLORS.ERROR}
-                offTint={COLORS.BRAND}
-                thumbColor={COLORS.PRIMARY_LIGHT}
-                accessibilityLabel="Mark as emergency communications repeater"
+              <Text style={styles.switchSubLabel}>
+                Mark as ARES / RACES / SKYWARN / etc.
+              </Text>
+            </View>
+            <AppSwitch
+              value={isEmcomm}
+              onValueChange={(v) => {
+                setIsEmcomm(v);
+                if (!v) setEmcomm('');
+              }}
+              tint={COLORS.ERROR}
+              offTint={COLORS.BRAND}
+              thumbColor={COLORS.PRIMARY_LIGHT}
+              accessibilityLabel="Mark as emergency communications repeater"
+            />
+          </View>
+          {isEmcomm && (
+            <FormInput
+              label="Group / Affiliation (optional)"
+              placeholder="e.g. ARES, SKYWARN"
+              value={emcomm}
+              onChangeText={setEmcomm}
+              containerStyle={styles.emcommInput}
+              accessibilityLabel="Emergency communications group or affiliation"
+            />
+          )}
+        </View>
+
+        <View style={styles.formGroup}>
+          <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
+            Operational Status
+          </Text>
+          <SelectMenu
+            title="Operational Status"
+            options={STATUS_OPTIONS}
+            value={operationalStatus}
+            onSelect={setOperationalStatus}
+            accessibilityLabel={`Operational status: ${operationalStatus}`}
+          >
+            <View style={styles.pickerField}>
+              <Text style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}>
+                {operationalStatus}
+              </Text>
+              <Ionicons
+                name="chevron-down-outline"
+                size={16}
+                color={COLORS.PRIMARY_DARK}
               />
             </View>
-            {isEmcomm && (
-              <FormInput
-                label="Group / Affiliation (optional)"
-                placeholder="e.g. ARES, SKYWARN"
-                value={emcomm}
-                onChangeText={setEmcomm}
-                containerStyle={styles.emcommInput}
-                accessibilityLabel="Emergency communications group or affiliation"
-              />
-            )}
-          </View>
+          </SelectMenu>
+        </View>
 
-          <View style={styles.formGroup}>
-            <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-              Operational Status
-            </Text>
-            <SelectMenu
-              title="Operational Status"
-              options={STATUS_OPTIONS}
-              value={operationalStatus}
-              onSelect={setOperationalStatus}
-              accessibilityLabel={`Operational status: ${operationalStatus}`}
-            >
-              <View style={styles.pickerField}>
-                <Text
-                  style={[styles.pickerText, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {operationalStatus}
-                </Text>
-                <Ionicons
-                  name="chevron-down-outline"
-                  size={16}
-                  color={COLORS.PRIMARY_DARK}
-                />
-              </View>
-            </SelectMenu>
-          </View>
+        <FormTextArea
+          label="Notes"
+          placeholder="Additional notes..."
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Notes"
+        />
 
-          <FormTextArea
-            label="Notes"
-            placeholder="Additional notes..."
-            value={notes}
-            onChangeText={setNotes}
-            accessibilityLabel="Notes"
-          />
-
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!isValid}
-            saveLabel={isEditing ? 'Save Changes' : 'Add Repeater'}
-          />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!isValid}
+          saveLabel={isEditing ? 'Save Changes' : 'Add Repeater'}
+        />
+      </FormCard>
+    </StackScreen>
   );
 });
 
@@ -297,45 +275,22 @@ export type AddCustomRepeaterScreenParams = { repeater: Repeater } | undefined;
 
 const createStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      alignSelf: 'stretch',
-      paddingBottom: FOOTER_HEIGHT,
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      paddingHorizontal: 14,
-      paddingTop: 8,
-      paddingBottom: 24,
-    },
-    sectionLabel: {
-      fontSize: 13,
-      fontWeight: '700',
-      textTransform: 'uppercase',
-      letterSpacing: 0.8,
-      marginBottom: 12,
-      marginTop: 4,
-    },
-    sectionLabelOptional: {
-      marginTop: 16,
+    optionalEyebrow: {
+      marginTop: SPACING.md,
     },
     formGroup: {
-      marginBottom: 20,
+      marginBottom: SPACING.lg,
     },
     label: {
       fontSize: 16,
       fontWeight: '600',
-      marginBottom: 8,
+      marginBottom: SPACING.sm,
     },
     labelRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: 6,
-      marginBottom: 8,
+      gap: SPACING.xs + 2,
+      marginBottom: SPACING.sm,
     },
     labelInline: {
       marginBottom: 0,
@@ -347,11 +302,13 @@ const createStyles = (COLORS: ColorScheme) =>
       justifyContent: 'space-between',
       minHeight: 48,
       borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 12,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderColor: COLORS.SECONDARY_ACCENT,
+      borderRadius: RADIUS.tileSmall,
+      paddingHorizontal: SPACING.md,
+      paddingVertical: SPACING.md,
+      backgroundColor: isAndroid
+        ? COLORS.SURFACE_CONTAINER
+        : COLORS.SURFACE_GROUND,
+      borderColor: COLORS.BORDER,
     },
     pickerText: {
       fontSize: 16,
@@ -360,15 +317,15 @@ const createStyles = (COLORS: ColorScheme) =>
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
-      marginBottom: 8,
+      marginBottom: SPACING.sm,
     },
     switchLabelGroup: {
       flex: 1,
-      marginRight: 12,
+      marginRight: SPACING.md,
     },
     switchSubLabel: {
       fontSize: 12,
-      opacity: 0.6,
+      color: COLORS.MUTED,
       marginTop: 2,
     },
     emcommInput: {
