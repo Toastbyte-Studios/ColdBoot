@@ -55,8 +55,9 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   },
   {
     icon: 'notifications-outline',
-    title: 'Tab Bar',
-    description: 'Switch between Home, Modules and Alerts below.',
+    title: 'Shortcuts',
+    description:
+      'Your most-used tools and Alerts, one tap away. Change them in Settings.',
     spotlightTarget: 'footerButtons',
   },
   {

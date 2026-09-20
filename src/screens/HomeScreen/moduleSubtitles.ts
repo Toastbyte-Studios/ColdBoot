@@ -12,8 +12,7 @@ import {
  * the root `constants.ts`.
  *
  * These live beside the module list rather than in `constants.ts` so the tool
- * metadata stays a plain data table; this is presentation copy, and only Home
- * and the Modules tab render it.
+ * metadata stays a plain data table; this is presentation copy used by Home.
  */
 export const MODULE_SUBTITLES: Record<string, string> = {
   home_communications: 'Morse · whistle · frequencies',

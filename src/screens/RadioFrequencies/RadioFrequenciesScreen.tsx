@@ -25,7 +25,7 @@ const radioCategories = [
  *
  * Shows categories for HAM, CB, GMRS, FRS, and MURS radio frequencies as rows
  * in one grouped list, with a Local Repeaters entry (powered by RepeaterBook)
- * in its own group below. StackScreen keeps the content clear of the tab bar.
+ * in its own group below. StackScreen keeps the content clear of the shortcut bar.
  *
  * @component
  * @returns {JSX.Element} The rendered radio frequencies screen.

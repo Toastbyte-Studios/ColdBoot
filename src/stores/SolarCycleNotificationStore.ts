@@ -87,7 +87,7 @@ export class SolarCycleNotificationStore {
    *
    * Until this existed, the only caller of {@link updateNotifications} and
    * {@link updateCurrentTime} was the old footer's SolarCycleNotification
-   * component. When the tab bar replaced the footer, nothing created solar
+   * component. When the shortcut bar replaced the footer, nothing created solar
    * alerts any more, so none ever appeared in the Alerts sheet (and the lunar
    * phase alert, which needs a calculated location, never appeared either).
    *

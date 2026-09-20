@@ -33,7 +33,7 @@ import { HelpModal } from './HelpModal';
 import { ManageOfflineMapsModal } from './ManageOfflineMapsModal';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
-import TabBar from './TabBar';
+import ShortcutBar from './ShortcutBar';
 import TutorialModal from './TutorialModal';
 import {
   SpotlightLayout,
@@ -68,7 +68,7 @@ const FULL_SCREEN_ROUTES = new Set(['Search']);
  *
  * Provides:
  * - A top app bar ({@link AppBar}), which each platform draws its own way.
- * - A bottom tab bar.
+ * - A bottom shortcut bar.
  * - Global horizontal swipe navigation, on iOS only — see below.
  *
  * Gesture behavior (iOS):
@@ -362,7 +362,7 @@ export default function AppShell({ children }: Props) {
                   : undefined
               }
             >
-              <TabBar
+              <ShortcutBar
                 onAlertsPress={() => setIsAlertsVisible(true)}
                 onAlertsClose={() => setIsAlertsVisible(false)}
                 alertsActive={isAlertsVisible}

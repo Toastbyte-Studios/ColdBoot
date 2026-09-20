@@ -51,9 +51,11 @@ import {
   listBackupFiles,
   readBackupFile,
 } from '../utils/backupService';
+import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
 import IconButton from './IconButton';
+import ShortcutPicker from './ShortcutPicker';
 import SegmentedControl from './SegmentedControl';
 import Touchable from './Touchable';
 
@@ -184,6 +186,9 @@ export const SettingsModal = observer(
     const [offlinePacks, setOfflinePacks] = useState<OfflineMapPack[] | null>(
       null,
     );
+    const [shortcutPickerSlot, setShortcutPickerSlot] = useState<0 | 1 | 2 | null>(
+      null,
+    );
 
     // Summarise downloaded maps for the row's value. A Modal has no navigation
     // focus event, so visibility is the equivalent trigger.
@@ -264,6 +269,7 @@ export const SettingsModal = observer(
             themeMode: settingsStore.themeMode,
             noteSortOrder: settingsStore.noteSortOrder,
             measurementSystem: settingsStore.measurementSystem,
+            shortcuts: settingsStore.shortcuts,
           },
           waypointStore.waypoints,
           trackStore.tracks,
@@ -394,6 +400,9 @@ export const SettingsModal = observer(
                 data.settings.measurementSystem,
               );
             }
+            if (data.settings.shortcuts) {
+              await settingsStore.restoreShortcuts(data.settings.shortcuts);
+            }
           }
 
           setShowFileList(false);
@@ -453,6 +462,18 @@ export const SettingsModal = observer(
       onClose();
       onOpenHelp?.();
     }, [onClose, onOpenHelp]);
+
+    const handleSelectShortcut = useCallback(
+      async (toolId: string) => {
+        if (shortcutPickerSlot === null) {
+          return;
+        }
+
+        await settingsStore.setShortcut(shortcutPickerSlot, toolId);
+        setShortcutPickerSlot(null);
+      },
+      [settingsStore, shortcutPickerSlot],
+    );
 
     return (
       <Modal
@@ -530,6 +551,62 @@ export const SettingsModal = observer(
                     value={settingsStore.fontSize}
                     onChange={(size) => settingsStore.setFontSize(size)}
                     accessibilityLabel="Text size"
+                  />
+                </View>
+              </View>
+
+              <GroupLabel>SHORTCUTS</GroupLabel>
+              <View style={[styles.group, t.groupThemed]}>
+                {settingsStore.shortcuts.map((toolId, index) => {
+                  const tool = getToolById(toolId);
+                  if (!tool) {
+                    return null;
+                  }
+
+                  return (
+                    <React.Fragment key={toolId}>
+                      <Touchable
+                        style={styles.row}
+                        onPress={() => setShortcutPickerSlot(index as 0 | 1 | 2)}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Shortcut ${index + 1}, ${
+                          tool.name
+                        }`}
+                      >
+                        <RNText style={[styles.rowTitle, t.primaryText]}>
+                          Shortcut {index + 1}
+                        </RNText>
+                        <RNText style={[styles.rowValue, t.mutedText]}>
+                          {tool.shortName ?? tool.name}
+                        </RNText>
+                        <IconButton
+                          name="chevron-forward-outline"
+                          size={16}
+                          color={COLORS.CHEVRON}
+                          onPress={(event) => {
+                            event.stopPropagation();
+                            setShortcutPickerSlot(index as 0 | 1 | 2);
+                          }}
+                          accessibilityLabel={`Choose shortcut ${index + 1}`}
+                        />
+                      </Touchable>
+                      {index < settingsStore.shortcuts.length - 1 ? (
+                        <View style={[styles.separator, t.separatorThemed]} />
+                      ) : null}
+                    </React.Fragment>
+                  );
+                })}
+
+                <View style={[styles.separator, t.separatorThemed]} />
+
+                <View style={styles.shortcutResetRow}>
+                  <AppButton
+                    label="Reset to defaults"
+                    icon="refresh-outline"
+                    variant="tinted"
+                    fullWidth
+                    onPress={() => settingsStore.resetShortcuts()}
+                    accessibilityLabel="Reset shortcuts to defaults"
                   />
                 </View>
               </View>
@@ -804,6 +881,13 @@ export const SettingsModal = observer(
             </ScrollView>
           </View>
         </View>
+        <ShortcutPicker
+          visible={shortcutPickerSlot !== null}
+          slot={shortcutPickerSlot}
+          shortcuts={settingsStore.shortcuts}
+          onClose={() => setShortcutPickerSlot(null)}
+          onSelect={handleSelectShortcut}
+        />
       </Modal>
     );
   },
@@ -912,6 +996,7 @@ const styles = StyleSheet.create({
   rowValue: {
     fontSize: 15.5,
     fontWeight: '600',
+    flexShrink: 1,
   },
   rowSubtitle: {
     fontSize: 12.5,
@@ -923,6 +1008,9 @@ const styles = StyleSheet.create({
   },
   actionButton: {
     marginTop: SPACING.md,
+  },
+  shortcutResetRow: {
+    padding: SPACING.lg,
   },
   restorePanel: {
     borderWidth: 1,

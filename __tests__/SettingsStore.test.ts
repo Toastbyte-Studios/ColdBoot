@@ -2,7 +2,10 @@
  * @format
  */
 
-import { SettingsStore } from '../src/stores/SettingsStore';
+import {
+  DEFAULT_SHORTCUTS,
+  SettingsStore,
+} from '../src/stores/SettingsStore';
 
 // Mock database for testing
 const createMockDatabase = () => {
@@ -99,6 +102,7 @@ describe('SettingsStore', () => {
       expect(settingsStore.themeMode).toBe('system');
       expect(settingsStore.noteSortOrder).toBe('newest-oldest');
       expect(settingsStore.measurementSystem).toBe('imperial');
+      expect(settingsStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
     });
 
     it('should make the store observable', () => {
@@ -107,6 +111,8 @@ describe('SettingsStore', () => {
       expect(typeof settingsStore.setThemeMode).toBe('function');
       expect(typeof settingsStore.setNoteSortOrder).toBe('function');
       expect(typeof settingsStore.setMeasurementSystem).toBe('function');
+      expect(typeof settingsStore.setShortcut).toBe('function');
+      expect(typeof settingsStore.resetShortcuts).toBe('function');
     });
   });
 
@@ -256,6 +262,48 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('shortcuts', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('uses the default shortcuts', () => {
+      expect(settingsStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
+    });
+
+    it('persists a shortcut change', async () => {
+      await settingsStore.setShortcut(1, 'nav_grid_reference');
+
+      expect(settingsStore.shortcuts).toEqual([
+        'core_flashlight',
+        'nav_grid_reference',
+        'core_voice_log',
+      ]);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        [JSON.stringify(settingsStore.shortcuts)],
+      );
+    });
+
+    it('swaps shortcuts when selecting one already in another slot', async () => {
+      await settingsStore.setShortcut(0, 'nav_map');
+
+      expect(settingsStore.shortcuts).toEqual([
+        'nav_map',
+        'core_flashlight',
+        'core_voice_log',
+      ]);
+    });
+
+    it('resets shortcuts to defaults', async () => {
+      await settingsStore.setShortcut(2, 'comm_radio_frequency');
+
+      await settingsStore.resetShortcuts();
+
+      expect(settingsStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
+    });
+  });
+
   describe('database initialization', () => {
     it('should initialize settings table', async () => {
       await settingsStore.initSettingsDb(mockDb);
@@ -352,6 +400,7 @@ describe('SettingsStore', () => {
       expect(newStore.themeMode).toBe('system');
       expect(newStore.noteSortOrder).toBe('newest-oldest');
       expect(newStore.measurementSystem).toBe('imperial');
+      expect(newStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
     });
 
     it('should handle load errors gracefully', async () => {
@@ -369,6 +418,55 @@ describe('SettingsStore', () => {
       );
 
       consoleErrorSpy.mockRestore();
+    });
+
+    it('recovers from invalid shortcut JSON', async () => {
+      await mockDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        ['not-json'],
+      );
+
+      const newStore = new SettingsStore();
+      await newStore.initSettingsDb(mockDb);
+      await newStore.loadSettings(mockDb);
+
+      expect(newStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
+    });
+
+    it('recovers from the wrong shortcut length', async () => {
+      await mockDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        [JSON.stringify(['nav_map'])],
+      );
+
+      const newStore = new SettingsStore();
+      await newStore.initSettingsDb(mockDb);
+      await newStore.loadSettings(mockDb);
+
+      expect(newStore.shortcuts).toEqual(DEFAULT_SHORTCUTS);
+    });
+
+    it('recovers from unknown shortcut ids without duplicates', async () => {
+      await mockDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        [
+          JSON.stringify([
+            'nav_map',
+            'missing_tool',
+            'nav_map',
+          ]),
+        ],
+      );
+
+      const newStore = new SettingsStore();
+      await newStore.initSettingsDb(mockDb);
+      await newStore.loadSettings(mockDb);
+
+      expect(newStore.shortcuts).toEqual([
+        'nav_map',
+        'core_flashlight',
+        'core_voice_log',
+      ]);
     });
   });
 
@@ -403,6 +501,10 @@ describe('SettingsStore', () => {
       expect(mockDb.executeSql).toHaveBeenCalledWith(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('measurementSystem', ?)",
         ['imperial'],
+      );
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('shortcuts', ?)",
+        [JSON.stringify(DEFAULT_SHORTCUTS)],
       );
     });
 

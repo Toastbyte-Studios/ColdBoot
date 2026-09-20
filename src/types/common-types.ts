@@ -3,6 +3,7 @@ import ReferenceEntryType from './data-type';
 export type ToolType = {
   id: string;
   name: string;
+  shortName?: string;
   screen: string;
   icon: string;
 };

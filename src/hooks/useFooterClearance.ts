@@ -2,7 +2,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FOOTER_HEIGHT } from '../theme';
 
 /**
- * Bottom padding a screen needs so its content clears the tab bar.
+ * Bottom padding a screen needs so its content clears the shortcut bar.
  *
  * The bar is `FOOTER_HEIGHT` tall and sits on top of the device's bottom
  * inset, so content has to clear both. Screens that use the bare
