@@ -21,6 +21,14 @@ type Props = PropsWithChildren<{
   subtitle?: string;
   /** Rendered at the trailing edge of the title row — a glyph, an action. */
   trailing?: React.ReactNode;
+  /**
+   * What the back control does, when going back is not popping the screen —
+   * a screen that holds several steps of its own, such as Voice Log's record
+   * and playback modes, returns to its own starting point instead. The
+   * control is always shown when this is set; without it the control appears
+   * only when there is a screen to pop.
+   */
+  onBack?: () => void;
   keyboardShouldPersistTaps?: React.ComponentProps<
     typeof ScrollView
   >['keyboardShouldPersistTaps'];
@@ -51,6 +59,7 @@ export default function StackScreen({
   title,
   subtitle,
   trailing,
+  onBack,
   keyboardShouldPersistTaps,
   note,
   children,
@@ -72,12 +81,12 @@ export default function StackScreen({
         <SectionHeader
           containerStyle={isAndroid ? styles.headline : undefined}
           leading={
-            navigation.canGoBack() ? (
+            onBack || navigation.canGoBack() ? (
               <IconButton
                 name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
                 size={isAndroid ? 24 : 20}
                 color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
-                onPress={() => navigation.goBack()}
+                onPress={onBack ?? (() => navigation.goBack())}
                 accessibilityLabel="Go back"
               />
             ) : undefined

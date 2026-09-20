@@ -6,22 +6,25 @@ import {
   RouteProp,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, ScrollView, Alert, Image } from 'react-native';
-import { HorizontalRule } from '../../../components/HorizontalRule';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, View, Alert, Image } from 'react-native';
 import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
-import ScreenBody from '../../../components/ScreenBody';
-import SectionHeader from '../../../components/SectionHeader';
-import { useFooterClearance } from '../../../hooks/useFooterClearance';
+import StackScreen from '../../../components/StackScreen';
 import { useTheme } from '../../../hooks/useTheme';
 import { useNotesStore } from '../../../stores';
 import { Note } from '../../../stores/NotesStore';
-import { FOOTER_HEIGHT } from '../../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../../theme';
+import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { PAPER } from '../../../theme/fixedSurfaces';
 import { formatDateTime } from '../../../utils/timeFormat';
-import { makeNoteListSharedStyles } from '../noteListStyles';
+
+const isAndroid = Platform.OS === 'android';
+
+/** Muted text on the bare screen ground — see `MUTED_ON_GROUND`. */
+const groundInk = (colors: ColorScheme) =>
+  isAndroid ? colors.MUTED : colors.MUTED_ON_GROUND;
 
 type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
 
@@ -29,23 +32,20 @@ type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
  * Displays a single note in fully expanded state.
  *
  * This screen retrieves a note from the navigation route parameters and displays
- * it with its full title and body text. It includes bookmark and delete functionality
- * and navigation options.
+ * it with its full title and body text. Edit, bookmark and delete live in the
+ * title row's trailing slot, where the other stack screens keep their actions.
  *
  * @returns {JSX.Element} The rendered note entry screen component.
  *
  * @remarks
  * - Receives `note` parameter from the route params
- * - Displays the note title as the section header
- * - Shows the full note text in expanded view
- * - Includes bookmark and delete buttons
+ * - Displays the note title as the screen title, its timestamp and category
+ *   as the subtitle
+ * - Shows the full note text, or the sketch, on a card
  * - Voice logs should be accessed through the Voice Log feature instead
  */
 export default observer(function NoteEntryScreen(): React.JSX.Element {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
-  const shared = useMemo(() => makeNoteListSharedStyles(COLORS), [COLORS]);
   const route = useRoute<NoteEntryRouteProp>();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const core = useNotesStore();
@@ -57,16 +57,11 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
 
   if (!note) {
     return (
-      <ScreenBody>
-        <SectionHeader>Note Not Found</SectionHeader>
-        <View
-          style={[styles.container, { marginBottom: footerClearance + 12 }]}
-        >
-          <Text style={shared.value}>
-            The requested note could not be found.
-          </Text>
-        </View>
-      </ScreenBody>
+      <StackScreen title="Note not found">
+        <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
+          The requested note could not be found.
+        </Text>
+      </StackScreen>
     );
   }
 
@@ -80,134 +75,102 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
     setIsBookmarked(!isBookmarked);
   };
 
-  return (
-    <ScreenBody>
-      <SectionHeader>{noteTitle}</SectionHeader>
-      <View style={styles.noteHeader}>
-        <IconButton
-          name="create-outline"
-          size={30}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Edit note"
-          style={shared.noteButton}
-          onPress={() => {
-            navigation.navigate('EditNote', { note });
-          }}
-        />
-        <IconButton
-          name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
-          size={30}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel={
-            isBookmarked ? 'Remove bookmark' : 'Bookmark note'
-          }
-          style={shared.noteButton}
-          onPress={handleBookmarkPress}
-        />
-        <IconButton
-          name="trash-outline"
-          size={30}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Delete note"
-          style={shared.noteButton}
-          onPress={() => {
-            Alert.alert(
-              'Delete Note',
-              'Are you sure you want to delete this note?',
-              [
-                { text: 'Cancel', style: 'cancel' },
-                {
-                  text: 'Delete',
-                  style: 'destructive',
-                  onPress: async () => {
-                    await core.deleteNote(note.id);
-                    navigation.goBack();
-                  },
-                },
-              ],
-            );
-          }}
-        />
-      </View>
-      <HorizontalRule />
-      <View style={[styles.container, { marginBottom: footerClearance + 12 }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <View style={shared.actionsRow}>
-            <Text style={shared.itemMeta}>
-              {formatDateTime(new Date(note.createdAt))} • {note.category}
-            </Text>
-          </View>
+  const handleDeletePress = () => {
+    Alert.alert('Delete Note', 'Are you sure you want to delete this note?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Delete',
+        style: 'destructive',
+        onPress: async () => {
+          await core.deleteNote(note.id);
+          navigation.goBack();
+        },
+      },
+    ]);
+  };
 
-          {noteType === 'text' ? (
-            <View>
-              <Text style={shared.itemBodyExpanded}>{noteText}</Text>
-            </View>
-          ) : noteType === 'sketch' && sketchDataUri ? (
-            <View style={styles.sketchView}>
-              <Image
-                source={{ uri: sketchDataUri }}
-                style={styles.sketchImage}
-                resizeMode="contain"
-              />
-            </View>
-          ) : (
-            <View>
-              <Text style={shared.itemBodyExpanded}>
-                No sketch data available.
-              </Text>
-            </View>
-          )}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+  return (
+    <StackScreen
+      title={noteTitle}
+      subtitle={`${formatDateTime(new Date(note.createdAt))} · ${note.category}`}
+      trailing={
+        <>
+          <IconButton
+            name="create-outline"
+            size={22}
+            accessibilityLabel="Edit note"
+            onPress={() => navigation.navigate('EditNote', { note })}
+          />
+          <IconButton
+            name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
+            size={22}
+            accessibilityLabel={
+              isBookmarked ? 'Remove bookmark' : 'Bookmark note'
+            }
+            onPress={handleBookmarkPress}
+          />
+          <IconButton
+            name="trash-outline"
+            size={22}
+            color={COLORS.ERROR}
+            accessibilityLabel="Delete note"
+            onPress={handleDeletePress}
+          />
+        </>
+      }
+    >
+      {noteType === 'sketch' ? (
+        sketchDataUri ? (
+          /* Sketches are saved as PNGs drawn dark-on-light by SketchCanvas, so
+             their backdrop stays PAPER-coloured in both schemes rather than
+             following the theme. See src/theme/fixedSurfaces.ts. */
+          <View style={styles.sketchPlate}>
+            <Image
+              source={{ uri: sketchDataUri }}
+              style={styles.sketchImage}
+              resizeMode="contain"
+            />
+          </View>
+        ) : (
+          <View style={[styles.card, cardSurface(COLORS)]}>
+            <Text style={styles.body}>No sketch data available.</Text>
+          </View>
+        )
+      ) : (
+        <View style={[styles.card, cardSurface(COLORS)]}>
+          <Text style={styles.body}>{noteText}</Text>
+        </View>
+      )}
+    </StackScreen>
   );
 });
 
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderWidth: 2,
-      borderRadius: 12,
-      borderColor: COLORS.SECONDARY_ACCENT,
-      alignSelf: 'stretch',
-      marginTop: 12,
-      marginBottom: FOOTER_HEIGHT + 12,
-    },
-    noteHeader: {
-      width: '75%',
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      width: '100%',
-      paddingHorizontal: 16,
-      paddingBottom: 24,
-    },
-    // Sketches are saved as PNGs drawn dark-on-light by SketchCanvas, so their
-    // backdrop stays PAPER-coloured in both schemes rather than following the
-    // theme. See src/theme/fixedSurfaces.ts.
-    sketchView: {
-      width: '100%',
-      minHeight: 200,
-      backgroundColor: PAPER,
-      borderRadius: 8,
-      padding: 8,
-      alignItems: 'center',
-      justifyContent: 'center',
-    },
-    sketchImage: {
-      width: '100%',
-      height: 300,
-    },
-  });
+const styles = StyleSheet.create({
+  // StackScreen's Android content is full-bleed; cards carry the gutter.
+  card: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
+  },
+  body: {
+    fontSize: 16,
+    lineHeight: 23,
+  },
+  helperText: {
+    fontSize: 16,
+    lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
+  sketchPlate: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    minHeight: 200,
+    backgroundColor: PAPER,
+    borderRadius: RADIUS.card,
+    padding: SPACING.sm,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  sketchImage: {
+    width: '100%',
+    height: 300,
+  },
+});

@@ -1,14 +1,13 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
+import { Alert, Platform, StyleSheet } from 'react-native';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
+import { TEXT_GUTTER } from '../../theme';
 import {
   FormInput,
   FormTextArea,
@@ -17,7 +16,9 @@ import {
   QuantityUnitRow,
   ExpirationDatePicker,
 } from '../Shared/Prepper';
-import { inventoryFormStyles as styles } from './inventoryFormStyles';
+import { FormCard } from '../Shared/Prepper/FormCard';
+
+const isAndroid = Platform.OS === 'android';
 
 type EditInventoryItemRouteProp = RouteProp<
   { EditInventoryItem: { item: InventoryItem } },
@@ -42,7 +43,6 @@ export default observer(function EditInventoryItemScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const inventory = useInventoryStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
 
   const { item } = route.params || {};
   const [name, setName] = useState<string>(item?.name || '');
@@ -123,67 +123,67 @@ export default observer(function EditInventoryItemScreen(): React.JSX.Element {
 
   if (!item) {
     return (
-      <ScreenBody>
-        <SectionHeader>Edit Item</SectionHeader>
-        <View style={[styles.container, { paddingBottom: footerClearance }]}>
-          <Text
-            style={[styles.errorText, { color: COLORS.ERROR || '#d32f2f' }]}
-          >
-            Item not found
-          </Text>
-        </View>
-      </ScreenBody>
+      <StackScreen title="Edit Item">
+        <Text style={[styles.errorText, { color: COLORS.ERROR }]}>
+          Item not found
+        </Text>
+      </StackScreen>
     );
   }
 
   return (
-    <ScreenBody>
-      <SectionHeader>Edit Item</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <FormInput
-            label="Item Name *"
-            placeholder="Enter item name..."
-            value={name}
-            onChangeText={setName}
-            accessibilityLabel="Item name"
-          />
+    <StackScreen
+      title="Edit Item"
+      subtitle={item.category}
+      keyboardShouldPersistTaps="handled"
+    >
+      <FormCard testID="inventory-item-form">
+        <FormInput
+          label="Item Name *"
+          placeholder="Enter item name..."
+          value={name}
+          onChangeText={setName}
+          accessibilityLabel="Item name"
+        />
 
-          <QuantityUnitRow
-            quantity={quantity}
-            unit={unit}
-            onQuantityChange={setQuantity}
-            onUnitChange={setUnit}
-          />
+        <QuantityUnitRow
+          quantity={quantity}
+          unit={unit}
+          onQuantityChange={setQuantity}
+          onUnitChange={setUnit}
+        />
 
-          <ExpirationDatePicker
-            month={expirationMonth}
-            year={expirationYear}
-            onMonthChange={setExpirationMonth}
-            onYearChange={setExpirationYear}
-          />
+        <ExpirationDatePicker
+          month={expirationMonth}
+          year={expirationYear}
+          onMonthChange={setExpirationMonth}
+          onYearChange={setExpirationYear}
+        />
 
-          <FormTextArea
-            label="Notes (optional)"
-            placeholder="Enter notes..."
-            value={notes}
-            onChangeText={setNotes}
-            accessibilityLabel="Notes"
-          />
+        <FormTextArea
+          label="Notes (optional)"
+          placeholder="Enter notes..."
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Notes"
+        />
 
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!name.trim()}
-            saveLabel="Save"
-          />
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!name.trim()}
+          saveLabel="Save"
+        />
 
-          <DeleteButton onPress={handleDelete} />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        <DeleteButton onPress={handleDelete} />
+      </FormCard>
+    </StackScreen>
   );
+});
+
+const styles = StyleSheet.create({
+  errorText: {
+    fontSize: 16,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
 });

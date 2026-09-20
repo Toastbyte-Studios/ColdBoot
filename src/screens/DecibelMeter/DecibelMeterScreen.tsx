@@ -7,16 +7,16 @@ import {
   PermissionsAndroid,
   Alert,
   Animated,
-  ScrollView,
 } from 'react-native';
 import Sound, { type RecordBackType } from 'react-native-nitro-sound';
 import AppButton from '../../components/AppButton';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+
+const isAndroid = Platform.OS === 'android';
 
 // Track if recording is active globally
 let isGlobalRecording = false;
@@ -39,7 +39,6 @@ let isGlobalRecording = false;
 const DecibelMeterScreenImpl = () => {
   const core = useSignalingStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const [isActive, setIsActive] = useState(core.decibelMeterActive);
   const [decibelLevel, setDecibelLevel] = useState(0);
   const animatedLevel = useRef(new Animated.Value(0)).current;
@@ -232,120 +231,77 @@ const DecibelMeterScreenImpl = () => {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Decibel Meter</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Main Meter Display */}
-          <View
-            style={[
-              styles.meterContainer,
-              {
-                backgroundColor: COLORS.PRIMARY_LIGHT,
-                borderColor: COLORS.SECONDARY_ACCENT,
-              },
-            ]}
-          >
-            {/* Visual Bar Meter */}
-            <View style={styles.barMeterContainer}>
-              {[...Array(20)].map((_, i) => {
-                const barLevel = (i + 1) * 5; // Each bar represents 5 dB
-                const isBarActive = decibelLevel >= barLevel;
-                const barColor = getLevelColor(barLevel);
-                const barHeight = ((i + 1) / 20) * 120; // Height scales from 6px to 120px
+    <StackScreen
+      title="Decibel Meter"
+      subtitle={isActive ? 'Listening' : 'Stopped'}
+      note="A rough reading from the phone's microphone, not a calibrated meter."
+    >
+      {/* Main Meter Display */}
+      <View style={[styles.meterCard, cardSurface(COLORS)]}>
+        {/* Visual Bar Meter */}
+        <View style={styles.barMeterContainer}>
+          {[...Array(20)].map((_, i) => {
+            const barLevel = (i + 1) * 5; // Each bar represents 5 dB
+            const isBarActive = decibelLevel >= barLevel;
+            const barColor = getLevelColor(barLevel);
+            const barHeight = ((i + 1) / 20) * 120; // Height scales from 6px to 120px
 
-                return (
-                  <View
-                    key={i}
-                    style={[
-                      styles.bar,
-                      isBarActive ? styles.barActive : styles.barInactive,
-                      {
-                        height: barHeight,
-                        backgroundColor: isBarActive
-                          ? barColor
-                          : COLORS.BACKGROUND,
-                        borderColor: COLORS.SECONDARY_ACCENT,
-                      },
-                    ]}
-                  />
-                );
-              })}
-            </View>
-          </View>
-
-          {/* Controls */}
-          <View style={styles.controlsContainer}>
-            {!isActive ? (
-              <AppButton
-                label="Start Monitoring"
-                onPress={handleStart}
-                variant="success"
-                icon="play"
-                iconSize={24}
-                accessibilityLabel="Start Decibel Meter"
+            return (
+              <View
+                key={i}
+                style={[
+                  styles.bar,
+                  isBarActive ? styles.barActive : styles.barInactive,
+                  {
+                    height: barHeight,
+                    backgroundColor: isBarActive
+                      ? barColor
+                      : COLORS.OUTLINE_VARIANT,
+                  },
+                ]}
               />
-            ) : (
-              <AppButton
-                label="Stop Monitoring"
-                onPress={handleStop}
-                variant="destructive"
-                icon="stop"
-                iconSize={24}
-                accessibilityLabel="Stop Decibel Meter"
-              />
-            )}
-          </View>
-        </ScrollView>
+            );
+          })}
+        </View>
       </View>
-    </ScreenBody>
+
+      {/* Controls */}
+      <View style={styles.controls}>
+        {!isActive ? (
+          <AppButton
+            label="Start Monitoring"
+            onPress={handleStart}
+            variant="success"
+            icon="play"
+            iconSize={24}
+            fullWidth
+            accessibilityLabel="Start Decibel Meter"
+          />
+        ) : (
+          <AppButton
+            label="Stop Monitoring"
+            onPress={handleStop}
+            variant="destructive"
+            icon="stop"
+            iconSize={24}
+            fullWidth
+            accessibilityLabel="Stop Decibel Meter"
+          />
+        )}
+      </View>
+    </StackScreen>
   );
 };
 
 export default observer(DecibelMeterScreenImpl);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingTop: SCROLL_PADDING,
-    paddingBottom: 24,
+  meterCard: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.lg,
+    padding: SPACING.lg,
     alignItems: 'center',
-  },
-  meterContainer: {
-    marginHorizontal: 16,
-    marginVertical: 20,
-    padding: 24,
-    borderRadius: 16,
-    borderWidth: 2,
-    alignItems: 'center',
-  },
-  levelDisplay: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-    marginBottom: 8,
-  },
-  levelNumber: {
-    fontSize: 72,
-    fontWeight: '700',
-    lineHeight: 72,
-  },
-  levelUnit: {
-    fontSize: 32,
-    fontWeight: '600',
-    marginLeft: 8,
   },
   barMeterContainer: {
     flexDirection: 'row',
@@ -358,43 +314,16 @@ const styles = StyleSheet.create({
   bar: {
     flex: 1, // Equal width bars that flex to fill container
     borderRadius: 4,
-    borderWidth: 1,
     // Height is set dynamically based on bar level to create proper meter visualization
   },
   barActive: {
     opacity: 1,
   },
   barInactive: {
-    opacity: 0.3,
+    opacity: 0.4,
   },
-  controlsContainer: {
-    paddingHorizontal: 16,
-    marginBottom: 20,
-  },
-  referenceContainer: {
-    marginHorizontal: 16,
-    marginBottom: 20,
-  },
-  referenceTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 12,
-    paddingBottom: 8,
-    borderBottomWidth: 1,
-  },
-  referenceItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    gap: 12,
-  },
-  referenceLevel: {
-    fontSize: 14,
-    fontWeight: '700',
-    width: 50,
-  },
-  referenceDescription: {
-    fontSize: 14,
-    flex: 1,
+  controls: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.lg,
   },
 });

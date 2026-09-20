@@ -1,15 +1,9 @@
-import {
-  NavigationProp,
-  ParamListBase,
-  useNavigation,
-} from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   LayoutChangeEvent,
   Platform,
-  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
@@ -21,21 +15,12 @@ import Svg, {
   Stop,
 } from 'react-native-svg';
 import GroupContainer from '../../components/GroupContainer';
-import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
 import SectionEyebrow from '../../components/SectionEyebrow';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
-import {
-  RADIUS,
-  SCREEN_GUTTER,
-  SCREEN_INSET,
-  SPACING,
-  TEXT_GUTTER,
-} from '../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { withAlpha } from '../../theme/colorUtils';
 import { formatDuration, getSolarSnapshot } from '../../utils/sunTimes';
 import { formatTime } from '../../utils/timeFormat';
@@ -69,8 +54,6 @@ const CHART_PEAK = 18;
 const SunTimeScreen = observer(() => {
   const COLORS = useTheme();
   const core = useCoreStore();
-  const footerClearance = useFooterClearance();
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
@@ -177,197 +160,172 @@ const SunTimeScreen = observer(() => {
   };
 
   return (
-    <ScreenBody>
-      <ScrollView
-        style={[styles.scroll, isAndroid && styles.bleed]}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: footerClearance },
-        ]}
-      >
-        <SectionHeader
-          containerStyle={isAndroid ? styles.headline : undefined}
-          leading={
-            navigation.canGoBack() ? (
-              <IconButton
-                name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
-                size={isAndroid ? 24 : 20}
-                color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
-                onPress={() => navigation.goBack()}
-                accessibilityLabel="Go back"
-              />
-            ) : undefined
-          }
-          title="Sun Times"
-          subtitle={coordinates}
-        />
+    <StackScreen title="Sun Times" subtitle={coordinates}>
+      {loading && (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={COLORS.ACCENT} />
+          <Text style={[styles.centerText, { color: COLORS.MUTED }]}>
+            Getting location…
+          </Text>
+        </View>
+      )}
 
-        {loading && (
-          <View style={styles.centerContainer}>
-            <ActivityIndicator size="large" color={COLORS.ACCENT} />
-            <Text style={[styles.centerText, { color: COLORS.MUTED }]}>
-              Getting location…
-            </Text>
-          </View>
-        )}
+      {!loading && (error || !snapshot) && (
+        <View style={styles.centerContainer}>
+          <Text style={[styles.centerText, { color: COLORS.MUTED }]}>
+            {error ??
+              'Sun times are unavailable for this location today — the sun may not rise or set here.'}
+          </Text>
+        </View>
+      )}
 
-        {!loading && (error || !snapshot) && (
-          <View style={styles.centerContainer}>
-            <Text style={[styles.centerText, { color: COLORS.MUTED }]}>
-              {error ??
-                'Sun times are unavailable for this location today — the sun may not rise or set here.'}
-            </Text>
-          </View>
-        )}
-
-        {!loading && !error && snapshot && (
-          <>
-            <View
-              style={[
-                styles.daylightCard,
-                isAndroid
-                  ? { backgroundColor: COLORS.SURFACE_CONTAINER }
-                  : [
-                      styles.outlined,
-                      {
-                        backgroundColor: COLORS.SURFACE,
-                        borderColor: COLORS.BORDER,
-                      },
-                    ],
-              ]}
-            >
-              <View style={styles.daylightHeader}>
-                <SectionEyebrow inline>Daylight remaining</SectionEyebrow>
-                <Text
-                  style={[styles.daylightValue, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {formatDuration(snapshot.daylightRemainingMs)}
-                </Text>
-              </View>
-
-              <View onLayout={handleChartLayout} style={styles.chart}>
-                {chartWidth > 0 && (
-                  <Svg
-                    width={chartWidth}
-                    height={CHART_HEIGHT}
-                    accessibilityElementsHidden
-                  >
-                    <Defs>
-                      <LinearGradient id="daylight" x1="0" y1="0" x2="0" y2="1">
-                        <Stop
-                          offset="0"
-                          stopColor={COLORS.ACCENT}
-                          stopOpacity={0.22}
-                        />
-                        <Stop
-                          offset="1"
-                          stopColor={COLORS.ACCENT}
-                          stopOpacity={0}
-                        />
-                      </LinearGradient>
-                    </Defs>
-
-                    {/* Filled area under the day arc. */}
-                    <Path
-                      d={`${arcPath(0, 1)} L${chartWidth} ${CHART_BASELINE} L0 ${CHART_BASELINE} Z`}
-                      fill="url(#daylight)"
-                    />
-                    <Path
-                      d={arcPath(0, 1)}
-                      stroke={COLORS.ACCENT}
-                      strokeWidth={2}
-                      fill="none"
-                      strokeLinecap="round"
-                    />
-                    {/* Horizon. */}
-                    <Path
-                      d={`M0 ${CHART_BASELINE} H${chartWidth}`}
-                      stroke={COLORS.BORDER}
-                      strokeWidth={1.5}
-                    />
-                    {/* Now. */}
-                    <Path
-                      d={`M${arcPoint(snapshot.progress).x} ${CHART_PEAK - 10} V${CHART_BASELINE}`}
-                      stroke={COLORS.MUTED}
-                      strokeWidth={1}
-                      strokeDasharray="3 3"
-                    />
-                    <Circle
-                      cx={arcPoint(snapshot.progress).x}
-                      cy={arcPoint(snapshot.progress).y}
-                      r={13}
-                      fill={withAlpha(COLORS.ACCENT, 0.2)}
-                    />
-                    <Circle
-                      cx={arcPoint(snapshot.progress).x}
-                      cy={arcPoint(snapshot.progress).y}
-                      r={7}
-                      fill={COLORS.ACCENT}
-                    />
-                  </Svg>
-                )}
-              </View>
-
-              <View style={styles.milestones}>
-                <Milestone label="Dawn" value={formatTime(snapshot.dawn)} />
-                <View
-                  style={[
-                    styles.rule,
+      {!loading && !error && snapshot && (
+        <>
+          <View
+            style={[
+              styles.daylightCard,
+              isAndroid
+                ? { backgroundColor: COLORS.SURFACE_CONTAINER }
+                : [
+                    styles.outlined,
                     {
-                      backgroundColor: isAndroid
-                        ? COLORS.OUTLINE_VARIANT
-                        : COLORS.SEPARATOR,
+                      backgroundColor: COLORS.SURFACE,
+                      borderColor: COLORS.BORDER,
                     },
-                  ]}
-                />
-                <Milestone
-                  label="Solar noon"
-                  value={formatTime(snapshot.solarNoon)}
-                />
-                <View
-                  style={[
-                    styles.rule,
-                    {
-                      backgroundColor: isAndroid
-                        ? COLORS.OUTLINE_VARIANT
-                        : COLORS.SEPARATOR,
-                    },
-                  ]}
-                />
-                <Milestone label="Dusk" value={formatTime(snapshot.dusk)} />
-              </View>
+                  ],
+            ]}
+          >
+            <View style={styles.daylightHeader}>
+              <SectionEyebrow inline>Daylight remaining</SectionEyebrow>
+              <Text
+                style={[styles.daylightValue, { color: COLORS.PRIMARY_DARK }]}
+              >
+                {formatDuration(snapshot.daylightRemainingMs)}
+              </Text>
             </View>
 
-            <SectionEyebrow>Today</SectionEyebrow>
-            <GroupContainer>
-              <EventRow
-                label="Sunrise"
-                value={formatTime(snapshot.sunrise)}
-                dot={COLORS.ACCENT}
+            <View onLayout={handleChartLayout} style={styles.chart}>
+              {chartWidth > 0 && (
+                <Svg
+                  width={chartWidth}
+                  height={CHART_HEIGHT}
+                  accessibilityElementsHidden
+                >
+                  <Defs>
+                    <LinearGradient id="daylight" x1="0" y1="0" x2="0" y2="1">
+                      <Stop
+                        offset="0"
+                        stopColor={COLORS.ACCENT}
+                        stopOpacity={0.22}
+                      />
+                      <Stop
+                        offset="1"
+                        stopColor={COLORS.ACCENT}
+                        stopOpacity={0}
+                      />
+                    </LinearGradient>
+                  </Defs>
+
+                  {/* Filled area under the day arc. */}
+                  <Path
+                    d={`${arcPath(0, 1)} L${chartWidth} ${CHART_BASELINE} L0 ${CHART_BASELINE} Z`}
+                    fill="url(#daylight)"
+                  />
+                  <Path
+                    d={arcPath(0, 1)}
+                    stroke={COLORS.ACCENT}
+                    strokeWidth={2}
+                    fill="none"
+                    strokeLinecap="round"
+                  />
+                  {/* Horizon. */}
+                  <Path
+                    d={`M0 ${CHART_BASELINE} H${chartWidth}`}
+                    stroke={COLORS.BORDER}
+                    strokeWidth={1.5}
+                  />
+                  {/* Now. */}
+                  <Path
+                    d={`M${arcPoint(snapshot.progress).x} ${CHART_PEAK - 10} V${CHART_BASELINE}`}
+                    stroke={COLORS.MUTED}
+                    strokeWidth={1}
+                    strokeDasharray="3 3"
+                  />
+                  <Circle
+                    cx={arcPoint(snapshot.progress).x}
+                    cy={arcPoint(snapshot.progress).y}
+                    r={13}
+                    fill={withAlpha(COLORS.ACCENT, 0.2)}
+                  />
+                  <Circle
+                    cx={arcPoint(snapshot.progress).x}
+                    cy={arcPoint(snapshot.progress).y}
+                    r={7}
+                    fill={COLORS.ACCENT}
+                  />
+                </Svg>
+              )}
+            </View>
+
+            <View style={styles.milestones}>
+              <Milestone label="Dawn" value={formatTime(snapshot.dawn)} />
+              <View
+                style={[
+                  styles.rule,
+                  {
+                    backgroundColor: isAndroid
+                      ? COLORS.OUTLINE_VARIANT
+                      : COLORS.SEPARATOR,
+                  },
+                ]}
               />
-              <EventRow
-                label="Golden hour"
-                value={formatTime(snapshot.goldenHour)}
-                dot={COLORS.BRAND}
+              <Milestone
+                label="Solar noon"
+                value={formatTime(snapshot.solarNoon)}
               />
-              <EventRow
-                label="Sunset"
-                value={formatTime(snapshot.sunset)}
-                dot={COLORS.SECONDARY_ACCENT}
+              <View
+                style={[
+                  styles.rule,
+                  {
+                    backgroundColor: isAndroid
+                      ? COLORS.OUTLINE_VARIANT
+                      : COLORS.SEPARATOR,
+                  },
+                ]}
               />
-              <EventRow
-                label="Day length"
-                value={formatDuration(
-                  snapshot.sunset.getTime() - snapshot.sunrise.getTime(),
-                )}
-                dot={COLORS.MUTED}
-                isLast
-              />
-            </GroupContainer>
-          </>
-        )}
-      </ScrollView>
-    </ScreenBody>
+              <Milestone label="Dusk" value={formatTime(snapshot.dusk)} />
+            </View>
+          </View>
+
+          <SectionEyebrow>Today</SectionEyebrow>
+          <GroupContainer>
+            <EventRow
+              label="Sunrise"
+              value={formatTime(snapshot.sunrise)}
+              dot={COLORS.ACCENT}
+            />
+            <EventRow
+              label="Golden hour"
+              value={formatTime(snapshot.goldenHour)}
+              dot={COLORS.BRAND}
+            />
+            <EventRow
+              label="Sunset"
+              value={formatTime(snapshot.sunset)}
+              dot={COLORS.SECONDARY_ACCENT}
+            />
+            <EventRow
+              label="Day length"
+              value={formatDuration(
+                snapshot.sunset.getTime() - snapshot.sunrise.getTime(),
+              )}
+              dot={COLORS.MUTED}
+              isLast
+            />
+          </GroupContainer>
+        </>
+      )}
+    </StackScreen>
   );
 });
 
@@ -431,25 +389,6 @@ const hairline =
   StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth;
 
 const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-  },
-  bleed: {
-    // See HomeScreen: `width: 'auto'` turns the negative margins into extra
-    // width rather than a sideways shift.
-    width: 'auto',
-    marginHorizontal: -SCREEN_INSET,
-  },
-  content: {
-    paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
-  },
-  headline: {
-    paddingHorizontal: TEXT_GUTTER,
-    paddingTop: 4,
-    paddingBottom: 18,
-  },
   centerContainer: {
     alignItems: 'center',
     paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,

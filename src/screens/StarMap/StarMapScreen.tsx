@@ -1,15 +1,14 @@
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import constellationImages from '../../assets/constellationImages';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
   ConstellationGuide,
@@ -20,6 +19,8 @@ import {
   getNavigationInstructions,
   getStarsForHemisphere,
 } from '../../utils/starNavigation';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * StarMapScreen
@@ -36,7 +37,6 @@ import {
  */
 function StarMapScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const core = useCoreStore();
   const [hemisphere, setHemisphere] = useState<'northern' | 'southern'>(
     'northern',
@@ -130,110 +130,74 @@ function StarMapScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Star Map & Celestial Navigation</SectionHeader>
-
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Context banner */}
-          <View style={[styles.contextBanner, cardSurface(COLORS)]}>
-            <View style={styles.contextRow}>
-              <Ionicons
-                name="earth-outline"
-                size={18}
-                color={COLORS.PRIMARY_DARK}
-              />
-              <Text
-                style={[styles.contextText, { color: COLORS.PRIMARY_DARK }]}
-              >
-                {hemisphere === 'northern'
-                  ? 'Northern Hemisphere'
-                  : 'Southern Hemisphere'}
-                {'  '}·{'  '}
-                {season}
-              </Text>
-            </View>
-            {!core.lastFix && (
-              <Text
-                style={[styles.contextNote, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Enable location for hemisphere-specific guidance
-              </Text>
-            )}
-          </View>
-
-          {/* Navigation instructions */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}>
-              Finding{' '}
-              {hemisphere === 'northern'
-                ? 'North with Polaris'
-                : 'South with the Southern Cross'}
-            </Text>
-            {instructions.map((step, i) => renderStepCard(step, i))}
-          </View>
-
-          {/* Navigational stars */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}>
-              Key Navigational Stars
-            </Text>
-            {stars.map((star, i) => renderStarCard(star, i))}
-          </View>
-
-          {/* Constellation guides */}
-          {constellations.length > 0 && (
-            <View style={styles.section}>
-              <Text
-                style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Constellations Visible Now
-              </Text>
-              {constellations.map((guide, i) =>
-                renderConstellationCard(guide, i),
-              )}
-            </View>
-          )}
-        </ScrollView>
+    <StackScreen
+      title="Star Map"
+      subtitle={`${
+        hemisphere === 'northern' ? 'Northern' : 'Southern'
+      } hemisphere · ${season}`}
+    >
+      {/* Context banner */}
+      <View style={[styles.contextBanner, cardSurface(COLORS)]}>
+        <View style={styles.contextRow}>
+          <Ionicons
+            name="earth-outline"
+            size={18}
+            color={COLORS.PRIMARY_DARK}
+          />
+          <Text style={[styles.contextText, { color: COLORS.PRIMARY_DARK }]}>
+            {hemisphere === 'northern'
+              ? 'Northern Hemisphere'
+              : 'Southern Hemisphere'}
+            {'  '}·{'  '}
+            {season}
+          </Text>
+        </View>
+        {!core.lastFix && (
+          <Text style={[styles.contextNote, { color: COLORS.PRIMARY_DARK }]}>
+            Enable location for hemisphere-specific guidance
+          </Text>
+        )}
       </View>
-    </ScreenBody>
+
+      {/* Navigation instructions */}
+      <View style={styles.section}>
+        <SectionEyebrow>
+          {hemisphere === 'northern'
+            ? 'Finding north with Polaris'
+            : 'Finding south with the Southern Cross'}
+        </SectionEyebrow>
+        {instructions.map((step, i) => renderStepCard(step, i))}
+      </View>
+
+      {/* Navigational stars */}
+      <View style={styles.section}>
+        <SectionEyebrow>Key Navigational Stars</SectionEyebrow>
+        {stars.map((star, i) => renderStarCard(star, i))}
+      </View>
+
+      {/* Constellation guides */}
+      {constellations.length > 0 && (
+        <View style={styles.section}>
+          <SectionEyebrow>Constellations Visible Now</SectionEyebrow>
+          {constellations.map((guide, i) => renderConstellationCard(guide, i))}
+        </View>
+      )}
+    </StackScreen>
   );
 }
 
 export default observer(StarMapScreen);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
+  // StackScreen's Android content is full-bleed. The eyebrow brings its own
+  // text gutter and each card brings the screen gutter, so the section itself
+  // only spaces the groups apart.
   section: {
-    width: '90%',
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    marginTop: SPACING.lg,
   },
   contextBanner: {
-    width: '90%',
-    padding: 16,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
     overflow: 'hidden',
     alignItems: 'center',
     marginTop: 8,
@@ -255,6 +219,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   stepCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 14,
     marginTop: 8,
     overflow: 'hidden',
@@ -264,6 +229,7 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   starCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
@@ -294,6 +260,7 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   constellationCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',

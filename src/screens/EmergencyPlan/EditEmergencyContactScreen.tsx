@@ -1,9 +1,8 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import { Alert } from 'react-native';
+import StackScreen from '../../components/StackScreen';
 import { useEmergencyPlanStore } from '../../stores';
 import { EmergencyContact } from '../../stores/EmergencyPlanStore';
 import {
@@ -12,7 +11,7 @@ import {
   FormInput,
   FormTextArea,
 } from '../Shared/Prepper';
-import { formStyles as styles } from '../Shared/Prepper/formStyles';
+import { FormCard } from '../Shared/Prepper/FormCard';
 
 type EditEmergencyContactRouteProp = RouteProp<
   { EditEmergencyContact: { contact: EmergencyContact } },
@@ -97,50 +96,48 @@ export default observer(function EditEmergencyContactScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Edit Contact</SectionHeader>
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <FormInput
-            label="Name *"
-            placeholder="Enter full name..."
-            value={name}
-            onChangeText={setName}
-            accessibilityLabel="Contact name"
-          />
-          <FormInput
-            label="Relationship *"
-            placeholder="e.g. Spouse, Parent, Neighbor..."
-            value={relationship}
-            onChangeText={setRelationship}
-            accessibilityLabel="Relationship"
-          />
-          <FormInput
-            label="Phone Number *"
-            placeholder="Enter phone number..."
-            value={phone}
-            onChangeText={setPhone}
-            keyboardType="phone-pad"
-            accessibilityLabel="Phone number"
-          />
-          <FormTextArea
-            label="Notes (optional)"
-            placeholder="Additional details..."
-            value={notes}
-            onChangeText={setNotes}
-            accessibilityLabel="Notes"
-          />
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!name.trim() || !relationship.trim() || !phone.trim()}
-          />
-          <DeleteButton onPress={handleDelete} label="Delete Contact" />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+    <StackScreen
+      title="Edit Contact"
+      subtitle={contact.name}
+      keyboardShouldPersistTaps="handled"
+    >
+      <FormCard testID="emergency-contact-form">
+        <FormInput
+          label="Name *"
+          placeholder="Enter full name..."
+          value={name}
+          onChangeText={setName}
+          accessibilityLabel="Contact name"
+        />
+        <FormInput
+          label="Relationship *"
+          placeholder="e.g. Spouse, Parent, Neighbor..."
+          value={relationship}
+          onChangeText={setRelationship}
+          accessibilityLabel="Relationship"
+        />
+        <FormInput
+          label="Phone Number *"
+          placeholder="Enter phone number..."
+          value={phone}
+          onChangeText={setPhone}
+          keyboardType="phone-pad"
+          accessibilityLabel="Phone number"
+        />
+        <FormTextArea
+          label="Notes (optional)"
+          placeholder="Additional details..."
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Notes"
+        />
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!name.trim() || !relationship.trim() || !phone.trim()}
+        />
+        <DeleteButton onPress={handleDelete} label="Delete Contact" />
+      </FormCard>
+    </StackScreen>
   );
 });

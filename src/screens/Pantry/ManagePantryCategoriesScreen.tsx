@@ -1,22 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
+import CategoryManagerRow from '../../components/CategoryManagerRow';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
-import {
-  ROW_MIN_HEIGHT,
-  ROW_PADDING_HORIZONTAL,
-  ROW_PADDING_VERTICAL,
-  SCREEN_GUTTER,
-  SPACING,
-  TEXT_GUTTER,
-} from '../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import { FormInput } from '../Shared/Prepper';
 
@@ -198,69 +191,13 @@ export default observer(
             {pantry.categories.map((category, index) => {
               const itemCount = pantry.getCategoryItemCount(category);
               return (
-                <View key={category}>
-                  <View style={styles.categoryRow}>
-                    <View style={styles.categoryInfo}>
-                      <View
-                        style={[
-                          styles.iconTile,
-                          {
-                            backgroundColor: isAndroid
-                              ? COLORS.SECONDARY_CONTAINER
-                              : COLORS.SURFACE_CONTAINER,
-                          },
-                        ]}
-                      >
-                        <Icon
-                          name="folder-outline"
-                          size={20}
-                          color={
-                            isAndroid
-                              ? COLORS.ON_SECONDARY_CONTAINER
-                              : COLORS.BRAND
-                          }
-                        />
-                      </View>
-                      <View style={styles.categoryTextContainer}>
-                        <Text
-                          style={[
-                            styles.categoryName,
-                            { color: COLORS.PRIMARY_DARK },
-                          ]}
-                        >
-                          {category}
-                        </Text>
-                        <Text
-                          style={[
-                            styles.categoryCount,
-                            { color: COLORS.MUTED },
-                          ]}
-                        >
-                          {itemCount} item{itemCount !== 1 ? 's' : ''}
-                        </Text>
-                      </View>
-                    </View>
-                    <IconButton
-                      name="trash-outline"
-                      size={22}
-                      color={COLORS.ERROR}
-                      accessibilityLabel={`Delete ${category} category`}
-                      onPress={() => handleDeleteCategory(category)}
-                    />
-                  </View>
-                  {index < pantry.categories.length - 1 ? (
-                    <View
-                      style={[
-                        styles.separator,
-                        {
-                          backgroundColor: isAndroid
-                            ? COLORS.OUTLINE_VARIANT
-                            : COLORS.SEPARATOR,
-                        },
-                      ]}
-                    />
-                  ) : null}
-                </View>
+                <CategoryManagerRow
+                  key={category}
+                  name={category}
+                  count={`${itemCount} item${itemCount === 1 ? '' : 's'}`}
+                  onDelete={() => handleDeleteCategory(category)}
+                  showSeparator={index < pantry.categories.length - 1}
+                />
               );
             })}
           </GroupContainer>
@@ -281,41 +218,5 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-  },
-  categoryRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    minHeight: ROW_MIN_HEIGHT,
-    paddingVertical: ROW_PADDING_VERTICAL,
-    paddingHorizontal: ROW_PADDING_HORIZONTAL,
-  },
-  categoryInfo: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
-    gap: isAndroid ? 16 : 13,
-  },
-  iconTile: {
-    width: isAndroid ? 40 : 34,
-    height: isAndroid ? 40 : 34,
-    borderRadius: 20,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryTextContainer: {
-    flex: 1,
-  },
-  categoryName: {
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 2,
-  },
-  categoryCount: {
-    fontSize: 13,
-  },
-  separator: {
-    height: isAndroid ? 1 : StyleSheet.hairlineWidth,
-    marginLeft: isAndroid ? 72 : 61,
   },
 });

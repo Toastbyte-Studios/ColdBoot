@@ -1,19 +1,25 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
+import { Alert, Platform, StyleSheet, TextInput, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { HorizontalRule } from '../../components/HorizontalRule';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useChecklistStore } from '../../stores';
 import { Checklist } from '../../stores/ChecklistStore';
-import { FOOTER_HEIGHT } from '../../theme';
+import {
+  RADIUS,
+  ROW_PADDING_HORIZONTAL,
+  SCREEN_GUTTER,
+  SPACING,
+  TEXT_GUTTER,
+} from '../../theme';
+
+const isAndroid = Platform.OS === 'android';
 
 type ChecklistEntryRouteProp = RouteProp<
   { ChecklistEntry: { checklist: Checklist } },
@@ -33,34 +39,23 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const checklistStore = useChecklistStore();
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const [newItemText, setNewItemText] = useState<string>('');
   const [isAddingItem, setIsAddingItem] = useState<boolean>(false);
 
   const { checklist } = route.params || {};
 
-  // Reusable container theme styles
-  const containerThemeStyle = {
-    backgroundColor: COLORS.PRIMARY_LIGHT,
-    borderColor: COLORS.SECONDARY_ACCENT,
-  };
-
   if (!checklist) {
     return (
-      <ScreenBody>
-        <SectionHeader>Checklist Not Found</SectionHeader>
-        <View
+      <StackScreen title="Checklist not found">
+        <Text
           style={[
-            styles.container,
-            containerThemeStyle,
-            { marginBottom: footerClearance + 12 },
+            styles.errorText,
+            { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
           ]}
         >
-          <Text style={[styles.errorText, { color: COLORS.PRIMARY_DARK }]}>
-            The requested checklist could not be found.
-          </Text>
-        </View>
-      </ScreenBody>
+          The requested checklist could not be found.
+        </Text>
+      </StackScreen>
     );
   }
 
@@ -107,202 +102,193 @@ export default observer(function ChecklistEntryScreen(): React.JSX.Element {
     );
   };
 
+  const checkedCount = items.filter((item) => item.checked).length;
+
   return (
-    <ScreenBody>
-      <SectionHeader>{checklistName}</SectionHeader>
-      <View style={styles.checklistHeader}>
-        <IconButton
-          name="add-circle-outline"
-          size={30}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Add item"
-          onPress={() => setIsAddingItem(true)}
-        />
-        <IconButton
-          name="trash-outline"
-          size={30}
-          color={COLORS.PRIMARY_DARK}
-          accessibilityLabel="Delete checklist"
-          onPress={handleDeleteChecklist}
-        />
-      </View>
-      <HorizontalRule />
-      <View
-        style={[
-          styles.container,
-          containerThemeStyle,
-          { marginBottom: footerClearance + 12 },
-        ]}
-      >
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {items.length === 0 && (
-            <View style={styles.emptyState}>
-              <Icon name="clipboard-outline" size={48} color={COLORS.MUTED} />
-              <Text style={[styles.emptyText, { color: COLORS.MUTED }]}>
-                No items yet
-              </Text>
-              <Text style={[styles.emptySubtext, { color: COLORS.MUTED }]}>
-                Add your first item below.
-              </Text>
-            </View>
-          )}
+    <StackScreen
+      title={checklistName}
+      subtitle={
+        items.length === 0
+          ? 'No items yet'
+          : `${checkedCount} of ${items.length} done`
+      }
+      keyboardShouldPersistTaps="handled"
+      trailing={
+        <>
+          <IconButton
+            name="add-circle-outline"
+            size={22}
+            accessibilityLabel="Add item"
+            onPress={() => setIsAddingItem(true)}
+          />
+          <IconButton
+            name="trash-outline"
+            size={22}
+            color={COLORS.ERROR}
+            accessibilityLabel="Delete checklist"
+            onPress={handleDeleteChecklist}
+          />
+        </>
+      }
+    >
+      {items.length === 0 && (
+        <View style={styles.emptyState}>
+          <Icon name="clipboard-outline" size={48} color={COLORS.MUTED} />
+          <Text style={[styles.emptyText, { color: COLORS.MUTED }]}>
+            No items yet
+          </Text>
+          <Text style={[styles.emptySubtext, { color: COLORS.MUTED }]}>
+            Add your first item below.
+          </Text>
+        </View>
+      )}
 
-          {shouldShowAddItemInput && (
-            <View
-              style={[
-                styles.addItemRow,
-                { borderBottomColor: COLORS.SECONDARY_ACCENT + '40' },
-              ]}
-            >
-              <TextInput
-                style={[
-                  styles.input,
-                  {
-                    color: COLORS.PRIMARY_DARK,
-                    borderColor: COLORS.SECONDARY_ACCENT,
-                    backgroundColor: COLORS.PRIMARY_LIGHT,
-                  },
-                ]}
-                value={newItemText}
-                onChangeText={setNewItemText}
-                placeholder="Enter item text..."
-                placeholderTextColor={COLORS.PRIMARY_DARK + '80'}
-                autoFocus
-                onSubmitEditing={handleAddItem}
-              />
-              <IconButton
-                name="checkmark-circle-outline"
-                size={30}
-                color={COLORS.PRIMARY_DARK}
-                accessibilityLabel="Save item"
-                onPress={handleAddItem}
-                style={styles.addButton}
-              />
-              <IconButton
-                name="close-circle-outline"
-                size={30}
-                color={COLORS.PRIMARY_DARK}
-                accessibilityLabel="Cancel"
-                onPress={() => {
-                  setNewItemText('');
-                  if (items.length > 0) {
-                    setIsAddingItem(false);
+      {shouldShowAddItemInput && (
+        <View style={styles.addItemRow}>
+          <TextInput
+            style={[
+              styles.input,
+              {
+                color: COLORS.PRIMARY_DARK,
+                borderColor: COLORS.BORDER,
+                backgroundColor: COLORS.SURFACE_CONTAINER,
+              },
+            ]}
+            value={newItemText}
+            onChangeText={setNewItemText}
+            placeholder="Enter item text..."
+            placeholderTextColor={COLORS.MUTED}
+            autoFocus
+            onSubmitEditing={handleAddItem}
+            accessibilityLabel="New item text"
+          />
+          <IconButton
+            name="checkmark-circle-outline"
+            size={26}
+            accessibilityLabel="Save item"
+            onPress={handleAddItem}
+          />
+          <IconButton
+            name="close-circle-outline"
+            size={26}
+            accessibilityLabel="Cancel"
+            onPress={() => {
+              setNewItemText('');
+              if (items.length > 0) {
+                setIsAddingItem(false);
+              }
+            }}
+          />
+        </View>
+      )}
+
+      {items.length > 0 && (
+        <GroupContainer>
+          {items.map((item, index) => (
+            <View key={item.id}>
+              <View style={styles.itemRow}>
+                <Touchable
+                  style={styles.checkbox}
+                  borderless
+                  onPress={() => checklistStore.toggleChecklistItem(item.id)}
+                  accessibilityLabel={
+                    item.checked ? 'Uncheck item' : 'Check item'
                   }
-                }}
-              />
-            </View>
-          )}
-
-          {items.map((item) => (
-            <View
-              key={item.id}
-              style={[
-                styles.itemRow,
-                { borderBottomColor: COLORS.SECONDARY_ACCENT + '40' },
-              ]}
-            >
-              <Touchable
-                style={styles.checkbox}
-                borderless
-                onPress={() => checklistStore.toggleChecklistItem(item.id)}
-                accessibilityLabel={
-                  item.checked ? 'Uncheck item' : 'Check item'
-                }
-                accessibilityRole="checkbox"
-                accessibilityState={{ checked: item.checked }}
-              >
-                <Icon
-                  name={item.checked ? 'checkbox-outline' : 'square-outline'}
-                  size={28}
-                  color={COLORS.PRIMARY_DARK}
+                  accessibilityRole="checkbox"
+                  accessibilityState={{ checked: item.checked }}
+                >
+                  <Icon
+                    name={item.checked ? 'checkbox-outline' : 'square-outline'}
+                    size={26}
+                    color={item.checked ? COLORS.BRAND : COLORS.MUTED}
+                  />
+                </Touchable>
+                <Text
+                  style={[
+                    styles.itemText,
+                    item.checked && [
+                      styles.itemTextChecked,
+                      { color: COLORS.MUTED },
+                    ],
+                  ]}
+                >
+                  {item.text}
+                </Text>
+                <IconButton
+                  name="close-circle-outline"
+                  size={22}
+                  color={COLORS.MUTED}
+                  accessibilityLabel="Delete item"
+                  onPress={() => handleDeleteItem(item.id)}
                 />
-              </Touchable>
-              <Text
-                style={[
-                  styles.itemText,
-                  { color: COLORS.PRIMARY_DARK },
-                  item.checked && [
-                    styles.itemTextChecked,
-                    { color: COLORS.PRIMARY_DARK + '60' },
-                  ],
-                ]}
-              >
-                {item.text}
-              </Text>
-              <IconButton
-                name="close-circle-outline"
-                size={24}
-                color={COLORS.PRIMARY_DARK}
-                accessibilityLabel="Delete item"
-                onPress={() => handleDeleteItem(item.id)}
-              />
+              </View>
+              {index < items.length - 1 ? (
+                <View
+                  style={[
+                    styles.separator,
+                    {
+                      backgroundColor: isAndroid
+                        ? COLORS.OUTLINE_VARIANT
+                        : COLORS.SEPARATOR,
+                    },
+                  ]}
+                />
+              ) : null}
             </View>
           ))}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 });
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    borderWidth: 2,
-    borderRadius: 12,
-    alignSelf: 'stretch',
-    marginTop: 12,
-    marginBottom: FOOTER_HEIGHT + 12,
-  },
-  checklistHeader: {
-    width: '50%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
   errorText: {
     fontSize: 16,
-    textAlign: 'center',
-    padding: 20,
+    lineHeight: 22,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
   emptyState: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 40,
+    paddingVertical: SPACING.xl,
   },
   emptyText: {
     fontSize: 18,
     fontWeight: '600',
-    marginTop: 12,
+    marginTop: SPACING.md,
   },
   emptySubtext: {
     fontSize: 14,
-    marginTop: 4,
+    marginTop: SPACING.xs,
+  },
+  addItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.xs,
+    marginBottom: SPACING.md,
+    // StackScreen's Android content is full-bleed; the field carries the gutter.
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+  },
+  input: {
+    flex: 1,
+    fontSize: 16,
+    borderWidth: 1,
+    borderRadius: RADIUS.tileSmall,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.sm,
   },
   itemRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
+    paddingVertical: SPACING.xs,
+    paddingRight: ROW_PADDING_HORIZONTAL,
   },
   checkbox: {
     minWidth: 44,
     minHeight: 44,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 4,
   },
   itemText: {
     flex: 1,
@@ -311,21 +297,8 @@ const styles = StyleSheet.create({
   itemTextChecked: {
     textDecorationLine: 'line-through',
   },
-  addItemRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-  },
-  input: {
-    flex: 1,
-    fontSize: 16,
-    borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-  },
-  addButton: {
-    marginLeft: 4,
+  separator: {
+    height: isAndroid ? 1 : StyleSheet.hairlineWidth,
+    marginLeft: 44,
   },
 });

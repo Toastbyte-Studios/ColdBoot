@@ -14,7 +14,6 @@ import {
   Vibration,
   Platform,
   PermissionsAndroid,
-  ScrollView,
 } from 'react-native';
 import {
   useSoundRecorder,
@@ -22,19 +21,20 @@ import {
 } from 'react-native-nitro-sound';
 import Sound from 'react-native-sound';
 import Icon from 'react-native-vector-icons/Ionicons';
+import GroupContainer from '../../components/GroupContainer';
+import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
-import { FOOTER_HEIGHT, SCROLL_PADDING } from '../../theme';
+import { SCREEN_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
 import EmptyState from './components/EmptyState';
 import InfoBox from './components/InfoBox';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
-import VoiceLogModeButton from './components/VoiceLogModeButton';
+
+const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_SECONDS = 12;
 
@@ -56,7 +56,6 @@ const MAX_DURATION_SECONDS = 12;
  */
 export default observer(function VoiceLogScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const navigation = useNavigation();
@@ -315,62 +314,41 @@ export default observer(function VoiceLogScreen() {
   // Mode: Select recording or viewing
   if (mode === 'select') {
     return (
-      <ScreenBody>
-        <SectionHeader>Voice Logs</SectionHeader>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: footerClearance + SCROLL_PADDING },
-          ]}
-        >
-          <Text style={styles.modeSelectionTitle}>
-            What would you like to do?
-          </Text>
-
-          <VoiceLogModeButton
-            icon="mic"
-            title="Record Voice Log"
+      <StackScreen title="Voice Logs" subtitle="Stored offline on this device">
+        <GroupContainer>
+          <ModuleRow
+            title="Record voice log"
             subtitle="Create a new voice note"
+            icon="mic-outline"
+            variant="tool"
             onPress={() => {
               setMode('record');
               setRecordingTime(0);
               setAudioPath(null);
             }}
-            accessibilityLabel="Record Voice Log"
           />
-
-          <VoiceLogModeButton
-            icon="list"
-            title="View Voice Logs"
+          <ModuleRow
+            title="View voice logs"
             subtitle={`${voiceLogs.length} saved ${voiceLogs.length === 1 ? 'log' : 'logs'}`}
+            icon="list-outline"
+            variant="tool"
+            showSeparator={false}
             onPress={() => setMode('view')}
-            accessibilityLabel="View Voice Logs"
           />
-        </ScrollView>
-      </ScreenBody>
+        </GroupContainer>
+      </StackScreen>
     );
   }
 
   // Mode: Record
   if (mode === 'record') {
     return (
-      <ScreenBody>
-        <SectionHeader>Record Voice Log</SectionHeader>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[
-            styles.scrollContent,
-            { paddingBottom: footerClearance + SCROLL_PADDING },
-          ]}
-        >
-          <InfoBox icon="information-circle-outline">
-            <Text style={styles.infoText}>
-              Tap to record a voice note.{'\n'}
-              Maximum duration: {MAX_DURATION_SECONDS} seconds.
-            </Text>
-          </InfoBox>
-
+      <StackScreen
+        title="Record Voice Log"
+        note={`Tap to record a voice note. Maximum duration: ${MAX_DURATION_SECONDS} seconds.`}
+        onBack={() => setMode('select')}
+      >
+        <View style={styles.column}>
           <RecordingControls
             isRecording={isRecording}
             recordingTime={recordingTime}
@@ -403,22 +381,19 @@ export default observer(function VoiceLogScreen() {
               </View>
             </View>
           </InfoBox>
-        </ScrollView>
-      </ScreenBody>
+        </View>
+      </StackScreen>
     );
   }
 
   // Mode: View
   return (
-    <ScreenBody>
-      <SectionHeader>Voice Logs</SectionHeader>
-      <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: footerClearance + SCROLL_PADDING },
-        ]}
-      >
+    <StackScreen
+      title="Saved Voice Logs"
+      subtitle={`${voiceLogs.length} ${voiceLogs.length === 1 ? 'log' : 'logs'}`}
+      onBack={() => setMode('select')}
+    >
+      <View style={styles.column}>
         {voiceLogs.length === 0 ? (
           <EmptyState
             icon="mic-off-outline"
@@ -426,49 +401,29 @@ export default observer(function VoiceLogScreen() {
             subtitle="Record your first voice log to get started"
           />
         ) : (
-          <View style={styles.voiceLogsList}>
-            {voiceLogs.map((log) => (
-              <VoiceLogCard
-                key={log.id}
-                title={log.title}
-                createdAt={log.createdAt}
-                duration={log.duration}
-                audioUri={log.audioUri}
-                isPlaying={playingId === log.id}
-                onPlay={() => handlePlayVoiceLog(log.id, log.audioUri!)}
-                onDelete={() => handleDeleteVoiceLog(log.id)}
-              />
-            ))}
-          </View>
+          voiceLogs.map((log) => (
+            <VoiceLogCard
+              key={log.id}
+              title={log.title}
+              createdAt={log.createdAt}
+              duration={log.duration}
+              audioUri={log.audioUri}
+              isPlaying={playingId === log.id}
+              onPlay={() => handlePlayVoiceLog(log.id, log.audioUri!)}
+              onDelete={() => handleDeleteVoiceLog(log.id)}
+            />
+          ))
         )}
-      </ScrollView>
-    </ScreenBody>
+      </View>
+    </StackScreen>
   );
 });
 
 const makeStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      flexGrow: 1,
-      paddingTop: SCROLL_PADDING,
-      paddingHorizontal: 16,
-      paddingBottom: FOOTER_HEIGHT + SCROLL_PADDING,
-    },
-    modeSelectionTitle: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
-      marginBottom: 30,
-      textAlign: 'center',
-    },
-    infoText: {
-      fontSize: 14,
-      color: COLORS.PRIMARY_DARK,
-      lineHeight: 20,
+    column: {
+      // StackScreen's Android content is full-bleed; cards carry the gutter.
+      paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     },
     featuresTitle: {
       fontSize: 14,
@@ -485,8 +440,5 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 14,
       color: COLORS.PRIMARY_DARK,
       marginLeft: 8,
-    },
-    voiceLogsList: {
-      width: '100%',
     },
   });

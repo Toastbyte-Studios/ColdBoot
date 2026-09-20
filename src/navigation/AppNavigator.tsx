@@ -14,7 +14,6 @@ import BarterEstimatorScreen from '../screens/BarterEstimator/BarterEstimatorScr
 import ChecklistEntryScreen from '../screens/Checklist/ChecklistEntryScreen';
 import ChecklistScreen from '../screens/Checklist/ChecklistScreen';
 import NewChecklistScreen from '../screens/Checklist/NewChecklistScreen';
-import ComingSoonScreen from '../screens/Common/ComingSoonScreen';
 import SearchScreen from '../screens/Common/SearchScreen';
 import DecibelMeterScreen from '../screens/DecibelMeter/DecibelMeterScreen';
 import DepletionCalculatorScreen from '../screens/DepletionCalculator/DepletionCalculatorScreen';
@@ -157,7 +156,6 @@ function NavigatorContent(): JSX.Element {
             )}
           </Stack.Screen>
           {/* Shared */}
-          <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
           <Stack.Screen name="Search" component={SearchScreen} />
           {/* Communications Module */}
           <Stack.Screen name="MorseCode" component={MorseCodeScreen} />

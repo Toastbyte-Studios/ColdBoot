@@ -1,10 +1,8 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { View, ScrollView, Alert } from 'react-native';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import { Alert } from 'react-native';
+import StackScreen from '../../components/StackScreen';
 import { useInventoryStore } from '../../stores';
 import {
   FormInput,
@@ -13,7 +11,7 @@ import {
   QuantityUnitRow,
   ExpirationDatePicker,
 } from '../Shared/Prepper';
-import { inventoryFormStyles as styles } from './inventoryFormStyles';
+import { FormCard } from '../Shared/Prepper/FormCard';
 
 type NewInventoryItemRouteProp = RouteProp<
   { NewInventoryItem: { category: string } },
@@ -36,7 +34,6 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
   const route = useRoute<NewInventoryItemRouteProp>();
   const navigation = useNavigation();
   const inventory = useInventoryStore();
-  const footerClearance = useFooterClearance();
 
   const { category } = route.params || {};
   const [name, setName] = useState<string>('');
@@ -81,52 +78,50 @@ export default observer(function NewInventoryItemScreen(): React.JSX.Element {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Add Item to {category}</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <FormInput
-            label="Item Name *"
-            placeholder="Enter item name..."
-            value={name}
-            onChangeText={setName}
-            autoFocus
-            accessibilityLabel="Item name"
-          />
+    <StackScreen
+      title="Add Inventory Item"
+      subtitle={category}
+      keyboardShouldPersistTaps="handled"
+    >
+      <FormCard testID="inventory-item-form">
+        <FormInput
+          label="Item Name *"
+          placeholder="Enter item name..."
+          value={name}
+          onChangeText={setName}
+          autoFocus
+          accessibilityLabel="Item name"
+        />
 
-          <QuantityUnitRow
-            quantity={quantity}
-            unit={unit}
-            onQuantityChange={setQuantity}
-            onUnitChange={setUnit}
-          />
+        <QuantityUnitRow
+          quantity={quantity}
+          unit={unit}
+          onQuantityChange={setQuantity}
+          onUnitChange={setUnit}
+        />
 
-          <ExpirationDatePicker
-            month={expirationMonth}
-            year={expirationYear}
-            onMonthChange={setExpirationMonth}
-            onYearChange={setExpirationYear}
-          />
+        <ExpirationDatePicker
+          month={expirationMonth}
+          year={expirationYear}
+          onMonthChange={setExpirationMonth}
+          onYearChange={setExpirationYear}
+        />
 
-          <FormTextArea
-            label="Notes (optional)"
-            placeholder="Enter notes..."
-            value={notes}
-            onChangeText={setNotes}
-            accessibilityLabel="Notes"
-          />
+        <FormTextArea
+          label="Notes (optional)"
+          placeholder="Enter notes..."
+          value={notes}
+          onChangeText={setNotes}
+          accessibilityLabel="Notes"
+        />
 
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!name.trim()}
-            saveLabel="Save"
-          />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!name.trim()}
+          saveLabel="Save"
+        />
+      </FormCard>
+    </StackScreen>
   );
 });

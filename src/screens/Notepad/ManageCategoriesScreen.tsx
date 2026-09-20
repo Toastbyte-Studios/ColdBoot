@@ -1,17 +1,19 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, ScrollView, Alert, TextInput } from 'react-native';
-import Icon from 'react-native-vector-icons/Ionicons';
+import React, { useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import AppButton from '../../components/AppButton';
+import CategoryManagerRow from '../../components/CategoryManagerRow';
+import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
-import { FOOTER_HEIGHT } from '../../theme';
-import { ColorScheme } from '../../theme/colors';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
+import { FormInput } from '../Shared/Prepper';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * Screen for managing note categories.
@@ -25,11 +27,18 @@ import { ColorScheme } from '../../theme/colors';
  */
 export default observer(function ManageCategoriesScreen(): React.JSX.Element {
   const COLORS = useTheme();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
-  const footerClearance = useFooterClearance();
   const [newCategoryName, setNewCategoryName] = useState<string>('');
   const [isAdding, setIsAdding] = useState<boolean>(false);
+
+  const handleToggleAddCategory = () => {
+    setIsAdding((current) => {
+      if (current) {
+        setNewCategoryName('');
+      }
+      return !current;
+    });
+  };
 
   const handleAddCategory = async () => {
     const trimmedName = newCategoryName.trim();
@@ -137,161 +146,80 @@ export default observer(function ManageCategoriesScreen(): React.JSX.Element {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Manage Categories</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <View style={styles.headerSection}>
+    <StackScreen
+      title="Manage Categories"
+      subtitle={`${core.categories.length} categor${core.categories.length === 1 ? 'y' : 'ies'}`}
+      keyboardShouldPersistTaps="handled"
+      trailing={
+        <IconButton
+          name={isAdding ? 'close-outline' : 'add-circle-outline'}
+          size={22}
+          accessibilityLabel={
+            isAdding ? 'Cancel adding category' : 'Add new category'
+          }
+          onPress={handleToggleAddCategory}
+        />
+      }
+    >
+      {isAdding ? (
+        <View style={[styles.addCategoryForm, cardSurface(COLORS)]}>
+          <FormInput
+            label="Category name"
+            placeholder="Category name..."
+            value={newCategoryName}
+            onChangeText={setNewCategoryName}
+            autoFocus
+            accessibilityLabel="Enter category name"
+          />
           <AppButton
-            label={isAdding ? 'Cancel' : 'Add category'}
-            icon={isAdding ? 'close-outline' : 'add-outline'}
-            variant={isAdding ? 'tinted' : 'filled'}
+            label="Save category"
+            onPress={handleAddCategory}
+            disabled={!newCategoryName.trim()}
+            accessibilityLabel="Save new category"
             fullWidth
-            onPress={() => setIsAdding(!isAdding)}
-            accessibilityLabel={
-              isAdding ? 'Cancel adding category' : 'Add new category'
-            }
           />
         </View>
+      ) : null}
 
-        {isAdding && (
-          <View style={styles.addCategoryForm}>
-            <TextInput
-              style={styles.input}
-              placeholder="Category name..."
-              placeholderTextColor={COLORS.MUTED}
-              value={newCategoryName}
-              onChangeText={setNewCategoryName}
-              autoFocus
-              accessibilityLabel="Enter category name"
-            />
-            <AppButton
-              label="Save"
-              onPress={handleAddCategory}
-              disabled={!newCategoryName.trim()}
-              accessibilityLabel="Save new category"
-            />
-          </View>
-        )}
-
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+      {core.categories.length === 0 ? (
+        <Text
+          style={[
+            styles.emptyText,
+            { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+          ]}
         >
-          {core.categories.length === 0 ? (
-            <Text style={styles.emptyText}>No categories yet.</Text>
-          ) : (
-            core.categories.map((category) => {
-              const noteCount = core.getCategoryNoteCount(category);
-              return (
-                <View key={category} style={styles.categoryItem}>
-                  <View style={styles.categoryInfo}>
-                    <Icon
-                      name="folder-outline"
-                      size={24}
-                      color={COLORS.PRIMARY_DARK}
-                      style={styles.categoryIcon}
-                    />
-                    <View style={styles.categoryTextContainer}>
-                      <Text style={styles.categoryName}>{category}</Text>
-                      <Text style={styles.categoryCount}>
-                        {noteCount} note{noteCount !== 1 ? 's' : ''}
-                      </Text>
-                    </View>
-                  </View>
-                  <IconButton
-                    name="trash-outline"
-                    size={22}
-                    color={COLORS.ERROR}
-                    accessibilityLabel={`Delete ${category} category`}
-                    onPress={() => handleDeleteCategory(category)}
-                  />
-                </View>
-              );
-            })
-          )}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+          No categories yet.
+        </Text>
+      ) : (
+        <GroupContainer>
+          {core.categories.map((category, index) => {
+            const noteCount = core.getCategoryNoteCount(category);
+            return (
+              <CategoryManagerRow
+                key={category}
+                name={category}
+                count={`${noteCount} note${noteCount === 1 ? '' : 's'}`}
+                onDelete={() => handleDeleteCategory(category)}
+                showSeparator={index < core.categories.length - 1}
+              />
+            );
+          })}
+        </GroupContainer>
+      )}
+    </StackScreen>
   );
 });
 
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      paddingBottom: FOOTER_HEIGHT,
-    },
-    headerSection: {
-      width: '100%',
-      paddingVertical: 12,
-      paddingHorizontal: 6,
-    },
-    addCategoryForm: {
-      width: '100%',
-      flexDirection: 'row',
-      gap: 8,
-      paddingHorizontal: 6,
-      paddingBottom: 12,
-    },
-    input: {
-      flex: 1,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderColor: COLORS.SECONDARY_ACCENT,
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingHorizontal: 12,
-      paddingVertical: 8,
-      color: COLORS.PRIMARY_DARK,
-      fontSize: 16,
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      paddingHorizontal: 6,
-      paddingBottom: 24,
-    },
-    emptyText: {
-      fontSize: 16,
-      color: COLORS.PRIMARY_DARK,
-      opacity: 0.7,
-      textAlign: 'center',
-      marginTop: 24,
-    },
-    categoryItem: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderColor: COLORS.SECONDARY_ACCENT,
-      borderWidth: 1,
-      borderRadius: 8,
-      paddingVertical: 12,
-      paddingHorizontal: 12,
-      marginBottom: 8,
-    },
-    categoryInfo: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      flex: 1,
-    },
-    categoryIcon: {
-      marginRight: 12,
-    },
-    categoryTextContainer: {
-      flex: 1,
-    },
-    categoryName: {
-      fontSize: 16,
-      fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
-      marginBottom: 2,
-    },
-    categoryCount: {
-      fontSize: 13,
-      color: COLORS.PRIMARY_DARK,
-      opacity: 0.7,
-    },
-  });
+const styles = StyleSheet.create({
+  addCategoryForm: {
+    marginTop: SPACING.md,
+    marginBottom: SPACING.md,
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    padding: SPACING.md,
+    gap: SPACING.sm,
+  },
+  emptyText: {
+    fontSize: 16,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
+});

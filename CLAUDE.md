@@ -66,6 +66,26 @@ src/
 - Lists of tappable tools/items should use `GroupContainer` + `ModuleRow variant="tool"`
 - Card content should use `cardSurface(COLORS)` and carry its own `SCREEN_GUTTER` on Android
 - Use `SectionEyebrow` for labels inside a screen; `SectionHeader` is the page title owned by `StackScreen`
+- A screen with steps of its own (Voice Log's record and playback modes) passes
+  `StackScreen`'s `onBack` so its back control returns to its own starting
+  point rather than popping the screen
+- Two screens deliberately keep their own frame, each explained in a comment on
+  the file: `Map/MapScreen` and `UnitConversion/ConversionCategoryScreen`. Both
+  fill the remaining height with something that must not scroll (a map, a
+  keypad), so they take the headline row alone. A modal like
+  `ConversionCategoryScreen` gets a close button there, not a back chevron.
+
+Before building a screen part from scratch, check whether one of these already
+covers it:
+
+| Need                              | Use                                                         |
+| --------------------------------- | ----------------------------------------------------------- |
+| A form on a card, keyboard-aware  | `screens/Shared/Prepper/FormCard`                           |
+| A "manage categories" row         | `components/CategoryManagerRow`                             |
+| A titled block of prose and lists | `components/EntrySection` (`EntrySection`, `EntryItemList`) |
+| A lookup table (morse, NATO)      | `components/ReferenceTable`                                 |
+| A note composer                   | `screens/Notepad/Shared/NoteEditor`                         |
+| Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                  |
 
 ```tsx
 import { observer } from 'mobx-react-lite';

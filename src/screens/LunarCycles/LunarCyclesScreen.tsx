@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import * as SunCalc from 'suncalc';
 import MoonPhaseGlyph from '../../components/MoonPhaseGlyph';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import { getLunarPhaseName } from '../../utils/lunarPhase';
+
+const isAndroid = Platform.OS === 'android';
 
 interface MoonPhase {
   date: Date;
@@ -82,7 +83,6 @@ const formatDateTime = (date: Date): string => {
 
 function LunarCyclesScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const [currentPhase, setCurrentPhase] = useState<MoonPhase | null>(null);
   const [nextFullMoon, setNextFullMoon] = useState<MoonPhase | null>(null);
   const [nextFirstQuarter, setNextFirstQuarter] = useState<MoonPhase | null>(
@@ -208,110 +208,74 @@ function LunarCyclesScreen() {
   );
 
   return (
-    <ScreenBody>
-      <SectionHeader>Lunar Cycles</SectionHeader>
-
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {/* Current Phase */}
-          {currentPhase && (
-            <View style={styles.section}>
-              <Text
-                style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}
-              >
-                Current Moon Phase
-              </Text>
-              <View style={[styles.currentCard, cardSurface(COLORS)]}>
-                <View style={styles.currentGlyph}>
-                  <MoonPhaseGlyph phase={currentPhase.phaseValue} size={64} />
-                </View>
-                <Text
-                  style={[styles.currentPhase, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {currentPhase.phaseName}
-                </Text>
-                <Text
-                  style={[
-                    styles.currentIllumination,
-                    { color: COLORS.PRIMARY_DARK },
-                  ]}
-                >
-                  {(currentPhase.fraction * 100).toFixed(0)}% illuminated
-                </Text>
-              </View>
+    <StackScreen
+      title="Lunar Cycles"
+      subtitle={currentPhase ? currentPhase.phaseName : undefined}
+    >
+      {/* Current Phase */}
+      {currentPhase && (
+        <View style={styles.section}>
+          <SectionEyebrow>Current Moon Phase</SectionEyebrow>
+          <View style={[styles.currentCard, cardSurface(COLORS)]}>
+            <View style={styles.currentGlyph}>
+              <MoonPhaseGlyph phase={currentPhase.phaseValue} size={64} />
             </View>
+            <Text style={[styles.currentPhase, { color: COLORS.PRIMARY_DARK }]}>
+              {currentPhase.phaseName}
+            </Text>
+            <Text
+              style={[
+                styles.currentIllumination,
+                { color: COLORS.PRIMARY_DARK },
+              ]}
+            >
+              {(currentPhase.fraction * 100).toFixed(0)}% illuminated
+            </Text>
+          </View>
+        </View>
+      )}
+
+      {/* Key Phases */}
+      <View style={styles.section}>
+        <SectionEyebrow>Upcoming Key Phases</SectionEyebrow>
+        {nextNewMoon &&
+          renderKeyPhaseCard('Next New Moon', nextNewMoon, PHASE_NEW)}
+        {nextFirstQuarter &&
+          renderKeyPhaseCard(
+            'Next First Quarter',
+            nextFirstQuarter,
+            PHASE_FIRST_QUARTER,
           )}
-
-          {/* Key Phases */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}>
-              Upcoming Key Phases
-            </Text>
-            {nextNewMoon &&
-              renderKeyPhaseCard('Next New Moon', nextNewMoon, PHASE_NEW)}
-            {nextFirstQuarter &&
-              renderKeyPhaseCard(
-                'Next First Quarter',
-                nextFirstQuarter,
-                PHASE_FIRST_QUARTER,
-              )}
-            {nextFullMoon &&
-              renderKeyPhaseCard('Next Full Moon', nextFullMoon, PHASE_FULL)}
-            {nextLastQuarter &&
-              renderKeyPhaseCard(
-                'Next Last Quarter',
-                nextLastQuarter,
-                PHASE_LAST_QUARTER,
-              )}
-          </View>
-
-          {/* Daily Phases */}
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}>
-              Next 30 Days
-            </Text>
-            {dailyPhases.map((phase, index) =>
-              renderDailyPhaseCard(phase, index),
-            )}
-          </View>
-        </ScrollView>
+        {nextFullMoon &&
+          renderKeyPhaseCard('Next Full Moon', nextFullMoon, PHASE_FULL)}
+        {nextLastQuarter &&
+          renderKeyPhaseCard(
+            'Next Last Quarter',
+            nextLastQuarter,
+            PHASE_LAST_QUARTER,
+          )}
       </View>
-    </ScreenBody>
+
+      {/* Daily Phases */}
+      <View style={styles.section}>
+        <SectionEyebrow>Next 30 Days</SectionEyebrow>
+        {dailyPhases.map((phase, index) => renderDailyPhaseCard(phase, index))}
+      </View>
+    </StackScreen>
   );
 }
 
 export default LunarCyclesScreen;
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
+  // StackScreen's Android content is full-bleed. The eyebrow brings its own
+  // text gutter and each card brings the screen gutter, so the section itself
+  // only spaces the groups apart.
   section: {
-    width: '90%',
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
+    marginTop: SPACING.lg,
   },
   currentCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 24,
     overflow: 'hidden',
     alignItems: 'center',
@@ -329,6 +293,7 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   keyCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 16,
     marginTop: 12,
     overflow: 'hidden',
@@ -357,6 +322,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   dailyCard: {
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     padding: 12,
     marginTop: 8,
     overflow: 'hidden',

@@ -1,15 +1,17 @@
 import React, { useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import { ColorScheme } from '../../theme/colors';
 import { onColor } from '../../theme/colorUtils';
 import { morseToText } from '../../utils/morseCodeMapping';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * Morse to Alpha screen allows users to input morse code and see real-time translation.
@@ -24,7 +26,6 @@ const MorseToAlphaScreen = () => {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const [morseInput, setMorseInput] = useState('');
-  const footerClearance = useFooterClearance();
 
   // Compute translation directly from morse input
   const translatedText = morseToText(morseInput);
@@ -70,26 +71,23 @@ const MorseToAlphaScreen = () => {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Morse to Alpha</SectionHeader>
-
-      <View style={[styles.container, { paddingBottom: footerClearance + 10 }]}>
+    <StackScreen
+      title="Morse to Alpha"
+      note="Press SPACE between morse characters (letters and numbers), and WORD to separate words."
+    >
+      <View style={styles.container}>
         {/* Morse Code Input Display */}
-        <View style={styles.displayContainer}>
-          <Text style={styles.displayLabel}>Morse Code:</Text>
-          <View style={styles.displayBox}>
-            <Text style={styles.displayText}>
-              {morseInput || 'Enter morse code...'}
-            </Text>
-          </View>
+        <SectionEyebrow>Morse code</SectionEyebrow>
+        <View style={[styles.displayBox, cardSurface(COLORS)]}>
+          <Text style={styles.displayText}>
+            {morseInput || 'Enter morse code...'}
+          </Text>
         </View>
 
         {/* Translated Text Display */}
-        <View style={styles.displayContainer}>
-          <Text style={styles.displayLabel}>Translation:</Text>
-          <View style={styles.displayBox}>
-            <Text style={styles.translatedText}>{translatedText || '-'}</Text>
-          </View>
+        <SectionEyebrow style={styles.eyebrow}>Translation</SectionEyebrow>
+        <View style={[styles.displayBox, cardSurface(COLORS)]}>
+          <Text style={styles.translatedText}>{translatedText || '-'}</Text>
         </View>
 
         {/* Input keypad.
@@ -165,16 +163,8 @@ const MorseToAlphaScreen = () => {
             </Touchable>
           </View>
         </View>
-
-        {/* Help Text */}
-        <View style={styles.helpContainer}>
-          <Text style={styles.helpText}>
-            Tip: Press SPACE between morse characters (letters/numbers) and WORD
-            to separate words.
-          </Text>
-        </View>
       </View>
-    </ScreenBody>
+    </StackScreen>
   );
 };
 
@@ -184,33 +174,21 @@ const makeStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
     container: {
       width: '100%',
-      paddingHorizontal: 14,
-      paddingTop: 8,
-      paddingBottom: FOOTER_HEIGHT + 10,
+      // StackScreen's Android content is full-bleed; cards carry the gutter.
+      paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     },
-    displayContainer: {
-      width: '100%',
-      marginBottom: 10,
-    },
-    displayLabel: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
-      marginBottom: 5,
+    eyebrow: {
+      marginTop: SPACING.md,
     },
     displayBox: {
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderWidth: 2,
-      borderColor: COLORS.BRAND,
-      borderRadius: 8,
-      padding: 10,
-      minHeight: 50,
+      padding: SPACING.md,
+      minHeight: 56,
       justifyContent: 'center',
     },
     displayText: {
       fontSize: 16,
-      color: COLORS.PRIMARY_DARK,
-      fontFamily: 'monospace',
+      fontFamily: Platform.select({ ios: 'Menlo', default: 'monospace' }),
+      letterSpacing: 1,
     },
     translatedText: {
       fontSize: 18,
@@ -219,26 +197,24 @@ const makeStyles = (COLORS: ColorScheme) =>
     },
     buttonGrid: {
       width: '100%',
-      marginTop: 4,
+      marginTop: SPACING.lg,
     },
     buttonRow: {
       flexDirection: 'row',
       justifyContent: 'space-between',
-      marginBottom: 8,
-      gap: 8,
+      marginBottom: SPACING.sm,
+      gap: SPACING.sm,
     },
     button: {
       flex: 1,
       minHeight: 48,
-      paddingVertical: 12,
-      borderRadius: 8,
+      paddingVertical: SPACING.md,
+      borderRadius: RADIUS.tileSmall,
       alignItems: 'center',
       justifyContent: 'center',
     },
     primaryButton: {
       backgroundColor: COLORS.ACCENT,
-      borderWidth: 2,
-      borderColor: COLORS.BRAND,
     },
     primaryButtonText: {
       fontSize: 24,
@@ -249,19 +225,17 @@ const makeStyles = (COLORS: ColorScheme) =>
       color: onColor(COLORS.ACCENT),
     },
     secondaryButton: {
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderWidth: 2,
-      borderColor: COLORS.BRAND,
+      backgroundColor: isAndroid ? COLORS.SURFACE_CONTAINER : COLORS.SURFACE,
+      borderWidth: 1,
+      borderColor: COLORS.BORDER,
     },
     secondaryButtonText: {
       fontSize: 20,
       fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
     },
     buttonLabel: {
       fontSize: 10,
       fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
       marginTop: 2,
     },
     clearButton: {
@@ -271,18 +245,5 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 13,
       fontWeight: '700',
       color: onColor(COLORS.BRAND),
-    },
-    helpContainer: {
-      marginTop: 10,
-      padding: 8,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderRadius: 8,
-      borderWidth: 1,
-      borderColor: COLORS.SECONDARY_ACCENT,
-    },
-    helpText: {
-      fontSize: 11,
-      color: COLORS.SECONDARY_ACCENT,
-      textAlign: 'center',
     },
   });

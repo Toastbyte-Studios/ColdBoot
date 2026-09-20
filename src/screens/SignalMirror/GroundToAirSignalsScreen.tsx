@@ -1,15 +1,14 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import SectionSubHeader from '../../components/SectionSubHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import { GROUND_TO_AIR_SIGNALS } from './data';
-import { createStyles } from './styles';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * GroundToAirSignalsScreen component
@@ -24,74 +23,97 @@ import { createStyles } from './styles';
  */
 export default function GroundToAirSignalsScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
-  const dynamicStyles = createStyles(COLORS);
 
   return (
-    <ScreenBody>
-      <SectionHeader>Ground-to-Air Signals</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={dynamicStyles.scrollContent}
-          showsVerticalScrollIndicator={false}
+    <StackScreen
+      title="Ground-to-Air Signals"
+      subtitle={`${GROUND_TO_AIR_SIGNALS.length} symbols`}
+      note="Lay these symbols on open ground using rocks, logs, or any high-contrast material. Minimum 3 m per character. Best viewed from aircraft at altitude — choose a clearing with maximum sky visibility."
+    >
+      {GROUND_TO_AIR_SIGNALS.map((signal) => (
+        <View
+          key={signal.symbol}
+          style={[
+            styles.signalCard,
+            cardSurface(COLORS, { accent: COLORS.ACCENT }),
+          ]}
         >
-          <SectionSubHeader>
-            Lay these symbols on open ground using rocks, logs, or any
-            high-contrast material. Minimum 3 m per character. Best viewed from
-            aircraft at altitude — choose a clearing with maximum sky
-            visibility.
-          </SectionSubHeader>
+          <View style={styles.signalHeader}>
+            <Text style={[styles.signalSymbol, { color: COLORS.ACCENT }]}>
+              {signal.symbol}
+            </Text>
+            <Text style={styles.signalMeaning}>{signal.meaning}</Text>
+          </View>
+          <View style={styles.sizeRow}>
+            <Icon name="resize-outline" size={14} color={COLORS.MUTED} />
+            <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
+              <Text style={styles.signalDetailLabel}>Min size: </Text>
+              {signal.minSize}
+            </Text>
+          </View>
+          <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
+            <Text style={styles.signalDetailLabel}>Materials: </Text>
+            {signal.materials}
+          </Text>
+        </View>
+      ))}
 
-          {GROUND_TO_AIR_SIGNALS.map((signal) => (
-            <View key={signal.symbol} style={dynamicStyles.signalCard}>
-              <View style={dynamicStyles.signalHeader}>
-                <Text style={dynamicStyles.signalSymbol}>{signal.symbol}</Text>
-                <Text style={dynamicStyles.signalMeaning}>
-                  {signal.meaning}
-                </Text>
-              </View>
-              <View style={dynamicStyles.sizeRow}>
-                <Icon
-                  name="resize-outline"
-                  size={14}
-                  color={COLORS.PRIMARY_DARK}
-                  style={dynamicStyles.resizeIcon}
-                />
-                <Text style={dynamicStyles.sizeText}>
-                  <Text style={dynamicStyles.signalDetailLabel}>
-                    Min size:{' '}
-                  </Text>
-                  {signal.minSize}
-                </Text>
-              </View>
-              <Text style={dynamicStyles.signalDetail}>
-                <Text style={dynamicStyles.signalDetailLabel}>Materials: </Text>
-                {signal.materials}
-              </Text>
-            </View>
-          ))}
-
-          <View style={dynamicStyles.separator} />
-          <SectionSubHeader>
-            Tip: Pair ground signals with audio signals (whistle, Morse code)
-            and movement at regular intervals to increase detectability.
-          </SectionSubHeader>
-        </ScrollView>
-      </View>
-    </ScreenBody>
+      <Text
+        style={[
+          styles.tip,
+          { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
+        ]}
+      >
+        Tip: pair ground signals with audio signals (whistle, Morse code) and
+        movement at regular intervals to increase detectability.
+      </Text>
+    </StackScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
+  signalCard: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
   },
-  scrollView: {
+  signalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: SPACING.sm,
+    gap: SPACING.md,
+  },
+  signalSymbol: {
+    fontSize: 40,
+    fontWeight: '900',
+    minWidth: 56,
+    textAlign: 'center',
+  },
+  signalMeaning: {
+    fontSize: 17,
+    fontWeight: '700',
     flex: 1,
-    width: '100%',
+  },
+  signalDetail: {
+    fontSize: 13,
+    marginTop: SPACING.xs,
+    lineHeight: 18,
+    flexShrink: 1,
+  },
+  signalDetailLabel: {
+    fontWeight: '700',
+  },
+  sizeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: SPACING.xs,
+    gap: SPACING.xs + 2,
+  },
+  tip: {
+    fontSize: 13,
+    lineHeight: 19,
+    marginTop: SPACING.sm,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
 });

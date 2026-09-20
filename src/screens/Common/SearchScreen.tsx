@@ -34,7 +34,6 @@ import { RagResult, ragSearch } from '../../utils/ragSearch';
 import { SearchableItem, searchItems } from '../../utils/searchData';
 
 type SearchScreenNavigationProp = NativeStackNavigationProp<{
-  ComingSoon: { title: string; icon: string };
   Entry: { entry: ReferenceEntryType };
   NoteEntry: { note: Note };
   ChecklistEntry: { checklist: Checklist };
@@ -236,12 +235,7 @@ export default observer(function SearchScreen(): JSX.Element {
 
   const handleItemPress = useCallback(
     (item: SearchableItem) => {
-      if (item.screen === 'ComingSoon') {
-        navigation.navigate('ComingSoon', {
-          title: item.title,
-          icon: item.icon,
-        });
-      } else if (item.screen === 'Entry') {
+      if (item.screen === 'Entry') {
         navigation.navigate(
           'Entry',
           item.data as unknown as { entry: ReferenceEntryType },

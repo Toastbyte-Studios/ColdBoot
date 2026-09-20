@@ -1,15 +1,18 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
-import { StyleSheet, View, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { Platform, StyleSheet, View, TextInput } from 'react-native';
 import AppButton from '../../components/AppButton';
 import AppSwitch from '../../components/AppSwitch';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
-import { ColorScheme } from '../../theme/colors';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import { textToMorse } from '../../utils/morseCodeMapping';
+
+const isAndroid = Platform.OS === 'android';
 
 const MAX_CHARACTERS = 300;
 
@@ -25,7 +28,6 @@ const MAX_CHARACTERS = 300;
  */
 const AlphaToMorseScreenImpl = () => {
   const COLORS = useTheme();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useSignalingStore();
   const [message, setMessage] = useState('');
   const [morseWithTone, setMorseWithTone] = useState(true);
@@ -49,39 +51,44 @@ const AlphaToMorseScreenImpl = () => {
   const remainingChars = MAX_CHARACTERS - message.length;
 
   return (
-    <ScreenBody>
-      <SectionHeader>Alpha to Morse</SectionHeader>
+    <StackScreen
+      title="Alpha to Morse"
+      subtitle="Flashes the torch, and optionally beeps"
+      keyboardShouldPersistTaps="handled"
+    >
+      <View style={styles.column}>
+        <SectionEyebrow>Message</SectionEyebrow>
+        <TextInput
+          style={[
+            styles.textInput,
+            cardSurface(COLORS),
+            { color: COLORS.PRIMARY_DARK },
+          ]}
+          placeholder="Enter your message..."
+          placeholderTextColor={COLORS.MUTED}
+          value={message}
+          onChangeText={handleMessageChange}
+          multiline
+          maxLength={MAX_CHARACTERS}
+          editable={!isTransmitting}
+          accessibilityLabel="Message to transmit"
+        />
+        <Text style={[styles.charCounter, { color: COLORS.MUTED }]}>
+          {remainingChars} characters remaining
+        </Text>
 
-      <View style={styles.container}>
-        <View style={styles.inputContainer}>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Enter your message..."
-            placeholderTextColor={COLORS.SECONDARY_ACCENT}
-            value={message}
-            onChangeText={handleMessageChange}
-            multiline
-            maxLength={MAX_CHARACTERS}
-            editable={!isTransmitting}
+        <SectionEyebrow style={styles.eyebrow}>Transmission</SectionEyebrow>
+        <View style={[styles.switchRow, cardSurface(COLORS)]}>
+          <Text style={styles.controlLabel}>Play a tone</Text>
+          <AppSwitch
+            value={morseWithTone}
+            onValueChange={setMorseWithTone}
+            tint={COLORS.ACCENT}
+            offTint={COLORS.SECONDARY_ACCENT}
+            thumbColor={morseWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND}
+            disabled={isTransmitting}
+            accessibilityLabel="Play a tone while transmitting morse"
           />
-          <Text style={styles.charCounter}>
-            {remainingChars} characters remaining
-          </Text>
-        </View>
-
-        <View style={styles.controlsContainer}>
-          <View style={styles.soundToggleContainer}>
-            <Text style={styles.controlLabel}>Sound</Text>
-            <AppSwitch
-              value={morseWithTone}
-              onValueChange={setMorseWithTone}
-              tint={COLORS.ACCENT}
-              offTint={COLORS.SECONDARY_ACCENT}
-              thumbColor={morseWithTone ? COLORS.PRIMARY_LIGHT : COLORS.BRAND}
-              disabled={isTransmitting}
-              accessibilityLabel="Play a tone while transmitting morse"
-            />
-          </View>
         </View>
 
         <AppButton
@@ -104,61 +111,45 @@ const AlphaToMorseScreenImpl = () => {
           />
         )}
       </View>
-    </ScreenBody>
+    </StackScreen>
   );
 };
 
 export default observer(AlphaToMorseScreenImpl);
 
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      paddingHorizontal: 14,
-      paddingTop: 10,
-    },
-    inputContainer: {
-      width: '100%',
-      marginBottom: 20,
-    },
-    textInput: {
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderWidth: 2,
-      borderColor: COLORS.BRAND,
-      borderRadius: 12,
-      padding: 16,
-      fontSize: 16,
-      color: COLORS.PRIMARY_DARK,
-      minHeight: 150,
-      textAlignVertical: 'top',
-    },
-    charCounter: {
-      fontSize: 14,
-      color: COLORS.SECONDARY_ACCENT,
-      marginTop: 8,
-      textAlign: 'right',
-    },
-    controlsContainer: {
-      width: '100%',
-      marginBottom: 20,
-    },
-    soundToggleContainer: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'space-between',
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderWidth: 2,
-      borderColor: COLORS.BRAND,
-      borderRadius: 12,
-      padding: 16,
-    },
-    controlLabel: {
-      fontSize: 18,
-      fontWeight: '600',
-      color: COLORS.PRIMARY_DARK,
-    },
-    submitButton: {
-      marginBottom: 12,
-    },
-  });
+const styles = StyleSheet.create({
+  column: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+  },
+  eyebrow: {
+    marginTop: SPACING.lg,
+  },
+  textInput: {
+    padding: SPACING.md,
+    fontSize: 16,
+    minHeight: 150,
+    textAlignVertical: 'top',
+    borderRadius: RADIUS.card,
+  },
+  charCounter: {
+    fontSize: 13,
+    marginTop: SPACING.sm,
+    textAlign: 'right',
+  },
+  switchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: SPACING.md,
+    padding: SPACING.md,
+    marginBottom: SPACING.lg,
+  },
+  controlLabel: {
+    flex: 1,
+    fontSize: 16,
+  },
+  submitButton: {
+    marginBottom: SPACING.md,
+  },
+});

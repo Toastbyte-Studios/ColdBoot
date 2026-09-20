@@ -1,9 +1,8 @@
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, { useState } from 'react';
-import { Alert, ScrollView, View } from 'react-native';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import { Alert } from 'react-native';
+import StackScreen from '../../components/StackScreen';
 import { useEmergencyPlanStore } from '../../stores';
 import { RallyPoint } from '../../stores/EmergencyPlanStore';
 import {
@@ -12,7 +11,7 @@ import {
   FormInput,
   FormTextArea,
 } from '../Shared/Prepper';
-import { formStyles as styles } from '../Shared/Prepper/formStyles';
+import { FormCard } from '../Shared/Prepper/FormCard';
 
 type EditRallyPointRouteProp = RouteProp<
   { EditRallyPoint: { rallyPoint: RallyPoint } },
@@ -91,42 +90,40 @@ export default observer(function EditRallyPointScreen() {
   };
 
   return (
-    <ScreenBody>
-      <SectionHeader>Edit Rally Point</SectionHeader>
-      <View style={styles.container}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          <FormInput
-            label="Name *"
-            placeholder={`e.g. "Primary: Grandma's house"`}
-            value={name}
-            onChangeText={setName}
-            accessibilityLabel="Rally point name"
-          />
-          <FormTextArea
-            label="Description *"
-            placeholder="Address or directions..."
-            value={description}
-            onChangeText={setDescription}
-            accessibilityLabel="Description"
-          />
-          <FormInput
-            label="Coordinates (optional)"
-            placeholder='e.g. "40.7128, -74.0060"'
-            value={coordinates}
-            onChangeText={setCoordinates}
-            accessibilityLabel="Coordinates"
-          />
-          <FormButtonRow
-            onCancel={() => navigation.goBack()}
-            onSave={handleSave}
-            saveDisabled={!name.trim() || !description.trim()}
-          />
-          <DeleteButton onPress={handleDelete} label="Delete Rally Point" />
-        </ScrollView>
-      </View>
-    </ScreenBody>
+    <StackScreen
+      title="Edit Rally Point"
+      subtitle={rallyPoint.name}
+      keyboardShouldPersistTaps="handled"
+    >
+      <FormCard testID="rally-point-form">
+        <FormInput
+          label="Name *"
+          placeholder={`e.g. "Primary: Grandma's house"`}
+          value={name}
+          onChangeText={setName}
+          accessibilityLabel="Rally point name"
+        />
+        <FormTextArea
+          label="Description *"
+          placeholder="Address or directions..."
+          value={description}
+          onChangeText={setDescription}
+          accessibilityLabel="Description"
+        />
+        <FormInput
+          label="Coordinates (optional)"
+          placeholder='e.g. "40.7128, -74.0060"'
+          value={coordinates}
+          onChangeText={setCoordinates}
+          accessibilityLabel="Coordinates"
+        />
+        <FormButtonRow
+          onCancel={() => navigation.goBack()}
+          onSave={handleSave}
+          saveDisabled={!name.trim() || !description.trim()}
+        />
+        <DeleteButton onPress={handleDelete} label="Delete Rally Point" />
+      </FormCard>
+    </StackScreen>
   );
 });

@@ -1,14 +1,15 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { StyleSheet, View, ScrollView } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
+import SectionEyebrow from '../../components/SectionEyebrow';
+import StackScreen from '../../components/StackScreen';
 import { useDeviceStatus } from '../../hooks/useDeviceStatus';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
+
+const isAndroid = Platform.OS === 'android';
 
 /**
  * DeviceStatusScreen
@@ -24,109 +25,58 @@ import { cardSurface } from '../../theme/cardSurface';
  *
  * Data is sourced from {@link useDeviceStatus}, which provides pre-formatted
  * strings for display. Each metric is presented on the shared card surface
- * (see `cardSurface`) with consistent label/value typography.
+ * (see `cardSurface`) with consistent label/value typography. The cards are
+ * status readouts, not controls, which is why they are cards rather than the
+ * tappable rows the rest of the redesign's lists use.
  *
  * @returns A React element containing the Device Status screen UI.
  */
 function DeviceStatusScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const { storageText, batteryText, lastFixText, offlineText } =
     useDeviceStatus();
 
+  const metrics = [
+    { label: 'Battery', value: batteryText },
+    { label: 'Last GPS fix', value: lastFixText },
+    { label: 'Storage', value: storageText },
+    { label: 'Connectivity', value: offlineText },
+  ];
+
   return (
-    <ScreenBody>
-      <SectionHeader>Device Status</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+    <StackScreen title="Device Status">
+      <SectionEyebrow>Device metrics</SectionEyebrow>
+      {metrics.map((metric) => (
+        <View
+          key={metric.label}
+          style={[styles.card, cardSurface(COLORS)]}
+          accessible
+          accessibilityLabel={`${metric.label}. ${metric.value}`}
         >
-          <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: COLORS.PRIMARY_DARK }]}>
-              Device Metrics
-            </Text>
-
-            <View style={[styles.card, cardSurface(COLORS)]}>
-              <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-                Battery
-              </Text>
-              <Text style={[styles.value, { color: COLORS.PRIMARY_DARK }]}>
-                {batteryText}
-              </Text>
-            </View>
-
-            <View style={[styles.card, cardSurface(COLORS)]}>
-              <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-                Last GPS Fix
-              </Text>
-              <Text style={[styles.value, { color: COLORS.PRIMARY_DARK }]}>
-                {lastFixText}
-              </Text>
-            </View>
-
-            <View style={[styles.card, cardSurface(COLORS)]}>
-              <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-                Storage
-              </Text>
-              <Text style={[styles.value, { color: COLORS.PRIMARY_DARK }]}>
-                {storageText}
-              </Text>
-            </View>
-
-            <View style={[styles.card, cardSurface(COLORS)]}>
-              <Text style={[styles.label, { color: COLORS.PRIMARY_DARK }]}>
-                Connectivity
-              </Text>
-              <Text style={[styles.value, { color: COLORS.PRIMARY_DARK }]}>
-                {offlineText}
-              </Text>
-            </View>
-          </View>
-        </ScrollView>
-      </View>
-    </ScreenBody>
+          <Text style={[styles.label, { color: COLORS.MUTED }]}>
+            {metric.label}
+          </Text>
+          <Text style={styles.value}>{metric.value}</Text>
+        </View>
+      ))}
+    </StackScreen>
   );
 }
 
 export default observer(DeviceStatusScreen);
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-    paddingBottom: FOOTER_HEIGHT,
-  },
-  scrollView: {
-    flex: 1,
-    width: '100%',
-  },
-  scrollContent: {
-    width: '100%',
-    alignItems: 'center',
-    paddingTop: 8,
-    paddingBottom: 24,
-  },
-  section: {
-    width: '90%',
-    marginTop: 16,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 12,
-  },
   card: {
-    padding: 16,
-    marginTop: 12,
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    padding: SPACING.md,
     overflow: 'hidden',
   },
   label: {
-    fontSize: 14,
-    opacity: 0.9,
-    marginBottom: 6,
-    fontWeight: '700',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: SPACING.xs,
   },
   value: {
     fontSize: 16,

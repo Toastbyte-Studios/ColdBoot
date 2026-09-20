@@ -1,11 +1,9 @@
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
-import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
-import { useFooterClearance } from '../../hooks/useFooterClearance';
+import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import {
   AstronomyEvent,
@@ -15,10 +13,12 @@ import {
   useAstronomyEventStore,
   useCoreStore,
 } from '../../stores/StoreContext';
-import { FOOTER_HEIGHT } from '../../theme';
+import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import { onColor } from '../../theme/colorUtils';
 import { formatDaysUntil } from '../../utils/formatDaysUntil';
+
+const isAndroid = Platform.OS === 'android';
 
 const EVENT_TYPE_DETAILS: Record<
   AstronomyEventType,
@@ -127,7 +127,6 @@ const EventCard: React.FC<EventCardProps> = ({ event }) => {
  */
 function SkyEventsScreen() {
   const COLORS = useTheme();
-  const footerClearance = useFooterClearance();
   const styles = useMemo(() => createStyles(COLORS), [COLORS]);
   const core = useCoreStore();
   const astronomyStore = useAstronomyEventStore();
@@ -136,48 +135,39 @@ function SkyEventsScreen() {
   const hasLocation = !!core.lastFix;
 
   return (
-    <ScreenBody>
-      <SectionHeader>Sky Events</SectionHeader>
-      <View style={[styles.container, { paddingBottom: footerClearance }]}>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-        >
-          {!hasLocation && (
-            <View style={[styles.locationBanner, cardSurface(COLORS)]}>
-              <View style={styles.locationBannerRow}>
-                <Ionicons
-                  name="location-outline"
-                  size={14}
-                  color={COLORS.PRIMARY_DARK}
-                />
-                <Text style={styles.locationBannerText}>
-                  Enable location for planet rise times
-                </Text>
-              </View>
-            </View>
-          )}
+    <StackScreen
+      title="Sky Events"
+      subtitle={
+        upcomingEvents.length === 0
+          ? 'Next 12 months'
+          : `${upcomingEvents.length} event${
+              upcomingEvents.length === 1 ? '' : 's'
+            } in the next 12 months`
+      }
+    >
+      {!hasLocation && (
+        <View style={[styles.locationBanner, cardSurface(COLORS)]}>
+          <View style={styles.locationBannerRow}>
+            <Ionicons name="location-outline" size={14} color={COLORS.MUTED} />
+            <Text style={styles.locationBannerText}>
+              Enable location for planet rise times
+            </Text>
+          </View>
+        </View>
+      )}
 
-          {upcomingEvents.length === 0 ? (
-            <View style={styles.emptyState}>
-              <Text style={styles.emptyStateText}>
-                No upcoming sky events found in the next 12 months.
-              </Text>
-            </View>
-          ) : (
-            <>
-              <Text style={styles.subheader}>
-                {upcomingEvents.length} event
-                {upcomingEvents.length !== 1 ? 's' : ''} in the next 12 months
-              </Text>
-              {upcomingEvents.map((event) => (
-                <EventCard key={event.id} event={event} />
-              ))}
-            </>
-          )}
-        </ScrollView>
-      </View>
-    </ScreenBody>
+      {upcomingEvents.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyStateText}>
+            No upcoming sky events found in the next 12 months.
+          </Text>
+        </View>
+      ) : (
+        upcomingEvents.map((event) => (
+          <EventCard key={event.id} event={event} />
+        ))
+      )}
+    </StackScreen>
   );
 }
 
@@ -185,34 +175,11 @@ export default observer(SkyEventsScreen);
 
 const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
   StyleSheet.create({
-    container: {
-      flex: 1,
-      width: '100%',
-      alignSelf: 'stretch',
-      paddingBottom: FOOTER_HEIGHT,
-    },
-    scrollView: {
-      flex: 1,
-      width: '100%',
-    },
-    scrollContent: {
-      width: '100%',
-      alignItems: 'center',
-      paddingTop: 8,
-      paddingBottom: 24,
-    },
-    subheader: {
-      fontSize: 14,
-      fontWeight: '500',
-      opacity: 0.7,
-      marginBottom: 12,
-      width: '80%',
-      color: COLORS.PRIMARY_DARK,
-    },
     locationBanner: {
-      width: '80%',
-      padding: 12,
-      marginBottom: 12,
+      // StackScreen's Android content is full-bleed; cards carry the gutter.
+      marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+      padding: SPACING.md,
+      marginBottom: SPACING.md,
       overflow: 'hidden',
     },
     locationBannerRow: {
@@ -295,12 +262,11 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
     emptyState: {
       marginTop: 40,
       alignItems: 'center',
-      paddingHorizontal: 20,
+      paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
     },
     emptyStateText: {
       fontSize: 14,
       textAlign: 'center',
-      opacity: 0.7,
-      color: COLORS.PRIMARY_DARK,
+      color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND,
     },
   });
