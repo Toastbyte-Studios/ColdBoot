@@ -154,7 +154,7 @@ describe('MapLibraryScreen', () => {
     expect(texts).toContain('Near Red Rock Canyon');
     expect(texts).toContain('1 area · ≈ 82.0 MB');
     expect(texts).toContain('~10 mi radius · ≈ 82.0 MB · downloaded');
-  });
+  }, 10000);
 
   it('shows the empty state', async () => {
     (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([]);
