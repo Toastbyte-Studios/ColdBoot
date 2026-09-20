@@ -4,24 +4,21 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, {
   PropsWithChildren,
   useCallback,
-  useMemo,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from 'react';
 import {
-  Animated,
   PanResponder,
   Platform,
   StatusBar,
   StyleSheet,
   View,
-  Easing,
 } from 'react-native';
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { useActiveRouteName } from '../hooks/useActiveRouteName';
 import { useIsDarkMode } from '../hooks/useIsDarkMode';
-import { useKeyboardStatus } from '../hooks/useKeyboardStatus';
 import {
   useNavigationHistory,
   useGestureNavigation,
@@ -90,14 +87,12 @@ export default function AppShell({ children }: Props) {
   const navigation = useNavigation<AppShellNavigationProp>();
   const navigationHistory = useNavigationHistory();
   const { disableGestureNavigation } = useGestureNavigation();
-  const { isKeyboardVisible, keyboardHeight } = useKeyboardStatus();
   const activeRouteName = useActiveRouteName();
   const isDarkMode = useIsDarkMode();
   const isFullScreenRoute =
     Platform.OS === 'android' &&
     activeRouteName !== undefined &&
     FULL_SCREEN_ROUTES.has(activeRouteName);
-  const translateYRef = useRef(new Animated.Value(0)).current;
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const [isAlertsVisible, setIsAlertsVisible] = useState(false);
@@ -137,15 +132,6 @@ export default function AppShell({ children }: Props) {
       isMounted = false;
     };
   }, []);
-
-  useEffect(() => {
-    Animated.timing(translateYRef, {
-      toValue: isKeyboardVisible ? -keyboardHeight : 0,
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  }, [isKeyboardVisible, keyboardHeight, translateYRef]);
 
   useEffect(() => {
     setSpotlightLayout(null);
@@ -268,12 +254,7 @@ export default function AppShell({ children }: Props) {
           style={styles.gestureContainer}
           {...panResponder.panHandlers}
         >
-          <Animated.View
-            style={[
-              styles.shell,
-              { transform: [{ translateY: translateYRef }] },
-            ]}
-          >
+          <View style={styles.shell}>
             {isFullScreenRoute ? null : (
               <AppBar
                 logoRef={logoRef}
@@ -285,7 +266,7 @@ export default function AppShell({ children }: Props) {
             )}
 
             <View style={styles.content}>{children}</View>
-          </Animated.View>
+          </View>
 
           {isTutorialVisible && (
             <Svg

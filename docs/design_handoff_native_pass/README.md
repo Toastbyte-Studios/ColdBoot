@@ -141,7 +141,7 @@ React Native note: `fontWeight: '590'` is not valid — use `'600'` for the 590 
 - Scope chips row, `gap: 7`, 30px tall, radius 15: active chip = brand fill with `#F7FAFC` label 13/600; inactive = `rgba(255,255,255,.7)` with hairline border and brand label 13/500. Labels carry counts: "All 14", "Reference 9", "Tools 3", "Notes 2" — wire to `searchData`/`ragSearch` result groups.
 - Result group: surface, border, radius 18. Each result is padding `12 15`: title 15.5/600 plus a source tag 11/500 +0.06em muted uppercase ("SURVIVAL", "HEALTH", "PREPPER"), and a 2-line snippet 13/400 muted. Separator 0.5px, `marginLeft: 15`.
 - "RECENT" eyebrow, then recent queries as 15/400 rows with a 15px clock glyph, `gap: 9`.
-- Keyboard is the system keyboard; the screen must lift with it — the existing `useKeyboardStatus` translate in `AppShell` already does this.
+- Keyboard is the system keyboard; keep the field visible with the screen's own keyboard handling rather than shifting the entire app shell.
 
 ### 6. Settings (`1g`)
 
