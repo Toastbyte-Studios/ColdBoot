@@ -82,20 +82,13 @@ function hasTransformStyle(node: RenderedNode): boolean {
     return node.some((child) => hasTransformStyle(child));
   }
 
-  const styles = Array.isArray(node.props.style)
-    ? node.props.style
-    : node.props.style
-      ? [node.props.style]
-      : [];
+  const { StyleSheet } = require('react-native');
+  const flattenedStyle = StyleSheet.flatten(node.props.style);
+  const transform = flattenedStyle?.transform;
 
   if (
-    styles.some(
-      (style) =>
-        style &&
-        typeof style === 'object' &&
-        'transform' in style &&
-        style.transform !== undefined,
-    )
+    Array.isArray(transform) &&
+    transform.some((t) => t && typeof t === 'object' && 'translateY' in t)
   ) {
     return true;
   }
