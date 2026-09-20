@@ -36,7 +36,7 @@ import { boundsToGeoJSON } from '../../../../navigation/utils/boundsToGeoJSON';
 import { formatBytes } from '../../../../navigation/utils/formatBytes';
 import { useSettingsStore } from '../../../../stores';
 import { useOfflineDownloadStore } from '../../../../stores/StoreContext';
-import type { OfflineMapPackMetadata } from '../../../../stores/OfflineDownloadStore';
+import { createOfflineRegionWithSmartName } from './offlinePackNaming';
 
 const RETRY_TIMEOUT_MS = 15_000;
 const FREE_DISK_BUFFER_BYTES = 500 * 1024 * 1024; // 500 MB safety margin
@@ -151,16 +151,11 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
     if (!bounds || !coords || starting) return;
     setStarting(true);
     try {
-      const metadata: OfflineMapPackMetadata = {
-        name: `Area Download ${new Date().toLocaleDateString()}`,
-        createdAt: new Date().toISOString(),
-        radiusMiles: RADIUS_MILES,
-        centerLng: coords.longitude,
-        centerLat: coords.latitude,
-      };
-      const pack = await OfflineMapService.downloadRegion({
+      const pack = await createOfflineRegionWithSmartName({
         bounds,
-        metadata,
+        centerLat: coords.latitude,
+        centerLng: coords.longitude,
+        radiusMiles: RADIUS_MILES,
         zoomRange,
         onProgress: (p, s) => store.handleProgress(p, s),
         onError: (p, e) => store.handleError(p, e),

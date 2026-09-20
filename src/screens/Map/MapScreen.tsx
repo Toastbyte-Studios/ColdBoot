@@ -14,7 +14,9 @@ import {
 import {
   NavigationProp,
   ParamListBase,
+  RouteProp,
   useNavigation,
+  useRoute,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
@@ -55,6 +57,7 @@ import {
 } from '../../stores/StoreContext';
 import { Track, TrackPoint } from '../../stores/TrackStore';
 import { FOOTER_HEIGHT, TEXT_GUTTER } from '../../theme';
+import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
 import MapPanel, {
@@ -68,125 +71,12 @@ import WaypointBottomSheet from './components/WaypointBottomSheet';
 import { haversineMeters } from './components/WaypointBottomSheet/waypointGeometry';
 import { requestForegroundNotificationPermission } from './requestForegroundNotificationPermission';
 
-// US state name → 2-letter abbreviation
-const US_STATE_ABBR: Record<string, string> = {
-  Alabama: 'AL',
-  Alaska: 'AK',
-  Arizona: 'AZ',
-  Arkansas: 'AR',
-  California: 'CA',
-  Colorado: 'CO',
-  Connecticut: 'CT',
-  Delaware: 'DE',
-  Florida: 'FL',
-  Georgia: 'GA',
-  Hawaii: 'HI',
-  Idaho: 'ID',
-  Illinois: 'IL',
-  Indiana: 'IN',
-  Iowa: 'IA',
-  Kansas: 'KS',
-  Kentucky: 'KY',
-  Louisiana: 'LA',
-  Maine: 'ME',
-  Maryland: 'MD',
-  Massachusetts: 'MA',
-  Michigan: 'MI',
-  Minnesota: 'MN',
-  Mississippi: 'MS',
-  Missouri: 'MO',
-  Montana: 'MT',
-  Nebraska: 'NE',
-  Nevada: 'NV',
-  'New Hampshire': 'NH',
-  'New Jersey': 'NJ',
-  'New Mexico': 'NM',
-  'New York': 'NY',
-  'North Carolina': 'NC',
-  'North Dakota': 'ND',
-  Ohio: 'OH',
-  Oklahoma: 'OK',
-  Oregon: 'OR',
-  Pennsylvania: 'PA',
-  'Rhode Island': 'RI',
-  'South Carolina': 'SC',
-  'South Dakota': 'SD',
-  Tennessee: 'TN',
-  Texas: 'TX',
-  Utah: 'UT',
-  Vermont: 'VT',
-  Virginia: 'VA',
-  Washington: 'WA',
-  'West Virginia': 'WV',
-  Wisconsin: 'WI',
-  Wyoming: 'WY',
-  'District of Columbia': 'DC',
-};
-
-const NOMINATIM_USER_AGENT =
-  'ColdBoot Survival App (toastbyte.studio, support@toastbyte.studio)';
-
 /**
  * Dev-only simulated-offline banner colours. Same fixed amber as
  * DownloadConfirmScreen's low-storage banner, because the palette has no
  * warning token. See docs/NATIVE_REDESIGN.md.
  */
 const WARNING_FOREGROUND = '#664D03';
-
-/**
- * Reverse geocodes a lat/lng via Nominatim and calls setName with the result.
- * Falls back to county/country, then '--' on any error.
- * Pass an AbortSignal to cancel an in-flight request (e.g. on unmount or new position).
- */
-async function fetchLocationName(
-  lat: number,
-  lng: number,
-  setName: (name: string) => void,
-  signal?: AbortSignal,
-): Promise<void> {
-  try {
-    const resp = await fetch(
-      `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`,
-      {
-        signal,
-        headers: {
-          'Accept-Language': 'en',
-          'User-Agent': NOMINATIM_USER_AGENT,
-        },
-      },
-    );
-    if (!resp.ok) {
-      setName('--');
-      return;
-    }
-    const data = await resp.json();
-    const addr = data?.address;
-    if (!addr) {
-      setName('--');
-      return;
-    }
-    const city = addr.city ?? addr.town ?? addr.village ?? addr.hamlet ?? null;
-    const state: string | undefined = addr.state;
-    const county: string | undefined = addr.county;
-    const country: string | undefined = addr.country;
-    if (city && state) {
-      const abbr = US_STATE_ABBR[state] ?? state;
-      setName(`${city}, ${abbr}`);
-    } else if (county && country) {
-      setName(`${county}, ${country}`);
-    } else if (country) {
-      setName(country);
-    } else {
-      setName('--');
-    }
-  } catch (err: unknown) {
-    // Ignore AbortError — request was intentionally cancelled
-    if (err instanceof Error && err.name === 'AbortError') {
-      return;
-    }
-    setName('--');
-  }
-}
 
 /**
  * Requests foreground location permission on the current platform.
@@ -303,9 +193,16 @@ const GEOCODE_THRESHOLD = 0.001;
 
 const isAndroid = Platform.OS === 'android';
 
+type MapScreenRouteParams = {
+  center?: { latitude: number; longitude: number };
+  radiusMiles?: number;
+};
+
 export default observer(function MapScreen() {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const route =
+    useRoute<RouteProp<Record<string, MapScreenRouteParams>, string>>();
   const footerClearance = useFooterClearance();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const { setDisableGestureNavigation } = useGestureNavigation();
@@ -338,6 +235,7 @@ export default observer(function MapScreen() {
   const [waypointSheetOpen, setWaypointSheetOpen] = useState(false);
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
+  const initialCenterAppliedRef = useRef(false);
 
   // ── Recording state ──────────────────────────────────────────────────────────
   /** Mutable ref so GPS callback closure always reads the latest value. */
@@ -439,12 +337,11 @@ export default observer(function MapScreen() {
       lastGeocodedLngRef.current = longitude;
       geocodeAbortRef.current?.abort();
       geocodeAbortRef.current = new AbortController();
-      fetchLocationName(
-        latitude,
-        longitude,
-        setLocationName,
-        geocodeAbortRef.current.signal,
-      );
+      reverseGeocode(latitude, longitude, {
+        signal: geocodeAbortRef.current.signal,
+      }).then((result) => {
+        setLocationName(result?.compassName ?? '--');
+      });
     }
   }, [mlPosition]);
 
@@ -722,6 +619,35 @@ export default observer(function MapScreen() {
     navigationRef.current?.navigate('DownloadArea' as never);
   }, []);
 
+  const handleMapLibraryPress = useCallback(() => {
+    navigation.navigate('MapLibrary');
+  }, [navigation]);
+
+  useEffect(() => {
+    if (initialCenterAppliedRef.current) {
+      return;
+    }
+    const center = route.params?.center;
+    if (!center) {
+      return;
+    }
+    const timer = setInterval(() => {
+      if (!cameraRef.current) {
+        return;
+      }
+      initialCenterAppliedRef.current = true;
+      cameraRef.current.setStop({
+        center: [center.longitude, center.latitude],
+        zoom: zoomFromDelta(DELTA.latitudeDelta),
+        duration: MAP_ANIMATE_DURATION_MS,
+        easing: 'fly',
+      });
+      clearInterval(timer);
+    }, 100);
+
+    return () => clearInterval(timer);
+  }, [route.params]);
+
   // ───────────────────────────────────────────────────────────────
 
   // Ring rotates opposite to heading so the needle appears fixed pointing up
@@ -764,6 +690,22 @@ export default observer(function MapScreen() {
         }
         title="Map"
         subtitle="Offline tiles and compass"
+        trailing={
+          <View style={styles.headerActions}>
+            <IconButton
+              name="download-outline"
+              size={22}
+              onPress={handleDownloadAreaPress}
+              accessibilityLabel="Download offline area"
+            />
+            <IconButton
+              name="layers-outline"
+              size={22}
+              onPress={handleMapLibraryPress}
+              accessibilityLabel="Map Library"
+            />
+          </View>
+        }
       />
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
@@ -854,6 +796,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
     headline: {
       paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    },
+    headerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      marginRight: isAndroid ? -10 : -8,
     },
     wrapper: {
       flex: 1,
