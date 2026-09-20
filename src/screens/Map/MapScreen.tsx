@@ -631,6 +631,7 @@ export default observer(function MapScreen() {
     }
     const center = route.params?.center;
     if (!center || !cameraRef.current) {
+      lastCenteredKeyRef.current = null;
       return;
     }
     const centerKey = `${center.latitude}:${center.longitude}:${route.params?.radiusMiles ?? 'na'}`;
@@ -650,7 +651,11 @@ export default observer(function MapScreen() {
       duration: MAP_ANIMATE_DURATION_MS,
       easing: 'fly',
     });
-  }, [mapReady, route.params]);
+    navigation.setParams({
+      center: undefined,
+      radiusMiles: undefined,
+    });
+  }, [mapReady, navigation, route.params]);
 
   // ───────────────────────────────────────────────────────────────
 
