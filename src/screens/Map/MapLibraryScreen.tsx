@@ -3,8 +3,10 @@ import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  ActivityIndicator,
   Alert,
   Modal,
+  Platform,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -13,6 +15,7 @@ import {
 } from 'react-native';
 import AppButton from '../../components/AppButton';
 import GroupContainer from '../../components/GroupContainer';
+import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
@@ -121,12 +124,20 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
     },
     actions: {
       flexDirection: 'row',
+      // Icons sit at the trailing edge: the row's title is the subject, and
+      // these act on it, so they read as its controls rather than as a menu.
+      justifyContent: 'flex-end',
+      alignItems: 'center',
       paddingHorizontal: 12,
       paddingBottom: 12,
-      gap: 8,
+      gap: 4,
     },
-    actionButton: {
-      flex: 1,
+    busyIndicator: {
+      // Matches IconButton's touch target so nothing shifts while busy.
+      width: Platform.OS === 'ios' ? 44 : 48,
+      height: Platform.OS === 'ios' ? 44 : 48,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     emptyCard: {
       borderWidth: 1,
@@ -462,30 +473,38 @@ function MapLibraryScreen() {
                   }}
                 />
                 <View style={styles.actions}>
-                  <AppButton
-                    label="Rename"
-                    icon="create-outline"
-                    variant="tinted"
+                  <IconButton
+                    name="create-outline"
+                    accessibilityLabel={`Rename ${displayName}`}
                     onPress={() => openRename(pack)}
                     disabled={isAnyBusy}
-                    style={styles.actionButton}
                   />
-                  <AppButton
-                    label="Refresh"
-                    icon="refresh-outline"
-                    variant="tinted"
-                    onPress={() => confirmRefresh(pack)}
-                    disabled={isAnyBusy}
-                    loading={isBusy}
-                    style={styles.actionButton}
-                  />
-                  <AppButton
-                    label="Delete"
-                    icon="trash-outline"
-                    variant="tinted"
+                  {/* The spinner replaces the glyph in place, so the row of
+                      actions keeps its width while a refresh runs. */}
+                  {isBusy ? (
+                    <View
+                      style={styles.busyIndicator}
+                      accessible
+                      accessibilityRole="progressbar"
+                      accessibilityLabel={`Refreshing ${displayName}`}
+                      accessibilityState={{ busy: true }}
+                    >
+                      <ActivityIndicator size="small" color={COLORS.BRAND} />
+                    </View>
+                  ) : (
+                    <IconButton
+                      name="refresh-outline"
+                      accessibilityLabel={`Refresh ${displayName}`}
+                      onPress={() => confirmRefresh(pack)}
+                      disabled={isAnyBusy}
+                    />
+                  )}
+                  <IconButton
+                    name="trash-outline"
+                    color={COLORS.ERROR}
+                    accessibilityLabel={`Delete ${displayName}`}
                     onPress={() => confirmDelete(pack)}
                     disabled={isAnyBusy}
-                    style={styles.actionButton}
                   />
                 </View>
               </GroupContainer>

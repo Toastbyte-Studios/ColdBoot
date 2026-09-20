@@ -175,6 +175,12 @@ export const NAVIGATION_TOOLS: ToolType[] = [
     id: 'nav_star_map',
   },
   {
+    name: 'Map Library',
+    screen: 'MapLibrary',
+    icon: 'albums-outline',
+    id: 'nav_map_library',
+  },
+  {
     name: 'Grid Reference Converter',
     shortName: 'Grid Ref',
     screen: 'GridReference',

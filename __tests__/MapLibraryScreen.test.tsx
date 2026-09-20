@@ -85,6 +85,27 @@ jest.mock('../src/components/AppButton', () => {
   );
 });
 
+jest.mock('../src/components/IconButton', () => {
+  const { Text: MockText, TouchableOpacity } = require('react-native');
+  return ({
+    accessibilityLabel,
+    onPress,
+    disabled,
+  }: {
+    accessibilityLabel: string;
+    onPress?: () => void;
+    disabled?: boolean;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      testID={`icon-button-${accessibilityLabel}`}
+    >
+      <MockText>{accessibilityLabel}</MockText>
+    </TouchableOpacity>
+  );
+});
+
 jest.mock('../src/navigation/services/OfflineMapService', () => ({
   ...jest.requireActual('../src/navigation/services/OfflineMapService'),
   OfflineMapService: {
@@ -250,9 +271,11 @@ describe('MapLibraryScreen', () => {
       await Promise.resolve();
     });
 
-    const refreshButton = tree.root.findByProps({
-      testID: 'app-button-Refresh',
-    });
+    const refreshButton = tree.root.find(
+      (node) =>
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('icon-button-Refresh '),
+    );
     await ReactTestRenderer.act(async () => {
       refreshButton.props.onPress();
       await Promise.resolve();
@@ -298,9 +321,11 @@ describe('MapLibraryScreen', () => {
       await Promise.resolve();
     });
 
-    const refreshButton = tree.root.findByProps({
-      testID: 'app-button-Refresh',
-    });
+    const refreshButton = tree.root.find(
+      (node) =>
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('icon-button-Refresh '),
+    );
     await ReactTestRenderer.act(async () => {
       refreshButton.props.onPress();
       await Promise.resolve();
@@ -311,6 +336,75 @@ describe('MapLibraryScreen', () => {
       'Refresh Unavailable',
       'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
     );
+  });
+
+  it('keeps the in-progress refresh indicator accessible for the area', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([
+      {
+        id: 'pack-1',
+        metadata: {
+          name: 'Area Download 9/20/2026',
+          createdAt: '2026-09-12T00:00:00.000Z',
+          radiusMiles: 10,
+          centerLat: 36.17,
+          centerLng: -115.13,
+        },
+        status: {
+          state: 'complete',
+          completedResourceCount: 10,
+          requiredResourceCount: 10,
+          completedResourceSize: 82 * 1024 * 1024,
+        },
+      },
+    ]);
+
+    let resolveDownload: ((value: { id: string }) => void) | undefined;
+    (OfflineMapService.downloadRegion as jest.Mock).mockImplementation(
+      () =>
+        new Promise<{ id: string }>((resolve) => {
+          resolveDownload = resolve;
+        }),
+    );
+    (OfflineMapService.deletePack as jest.Mock).mockResolvedValue(undefined);
+    (Alert.alert as jest.Mock).mockImplementation(
+      (title, _message, buttons) => {
+        if (title === 'Refresh Offline Map') {
+          buttons?.[1]?.onPress?.();
+        }
+      },
+    );
+
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(<MapLibraryScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      await Promise.resolve();
+    });
+
+    const refreshButton = tree.root.find(
+      (node) =>
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('icon-button-Refresh '),
+    );
+
+    await ReactTestRenderer.act(async () => {
+      refreshButton.props.onPress();
+      await Promise.resolve();
+    });
+
+    const busyIndicator = tree.root.findByProps({
+      accessibilityRole: 'progressbar',
+      accessibilityLabel: 'Refreshing Near Red Rock Canyon',
+    });
+
+    expect(busyIndicator.props.accessibilityState).toEqual({ busy: true });
+
+    await ReactTestRenderer.act(async () => {
+      resolveDownload?.({ id: 'pack-2' });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
   });
 
   it('does not navigate when stored region metadata is invalid', async () => {

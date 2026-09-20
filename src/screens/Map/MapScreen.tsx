@@ -29,6 +29,7 @@ import React, {
 import {
   Alert,
   Animated,
+  Easing,
   AppState,
   AppStateStatus,
   NativeModules,
@@ -44,6 +45,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
 import SectionHeader from '../../components/SectionHeader';
+import Touchable from '../../components/Touchable';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
@@ -57,7 +59,7 @@ import {
   useDevToolsStore,
 } from '../../stores/StoreContext';
 import { Track, TrackPoint } from '../../stores/TrackStore';
-import { FOOTER_HEIGHT, TEXT_GUTTER } from '../../theme';
+import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
@@ -222,6 +224,11 @@ export default observer(function MapScreen() {
   const [locationReady, setLocationReady] = useState(false);
   const [heading, setHeading] = useState(0);
   const needleRotation = useRef(new Animated.Value(0)).current;
+  // Pulses the record glyph while a track is recording. It used to live in
+  // MapPanel with the floating button; the control moved to the action row,
+  // so the animation came with it.
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
   const lastHeading = useRef(0);
   const [coords, setCoords] = useState<{
     latitude: number;
@@ -239,7 +246,7 @@ export default observer(function MapScreen() {
   const [mapReady, setMapReady] = useState(false);
   const lastCenteredKeyRef = useRef<string | null>(null);
 
-  // ── Recording state ──────────────────────────────────────────────────────────
+  // ── Recording state ────────────────────────────────────────────────────────────
   /** Mutable ref so GPS callback closure always reads the latest value. */
   const recordingStateRef = useRef<RecordingState>('idle');
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
@@ -257,7 +264,7 @@ export default observer(function MapScreen() {
   const [viewedTrack, setViewedTrack] = useState<Track | null>(null);
   /** Mirrors permissionStatus state so AppState callback can read it without deps. */
   const permissionStatusRef = useRef<LocationPermissionStatus>('undetermined');
-  // ───────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────
 
   // Live GPS position from MapLibre LocationManager — drives coords display and locate-me.
   const mlPosition = useCurrentPosition();
@@ -390,6 +397,31 @@ export default observer(function MapScreen() {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    if (recordingState === 'recording') {
+      pulseRef.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.4,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            easing: Easing.inOut(Easing.ease),
+            useNativeDriver: true,
+          }),
+        ]),
+      );
+      pulseRef.current.start();
+    } else {
+      pulseRef.current?.stop();
+      pulseAnim.setValue(1);
+    }
+  }, [recordingState, pulseAnim]);
+
   const handleLocateMe = () => {
     if (!cameraRef.current || !mlPosition) {
       return;
@@ -462,7 +494,7 @@ export default observer(function MapScreen() {
     [waypointStore],
   );
 
-  // ── Recording handlers ────────────────────────────────────────────────────────
+  // ── Recording handlers ───────────────────────────────────────────────────────
 
   const handleRecordPress = useCallback(() => {
     if (recordingStateRef.current === 'idle') {
@@ -657,7 +689,7 @@ export default observer(function MapScreen() {
     });
   }, [mapReady, navigation, route.params]);
 
-  // ───────────────────────────────────────────────────────────────
+  // ────────────────────────────────────────────────────────
 
   // Ring rotates opposite to heading so the needle appears fixed pointing up
   const ringSpin = needleRotation.interpolate({
@@ -699,23 +731,71 @@ export default observer(function MapScreen() {
         }
         title="Map"
         subtitle="Offline tiles and compass"
-        trailing={
-          <View style={styles.headerActions}>
-            <IconButton
-              name="download-outline"
-              size={22}
-              onPress={handleDownloadAreaPress}
-              accessibilityLabel="Download offline area"
-            />
-            <IconButton
-              name="layers-outline"
-              size={22}
-              onPress={handleMapLibraryPress}
-              accessibilityLabel="Map Library"
-            />
-          </View>
-        }
       />
+
+      {/* Every map control lives here rather than floating over the tiles:
+          the map is the point of the screen, so nothing sits on top of it. */}
+      <View style={styles.mapActions}>
+        <IconButton
+          name="flag-outline"
+          size={22}
+          onPress={() => setWaypointSheetOpen(true)}
+          disabled={permissionStatus !== 'granted'}
+          accessibilityLabel="Open waypoints"
+        />
+        {/* Not an IconButton while recording: only the glyph pulses, so the
+            animation has to wrap the icon rather than the pressable. */}
+        <Touchable
+          style={styles.recordAction}
+          rippleColor={COLORS.BRAND}
+          onPress={recordingState !== 'stopped' ? handleRecordPress : undefined}
+          disabled={
+            permissionStatus !== 'granted' || recordingState === 'stopped'
+          }
+          accessibilityLabel={
+            recordingState === 'recording'
+              ? 'Stop recording'
+              : 'Start recording'
+          }
+          accessibilityRole="button"
+        >
+          <Animated.View
+            style={
+              recordingState === 'recording'
+                ? { opacity: pulseAnim }
+                : undefined
+            }
+          >
+            <Icon
+              name={recordingState === 'recording' ? 'square' : 'ellipse'}
+              size={20}
+              color={
+                recordingState === 'recording' ? COLORS.ERROR : COLORS.BRAND
+              }
+            />
+          </Animated.View>
+        </Touchable>
+        <IconButton
+          name="locate-outline"
+          size={22}
+          onPress={handleLocateMe}
+          disabled={permissionStatus !== 'granted'}
+          accessibilityLabel="Center map on my location"
+        />
+        <IconButton
+          name="download-outline"
+          size={22}
+          onPress={handleDownloadAreaPress}
+          disabled={permissionStatus !== 'granted'}
+          accessibilityLabel="Download offline area"
+        />
+        <IconButton
+          name="layers-outline"
+          size={22}
+          onPress={handleMapLibraryPress}
+          accessibilityLabel="Map Library"
+        />
+      </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
         <View
@@ -725,17 +805,14 @@ export default observer(function MapScreen() {
           <View style={styles.mapInner}>
             <MapPanel
               permissionStatus={permissionStatus}
+              onLocateMe={handleLocateMe}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
-              onLocateMe={handleLocateMe}
-              onWaypointsPress={() => setWaypointSheetOpen(true)}
-              onDownloadAreaPress={handleDownloadAreaPress}
               onLongPressMap={handleLongPressMap}
               waypoints={waypointStore.waypoints}
               activeWaypointId={waypointStore.activeWaypointId}
               recordingState={recordingState}
-              onRecordPress={handleRecordPress}
               recordingPolylineCoords={recordingPolylineCoords}
               viewedTrackCoords={viewedTrackCoords}
               recordingElapsed={recordingElapsed}
@@ -807,10 +884,19 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     headline: {
       paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
     },
-    headerActions: {
+    mapActions: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginRight: isAndroid ? -10 : -8,
+      gap: SPACING.xs,
+      paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+      paddingBottom: SPACING.sm,
+    },
+    recordAction: {
+      // Matches IconButton's target so the row lines up.
+      width: isAndroid ? 48 : 44,
+      height: isAndroid ? 48 : 44,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     wrapper: {
       flex: 1,
