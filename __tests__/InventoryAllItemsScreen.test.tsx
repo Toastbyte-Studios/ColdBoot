@@ -125,7 +125,7 @@ describe('InventoryAllItemsScreen', () => {
     ]);
   });
 
-  it('shows the helper text when there are no pantry items', () => {
+  it('shows the helper text when there are no inventory items', () => {
     mockInventoryStore.allItemsSorted = [];
 
     let tree!: ReactTestRenderer.ReactTestRenderer;
