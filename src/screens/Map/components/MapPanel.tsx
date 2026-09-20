@@ -58,6 +58,7 @@ type Props = {
   locationReady: boolean;
   cameraRef: React.RefObject<CameraRef | null>;
   onLocateMe: () => void;
+  onMapReady?: () => void;
   onWaypointsPress: () => void;
   onDownloadAreaPress: () => void;
   onLongPressMap?: (coordinate: {
@@ -93,6 +94,7 @@ export default function MapPanel({
   locationReady,
   cameraRef,
   onLocateMe,
+  onMapReady,
   onWaypointsPress,
   onDownloadAreaPress,
   onLongPressMap,
@@ -184,9 +186,12 @@ export default function MapPanel({
             attribution
             attributionPosition={{ bottom: 8, right: 8 }}
             logo={false}
-            onDidFinishLoadingMap={
-              permissionStatus === 'granted' ? onLocateMe : undefined
-            }
+            onDidFinishLoadingMap={() => {
+              onMapReady?.();
+              if (permissionStatus === 'granted') {
+                onLocateMe();
+              }
+            }}
             onLongPress={(event) => {
               const [lng, lat] = event.nativeEvent.lngLat;
               onLongPressMap?.({ latitude: lat, longitude: lng });

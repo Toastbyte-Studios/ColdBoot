@@ -235,7 +235,8 @@ export default observer(function MapScreen() {
   const [waypointSheetOpen, setWaypointSheetOpen] = useState(false);
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
-  const initialCenterAppliedRef = useRef(false);
+  const [mapReady, setMapReady] = useState(false);
+  const lastCenteredKeyRef = useRef<string | null>(null);
 
   // ── Recording state ──────────────────────────────────────────────────────────
   /** Mutable ref so GPS callback closure always reads the latest value. */
@@ -624,29 +625,25 @@ export default observer(function MapScreen() {
   }, [navigation]);
 
   useEffect(() => {
-    if (initialCenterAppliedRef.current) {
+    if (!mapReady) {
       return;
     }
     const center = route.params?.center;
-    if (!center) {
+    if (!center || !cameraRef.current) {
       return;
     }
-    const timer = setInterval(() => {
-      if (!cameraRef.current) {
-        return;
-      }
-      initialCenterAppliedRef.current = true;
-      cameraRef.current.setStop({
-        center: [center.longitude, center.latitude],
-        zoom: zoomFromDelta(DELTA.latitudeDelta),
-        duration: MAP_ANIMATE_DURATION_MS,
-        easing: 'fly',
-      });
-      clearInterval(timer);
-    }, 100);
-
-    return () => clearInterval(timer);
-  }, [route.params]);
+    const centerKey = `${center.latitude}:${center.longitude}:${route.params?.radiusMiles ?? 'na'}`;
+    if (lastCenteredKeyRef.current === centerKey) {
+      return;
+    }
+    lastCenteredKeyRef.current = centerKey;
+    cameraRef.current.setStop({
+      center: [center.longitude, center.latitude],
+      zoom: zoomFromDelta(DELTA.latitudeDelta),
+      duration: MAP_ANIMATE_DURATION_MS,
+      easing: 'fly',
+    });
+  }, [mapReady, route.params]);
 
   // ───────────────────────────────────────────────────────────────
 
@@ -718,6 +715,7 @@ export default observer(function MapScreen() {
               permissionStatus={permissionStatus}
               locationReady={locationReady}
               cameraRef={cameraRef}
+              onMapReady={() => setMapReady(true)}
               onLocateMe={handleLocateMe}
               onWaypointsPress={() => setWaypointSheetOpen(true)}
               onDownloadAreaPress={handleDownloadAreaPress}

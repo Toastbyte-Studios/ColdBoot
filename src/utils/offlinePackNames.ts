@@ -4,6 +4,7 @@ import type { OfflineMapPack } from '../navigation/services/OfflineMapService';
 const PACK_NAME_OVERRIDES_KEY = '@offline/pack_names';
 
 type PackNameOverrides = Record<string, string>;
+let writeQueue: Promise<void> = Promise.resolve();
 
 async function readOverrides(): Promise<PackNameOverrides> {
   try {
@@ -28,6 +29,17 @@ async function writeOverrides(overrides: PackNameOverrides): Promise<void> {
   );
 }
 
+function enqueueWrite(
+  updater: (overrides: PackNameOverrides) => void,
+): Promise<void> {
+  writeQueue = writeQueue.then(async () => {
+    const next = await readOverrides();
+    updater(next);
+    await writeOverrides(next);
+  });
+  return writeQueue;
+}
+
 export function getPackDisplayName(
   pack: Pick<OfflineMapPack, 'id' | 'metadata'>,
   overrides: PackNameOverrides,
@@ -44,35 +56,33 @@ export async function setPackNameOverride(
   name: string,
 ): Promise<void> {
   const trimmed = name.trim();
-  const next = await readOverrides();
-
-  if (!trimmed) {
-    delete next[packId];
-  } else {
-    next[packId] = trimmed;
-  }
-
-  await writeOverrides(next);
+  await enqueueWrite((next) => {
+    if (!trimmed) {
+      delete next[packId];
+    } else {
+      next[packId] = trimmed;
+    }
+  });
 }
 
 export async function clearPackNameOverride(packId: string): Promise<void> {
-  const next = await readOverrides();
-  if (!(packId in next)) {
-    return;
-  }
-  delete next[packId];
-  await writeOverrides(next);
+  await enqueueWrite((next) => {
+    if (!(packId in next)) {
+      return;
+    }
+    delete next[packId];
+  });
 }
 
 export async function transferPackNameOverride(
   fromPackId: string,
   toPackId: string,
 ): Promise<void> {
-  const next = await readOverrides();
-  if (!next[fromPackId]) {
-    return;
-  }
-  next[toPackId] = next[fromPackId];
-  delete next[fromPackId];
-  await writeOverrides(next);
+  await enqueueWrite((next) => {
+    if (!next[fromPackId]) {
+      return;
+    }
+    next[toPackId] = next[fromPackId];
+    delete next[fromPackId];
+  });
 }

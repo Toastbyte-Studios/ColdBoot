@@ -140,6 +140,9 @@ describe('MapLibraryScreen', () => {
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(<MapLibraryScreen />);
     });
+    await ReactTestRenderer.act(async () => {
+      await Promise.resolve();
+    });
 
     const texts = collectText(tree);
 
@@ -154,6 +157,9 @@ describe('MapLibraryScreen', () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(<MapLibraryScreen />);
+    });
+    await ReactTestRenderer.act(async () => {
+      await Promise.resolve();
     });
 
     const texts = collectText(tree);

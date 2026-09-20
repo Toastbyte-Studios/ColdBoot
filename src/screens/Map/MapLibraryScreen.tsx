@@ -1,8 +1,5 @@
-import {
-  NavigationProp,
-  ParamListBase,
-  useNavigation,
-} from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
+import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -29,6 +26,7 @@ import {
 import { boundsFromRadius } from '../../navigation/utils/boundsFromRadius';
 import { formatBytes } from '../../navigation/utils/formatBytes';
 import { useSettingsStore } from '../../stores';
+import { withAlpha } from '../../theme/colorUtils';
 import {
   clearPackNameOverride,
   getPackDisplayName,
@@ -42,6 +40,18 @@ type RenameState = {
   value: string;
   original: string;
 };
+
+type MapLibraryRoutes = {
+  MapScreen:
+    | {
+        center: { latitude: number; longitude: number };
+        radiusMiles: number;
+      }
+    | undefined;
+  DownloadArea: undefined;
+};
+
+type MapLibraryNavigationProp = NativeStackNavigationProp<MapLibraryRoutes>;
 
 function formatDownloadedDate(createdAt: string): string {
   const date = new Date(createdAt);
@@ -112,7 +122,7 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
       flex: 1,
       justifyContent: 'center',
       alignItems: 'center',
-      backgroundColor: 'rgba(0, 0, 0, 0.45)',
+      backgroundColor: withAlpha(COLORS.PRIMARY_DARK, 0.45),
       padding: 20,
     },
     renameCard: {
@@ -147,7 +157,7 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
 }
 
 function MapLibraryScreen() {
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  const navigation = useNavigation<MapLibraryNavigationProp>();
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const settingsStore = useSettingsStore();
@@ -257,7 +267,6 @@ function MapLibraryScreen() {
     async (pack: OfflineMapPack) => {
       setBusyPackId(pack.id);
       try {
-        const displayName = getPackDisplayName(pack, packNameOverrides);
         const { centerLng, centerLat, radiusMiles } = pack.metadata;
         const bounds = boundsFromRadius(
           { longitude: centerLng, latitude: centerLat },
@@ -271,7 +280,6 @@ function MapLibraryScreen() {
           bounds,
           metadata: {
             ...pack.metadata,
-            name: displayName,
             createdAt: new Date().toISOString(),
           },
           zoomRange,
@@ -290,7 +298,7 @@ function MapLibraryScreen() {
         setBusyPackId(null);
       }
     },
-    [loadData, packNameOverrides, settingsStore.highDetailOffline],
+    [loadData, settingsStore.highDetailOffline],
   );
 
   const confirmRefresh = useCallback(
@@ -332,14 +340,24 @@ function MapLibraryScreen() {
     }
 
     const trimmed = renameState.value.trim();
-    const nextName = trimmed || renameState.original;
-
-    await setPackNameOverride(renameState.packId, nextName);
-    setPackNameOverrides((prev) => ({
-      ...prev,
-      [renameState.packId]: nextName,
-    }));
-    setRenameState(null);
+    if (!trimmed || trimmed === renameState.original) {
+      setRenameState(null);
+      return;
+    }
+    try {
+      await setPackNameOverride(renameState.packId, trimmed);
+      setPackNameOverrides((prev) => ({
+        ...prev,
+        [renameState.packId]: trimmed,
+      }));
+      setRenameState(null);
+    } catch (error) {
+      console.error('Failed to rename offline pack:', error);
+      Alert.alert(
+        'Rename Failed',
+        'Could not rename this map. Please try again.',
+      );
+    }
   }, [renameState]);
 
   return (
@@ -363,7 +381,7 @@ function MapLibraryScreen() {
             <AppButton
               label="Download your area"
               icon="download-outline"
-              onPress={() => navigation.navigate('MapScreen')}
+              onPress={() => navigation.navigate('DownloadArea')}
             />
           </View>
         ) : (
@@ -452,6 +470,9 @@ function MapLibraryScreen() {
               style={styles.renameInput}
               maxLength={40}
               autoFocus
+              accessibilityLabel="Offline area name"
+              placeholder="Area name"
+              placeholderTextColor={COLORS.MUTED}
             />
             <View style={styles.renameActions}>
               <AppButton
