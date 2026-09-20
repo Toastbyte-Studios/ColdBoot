@@ -7,11 +7,9 @@ import {
   UserLocation,
   type CameraRef,
 } from '@maplibre/maplibre-react-native';
-import React, { useMemo, useRef, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Animated,
-  Easing,
   StyleSheet,
   Text,
   TextInput,
@@ -19,11 +17,8 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../components/AppButton';
-import IconButton from '../../../components/IconButton';
-import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
-import DownloadAreaButton from './offline/DownloadAreaButton';
 import { formatDistance } from './WaypointBottomSheet/waypointGeometry';
 import type { MeasurementSystem } from '../../../stores/SettingsStore';
 
@@ -55,12 +50,11 @@ type LatLng = { latitude: number; longitude: number };
 
 type Props = {
   permissionStatus: LocationPermissionStatus;
+  /** Centres the map once tiles finish loading; the control itself lives on MapScreen. */
+  onLocateMe: () => void;
   locationReady: boolean;
   cameraRef: React.RefObject<CameraRef | null>;
-  onLocateMe: () => void;
   onMapReady?: () => void;
-  onWaypointsPress: () => void;
-  onDownloadAreaPress: () => void;
   onLongPressMap?: (coordinate: {
     latitude: number;
     longitude: number;
@@ -68,7 +62,6 @@ type Props = {
   waypoints?: Waypoint[];
   activeWaypointId?: string | null;
   recordingState?: RecordingState;
-  onRecordPress?: () => void;
   recordingPolylineCoords?: LatLng[];
   viewedTrackCoords?: LatLng[];
   recordingElapsed?: number;
@@ -91,17 +84,14 @@ function formatElapsed(seconds: number): string {
 
 export default function MapPanel({
   permissionStatus,
+  onLocateMe,
   locationReady,
   cameraRef,
-  onLocateMe,
   onMapReady,
-  onWaypointsPress,
-  onDownloadAreaPress,
   onLongPressMap,
   waypoints = [],
   activeWaypointId = null,
   recordingState = 'idle',
-  onRecordPress,
   recordingPolylineCoords = [],
   viewedTrackCoords = [],
   recordingElapsed = 0,
@@ -112,34 +102,6 @@ export default function MapPanel({
 }: Props) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
-
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-  const pulseRef = useRef<Animated.CompositeAnimation | null>(null);
-
-  React.useEffect(() => {
-    if (recordingState === 'recording') {
-      pulseRef.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.4,
-            duration: 600,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 600,
-            easing: Easing.inOut(Easing.ease),
-            useNativeDriver: true,
-          }),
-        ]),
-      );
-      pulseRef.current.start();
-    } else {
-      pulseRef.current?.stop();
-      pulseAnim.setValue(1);
-    }
-  }, [recordingState, pulseAnim]);
 
   const [saveName, setSaveName] = useState('');
 
@@ -322,71 +284,6 @@ export default function MapPanel({
               />
             </View>
           )}
-
-          {permissionStatus === 'granted' && (
-            <>
-              <IconButton
-                name="flag"
-                size={22}
-                color={COLORS.PRIMARY_LIGHT}
-                accessibilityLabel="Open waypoints"
-                onPress={onWaypointsPress}
-                style={styles.waypointsButton}
-              />
-
-              {/* Not an IconButton: only the glyph pulses while recording, not
-                  the whole circle, so the animation has to wrap the icon
-                  rather than the pressable. */}
-              <Touchable
-                style={[
-                  styles.recordButton,
-                  recordingState === 'recording' && styles.recordButtonActive,
-                  recordingState === 'stopped' && styles.recordButtonDisabled,
-                ]}
-                rippleColor={COLORS.PRIMARY_LIGHT}
-                onPress={
-                  recordingState !== 'stopped' ? onRecordPress : undefined
-                }
-                disabled={recordingState === 'stopped'}
-                accessibilityLabel={
-                  recordingState === 'recording'
-                    ? 'Stop recording'
-                    : 'Start recording'
-                }
-                accessibilityRole="button"
-              >
-                <Animated.View
-                  style={
-                    recordingState === 'recording'
-                      ? { opacity: pulseAnim }
-                      : undefined
-                  }
-                >
-                  <Icon
-                    name={recordingState === 'recording' ? 'square' : 'ellipse'}
-                    size={20}
-                    color={COLORS.PRIMARY_LIGHT}
-                  />
-                </Animated.View>
-              </Touchable>
-
-              <IconButton
-                name="locate"
-                size={24}
-                color={COLORS.PRIMARY_LIGHT}
-                accessibilityLabel="Center map on my location"
-                onPress={onLocateMe}
-                style={styles.locateMeButton}
-              />
-            </>
-          )}
-
-          {/* Download area button — shown regardless of recording state;
-              disabled when permission is not granted */}
-          <DownloadAreaButton
-            onPress={onDownloadAreaPress}
-            permissionGranted={permissionStatus === 'granted'}
-          />
         </>
       )}
     </View>
@@ -469,60 +366,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       fontSize: 13,
       color: colors.PRIMARY_DARK,
       paddingVertical: 4,
-    },
-    locateMeButton: {
-      position: 'absolute',
-      bottom: 24,
-      right: 16,
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 4,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    recordButton: {
-      position: 'absolute',
-      bottom: 24,
-      alignSelf: 'center',
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 4,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      backgroundColor: colors.SECONDARY_ACCENT,
-    },
-    recordButtonActive: {
-      backgroundColor: colors.ERROR,
-    },
-    recordButtonDisabled: {
-      opacity: 0.4,
-    },
-    waypointsButton: {
-      position: 'absolute',
-      bottom: 24,
-      left: 16,
-      width: 48,
-      height: 48,
-      borderRadius: 24,
-      justifyContent: 'center',
-      alignItems: 'center',
-      elevation: 4,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.25,
-      shadowRadius: 4,
-      backgroundColor: colors.SECONDARY_ACCENT,
     },
     markerDot: {
       width: 16,
