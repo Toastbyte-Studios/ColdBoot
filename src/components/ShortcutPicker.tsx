@@ -3,6 +3,7 @@ import { Modal, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../hooks/useTheme';
 import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
+import { withAlpha } from '../theme/colorUtils';
 import { ToolWithModule, ALL_TOOLS } from '../utils/tools';
 import GroupContainer from './GroupContainer';
 import IconButton from './IconButton';
@@ -56,7 +57,12 @@ export default function ShortcutPicker({
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          { backgroundColor: withAlpha(COLORS.PRIMARY_DARK, 0.28) },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
@@ -140,7 +146,6 @@ const hairline =
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(29, 31, 32, 0.28)',
     justifyContent: 'flex-end',
   },
   sheet: {

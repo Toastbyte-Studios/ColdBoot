@@ -70,13 +70,17 @@ describe('ShortcutBar', () => {
   });
 
   function render() {
+    return renderWithProps(false);
+  }
+
+  function renderWithProps(alertsActive: boolean) {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     ReactTestRenderer.act(() => {
       tree = ReactTestRenderer.create(
         <ShortcutBar
           onAlertsPress={mockOnAlertsPress}
           onAlertsClose={mockOnAlertsClose}
-          alertsActive={false}
+          alertsActive={alertsActive}
         />,
       );
     });
@@ -137,5 +141,19 @@ describe('ShortcutBar', () => {
 
     expect(mockSetFlashlightMode).toHaveBeenCalledWith('on');
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it('marks Alerts as active while the alerts sheet is open', () => {
+    mockCurrentRouteName = 'MapScreen';
+    const tree = renderWithProps(true);
+
+    expect(
+      tree.root.findByProps({ accessibilityLabel: 'Alerts, 3 notifications' })
+        .props.accessibilityState,
+    ).toEqual({ selected: true });
+    expect(
+      tree.root.findByProps({ accessibilityLabel: 'Map' }).props
+        .accessibilityState,
+    ).toEqual({ selected: false });
   });
 });
