@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 
 /**
- * Height of the bottom tab bar, excluding the safe-area inset beneath it.
+ * Height of the bottom shortcut bar, excluding the safe-area inset beneath it.
  *
  * Screens add this as bottom padding so content scrolls clear of the bar.
  * Prefer `useFooterClearance()` in new code: it adds the device's bottom

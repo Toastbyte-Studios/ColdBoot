@@ -31,7 +31,6 @@ import FlashlightScreen from '../screens/Flashlight/FlashlightScreen';
 import NightvisionScreen from '../screens/Flashlight/NightvisionScreen';
 import GridReferenceScreen from '../screens/GridReference/GridReferenceScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
-import ModulesScreen from '../screens/HomeScreen/ModulesScreen';
 import EditInventoryItemScreen from '../screens/Inventory/EditInventoryItemScreen';
 import InventoryAllItemsScreen from '../screens/Inventory/InventoryAllItemsScreen';
 import InventoryCategoryScreen from '../screens/Inventory/InventoryCategoryScreen';
@@ -130,8 +129,6 @@ function NavigatorContent(): JSX.Element {
           }}
         >
           <Stack.Screen name="Home" component={HomeScreen} />
-          {/* Modules tab target — the full module list on its own screen. */}
-          <Stack.Screen name="Modules" component={ModulesScreen} />
           {/* Modules */}
           <Stack.Screen name="CoreModule" component={CoreModule} />
           <Stack.Screen name="NavigationModule" component={NavigationModule} />

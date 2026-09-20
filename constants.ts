@@ -134,6 +134,7 @@ export const COMMUNICATION_TOOLS: ToolType[] = [
   },
   {
     name: 'Radio Frequency References',
+    shortName: 'Radio',
     screen: 'RadioFrequencies',
     icon: 'cellular-outline',
     id: 'comm_radio_frequency',
@@ -152,6 +153,7 @@ export const COMMUNICATION_TOOLS: ToolType[] = [
   },
   {
     name: 'Ground-to-Air Signals',
+    shortName: 'Signals',
     screen: 'GroundToAirSignals',
     icon: 'navigate-outline',
     id: 'comm_ground_to_air',
@@ -167,12 +169,14 @@ export const NAVIGATION_TOOLS: ToolType[] = [
   },
   {
     name: 'Star Map & Celestial Navigation',
+    shortName: 'Star Map',
     screen: 'StarMap',
     icon: 'star-outline',
     id: 'nav_star_map',
   },
   {
     name: 'Grid Reference Converter',
+    shortName: 'Grid Ref',
     screen: 'GridReference',
     icon: 'grid-outline',
     id: 'nav_grid_reference',

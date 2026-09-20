@@ -4,115 +4,127 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import { FlashlightModes } from '../../constants';
 import { useVisibleNotificationCount } from '../hooks/useAllNotifications';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
 import { navigationRef } from '../navigation/navigationRef';
+import { useSettingsStore, useSignalingStore } from '../stores';
+import { DEFAULT_SHORTCUTS, resolveShortcutIds } from '../stores/SettingsStore';
 import { FOOTER_HEIGHT } from '../theme';
 import { onColor } from '../theme/colorUtils';
+import { getToolById } from '../utils/tools';
 import { Text } from './ScaledText';
 
-type TabKey = 'home' | 'modules' | 'alerts';
+type ShortcutKey = 'shortcut-0' | 'shortcut-1' | 'shortcut-2' | 'alerts';
 
-type TabDefinition = {
-  key: TabKey;
+type ShortcutDefinition = {
+  key: ShortcutKey;
   label: string;
   icon: string;
-  /** Route this destination selects. Alerts opens a sheet instead, so it has none. */
   route?: string;
+  toolId?: string;
 };
 
-const TABS: TabDefinition[] = [
-  { key: 'home', label: 'Home', icon: 'home-outline', route: 'Home' },
-  { key: 'modules', label: 'Modules', icon: 'grid-outline', route: 'Modules' },
-  { key: 'alerts', label: 'Alerts', icon: 'notifications-outline' },
+const SHORTCUT_KEYS: Array<Exclude<ShortcutKey, 'alerts'>> = [
+  'shortcut-0',
+  'shortcut-1',
+  'shortcut-2',
 ];
 
-/** The active indicator: a 64×32dp pill behind the selected destination's icon. */
 const PILL = { width: 64, height: 32 };
-
-/** M3 `emphasized` easing, as a cubic-bezier RN can build. */
 const EMPHASIZED = Easing.bezier(0.2, 0, 0, 1);
 const PILL_DURATION_MS = 150;
 
 type Props = {
-  /** Opens the alerts sheet. Owned by the host so the sheet outlives tab changes. */
   onAlertsPress: () => void;
-  /** Closes the alerts sheet when another destination is selected. */
   onAlertsClose: () => void;
-  /** Whether the alerts sheet is currently open. */
   alertsActive: boolean;
 };
 
-/**
- * The Material 3 navigation bar.
- *
- * One structural difference from the iOS tab bar, beyond the obvious paint:
- *
- * - **The pill, not a tint.** Material marks the active destination with a
- *   tonal indicator behind its icon and leaves the label alone; iOS tints both
- *   and draws nothing. The pill grows in rather than sliding, because the
- *   destinations are not a continuum.
- *
- * The bar is opaque. Material does not blur this surface, and the app is
- * offline-first, so nothing is gained by pretending there is depth here.
- */
-const TabBar = observer(
+const ShortcutBar = observer(
   ({ onAlertsPress, onAlertsClose, alertsActive }: Props) => {
     const COLORS = useTheme();
     const insets = useSafeAreaInsets();
     const rippleColor = useRippleColor();
     const navigation = useNavigation<{ navigate: (route: string) => void }>();
     const notificationCount = useVisibleNotificationCount();
-
-    // The active route comes from the container ref rather than
-    // `useNavigationState`. The bar is rendered by AppShell, which wraps the
-    // navigator instead of sitting inside it — `useNavigationState` requires a
-    // navigator above it and throws here, while the container ref is reachable
-    // from anywhere under NavigationContainer.
-    const [routeStack, setRouteStack] = useState<string[]>(() =>
+    const settingsStore = useSettingsStore();
+    const signalingStore = useSignalingStore();
+    const [currentRoute, setCurrentRoute] = useState<string | undefined>(() =>
       navigationRef.isReady()
-        ? (navigationRef.getRootState()?.routes.map((route) => route.name) ??
-          [])
-        : [],
+        ? navigationRef.getCurrentRoute()?.name
+        : undefined,
     );
 
     useEffect(() => {
-      const syncRouteStack = () => {
-        if (!navigationRef.isReady()) {
-          setRouteStack([]);
-          return;
-        }
-        setRouteStack(
-          navigationRef.getRootState()?.routes.map((route) => route.name) ?? [],
+      const syncCurrentRoute = () => {
+        setCurrentRoute(
+          navigationRef.isReady()
+            ? navigationRef.getCurrentRoute()?.name
+            : undefined,
         );
       };
 
-      // The container may not be ready on the first render; sync once now to
-      // catch the case where it already is.
-      syncRouteStack();
-      return navigationRef.addListener('state', syncRouteStack);
+      syncCurrentRoute();
+      return navigationRef.addListener('state', syncCurrentRoute);
     }, []);
 
-    const lastTabRoute = [...routeStack]
-      .reverse()
-      .find((route) => route === 'Home' || route === 'Modules');
-    const activeKey: TabKey | undefined = alertsActive
-      ? 'alerts'
-      : lastTabRoute === 'Home'
-        ? 'home'
-        : lastTabRoute === 'Modules'
-          ? 'modules'
-          : undefined;
+    const shortcuts = resolveShortcutIds(settingsStore.shortcuts).map(
+      (toolId, index) => {
+        const tool =
+          getToolById(toolId) ??
+          getToolById(DEFAULT_SHORTCUTS[index]) ??
+          getToolById(DEFAULT_SHORTCUTS[0]);
 
-    const handlePress = (tab: TabDefinition) => {
-      if (tab.key === 'alerts') {
+        if (!tool) {
+          return {
+            key: SHORTCUT_KEYS[index],
+            label: 'Shortcut',
+            icon: 'construct-outline',
+          };
+        }
+
+        return {
+          key: SHORTCUT_KEYS[index],
+          label: tool.shortName ?? tool.name,
+          icon: tool.icon,
+          route: tool.screen,
+          toolId: tool.id,
+        };
+      },
+    );
+
+    const items: ShortcutDefinition[] = [
+      ...shortcuts,
+      {
+        key: 'alerts',
+        label: 'Alerts',
+        icon: 'notifications-outline',
+      },
+    ];
+
+    const activeKey: ShortcutKey | undefined = alertsActive
+      ? 'alerts'
+      : items.find((item) => item.route === currentRoute)?.key;
+
+    const toggleFlashlight = () => {
+      signalingStore.setFlashlightMode(
+        signalingStore.flashlightMode === FlashlightModes.OFF
+          ? FlashlightModes.ON
+          : FlashlightModes.OFF,
+      );
+    };
+
+    const handlePress = (item: ShortcutDefinition) => {
+      if (item.key === 'alerts') {
         onAlertsPress();
         return;
       }
+
       onAlertsClose();
-      if (tab.route) {
-        navigation.navigate(tab.route);
+      if (item.route) {
+        navigation.navigate(item.route);
       }
     };
 
@@ -127,14 +139,19 @@ const TabBar = observer(
           },
         ]}
       >
-        {TABS.map((tab) => (
+        {items.map((item) => (
           <Destination
-            key={tab.key}
-            tab={tab}
-            isActive={activeKey === tab.key}
+            key={item.key}
+            icon={item.icon}
+            isAlerts={item.key === 'alerts'}
+            isActive={activeKey === item.key}
+            label={item.label}
             notificationCount={notificationCount}
+            onPress={() => handlePress(item)}
+            onLongPress={
+              item.toolId === 'core_flashlight' ? toggleFlashlight : undefined
+            }
             rippleColor={rippleColor}
-            onPress={() => handlePress(tab)}
           />
         ))}
       </View>
@@ -143,23 +160,28 @@ const TabBar = observer(
 );
 
 function Destination({
-  tab,
+  icon,
+  isAlerts,
   isActive,
+  label,
   notificationCount,
-  rippleColor,
   onPress,
+  onLongPress,
+  rippleColor,
 }: {
-  tab: TabDefinition;
+  icon: string;
+  isAlerts: boolean;
   isActive: boolean;
+  label: string;
   notificationCount: number;
-  rippleColor: string;
   onPress: () => void;
+  onLongPress?: () => void;
+  rippleColor: string;
 }) {
   const COLORS = useTheme();
   const progress = useRef(new Animated.Value(isActive ? 1 : 0)).current;
-  // The bar is rendered with its destination already selected; only a later
-  // change is a transition.
   const isMounting = useRef(true);
+  const skipNextPress = useRef(false);
 
   useEffect(() => {
     if (isMounting.current) {
@@ -171,7 +193,6 @@ function Destination({
       toValue: isActive ? 1 : 0,
       duration: PILL_DURATION_MS,
       easing: EMPHASIZED,
-      // Animates width, which the native driver cannot drive.
       useNativeDriver: false,
     });
     animation.start();
@@ -184,20 +205,47 @@ function Destination({
   });
 
   const tint = isActive ? COLORS.ON_SECONDARY_CONTAINER : COLORS.MUTED;
-  const showBadge = tab.key === 'alerts' && notificationCount > 0;
+  const showBadge = isAlerts && notificationCount > 0;
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={() => {
+        if (skipNextPress.current) {
+          skipNextPress.current = false;
+          return;
+        }
+        onPress();
+      }}
+      onLongPress={
+        onLongPress
+          ? () => {
+              skipNextPress.current = true;
+              onLongPress();
+            }
+          : undefined
+      }
       accessibilityRole="tab"
       accessibilityState={{ selected: isActive }}
       accessibilityLabel={
         showBadge
-          ? `${tab.label}, ${notificationCount} notification${
+          ? `${label}, ${notificationCount} notification${
               notificationCount === 1 ? '' : 's'
             }`
-          : tab.label
+          : label
       }
+      accessibilityHint={
+        onLongPress
+          ? 'Double tap and hold to toggle the light without opening Flashlight.'
+          : undefined
+      }
+      accessibilityActions={
+        onLongPress ? [{ name: 'longpress', label: 'Toggle light' }] : undefined
+      }
+      onAccessibilityAction={(event) => {
+        if (event.nativeEvent.actionName === 'longpress') {
+          onLongPress?.();
+        }
+      }}
       android_ripple={{ color: rippleColor, borderless: true }}
       style={styles.destination}
     >
@@ -212,7 +260,7 @@ function Destination({
             },
           ]}
         />
-        <Ionicons name={tab.icon} size={24} color={tint} />
+        <Ionicons name={icon} size={24} color={tint} />
         {showBadge ? (
           <View style={[styles.badge, { backgroundColor: COLORS.ACCENT }]}>
             <Text style={[styles.badgeText, { color: onColor(COLORS.ACCENT) }]}>
@@ -223,19 +271,20 @@ function Destination({
       </View>
 
       <Text
+        numberOfLines={1}
         style={[
           styles.label,
           isActive ? styles.labelActive : styles.labelInactive,
           { color: tint },
         ]}
       >
-        {tab.label}
+        {label}
       </Text>
     </Pressable>
   );
 }
 
-export default TabBar;
+export default ShortcutBar;
 
 const styles = StyleSheet.create({
   bar: {
@@ -252,6 +301,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     justifyContent: 'flex-start',
+    minWidth: 0,
   },
   iconCell: {
     width: PILL.width,

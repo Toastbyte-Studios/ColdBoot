@@ -80,6 +80,7 @@ const SAMPLE_BACKUP: BackupData = {
       themeMode: 'dark',
       noteSortOrder: 'newest-oldest',
       measurementSystem: 'metric',
+      shortcuts: ['core_flashlight', 'nav_map', 'core_voice_log'],
     },
     waypoints: [
       {
@@ -215,6 +216,24 @@ describe('BackupService', () => {
       expect(legacyBackup.data.rallyPoints).toEqual([]);
       expect(legacyBackup.data.communicationPlan).toBeNull();
       expect(legacyBackup.data.customRepeaters).toEqual([]);
+    });
+
+    it('should accept a backup without shortcuts in settings', () => {
+      const legacySettings = {
+        ...SAMPLE_BACKUP,
+        data: {
+          ...SAMPLE_BACKUP.data,
+          settings: {
+            ...SAMPLE_BACKUP.data.settings,
+          },
+        },
+      };
+
+      delete (legacySettings.data.settings as { shortcuts?: string[] })
+        .shortcuts;
+
+      expect(validateBackup(legacySettings)).toBe(true);
+      expect(legacySettings.data.settings.shortcuts).toBeUndefined();
     });
 
     it('should return false when backupDate is missing', () => {
@@ -375,6 +394,11 @@ describe('BackupService', () => {
       expect(backup.data.customRepeaters).toHaveLength(1);
       expect(backup.data.settings.fontSize).toBe('medium');
       expect(backup.data.settings.measurementSystem).toBe('metric');
+      expect(backup.data.settings.shortcuts).toEqual([
+        'core_flashlight',
+        'nav_map',
+        'core_voice_log',
+      ]);
     });
   });
 });

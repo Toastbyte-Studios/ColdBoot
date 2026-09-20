@@ -146,7 +146,7 @@ export const HelpModal = ({
         Platform.OS === 'android'
           ? "Use your phone's back gesture or button to return to the previous screen."
           : 'Swipe left or right to navigate between screens.'
-      } Tap on any tool to open it. Use the settings button (top right) to customize your experience.`,
+      } Tap on any tool to open it. Use the shortcut bar for your most-used tools and Alerts, and change those shortcuts in Settings.`,
     },
     {
       id: 'privacy',
