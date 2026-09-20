@@ -85,6 +85,27 @@ jest.mock('../src/components/AppButton', () => {
   );
 });
 
+jest.mock('../src/components/IconButton', () => {
+  const { Text: MockText, TouchableOpacity } = require('react-native');
+  return ({
+    accessibilityLabel,
+    onPress,
+    disabled,
+  }: {
+    accessibilityLabel: string;
+    onPress?: () => void;
+    disabled?: boolean;
+  }) => (
+    <TouchableOpacity
+      onPress={onPress}
+      disabled={disabled}
+      testID={`icon-button-${accessibilityLabel}`}
+    >
+      <MockText>{accessibilityLabel}</MockText>
+    </TouchableOpacity>
+  );
+});
+
 jest.mock('../src/navigation/services/OfflineMapService', () => ({
   ...jest.requireActual('../src/navigation/services/OfflineMapService'),
   OfflineMapService: {
@@ -250,9 +271,11 @@ describe('MapLibraryScreen', () => {
       await Promise.resolve();
     });
 
-    const refreshButton = tree.root.findByProps({
-      testID: 'app-button-Refresh',
-    });
+    const refreshButton = tree.root.find(
+      (node) =>
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('icon-button-Refresh '),
+    );
     await ReactTestRenderer.act(async () => {
       refreshButton.props.onPress();
       await Promise.resolve();
@@ -298,9 +321,11 @@ describe('MapLibraryScreen', () => {
       await Promise.resolve();
     });
 
-    const refreshButton = tree.root.findByProps({
-      testID: 'app-button-Refresh',
-    });
+    const refreshButton = tree.root.find(
+      (node) =>
+        typeof node.props.testID === 'string' &&
+        node.props.testID.startsWith('icon-button-Refresh '),
+    );
     await ReactTestRenderer.act(async () => {
       refreshButton.props.onPress();
       await Promise.resolve();
