@@ -35,26 +35,32 @@
 		<key>NSAllowsLocalNetworking</key>
 		<true/>
 	</dict>
-	<key>NSMotionUsageDescription</key>
-	<string>We use the barometer sensor to read atmospheric pressure for weather and altitude awareness.</string>
-	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We use your location to show the last GPS fix on the Device Status screen.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app uses the camera to take photos for your notes and for the flashlight.</string>
+	<key>NSContactsUsageDescription</key>
+	<string>Cold Boot uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Cold Boot needs background location access to continue recording your GPS trail when the screen is locked or the app is backgrounded.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>We use your location to show the last GPS fix on the Device Status screen.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>We need microphone access to record voice logs for emergency documentation.</string>
+	<key>NSMotionUsageDescription</key>
+	<string>We use the barometer sensor to read atmospheric pressure for weather and altitude awareness.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs access to your photo library to attach photos to your notes.</string>
+	<key>RCTNewArchEnabled</key>
+	<true/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Ionicons.ttf</string>
+		<string>Bitter-Regular.ttf</string>
+		<string>Bitter-Bold.ttf</string>
+	</array>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>location</string>
 	</array>
-	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to take photos for your notes and for the flashlight.</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs access to your photo library to attach photos to your notes.</string>
-	<key>NSContactsUsageDescription</key>
-	<string>Cold Boot uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
-	<key>NSMicrophoneUsageDescription</key>
-	<string>We need microphone access to record voice logs for emergency documentation.</string>
-	<key>RCTNewArchEnabled</key>
-	<true/>
 	<key>UILaunchStoryboardName</key>
 	<string>BootSplash</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -67,11 +73,5 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
-	<key>UIAppFonts</key>
-	<array>
-		<string>Ionicons.ttf</string>
-		<string>Bitter-Regular.ttf</string>
-		<string>Bitter-Bold.ttf</string>
-	</array>
 </dict>
 </plist>
