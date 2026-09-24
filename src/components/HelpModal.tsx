@@ -18,6 +18,8 @@ import AppButton from './AppButton';
 import IconButton from './IconButton';
 import Touchable from './Touchable';
 
+const isAndroid = Platform.OS === 'android';
+
 interface HelpModalProps {
   visible: boolean;
   onClose: () => void;
@@ -112,7 +114,7 @@ function buildHelpGroups(): HelpGroup[] {
           // Screen-to-screen swiping is iOS only: on Android the edge drag
           // belongs to the system back gesture (see AppShell).
           content: `Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. ${
-            Platform.OS === 'android'
+            isAndroid
               ? "Use your phone's back gesture or button to return to the previous screen."
               : 'Swipe left or right to navigate between screens.'
           } Tap on any tool to open it. Use the shortcut bar for your most-used tools and Alerts, and change those shortcuts in Settings.`,
@@ -159,11 +161,11 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
     mutedText: { color: COLORS.MUTED },
     linkText: { color: COLORS.BRAND },
     sheetThemed: {
-      backgroundColor: isAndroid() ? COLORS.SURFACE_CONTAINER : COLORS.SURFACE,
+      backgroundColor: isAndroid ? COLORS.SURFACE_CONTAINER : COLORS.SURFACE,
       borderTopColor: COLORS.BORDER,
     },
     grabber: {
-      backgroundColor: isAndroid() ? COLORS.MUTED : COLORS.BORDER,
+      backgroundColor: isAndroid ? COLORS.MUTED : COLORS.BORDER,
     },
     groupThemed: {
       backgroundColor: COLORS.BACKGROUND,
@@ -175,12 +177,6 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
   });
 }
 
-// Read at render time rather than import time: the tutorial tests switch
-// Platform.OS between renders.
-function isAndroid() {
-  return Platform.OS === 'android';
-}
-
 export const HelpModal = ({
   visible,
   onClose,
@@ -189,7 +185,7 @@ export const HelpModal = ({
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
   const t = useMemo(() => makeStyles(COLORS), [COLORS]);
-  const groups = useMemo(buildHelpGroups, []);
+  const groups = useMemo(() => buildHelpGroups(), []);
   const [expandedSection, setExpandedSection] = useState<HelpSection | null>(
     null,
   );
@@ -270,9 +266,7 @@ export const HelpModal = ({
                     return (
                       <React.Fragment key={topic.id}>
                         {index > 0 ? (
-                          <View
-                            style={[styles.separator, t.separatorThemed]}
-                          />
+                          <View style={[styles.separator, t.separatorThemed]} />
                         ) : null}
                         <Touchable
                           style={styles.row}
