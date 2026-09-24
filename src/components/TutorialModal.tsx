@@ -63,8 +63,9 @@ const TUTORIAL_STEPS: TutorialStep[] = [
   {
     icon: 'layers-outline',
     title: 'Modules Overview',
+    // Keep in step with MODULES in constants.ts.
     description:
-      'ColdBoot is organized into modules like Reference, Tools, and Prepper.',
+      'ColdBoot is organized into six modules: Core, Navigation, Reference, Comms, Prepper, and Earth.',
   },
   {
     icon: 'checkmark-circle-outline',

@@ -92,9 +92,15 @@ function splitLinks(text: string): TextPart[] {
   return parts;
 }
 
-// NOTE: Placeholder rebrand copy. Awaiting final wording from creative.
-// The privacy and terms URLs point at /coldboot/ paths that do not exist
-// yet — they must be live before release or these links will 404.
+// Keep Privacy in step with what the app actually does. It lists every
+// permission in ios/ColdBoot/Info.plist and every outside service the app
+// calls: OpenFreeMap (map tiles), OpenStreetMap Nominatim (place names),
+// Open-Meteo (Seasonal Outlook, rounded to about 11 km in
+// weatherOutlookService) and RepeaterBook (by US state only). Adding a
+// permission or a network call means updating that section too.
+//
+// The privacy and terms URLs point at /coldboot/ pages that must be live
+// before release, or these links will 404.
 function buildHelpGroups(): HelpGroup[] {
   return [
     {
@@ -104,8 +110,10 @@ function buildHelpGroups(): HelpGroup[] {
           id: 'what',
           title: 'What is ColdBoot',
           icon: 'information-circle-outline',
-          content:
-            'ColdBoot is an offline-first toolkit for preparedness. A cold boot starts from nothing — no network, no account, no prior state — which is exactly how this app is built to work. Every tool, reference and calculator runs entirely on your device.',
+          content: [
+            'ColdBoot is an offline-first preparedness toolkit. A cold boot starts from nothing — no network, no account, no prior state — and that is how the app is built to work.',
+            "There's no sign-up, and everything you create stays on your device. Nearly every tool works with no signal at all. The few features that go online, like maps and the seasonal outlook, keep a copy of what they download so it's still there when you're off the grid.",
+          ].join('\n\n'),
         },
         {
           id: 'how',
@@ -113,11 +121,11 @@ function buildHelpGroups(): HelpGroup[] {
           icon: 'compass-outline',
           // Screen-to-screen swiping is iOS only: on Android the edge drag
           // belongs to the system back gesture (see AppShell).
-          content: `Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. ${
+          content: `Pick a module on the home screen — Core, Navigation, Reference, Comms, Prepper or Earth — then tap a tool to open it. Tap the ColdBoot logo to return home, or use the search button in the header to find any tool or reference. ${
             isAndroid
               ? "Use your phone's back gesture or button to return to the previous screen."
               : 'Swipe left or right to navigate between screens.'
-          } Tap on any tool to open it. Use the shortcut bar for your most-used tools and Alerts, and change those shortcuts in Settings.`,
+          }\n\nThe shortcut bar at the bottom keeps three of your most-used tools and Alerts one tap away. Change which tools it shows in Settings, where you'll also find offline maps, backup and restore, and this help.`,
         },
       ],
     },
@@ -128,15 +136,28 @@ function buildHelpGroups(): HelpGroup[] {
           id: 'privacy',
           title: 'Privacy Policy',
           icon: 'shield-checkmark-outline',
-          content:
-            "Your privacy is important to us. ColdBoot operates primarily offline and does not collect or transmit personal data without your explicit consent...which we don't ask for because we don't need it. Any data stored is kept locally on your device. For more details, please contact us at info@toastbyte.studio or visit our website: https://toastbyte.studio/coldboot/privacy.",
+          content: [
+            'ColdBoot has no accounts, ads, analytics or tracking. Toastbyte Studios does not collect, receive or sell your personal data.',
+            'Your notes, checklists, inventory, plans, voice logs, GPS trails and settings are stored only on this device. Backups are files you export and keep; we never see them.',
+            'The app asks for a permission only when a feature needs it: location for the map, GPS trails and location-based tools (in the background only while a trail is recording), camera for the flashlight and note photos, photo library for attaching photos to notes, microphone for Voice Log and the Decibel Meter, contacts for adding emergency contacts, and motion sensors for the barometer. You can change these at any time in your device settings.',
+            'A few features contact free public services when you use them, and send only what they need:',
+            '• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Place names: OpenStreetMap Nominatim receives the coordinates being named.\n• Seasonal Outlook: Open-Meteo receives your approximate location, rounded to about 11 km.\n• Nearby repeaters: RepeaterBook receives only your US state.',
+            'Like any website, these services also see your IP address, and they handle requests under their own privacy policies.',
+            'Questions? Email info@toastbyte.studio. Full policy: https://toastbyte.studio/coldboot/privacy.',
+          ].join('\n\n'),
         },
         {
           id: 'terms',
           title: 'Terms of Use',
           icon: 'document-text-outline',
-          content:
-            'By using ColdBoot, you agree to use this application responsibly and in accordance with all applicable laws. This application is provided "as-is" without warranties of any kind. The developers are not liable for any decisions made based on information provided by this app. For complete terms, visit our website: https://toastbyte.studio/coldboot/terms.',
+          content: [
+            'By using ColdBoot you agree to these terms.',
+            'ColdBoot is a reference and planning aid. It is not a substitute for professional medical care, emergency services, or proper navigation and safety training. In an emergency, contact local emergency services first.',
+            'Readings from your device, such as GPS position, compass heading, barometric pressure and sound level, depend on its hardware and can be wrong. Data from outside services, such as maps, seasonal outlooks and repeater listings, can be incomplete or out of date. Check anything critical against another source and use your own judgment.',
+            'You are responsible for using ColdBoot lawfully. Transmitting on many radio frequencies, including amateur repeaters, requires a license.',
+            'ColdBoot is provided as is, without warranties of any kind. To the fullest extent permitted by law, Toastbyte Studios, LLC is not liable for any loss or harm arising from your use of, or reliance on, the app.',
+            'Map data © OpenStreetMap contributors. Full terms: https://toastbyte.studio/coldboot/terms.',
+          ].join('\n\n'),
         },
       ],
     },
@@ -147,8 +168,11 @@ function buildHelpGroups(): HelpGroup[] {
           id: 'contact',
           title: 'Contact',
           icon: 'mail-outline',
-          content:
-            'Have questions, feedback, or need support? Reach out to us at:\n\ninfo@toastbyte.studio\n\nWe welcome your suggestions and are here to help!',
+          content: [
+            'Questions, feedback, bug reports and feature ideas are all welcome:',
+            'info@toastbyte.studio',
+            'For a bug, it helps to include your device model and the app version shown at the bottom of Settings.',
+          ].join('\n\n'),
         },
       ],
     },
