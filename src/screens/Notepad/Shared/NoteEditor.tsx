@@ -1,6 +1,5 @@
-import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState } from 'react';
 import {
   Alert,
   Image,
@@ -15,9 +14,6 @@ import IconButton from '../../../components/IconButton';
 import { Text } from '../../../components/ScaledText';
 import SectionEyebrow from '../../../components/SectionEyebrow';
 import SelectMenu from '../../../components/SelectMenu';
-import SketchCanvas, {
-  SketchCanvasHandle,
-} from '../../../components/SketchCanvas';
 import StackScreen from '../../../components/StackScreen';
 import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
@@ -34,18 +30,9 @@ const isAndroid = Platform.OS === 'android';
  *  view instead of the field shrinking to make room. */
 const TEXT_AREA_HEIGHT = 260;
 
-export type NoteType = 'text' | 'sketch';
-
-const NOTE_TYPE_OPTIONS: { value: NoteType; label: string }[] = [
-  { value: 'text', label: 'Text' },
-  { value: 'sketch', label: 'Sketch' },
-];
-
 export type NoteDraft = {
-  type: NoteType;
   title: string;
-  text?: string;
-  sketchDataUri?: string;
+  text: string;
   category: string;
   photoUris: string[];
 };
@@ -56,18 +43,11 @@ type Props = {
   categories: string[];
   /** The note being edited, if any. Absent means a new note. */
   initial?: {
-    type?: NoteType;
     title?: string;
     text?: string;
-    sketchDataUri?: string;
     category?: string;
     photoUris?: string[];
   };
-  /**
-   * Whether the note's type can still be chosen. A new note picks text or
-   * sketch; an existing one is already one or the other.
-   */
-  allowTypeChange?: boolean;
   /** Receives the draft when the user commits it. */
   onSubmit: (draft: NoteDraft) => Promise<void>;
 };
@@ -75,10 +55,9 @@ type Props = {
 /**
  * The note composer, shared by the New and Edit note screens.
  *
- * Both screens are the same editor over the same fields — category, type,
- * title, photos, and either a body or a sketch — differing only in where the
- * initial values come from and what saving does. They were two near-identical
- * 500-line files; this is the one of them.
+ * Both screens are the same editor over the same fields — category, title,
+ * photos and body — differing only in where the initial values come from and
+ * what saving does.
  *
  * It owns the whole screen, `StackScreen` included, because the save and
  * clear actions live in the title row's trailing slot, where every other
@@ -88,79 +67,29 @@ export default observer(function NoteEditor({
   screenTitle,
   categories,
   initial,
-  allowTypeChange = false,
   onSubmit,
 }: Props) {
   const COLORS = useTheme();
-  const navigation = useNavigation();
-  const sketchCanvasRef = useRef<SketchCanvasHandle>(null);
-  const sketchSaveResolveRef = useRef<((dataUri: string) => void) | null>(null);
 
   const [title, setTitle] = useState(initial?.title ?? '');
   const [text, setText] = useState(initial?.text ?? '');
-  const [sketchDataUri, setSketchDataUri] = useState<string | undefined>(
-    initial?.sketchDataUri,
-  );
-  const [hasDrawn, setHasDrawn] = useState(!!initial?.sketchDataUri);
   const [category, setCategory] = useState(
     initial?.category ?? categories[0] ?? 'General',
   );
-  const [noteType, setNoteType] = useState<NoteType>(initial?.type ?? 'text');
   const [photoUris, setPhotoUris] = useState<string[]>(
     initial?.photoUris ?? [],
   );
 
-  const hasContent: boolean =
-    noteType === 'text'
-      ? text.trim().length > 0
-      : hasDrawn && title.trim().length > 0;
+  const hasContent = text.trim().length > 0;
   const disabledIcon = withAlpha(COLORS.PRIMARY_DARK, 0.3);
-
-  // Disable gesture navigation when in sketch mode, so a stroke that starts
-  // near the screen edge draws rather than popping the screen.
-  useEffect(() => {
-    navigation.setOptions({ gestureEnabled: noteType !== 'sketch' });
-  }, [noteType, navigation]);
 
   const handleSave = async () => {
     try {
-      let sketchData = sketchDataUri;
-
-      // For sketch notes, read the signature first and wait for the callback
-      if (noteType === 'sketch') {
-        sketchData = await new Promise<string>((resolve) => {
-          sketchSaveResolveRef.current = resolve;
-          sketchCanvasRef.current?.readSignature();
-
-          // Fallback timeout in case callback doesn't fire
-          setTimeout(() => {
-            if (sketchSaveResolveRef.current) {
-              sketchSaveResolveRef.current(sketchDataUri || '');
-              sketchSaveResolveRef.current = null;
-            }
-          }, 1000);
-        });
-      }
-
-      await onSubmit({
-        type: noteType,
-        title,
-        category,
-        photoUris,
-        ...(noteType === 'text'
-          ? { text }
-          : { sketchDataUri: sketchData ?? undefined }),
-      });
+      await onSubmit({ title, text, category, photoUris });
     } catch (error) {
       Alert.alert('Error', 'Failed to save note. Please try again.');
       console.error('Failed to save note:', error);
     }
-  };
-
-  const clearSketch = () => {
-    sketchCanvasRef.current?.clearSignature();
-    setSketchDataUri(undefined);
-    setHasDrawn(false);
   };
 
   return (
@@ -170,25 +99,13 @@ export default observer(function NoteEditor({
       keyboardShouldPersistTaps="handled"
       trailing={
         <>
-          {noteType === 'sketch' ? (
-            <IconButton
-              name="arrow-undo-outline"
-              size={22}
-              onPress={() => sketchCanvasRef.current?.undo()}
-              accessibilityLabel="Undo last stroke"
-            />
-          ) : null}
           <IconButton
             name="trash-outline"
             size={22}
-            disabled={noteType === 'text' && !hasContent}
+            disabled={!hasContent}
             disabledColor={disabledIcon}
-            onPress={() =>
-              noteType === 'sketch' ? clearSketch() : setText('')
-            }
-            accessibilityLabel={
-              noteType === 'sketch' ? 'Clear sketch' : 'Clear note'
-            }
+            onPress={() => setText('')}
+            accessibilityLabel="Clear note"
           />
           <IconButton
             name="checkmark-outline"
@@ -231,38 +148,6 @@ export default observer(function NoteEditor({
             </View>
           </SelectMenu>
 
-          {allowTypeChange ? (
-            <SelectMenu
-              title="Note type"
-              options={NOTE_TYPE_OPTIONS}
-              value={noteType}
-              onSelect={setNoteType}
-              accessibilityLabel={`Note type: ${
-                noteType === 'text' ? 'Text' : 'Sketch'
-              }`}
-              style={styles.dropdown}
-            >
-              <View
-                style={[
-                  styles.dropdownHeader,
-                  {
-                    backgroundColor: COLORS.SURFACE_CONTAINER,
-                    borderColor: COLORS.BORDER,
-                  },
-                ]}
-              >
-                <Text style={styles.dropdownHeaderText}>
-                  {noteType === 'text' ? 'Text' : 'Sketch'}
-                </Text>
-                <Icon
-                  name="chevron-down-outline"
-                  size={18}
-                  color={COLORS.MUTED}
-                />
-              </View>
-            </SelectMenu>
-          ) : null}
-
           <IconButton
             name="camera-outline"
             size={22}
@@ -286,9 +171,7 @@ export default observer(function NoteEditor({
               color: COLORS.PRIMARY_DARK,
             },
           ]}
-          placeholder={
-            noteType === 'sketch' ? 'Title (required)' : 'Title (optional)'
-          }
+          placeholder="Title (optional)"
           placeholderTextColor={COLORS.MUTED}
           value={title}
           onChangeText={setTitle}
@@ -340,48 +223,23 @@ export default observer(function NoteEditor({
           </View>
         )}
 
-        <SectionEyebrow inline>
-          {noteType === 'text' ? 'Text' : 'Sketch'}
-        </SectionEyebrow>
-        {noteType === 'text' ? (
-          <TextInput
-            style={[
-              styles.textInput,
-              {
-                backgroundColor: COLORS.SURFACE_CONTAINER,
-                borderColor: COLORS.BORDER,
-                color: COLORS.PRIMARY_DARK,
-              },
-            ]}
-            placeholder="Type your note..."
-            placeholderTextColor={COLORS.MUTED}
-            multiline
-            textAlignVertical="top"
-            value={text}
-            onChangeText={setText}
-            accessibilityLabel="Note text"
-          />
-        ) : (
-          <View style={styles.sketchContainer}>
-            <SketchCanvas
-              ref={sketchCanvasRef}
-              onSketchSave={(dataUri: string) => {
-                setSketchDataUri(dataUri);
-                // If we're waiting for sketch data for save, resolve the promise
-                if (sketchSaveResolveRef.current) {
-                  sketchSaveResolveRef.current(dataUri);
-                  sketchSaveResolveRef.current = null;
-                }
-              }}
-              initialSketch={sketchDataUri}
-              onClear={() => {
-                setSketchDataUri(undefined);
-                setHasDrawn(false);
-              }}
-              onBegin={() => setHasDrawn(true)}
-            />
-          </View>
-        )}
+        <TextInput
+          style={[
+            styles.textInput,
+            {
+              backgroundColor: COLORS.SURFACE_CONTAINER,
+              borderColor: COLORS.BORDER,
+              color: COLORS.PRIMARY_DARK,
+            },
+          ]}
+          placeholder="Type your note..."
+          placeholderTextColor={COLORS.MUTED}
+          multiline
+          textAlignVertical="top"
+          value={text}
+          onChangeText={setText}
+          accessibilityLabel="Note text"
+        />
       </View>
     </StackScreen>
   );
@@ -431,9 +289,6 @@ const styles = StyleSheet.create({
     borderRadius: RADIUS.tileSmall,
     padding: SPACING.sm,
     fontSize: 15,
-  },
-  sketchContainer: {
-    height: 250,
   },
   photos: {
     marginBottom: SPACING.md,

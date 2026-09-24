@@ -60,7 +60,6 @@ export default observer(function EditNoteScreen() {
     await core.updateNoteContent(note.id, {
       title: draft.title,
       text: draft.text,
-      sketchDataUri: draft.sketchDataUri,
       category: draft.category,
       photoUris: draft.photoUris,
     });
@@ -75,13 +74,7 @@ export default observer(function EditNoteScreen() {
       key={note.id}
       screenTitle="Edit Note"
       categories={core.categories}
-      initial={{
-        ...note,
-        // A note's stored type also covers 'voice', which this editor has no
-        // mode for; anything that is not text opens in the sketch mode, as it
-        // did before. Voice logs are read in the Voice Log feature.
-        type: note.type === 'text' ? 'text' : 'sketch',
-      }}
+      initial={note}
       onSubmit={handleSubmit}
     />
   );
