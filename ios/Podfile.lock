@@ -1705,6 +1705,8 @@ PODS:
     - React-Core
   - react-native-torch (1.2.0):
     - React
+  - react-native-webview (13.16.0):
+    - React-Core
   - React-NativeModulesApple (0.84.0):
     - hermes-engine
     - React-callinvoker
@@ -2378,6 +2380,7 @@ DEPENDENCIES:
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-sqlite-storage (from `../node_modules/react-native-sqlite-storage`)
   - react-native-torch (from `../node_modules/react-native-torch`)
+  - react-native-webview (from `../node_modules/react-native-webview`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -2535,6 +2538,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-sqlite-storage"
   react-native-torch:
     :path: "../node_modules/react-native-torch"
+  react-native-webview:
+    :path: "../node_modules/react-native-webview"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -2683,6 +2688,7 @@ SPEC CHECKSUMS:
   react-native-slider: d535cb9791fe29bd2cd70c0c3556545aba3c1f55
   react-native-sqlite-storage: 0c84826214baaa498796c7e46a5ccc9a82e114ed
   react-native-torch: 8eb9ce45de54b565b470f4bfd8ccf57e5bcef8ff
+  react-native-webview: 743faa2f6bed1d700dda70b0253d4f66da86bb06
   React-NativeModulesApple: 44a9474594566cd03659f92e38f42599c6b9dee4
   React-networking: db73d91466cb134fcbdaaa579fb2de14e2c2ea01
   React-oscompat: b924b8609d06899f00ab1aa813b0cde9c5e12771
