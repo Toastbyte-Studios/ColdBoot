@@ -95,7 +95,8 @@ function splitLinks(text: string): TextPart[] {
 // Keep Privacy in step with what the app actually does. It lists every
 // permission in ios/ColdBoot/Info.plist and every outside service the app
 // calls: OpenFreeMap (map tiles), OpenStreetMap Nominatim (place names),
-// Open-Meteo (Seasonal Outlook) and RepeaterBook (by US state only). Adding a
+// Open-Meteo (Seasonal Outlook, rounded to about 11 km in
+// weatherOutlookService) and RepeaterBook (by US state only). Adding a
 // permission or a network call means updating that section too.
 //
 // The privacy and terms URLs point at /coldboot/ pages that must be live
@@ -140,7 +141,7 @@ function buildHelpGroups(): HelpGroup[] {
             'Your notes, checklists, inventory, plans, voice logs, GPS trails and settings are stored only on this device. Backups are files you export and keep; we never see them.',
             'The app asks for a permission only when a feature needs it: location for the map, GPS trails and location-based tools (in the background only while a trail is recording), camera for the flashlight and note photos, photo library for attaching photos to notes, microphone for Voice Log and the Decibel Meter, contacts for adding emergency contacts, and motion sensors for the barometer. You can change these at any time in your device settings.',
             'A few features contact free public services when you use them, and send only what they need:',
-            '• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Place names: OpenStreetMap Nominatim receives the coordinates being named.\n• Seasonal Outlook: Open-Meteo receives your coordinates.\n• Nearby repeaters: RepeaterBook receives only your US state.',
+            '• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Place names: OpenStreetMap Nominatim receives the coordinates being named.\n• Seasonal Outlook: Open-Meteo receives your approximate location, rounded to about 11 km.\n• Nearby repeaters: RepeaterBook receives only your US state.',
             'Like any website, these services also see your IP address, and they handle requests under their own privacy policies.',
             'Questions? Email info@toastbyte.studio. Full policy: https://toastbyte.studio/coldboot/privacy.',
           ].join('\n\n'),
