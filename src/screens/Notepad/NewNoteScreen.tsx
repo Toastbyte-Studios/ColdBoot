@@ -11,9 +11,8 @@ type NewNoteScreenNavigationProp = NativeStackNavigationProp<ParamListBase>;
  * Screen for composing and saving a new note.
  *
  * The composer itself is {@link NoteEditor}, shared with the Edit screen: a
- * category and type selector, a title, optional photos, and either a body or
- * a sketch. This screen supplies the empty draft and writes the result to the
- * store.
+ * category selector, a title, optional photos and a body. This screen
+ * supplies the empty draft and writes the result to the store.
  *
  * @returns A React element rendering the "New Note" creation screen.
  */
@@ -22,7 +21,7 @@ export default observer(function NewNoteScreen() {
   const navigation = useNavigation<NewNoteScreenNavigationProp>();
 
   const handleSubmit = async (draft: NoteDraft) => {
-    await core.createNote(draft);
+    await core.createNote({ ...draft, type: 'text' });
     // Return to previous screen (Notepad)
     navigation.goBack();
   };
@@ -31,7 +30,6 @@ export default observer(function NewNoteScreen() {
     <NoteEditor
       screenTitle="New Note"
       categories={core.categories}
-      allowTypeChange
       onSubmit={handleSubmit}
     />
   );

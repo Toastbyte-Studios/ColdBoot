@@ -41,7 +41,10 @@ type NoteEntryRouteProp = RouteProp<{ NoteEntry: { note: Note } }, 'NoteEntry'>;
  * - Receives `note` parameter from the route params
  * - Displays the note title as the screen title, its timestamp and category
  *   as the subtitle
- * - Shows the full note text, or the sketch, on a card
+ * - Shows the full note text on a card
+ * - Sketch notes can no longer be created. Ones saved before sketching was
+ *   removed are still shown read-only (no Edit action, since the editor is
+ *   text-only), so users do not lose them.
  * - Voice logs should be accessed through the Voice Log feature instead
  */
 export default observer(function NoteEntryScreen(): React.JSX.Element {
@@ -67,7 +70,7 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
 
   const noteTitle = note.title || '(Untitled)';
   const noteText = note.text || '';
-  const noteType = note.type || 'text';
+  const isLegacySketch = note.type === 'sketch';
   const sketchDataUri = note.sketchDataUri;
 
   const handleBookmarkPress = async () => {
@@ -95,12 +98,14 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
       subtitle={`${formatDateTime(new Date(note.createdAt))} · ${note.category}`}
       trailing={
         <>
-          <IconButton
-            name="create-outline"
-            size={22}
-            accessibilityLabel="Edit note"
-            onPress={() => navigation.navigate('EditNote', { note })}
-          />
+          {isLegacySketch ? null : (
+            <IconButton
+              name="create-outline"
+              size={22}
+              accessibilityLabel="Edit note"
+              onPress={() => navigation.navigate('EditNote', { note })}
+            />
+          )}
           <IconButton
             name={isBookmarked ? 'bookmark' : 'bookmark-outline'}
             size={22}
@@ -119,10 +124,10 @@ export default observer(function NoteEntryScreen(): React.JSX.Element {
         </>
       }
     >
-      {noteType === 'sketch' ? (
+      {isLegacySketch ? (
         sketchDataUri ? (
-          /* Sketches are saved as PNGs drawn dark-on-light by SketchCanvas, so
-             their backdrop stays PAPER-coloured in both schemes rather than
+          /* Legacy sketches were saved as PNGs drawn dark-on-light, so their
+             backdrop stays PAPER-coloured in both schemes rather than
              following the theme. See src/theme/fixedSurfaces.ts. */
           <View style={styles.sketchPlate}>
             <Image
