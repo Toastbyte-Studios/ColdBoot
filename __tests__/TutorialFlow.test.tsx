@@ -6,6 +6,12 @@ jest.mock('../src/hooks/useTheme', () => ({
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
+// HelpModal is a sheet that reads safe-area insets, and this suite renders it
+// without a SafeAreaProvider.
+jest.mock('react-native-safe-area-context', () => ({
+  useSafeAreaInsets: () => ({ top: 0, right: 0, bottom: 0, left: 0 }),
+}));
+
 // HelpModal and TutorialModal render AppButton, whose label goes through
 // ScaledText. ScaledText is a mobx-react-lite observer reading the settings
 // store, which this suite does not provide; the plain Text is enough here.
@@ -241,6 +247,27 @@ describe('Tutorial flow components', () => {
     ).toThrow();
 
     expect(onLaunchTutorial).toHaveBeenCalledTimes(1);
+  });
+
+  test('HelpModal links URLs without their trailing full stop', () => {
+    const { act, tree } = renderHelpModal('ios');
+
+    act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Terms of Use collapsed' })
+        .props.onPress();
+    });
+
+    const links = tree.root.findAll(
+      (node) =>
+        node.props.accessibilityRole === 'link' &&
+        typeof node.props.onPress === 'function',
+      { deep: false },
+    );
+
+    expect(links.map((link) => link.props.children)).toEqual([
+      'https://toastbyte.studio/coldboot/terms',
+    ]);
   });
 
   test.each([

@@ -1,16 +1,19 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
-  Modal,
-  StyleSheet,
-  TouchableWithoutFeedback,
-  View,
-  ScrollView,
-  Text as RNText,
   Linking,
+  Modal,
   Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text as RNText,
+  View,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useTheme } from '../hooks/useTheme';
+import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
+import { withAlpha } from '../theme/colorUtils';
 import AppButton from './AppButton';
 import IconButton from './IconButton';
 import Touchable from './Touchable';
@@ -23,22 +26,160 @@ interface HelpModalProps {
 
 type HelpSection = 'what' | 'how' | 'privacy' | 'terms' | 'contact';
 
-interface AccordionItem {
+interface HelpTopic {
   id: HelpSection;
   title: string;
+  icon: string;
+  content: string;
+}
+
+interface HelpGroup {
+  label: string;
+  topics: HelpTopic[];
+}
+
+interface TextPart {
+  type: 'text' | 'url' | 'email';
   content: string;
 }
 
 /**
- * Help modal component that overlays on top of the app.
- * Displays help topics in an accordion menu format.
- * When a topic is clicked, it expands to show content and collapses any other open topics.
+ * Help, presented as a sheet.
  *
- * Note: Uses React Native's Text directly to avoid scaling issues in the help UI.
+ * Was a centred 85%-wide box with a heavy brand border, a filled accent header
+ * and bordered accordion tiles. It now shares Settings' frame — a sheet with a
+ * grabber, grouped cards under uppercase labels and hairline separators — so
+ * the two surfaces a user reaches from the same row read as one family.
+ *
+ * Topics still expand one at a time, in place, inside their card.
+ *
+ * Note: Uses React Native's Text directly to avoid scaling issues in the help
+ * UI.
  */
 
-// No-op handler to prevent backdrop touch from propagating
-const preventClose = () => {};
+const ICON_BADGE_SIZE = 30;
+/** Where a row's title starts; separators and expanded text line up here. */
+const TITLE_INSET = SPACING.lg + ICON_BADGE_SIZE + SPACING.md;
+
+/**
+ * Matches a URL or an email address. The URL is lazy and stops before any
+ * trailing sentence punctuation, so "visit https://x.y/terms." links to
+ * "https://x.y/terms" rather than a path ending in a full stop.
+ */
+const LINK_PATTERN =
+  /(https?:\/\/\S+?)(?=[.,;:!?)]*(?:\s|$))|([\w.%+-]+@[\w-]+(?:\.[\w-]+)*\.[a-zA-Z]{2,})/g;
+
+/** Splits prose into plain runs and tappable URLs/emails, in order. */
+function splitLinks(text: string): TextPart[] {
+  const parts: TextPart[] = [];
+  let lastIndex = 0;
+
+  Array.from(text.matchAll(LINK_PATTERN)).forEach((match) => {
+    const start = match.index ?? 0;
+    if (start > lastIndex) {
+      parts.push({ type: 'text', content: text.slice(lastIndex, start) });
+    }
+    parts.push({ type: match[1] ? 'url' : 'email', content: match[0] });
+    lastIndex = start + match[0].length;
+  });
+
+  if (lastIndex < text.length) {
+    parts.push({ type: 'text', content: text.slice(lastIndex) });
+  }
+
+  return parts;
+}
+
+// NOTE: Placeholder rebrand copy. Awaiting final wording from creative.
+// The privacy and terms URLs point at /coldboot/ paths that do not exist
+// yet — they must be live before release or these links will 404.
+function buildHelpGroups(): HelpGroup[] {
+  return [
+    {
+      label: 'ABOUT',
+      topics: [
+        {
+          id: 'what',
+          title: 'What is ColdBoot',
+          icon: 'information-circle-outline',
+          content:
+            'ColdBoot is an offline-first toolkit for preparedness. A cold boot starts from nothing — no network, no account, no prior state — which is exactly how this app is built to work. Every tool, reference and calculator runs entirely on your device.',
+        },
+        {
+          id: 'how',
+          title: 'How to use',
+          icon: 'compass-outline',
+          // Screen-to-screen swiping is iOS only: on Android the edge drag
+          // belongs to the system back gesture (see AppShell).
+          content: `Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. ${
+            Platform.OS === 'android'
+              ? "Use your phone's back gesture or button to return to the previous screen."
+              : 'Swipe left or right to navigate between screens.'
+          } Tap on any tool to open it. Use the shortcut bar for your most-used tools and Alerts, and change those shortcuts in Settings.`,
+        },
+      ],
+    },
+    {
+      label: 'LEGAL',
+      topics: [
+        {
+          id: 'privacy',
+          title: 'Privacy Policy',
+          icon: 'shield-checkmark-outline',
+          content:
+            "Your privacy is important to us. ColdBoot operates primarily offline and does not collect or transmit personal data without your explicit consent...which we don't ask for because we don't need it. Any data stored is kept locally on your device. For more details, please contact us at info@toastbyte.studio or visit our website: https://toastbyte.studio/coldboot/privacy.",
+        },
+        {
+          id: 'terms',
+          title: 'Terms of Use',
+          icon: 'document-text-outline',
+          content:
+            'By using ColdBoot, you agree to use this application responsibly and in accordance with all applicable laws. This application is provided "as-is" without warranties of any kind. The developers are not liable for any decisions made based on information provided by this app. For complete terms, visit our website: https://toastbyte.studio/coldboot/terms.',
+        },
+      ],
+    },
+    {
+      label: 'SUPPORT',
+      topics: [
+        {
+          id: 'contact',
+          title: 'Contact',
+          icon: 'mail-outline',
+          content:
+            'Have questions, feedback, or need support? Reach out to us at:\n\ninfo@toastbyte.studio\n\nWe welcome your suggestions and are here to help!',
+        },
+      ],
+    },
+  ];
+}
+
+function makeStyles(COLORS: ReturnType<typeof useTheme>) {
+  return StyleSheet.create({
+    primaryText: { color: COLORS.PRIMARY_DARK },
+    mutedText: { color: COLORS.MUTED },
+    linkText: { color: COLORS.BRAND },
+    sheetThemed: {
+      backgroundColor: isAndroid() ? COLORS.SURFACE_CONTAINER : COLORS.SURFACE,
+      borderTopColor: COLORS.BORDER,
+    },
+    grabber: {
+      backgroundColor: isAndroid() ? COLORS.MUTED : COLORS.BORDER,
+    },
+    groupThemed: {
+      backgroundColor: COLORS.BACKGROUND,
+      borderColor: COLORS.BORDER,
+    },
+    separatorThemed: { backgroundColor: COLORS.SEPARATOR },
+    iconBadge: { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
+    closeButton: { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
+  });
+}
+
+// Read at render time rather than import time: the tutorial tests switch
+// Platform.OS between renders.
+function isAndroid() {
+  return Platform.OS === 'android';
+}
 
 export const HelpModal = ({
   visible,
@@ -46,249 +187,131 @@ export const HelpModal = ({
   onLaunchTutorial,
 }: HelpModalProps) => {
   const COLORS = useTheme();
+  const insets = useSafeAreaInsets();
+  const t = useMemo(() => makeStyles(COLORS), [COLORS]);
+  const groups = useMemo(buildHelpGroups, []);
   const [expandedSection, setExpandedSection] = useState<HelpSection | null>(
     null,
   );
 
-  const renderLinkableText = (text: string) => {
-    // Regex patterns for URLs and emails
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    const emailRegex = /([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/g;
+  const handleSectionPress = useCallback((sectionId: HelpSection) => {
+    setExpandedSection((current) => (current === sectionId ? null : sectionId));
+  }, []);
 
-    // Split text by both URLs and emails, preserving the delimiters
-    const parts: Array<{ type: 'text' | 'url' | 'email'; content: string }> =
-      [];
-    let lastIndex = 0;
-
-    // First, find all URLs
-    const urlMatches = Array.from(text.matchAll(urlRegex));
-    // Then find all emails
-    const emailMatches = Array.from(text.matchAll(emailRegex));
-
-    // Combine and sort all matches by position
-    const allMatches = [
-      ...urlMatches.map((m) => ({ ...m, type: 'url' as const })),
-      ...emailMatches.map((m) => ({ ...m, type: 'email' as const })),
-    ].sort((a, b) => a.index! - b.index!);
-
-    allMatches.forEach((match) => {
-      const matchStart = match.index!;
-      const matchEnd = matchStart + match[0].length;
-
-      // Add text before this match
-      if (lastIndex < matchStart) {
-        parts.push({
-          type: 'text',
-          content: text.substring(lastIndex, matchStart),
-        });
-      }
-
-      // Add the match itself
-      parts.push({
-        type: match.type,
-        content: match[0],
-      });
-
-      lastIndex = matchEnd;
-    });
-
-    // Add remaining text
-    if (lastIndex < text.length) {
-      parts.push({
-        type: 'text',
-        content: text.substring(lastIndex),
-      });
-    }
-
-    return parts.map((part, index) => {
-      if (part.type === 'url') {
-        return (
-          <RNText
-            key={index}
-            style={[styles.link, { color: COLORS.SECONDARY_ACCENT }]}
-            onPress={() => Linking.openURL(part.content)}
-          >
-            {part.content}
-          </RNText>
-        );
-      } else if (part.type === 'email') {
-        return (
-          <RNText
-            key={index}
-            style={[styles.link, { color: COLORS.SECONDARY_ACCENT }]}
-            onPress={() => Linking.openURL(`mailto:${part.content}`)}
-          >
-            {part.content}
-          </RNText>
-        );
-      } else {
+  const renderLinkableText = (text: string) =>
+    splitLinks(text).map((part, index) => {
+      if (part.type === 'text') {
         return <RNText key={index}>{part.content}</RNText>;
       }
+      const href =
+        part.type === 'email' ? `mailto:${part.content}` : part.content;
+      return (
+        <RNText
+          key={index}
+          style={[styles.link, t.linkText]}
+          onPress={() => Linking.openURL(href)}
+          accessibilityRole="link"
+        >
+          {part.content}
+        </RNText>
+      );
     });
-  };
-
-  // NOTE: Placeholder rebrand copy. Awaiting final wording from creative.
-  // The privacy and terms URLs point at /coldboot/ paths that do not exist
-  // yet — they must be live before release or these links will 404.
-  const helpSections: AccordionItem[] = [
-    {
-      id: 'what',
-      title: 'What is ColdBoot',
-      content:
-        'ColdBoot is an offline-first toolkit for preparedness. A cold boot starts from nothing — no network, no account, no prior state — which is exactly how this app is built to work. Every tool, reference and calculator runs entirely on your device.',
-    },
-    {
-      id: 'how',
-      title: 'How to use',
-      // Screen-to-screen swiping is iOS only: on Android the edge drag
-      // belongs to the system back gesture (see AppShell).
-      content: `Navigate through ColdBoot using the intuitive menu system. Access different tools and features from the home screen. ${
-        Platform.OS === 'android'
-          ? "Use your phone's back gesture or button to return to the previous screen."
-          : 'Swipe left or right to navigate between screens.'
-      } Tap on any tool to open it. Use the shortcut bar for your most-used tools and Alerts, and change those shortcuts in Settings.`,
-    },
-    {
-      id: 'privacy',
-      title: 'Privacy Policy',
-      content:
-        "Your privacy is important to us. ColdBoot operates primarily offline and does not collect or transmit personal data without your explicit consent...which we don't ask for because we don't need it. Any data stored is kept locally on your device. For more details, please contact us at info@toastbyte.studio or visit our website: https://toastbyte.studio/coldboot/privacy.",
-    },
-    {
-      id: 'terms',
-      title: 'Terms of Use',
-      content:
-        'By using ColdBoot, you agree to use this application responsibly and in accordance with all applicable laws. This application is provided "as-is" without warranties of any kind. The developers are not liable for any decisions made based on information provided by this app. For complete terms, visit our website: https://toastbyte.studio/coldboot/terms.',
-    },
-    {
-      id: 'contact',
-      title: 'Contact',
-      content:
-        'Have questions, feedback, or need support? Reach out to us at:\n\ninfo@toastbyte.studio\n\nWe welcome your suggestions and are here to help!',
-    },
-  ];
-
-  const handleSectionPress = (sectionId: HelpSection) => {
-    setExpandedSection(expandedSection === sectionId ? null : sectionId);
-  };
 
   return (
     <Modal
       visible={visible}
-      animationType="fade"
+      animationType="slide"
       transparent
       onRequestClose={onClose}
     >
-      <TouchableWithoutFeedback
-        onPress={onClose}
-        accessibilityLabel="Close help modal"
-        accessibilityRole="button"
-        accessibilityHint="Tap to dismiss the help"
-      >
-        <View style={styles.overlay}>
-          <TouchableWithoutFeedback onPress={preventClose}>
-            <View
-              style={[
-                styles.modalContainer,
-                {
-                  backgroundColor: COLORS.PRIMARY_LIGHT,
-                  borderColor: COLORS.BRAND,
-                },
-              ]}
-            >
-              <View
-                style={[
-                  styles.header,
-                  {
-                    backgroundColor: COLORS.SECONDARY_ACCENT,
-                    borderBottomColor: COLORS.BRAND,
-                  },
-                ]}
-              >
-                <RNText
-                  style={[styles.headerText, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  Help
+      <View style={styles.overlay}>
+        <Pressable
+          style={StyleSheet.absoluteFill}
+          onPress={onClose}
+          accessibilityLabel="Close help modal"
+          accessibilityRole="button"
+          accessibilityHint="Tap to dismiss the help"
+        />
+        <View
+          style={[styles.sheet, t.sheetThemed, { marginTop: insets.top + 52 }]}
+        >
+          <View style={[styles.grabber, t.grabber]} />
+
+          <View style={styles.header}>
+            <RNText style={[styles.headerText, t.primaryText]}>Help</RNText>
+            <View style={[styles.closeButton, t.closeButton]}>
+              <IconButton
+                name="close-outline"
+                size={14}
+                onPress={onClose}
+                accessibilityLabel="Close help"
+              />
+            </View>
+          </View>
+
+          <ScrollView
+            style={styles.content}
+            contentContainerStyle={[
+              styles.contentContainer,
+              { paddingBottom: insets.bottom + SPACING.xl },
+            ]}
+          >
+            {groups.map((group) => (
+              <React.Fragment key={group.label}>
+                <RNText style={[styles.groupLabel, t.mutedText]}>
+                  {group.label}
                 </RNText>
-                <IconButton
-                  name="close-outline"
-                  size={28}
-                  onPress={onClose}
-                  accessibilityLabel="Close help"
-                />
-              </View>
+                <View style={[styles.group, t.groupThemed]}>
+                  {group.topics.map((topic, index) => {
+                    const expanded = expandedSection === topic.id;
+                    const showTutorialAction =
+                      topic.id === 'how' && !!onLaunchTutorial;
 
-              <ScrollView style={styles.content}>
-                {helpSections.map((section) => {
-                  const shouldShowTutorialActions = section.id === 'how';
-                  const hasTutorialActionHandlers = !!onLaunchTutorial;
-
-                  return (
-                    <View key={section.id} style={styles.accordionItem}>
-                      <Touchable
-                        accessibilityState={{
-                          expanded: expandedSection === section.id,
-                        }}
-                        style={[
-                          styles.accordionHeader,
-                          {
-                            borderColor: COLORS.BRAND,
-                            backgroundColor: COLORS.BACKGROUND,
-                          },
-                          expandedSection === section.id && {
-                            backgroundColor: COLORS.BRAND,
-                            borderColor: COLORS.PRIMARY_DARK,
-                          },
-                        ]}
-                        onPress={() => handleSectionPress(section.id)}
-                        accessibilityLabel={`${section.title} ${
-                          expandedSection === section.id
-                            ? 'expanded'
-                            : 'collapsed'
-                        }`}
-                        accessibilityRole="button"
-                        accessibilityHint={`Tap to ${
-                          expandedSection === section.id ? 'collapse' : 'expand'
-                        } ${section.title}`}
-                      >
-                        <RNText
-                          style={[
-                            styles.accordionTitle,
-                            { color: COLORS.PRIMARY_DARK },
-                          ]}
+                    return (
+                      <React.Fragment key={topic.id}>
+                        {index > 0 ? (
+                          <View
+                            style={[styles.separator, t.separatorThemed]}
+                          />
+                        ) : null}
+                        <Touchable
+                          style={styles.row}
+                          onPress={() => handleSectionPress(topic.id)}
+                          accessibilityRole="button"
+                          accessibilityState={{ expanded }}
+                          accessibilityLabel={`${topic.title} ${
+                            expanded ? 'expanded' : 'collapsed'
+                          }`}
+                          accessibilityHint={`Tap to ${
+                            expanded ? 'collapse' : 'expand'
+                          } ${topic.title}`}
                         >
-                          {section.title}
-                        </RNText>
-                        <Ionicons
-                          name={
-                            expandedSection === section.id
-                              ? 'chevron-up-outline'
-                              : 'chevron-down-outline'
-                          }
-                          size={24}
-                          color={COLORS.PRIMARY_DARK}
-                        />
-                      </Touchable>
-                      {expandedSection === section.id && (
-                        <View
-                          style={[
-                            styles.accordionContent,
-                            {
-                              backgroundColor: COLORS.PRIMARY_LIGHT,
-                              borderColor: COLORS.BRAND,
-                            },
-                          ]}
-                        >
-                          <RNText
-                            style={[
-                              styles.accordionText,
-                              { color: COLORS.PRIMARY_DARK },
-                            ]}
-                          >
-                            {renderLinkableText(section.content)}
+                          <View style={[styles.iconBadge, t.iconBadge]}>
+                            <Ionicons
+                              name={topic.icon}
+                              size={17}
+                              color={COLORS.BRAND}
+                            />
+                          </View>
+                          <RNText style={[styles.rowTitle, t.primaryText]}>
+                            {topic.title}
                           </RNText>
-                          {shouldShowTutorialActions &&
-                            hasTutorialActionHandlers && (
+                          <Ionicons
+                            name={
+                              expanded
+                                ? 'chevron-up-outline'
+                                : 'chevron-down-outline'
+                            }
+                            size={16}
+                            color={COLORS.CHEVRON}
+                          />
+                        </Touchable>
+                        {expanded ? (
+                          <View style={styles.rowBody}>
+                            <RNText style={[styles.bodyText, t.primaryText]}>
+                              {renderLinkableText(topic.content)}
+                            </RNText>
+                            {showTutorialAction ? (
                               <AppButton
                                 label="Replay Tutorial"
                                 icon="play-outline"
@@ -297,85 +320,123 @@ export const HelpModal = ({
                                 accessibilityLabel="Replay tutorial now"
                                 style={styles.tutorialActionButton}
                               />
-                            )}
-                        </View>
-                      )}
-                    </View>
-                  );
-                })}
-              </ScrollView>
-            </View>
-          </TouchableWithoutFeedback>
+                            ) : null}
+                          </View>
+                        ) : null}
+                      </React.Fragment>
+                    );
+                  })}
+                </View>
+              </React.Fragment>
+            ))}
+          </ScrollView>
         </View>
-      </TouchableWithoutFeedback>
+      </View>
     </Modal>
   );
 };
 
+const hairline =
+  StyleSheet.hairlineWidth < 0.5 ? 0.5 : StyleSheet.hairlineWidth;
+
 const styles = StyleSheet.create({
   overlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
+    // Same scrim as Settings, so the two sheets dim the app identically.
+    backgroundColor: 'rgba(29, 31, 32, 0.28)',
+    justifyContent: 'flex-end',
   },
-  modalContainer: {
-    width: '85%',
-    maxWidth: 500,
-    height: '80%',
-    borderRadius: 16,
-    borderWidth: 3,
+  sheet: {
+    flex: 1,
+    borderTopLeftRadius: RADIUS.sheet,
+    borderTopRightRadius: RADIUS.sheet,
+    borderTopWidth: hairline,
     overflow: 'hidden',
-    flexDirection: 'column',
+  },
+  grabber: {
+    width: 40,
+    height: 5,
+    borderRadius: 3,
+    alignSelf: 'center',
+    marginTop: SPACING.sm,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    borderBottomWidth: 2,
+    paddingHorizontal: SCREEN_GUTTER,
+    paddingTop: SPACING.md,
+    paddingBottom: SPACING.sm,
   },
   headerText: {
-    fontSize: 22,
-    fontWeight: '800',
+    fontSize: 24,
+    fontFamily: 'Bitter-Bold',
+    letterSpacing: -0.4,
+  },
+  closeButton: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+    overflow: 'hidden',
   },
   content: {
     flex: 1,
-    padding: 20,
   },
-  accordionItem: {
-    marginBottom: 12,
+  contentContainer: {
+    paddingHorizontal: SCREEN_GUTTER,
   },
-  accordionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 2,
+  groupLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    letterSpacing: 0.99,
+    marginTop: SPACING.lg,
+    marginBottom: SPACING.sm,
   },
-  accordionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    flex: 1,
-  },
-  accordionContent: {
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 8,
+  group: {
     borderWidth: 1,
+    borderRadius: 16,
+    overflow: 'hidden',
   },
-  accordionText: {
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+    minHeight: 52,
+    paddingVertical: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+  },
+  iconBadge: {
+    width: ICON_BADGE_SIZE,
+    height: ICON_BADGE_SIZE,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rowTitle: {
+    flex: 1,
+    fontSize: 15.5,
+    fontWeight: '500',
+  },
+  rowBody: {
+    paddingLeft: TITLE_INSET,
+    paddingRight: SPACING.lg,
+    paddingBottom: SPACING.lg,
+  },
+  bodyText: {
     fontSize: 14,
-    lineHeight: 20,
+    lineHeight: 21,
   },
   link: {
     textDecorationLine: 'underline',
   },
+  separator: {
+    height: hairline,
+    marginLeft: TITLE_INSET,
+  },
   tutorialActionButton: {
-    marginTop: 12,
+    marginTop: SPACING.md,
+    alignSelf: 'flex-start',
   },
 });
