@@ -272,14 +272,23 @@ export function parseMonthlyResponse(
  * Fetches SEAS5 seasonal forecast data for the given coordinates.
  * Throws when the request fails, the API returns a non-OK HTTP response,
  * or the response payload is missing required data.
+ *
+ * Only coordinates rounded to 1 decimal place (about 11 km) leave the device.
+ * SEAS5's grid is roughly 36 km, so full precision would not change the
+ * forecast; it would only tell Open-Meteo more about where the user is. The
+ * rounded values are also the cache key, so each cached row matches exactly
+ * what was requested. Help's Privacy section describes this as "approximate
+ * location"; keep the two in step.
  */
 export async function fetchSeasonalData(
   lat: number,
   lon: number,
 ): Promise<SeasonalOutlook> {
+  const roundedLat = roundCoord(lat);
+  const roundedLon = roundCoord(lon);
   const params = new URLSearchParams({
-    latitude: String(lat),
-    longitude: String(lon),
+    latitude: String(roundedLat),
+    longitude: String(roundedLon),
     monthly: MONTHLY_VARIABLES.join(','),
     models: 'ecmwf_seas5_ensemble_mean',
     temperature_unit: 'celsius',
@@ -323,8 +332,8 @@ export async function fetchSeasonalData(
 
   const now = new Date();
   return {
-    lat: roundCoord(lat),
-    lon: roundCoord(lon),
+    lat: roundedLat,
+    lon: roundedLon,
     fetchedAt: now.toISOString(),
     fetchMonth: toYearMonth(now),
     months: parseMonthlyResponse(json.monthly, json.monthly_units),
