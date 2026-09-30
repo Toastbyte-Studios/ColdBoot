@@ -143,7 +143,7 @@ function buildHelpGroups(): HelpGroup[] {
             'A few features contact free public services when you use them, and send only what they need:',
             '• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Place names: OpenStreetMap Nominatim receives the coordinates being named.\n• Seasonal Outlook: Open-Meteo receives your approximate location, rounded to about 11 km.\n• Nearby repeaters: RepeaterBook receives only your US state.',
             'Like any website, these services also see your IP address, and they handle requests under their own privacy policies.',
-            'Questions? Email info@toastbyte.studio. Full policy: https://toastbyte.studio/coldboot/privacy.',
+            'Questions? Email support@toastbyte.studio. Full policy: https://toastbyte.studio/coldboot/privacy.',
           ].join('\n\n'),
         },
         {
@@ -170,7 +170,7 @@ function buildHelpGroups(): HelpGroup[] {
           icon: 'mail-outline',
           content: [
             'Questions, feedback, bug reports and feature ideas are all welcome:',
-            'info@toastbyte.studio',
+            'support@toastbyte.studio',
             'For a bug, it helps to include your device model and the app version shown at the bottom of Settings.',
           ].join('\n\n'),
         },
