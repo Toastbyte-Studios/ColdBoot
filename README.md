@@ -6,24 +6,25 @@ Built by [Toastbyte Studios](https://toastbyte.studio/).
 
 ## Features
 
-ColdBoot is organized into six modules:
+ColdBoot is organized into six modules. The tool lists follow `MODULES` and the `*_TOOLS` arrays in [`constants.ts`](constants.ts):
 
--- **Core** — flashlight, notepad, checklists, device status, unit conversion
--- **Navigation** — offline maps, grid reference, compass, star map
--- **Communications** — Morse code, digital whistle, signal mirror, radio frequencies, repeater lookup, voice log
--- **Earth** — sun times, lunar cycles, sky events, barometric pressure, seasonal outlook
--- **Prepper** — inventory, pantry, depletion calculator, barter estimator, emergency plan, scenario cards
--- **Reference** — offline reference material
+- **Core** — device status, flashlight, voice log, notepad, unit conversion, checklists
+- **Navigation** — offline map with compass, waypoints and track recording; star map and celestial navigation; map library; grid reference converter
+- **Reference** — health, survival guide, weather, tools and knots, emergency
+- **Comms** — Morse code, NATO phonetic alphabet, radio frequency references (with a US repeater lookup), digital whistle, decibel meter, ground-to-air signals
+- **Prepper** — depletion calculator, pantry, inventory, scenario cards, barter estimator, emergency planner
+- **Earth** — sun times, lunar cycles, barometric pressure, seasonal outlook, sky events
 
 Throughout:
 
-- **Offline-first design**: all functionality works without an internet connection
-- **Solar Cycle Notifications**: automatic sunrise and sunset notifications based on your location
-  - Always-on notifications that cannot be disabled
+- **Offline-first design**: nearly every tool works with no connection at all. Map areas, the Seasonal Outlook and repeater listings are downloaded while online and kept for offline use; place-name labels on the map simply don't appear without a connection.
+- **Search**: the header search finds any tool, reference entry, note, checklist, or pantry or inventory item, entirely on-device
+- **Solar cycle alerts**: sunrise, sunset, dawn and dusk alerts in the Alerts sheet, based on your location
+  - Always on, with no setting to turn them off; individual alerts can be dismissed
   - Dynamic time-remaining display (e.g., "Sunrise in 2h 30m")
   - Updates automatically when location changes
-- **Sun Time Display**: calculated sunrise, sunset, dawn, dusk, solar noon, and golden hour times
-- **Dynamic Sun Shadows**: UI shadows that update based on real sun position throughout the day
+- **Sun time display**: calculated sunrise, sunset, dawn, dusk, solar noon, and golden hour times
+- **Backup and restore**: export your data to a file you keep, and restore it from Settings
 
 ## Getting Started
 
