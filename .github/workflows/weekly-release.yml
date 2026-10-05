@@ -1,0 +1,164 @@
+name: Weekly release
+
+on:
+  schedule:
+    # Noon Pacific every Thursday. GitHub cron is UTC-only, so run at both
+    # possible UTC hours (PDT = 19:00, PST = 20:00) and let the gate pick one.
+    - cron: '0 19 * * 4'
+    - cron: '0 20 * * 4'
+  workflow_dispatch: # manual run, skips the time gate (handy for testing)
+
+concurrency:
+  group: weekly-release
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    name: Check it's noon Pacific
+    runs-on: ubuntu-latest
+    permissions: {}
+    outputs:
+      run: ${{ steps.check.outputs.run }}
+    steps:
+      - id: check
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          hour=$(TZ=America/Los_Angeles date +%H)
+          if [ "$hour" = "12" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Local hour is $hour, not 12. Skipping."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  bump-and-tag:
+    name: Bump minor version and tag
+    needs: gate
+    if: needs.gate.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0 # need full history + tags
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Skip if nothing changed since the last release
+        id: changes
+        run: |
+          last=$(git describe --tags --abbrev=0 --match 'v*' 2>/dev/null || true)
+          if [ -n "$last" ] && [ "$(git rev-list "$last"..HEAD --count)" = "0" ]; then
+            echo "No commits since $last. Skipping release."
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Wait for successful CI on main
+        if: steps.changes.outputs.skip == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          commit=$(git rev-parse HEAD)
+          for attempt in $(seq 1 60); do
+            run=$(gh run list --workflow ci.yml --branch main --commit "$commit" \
+              --json status,conclusion --limit 1)
+            status=$(jq -r 'if length == 0 then "missing" else .[0].status end' <<< "$run")
+            conclusion=$(jq -r 'if length == 0 then "" else .[0].conclusion // "" end' <<< "$run")
+            if [ "$status" = "completed" ]; then
+              if [ "$conclusion" = "success" ]; then
+                echo "CI passed for $commit."
+                exit 0
+              fi
+              echo "CI concluded with '$conclusion' for $commit."
+              exit 1
+            fi
+            echo "CI status is '$status' for $commit; waiting."
+            sleep 30
+          done
+          echo "Timed out waiting for CI to pass for $commit."
+          exit 1
+
+      - name: Bump versions (npm, Xcode and Android)
+        id: bump
+        if: steps.changes.outputs.skip == 'false'
+        run: |
+          set -euo pipefail
+          npm version minor --no-git-tag-version
+          version=$(node -p "require('./package.json').version")
+
+          pbx=ios/ColdBoot.xcodeproj/project.pbxproj
+          sed -i -E "s/MARKETING_VERSION = [^;]+;/MARKETING_VERSION = ${version};/" "$pbx"
+          grep -q "MARKETING_VERSION = ${version};" "$pbx"
+
+          android=android/app/build.gradle
+          # Increment Android versionCode by one for every generated release.
+          version_code=$(sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+)[[:space:]]*$/\1/p' "$android")
+          test -n "$version_code"
+          next_version_code=$((version_code + 1))
+          sed -i -E "s/^( *versionCode +)[0-9]+/\1${next_version_code}/" "$android"
+          sed -i -E "s/^( *versionName +)\"[^\"]+\"/\1\"${version}\"/" "$android"
+
+          echo "New version: $version"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Validate generated version changes
+        if: steps.changes.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          node -e '
+            const pkg = require("./package.json");
+            const lock = require("./package-lock.json");
+            if (pkg.version !== process.env.VERSION || lock.version !== process.env.VERSION) {
+              throw new Error("package.json and package-lock.json versions do not match");
+            }
+          '
+          grep -Fq "MARKETING_VERSION = ${VERSION};" ios/ColdBoot.xcodeproj/project.pbxproj
+          grep -Fq "versionName \"${VERSION}\"" android/app/build.gradle
+
+          previous_code=$(git show HEAD:android/app/build.gradle | \
+            sed -nE 's/^[[:space:]]*versionCode[[:space:]]+([0-9]+)[[:space:]]*$/\1/p')
+          version_code=$(sed -nE \
+            's/^[[:space:]]*versionCode[[:space:]]+([0-9]+)[[:space:]]*$/\1/p' \
+            android/app/build.gradle)
+          test -n "$previous_code"
+          test "$version_code" -eq "$((previous_code + 1))"
+
+          git diff --check
+          expected=$(printf '%s\n' \
+            android/app/build.gradle \
+            ios/ColdBoot.xcodeproj/project.pbxproj \
+            package-lock.json \
+            package.json | sort)
+          actual=$(git diff --name-only | sort)
+          test "$actual" = "$expected"
+
+      - name: Commit, tag and push
+        if: steps.changes.outputs.skip == 'false'
+        env:
+          VERSION: ${{ steps.bump.outputs.version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add package.json package-lock.json ios/ColdBoot.xcodeproj/project.pbxproj \
+            android/app/build.gradle
+          git commit -m "chore(release): v${VERSION}"
+          git tag -a "v${VERSION}" -m "Release v${VERSION}"
+
+          # Atomic so the commit and tag land together or not at all.
+          git push --atomic origin HEAD:main "v${VERSION}"
