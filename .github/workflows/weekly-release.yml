@@ -16,6 +16,7 @@ jobs:
   gate:
     name: Check it's noon Pacific
     runs-on: ubuntu-latest
+    permissions: {}
     outputs:
       run: ${{ steps.check.outputs.run }}
     steps:
