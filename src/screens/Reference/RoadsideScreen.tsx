@@ -8,6 +8,7 @@ const categoryMap: Record<string, string> = {
   BatteryAndElectrical: 'Battery & Electrical',
   EngineAndFluids: 'Engine & Fluids',
   StuckAndRecovery: 'Stuck & Recovery',
+  RoadsideSafety: 'Roadside Safety',
 };
 
 /** Exported so tests can check every data category has a row here. */
@@ -38,6 +39,13 @@ export const roadsideCategories: CategoryType[] = [
     icon: 'trail-sign-outline',
     id: 'roadside_stuck_recovery',
     category: categoryMap.StuckAndRecovery,
+    data: data.entries,
+  },
+  {
+    title: 'Roadside Safety',
+    icon: 'shield-checkmark-outline',
+    id: 'roadside_safety',
+    category: categoryMap.RoadsideSafety,
     data: data.entries,
   },
 ];

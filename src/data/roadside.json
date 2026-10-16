@@ -8,7 +8,8 @@
       "Tires & Wheels",
       "Battery & Electrical",
       "Engine & Fluids",
-      "Stuck & Recovery"
+      "Stuck & Recovery",
+      "Roadside Safety"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -626,6 +627,176 @@
       ],
       "related_screen": "ToolsAndKnots",
       "related_screen_label": "Open Tools & Knots"
+    },
+    {
+      "id": "roadside_pulling_over_safely",
+      "category": "Roadside Safety",
+      "title": "Pulling Over Safely and Warning Other Drivers",
+      "summary": "Choose where to stop, make the car visible, and decide whether to wait inside or outside when you break down.",
+      "difficulty": "basic",
+      "tags": [
+        "pull over",
+        "breakdown",
+        "hazard lights",
+        "warning triangle",
+        "flares",
+        "shoulder",
+        "highway",
+        "visibility"
+      ],
+      "steps": [
+        "Signal and turn on the hazard lights early, then move as far right as you can: onto the shoulder, and off the road entirely if there's room.",
+        "Pick a straight stretch where approaching drivers can see you from far away. If you can still roll, avoid stopping just past a curve or the crest of a hill, on a bridge, or in a tunnel.",
+        "On a divided highway, use the right shoulder rather than the median. Once stopped, turn the front wheels away from the road so the car won't roll into traffic if it's hit.",
+        "Set the parking brake and leave the hazards on. At night or in poor visibility, keep the parking lights on as well.",
+        "Get out on the side away from traffic. If there is a safe place well away from the road, such as behind a guardrail or up a bank, wait there, not between the car and traffic or directly behind it.",
+        "If there is no safe place to stand, for example a narrow freeway shoulder, stay in the car with your seatbelt fastened and the hazards on.",
+        "Set out warning triangles behind the car at increasing distances: roughly 10 ft (3 m), 100 ft (30 m), and on fast roads or before a curve or hill, 300 ft (100 m) or more. Walk along the shoulder facing traffic and carry each triangle in front of you.",
+        "Raise the hood or tie a bright cloth to the antenna or driver's door to show you need help.",
+        "When you call for help, give the road, direction of travel and nearest exit or mile marker. If you're unsure where you are, the Map shows your GPS position."
+      ],
+      "do_not": [
+        "Do not stand directly behind or in front of the car on the shoulder.",
+        "Do not attempt repairs on the traffic side if the car can be moved somewhere safer.",
+        "Do not walk along a freeway unless staying put is more dangerous.",
+        "Do not light flares near spilled fuel, a fuel smell, or dry grass."
+      ],
+      "watch_for": [
+        "Vehicles drifting onto the shoulder, especially at night when tired or impaired drivers are more common. Be ready to move away from the car.",
+        "Your own visibility: a reflective vest or bright clothing makes you far easier to see."
+      ],
+      "notes": [
+        "Many places have 'move over' laws for vehicles stopped on the shoulder, but don't count on every driver obeying them.",
+        "Keep a reflective vest within reach of the driver's seat, not buried in the trunk."
+      ],
+      "related_screen": "MapScreen",
+      "related_screen_label": "Open Map"
+    },
+    {
+      "id": "roadside_winter_stranded",
+      "category": "Roadside Safety",
+      "title": "Stranded in a Car in Winter",
+      "summary": "Stay warm, avoid carbon monoxide poisoning, and stay findable while you wait out a breakdown or storm in the cold.",
+      "difficulty": "intermediate",
+      "tags": [
+        "stranded",
+        "winter",
+        "snow",
+        "blizzard",
+        "carbon monoxide",
+        "cold",
+        "tailpipe",
+        "stuck in car",
+        "hypothermia"
+      ],
+      "steps": [
+        "Stay with the vehicle unless help is visible and close. The car is shelter, and it's far easier for rescuers to find than a person on foot.",
+        "Before running the engine, clear snow away from the tailpipe, and check it again every time you restart. A blocked exhaust can fill the car with carbon monoxide within minutes.",
+        "Run the engine and heater for about 10–15 minutes each hour, with a downwind window cracked open slightly for fresh air.",
+        "Make the car visible: hazards on while the engine runs, the dome light on at night for the same time, and a bright cloth on the antenna or door. Once snow stops falling, raise the hood as a distress signal.",
+        "Stay warm: put on every layer you have, keep a hat and gloves on, and use blankets, floor mats, seat covers or paper for insulation. Huddle together if there are several of you.",
+        "Move your arms and legs regularly to keep blood flowing, but avoid working hard enough to sweat; damp clothing chills you fast.",
+        "Drink fluids and eat small snacks; your body needs fuel to make heat. Melt snow before drinking it rather than eating it.",
+        "Conserve fuel and battery: keep lights off when not signaling, and put your phone in low-power mode, kept warm inside your jacket.",
+        "If more than one person is in the car, take turns sleeping so someone is always awake."
+      ],
+      "do_not": [
+        "Do not sleep with the engine running and the windows closed.",
+        "Do not run the engine without first checking the tailpipe is clear.",
+        "Do not leave the car on foot in a blizzard or whiteout. People get lost within a few feet of their vehicle.",
+        "Do not overexert yourself shoveling. Heavy exertion in the cold strains the heart."
+      ],
+      "watch_for": [
+        "Carbon monoxide symptoms: headache, dizziness, nausea, drowsiness or confusion. Get fresh air immediately and shut off the engine.",
+        "Hypothermia: intense shivering, slurred speech, clumsiness or confusion. The Health and Weather sections cover treatment.",
+        "Frostbite: numb skin that turns white, gray or waxy, usually on fingers, toes, nose or ears."
+      ],
+      "notes": [
+        "A winter kit belongs in the car from late fall: blankets, hats and gloves, a shovel, an ice scraper, food, water, a flashlight and hand warmers.",
+        "The Vehicle Breakdown scenario card covers deciding whether to stay or go."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "roadside_key_fob_lockout",
+      "category": "Roadside Safety",
+      "title": "Dead Key Fob or Locked Out",
+      "summary": "Get into and start a car when the key fob battery dies, and what to do if the keys are locked inside.",
+      "difficulty": "basic",
+      "tags": [
+        "key fob",
+        "dead fob",
+        "locked out",
+        "keys locked in car",
+        "push button start",
+        "key not detected",
+        "coin battery",
+        "lockout"
+      ],
+      "steps": [
+        "Dead fob, doors won't unlock: most fobs hide a metal key. Slide or press the release on the fob and pull the key out.",
+        "Find the keyhole on the driver's door. On many cars it's hidden behind a small cap on the door handle; pry the cap off gently with the tip of the key.",
+        "Push-button start with a dead fob: press the brake and hold the fob right against the start button while you press it, or place the fob in the backup slot or pocket the manual describes (often in the console or cup holder). The car can read the fob's chip even when its battery is flat.",
+        "If the alarm goes off after a manual unlock, starting the car or pressing the fob to the start button usually silences it.",
+        "Replace the fob battery: most use a coin cell (CR2032 is common). Pry the case apart at the seam with the metal key or a coin, and fit the new cell the same way up as the old one.",
+        "Keys locked inside: check every door and the trunk first. Then call roadside assistance, a locksmith or the dealer. Some manufacturers' phone apps can unlock the car if you have signal.",
+        "If a child or pet is locked inside in heat or cold, call emergency services immediately."
+      ],
+      "do_not": [
+        "Do not use a coat hanger or wedge on a modern car. It can damage door seals, wiring and side airbag parts.",
+        "Do not break a window unless a person or animal inside is in danger. If you must, break a side window as far as possible from them, striking near a corner with a hard, pointed tool. Windshields are laminated and won't shatter."
+      ],
+      "watch_for": [
+        "'Key not detected' or 'key battery low' messages. The fob battery is going; replace it soon."
+      ],
+      "notes": [
+        "Keep a spare coin cell in the glovebox.",
+        "Keep a spare key somewhere other than the car, with a trusted person, or carry a slim door-only key in your wallet."
+      ]
+    },
+    {
+      "id": "roadside_minor_collision",
+      "category": "Roadside Safety",
+      "title": "First Steps After a Minor Collision",
+      "summary": "Stay safe, swap the right information, and document the scene after a fender-bender.",
+      "difficulty": "basic",
+      "tags": [
+        "accident",
+        "collision",
+        "crash",
+        "fender bender",
+        "insurance",
+        "exchange information",
+        "police report",
+        "car accident"
+      ],
+      "steps": [
+        "Stop. Leaving the scene of a collision is illegal nearly everywhere, even a minor one.",
+        "Check yourself and your passengers for injuries. Call emergency services if anyone is hurt, the road is blocked, or the other driver seems impaired or hostile.",
+        "If no one is hurt and the cars can be driven, move them out of traffic to the shoulder or a parking lot; many places require this. Hazards on, engines off.",
+        "On a busy road, set out warning triangles or flares.",
+        "Exchange information with the other driver: names, phone numbers, driver's license numbers, insurance company and policy number, license plates, and each vehicle's make, model and color. Note the exact location and time.",
+        "Photograph both vehicles, all damage, the plates, the wider scene and the road conditions. With permission, photograph the other driver's license and insurance card.",
+        "Get the names and phone numbers of any witnesses.",
+        "File a police report where required (usually when anyone is injured or damage is above a set amount) and tell your insurer promptly."
+      ],
+      "do_not": [
+        "Do not admit fault or speculate about blame; stick to the facts.",
+        "Do not argue with the other driver.",
+        "Do not sign anything except police or insurance paperwork.",
+        "Do not move an injured person unless they're in immediate danger, such as from fire."
+      ],
+      "watch_for": [
+        "Leaking fluid, smoke, or a fuel smell. Move everyone well away from the vehicles.",
+        "Injury symptoms that appear hours or days later, such as neck pain, headache or dizziness. Get checked by a doctor."
+      ],
+      "notes": [
+        "Laws on reporting differ by state and country. Keep your insurance card and registration where you can reach them quickly.",
+        "Use the Notepad to record details and photos while they're fresh."
+      ],
+      "related_screen": "Notepad",
+      "related_screen_label": "Open Notepad"
     }
   ]
 }

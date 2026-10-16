@@ -121,6 +121,13 @@ describe('Roadside search', () => {
     ['car stuck in snow wheels spinning', 'roadside_stuck_snow_mud_sand'],
     ['stuck in sand', 'roadside_stuck_snow_mud_sand'],
     ['tow strap pull a stuck truck out', 'roadside_tow_strap'],
+    ['broke down on the highway where to stop', 'roadside_pulling_over_safely'],
+    ['warning triangles hazard lights', 'roadside_pulling_over_safely'],
+    ['stranded in my car in a snowstorm', 'roadside_winter_stranded'],
+    ['carbon monoxide car exhaust snow', 'roadside_winter_stranded'],
+    ['key fob battery dead', 'roadside_key_fob_lockout'],
+    ['locked my keys in the car', 'roadside_key_fob_lockout'],
+    ['car accident what information to exchange', 'roadside_minor_collision'],
   ])('natural-language search: "%s"', (query, id) => {
     const result = ragSearch(query);
     expect(result.results.map((r) => r.entry.id)).toContain(id);
