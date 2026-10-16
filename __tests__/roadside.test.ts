@@ -128,6 +128,7 @@ describe('Roadside search', () => {
     ['key fob battery dead', 'roadside_key_fob_lockout'],
     ['locked my keys in the car', 'roadside_key_fob_lockout'],
     ['car accident what information to exchange', 'roadside_minor_collision'],
+    ['what should I keep in my car emergency kit', 'roadside_vehicle_kit'],
   ])('natural-language search: "%s"', (query, id) => {
     const result = ragSearch(query);
     expect(result.results.map((r) => r.entry.id)).toContain(id);

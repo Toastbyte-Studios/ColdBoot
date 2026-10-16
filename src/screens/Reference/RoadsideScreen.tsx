@@ -9,6 +9,7 @@ const categoryMap: Record<string, string> = {
   EngineAndFluids: 'Engine & Fluids',
   StuckAndRecovery: 'Stuck & Recovery',
   RoadsideSafety: 'Roadside Safety',
+  VehicleKit: 'Vehicle Kit',
 };
 
 /** Exported so tests can check every data category has a row here. */
@@ -46,6 +47,13 @@ export const roadsideCategories: CategoryType[] = [
     icon: 'shield-checkmark-outline',
     id: 'roadside_safety',
     category: categoryMap.RoadsideSafety,
+    data: data.entries,
+  },
+  {
+    title: 'Vehicle Kit',
+    icon: 'briefcase-outline',
+    id: 'roadside_vehicle_kit_category',
+    category: categoryMap.VehicleKit,
     data: data.entries,
   },
 ];

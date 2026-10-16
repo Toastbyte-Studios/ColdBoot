@@ -9,7 +9,8 @@
       "Battery & Electrical",
       "Engine & Fluids",
       "Stuck & Recovery",
-      "Roadside Safety"
+      "Roadside Safety",
+      "Vehicle Kit"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -797,6 +798,52 @@
       ],
       "related_screen": "Notepad",
       "related_screen_label": "Open Notepad"
+    },
+    {
+      "id": "roadside_vehicle_kit",
+      "category": "Vehicle Kit",
+      "title": "Vehicle Emergency Kit Checklist",
+      "summary": "What to keep in the car so you can handle a flat, a dead battery or a long wait for help.",
+      "difficulty": "basic",
+      "tags": [
+        "car kit",
+        "emergency kit",
+        "roadside kit",
+        "vehicle kit",
+        "checklist",
+        "what to keep in car",
+        "jumper cables",
+        "spare tire",
+        "winter kit"
+      ],
+      "steps": [
+        "Tire change: an inflated spare (or the car's sealant kit), jack, lug wrench, wheel chock, and the locking lug key if your wheels use one.",
+        "Tire repair: a plug kit, a 12 V compressor and a tire pressure gauge.",
+        "Power: jumper cables or a charged jump pack, plus a phone charging cable and a power bank.",
+        "Visibility: warning triangles or flares, a reflective vest, and a flashlight or headlamp with spare batteries.",
+        "Fluids: a quart (1 L) of the right engine oil, a jug of premixed coolant, and windshield washer fluid.",
+        "Tools: a multi-tool, duct tape, zip ties, work gloves, rags, spare fuses, and a tow strap with soft shackles.",
+        "Recovery: a folding shovel, and traction boards or a bag of sand or clay cat litter.",
+        "Survival: water (about a gallon / 4 L per person), nonperishable food, a first aid kit, a blanket or sleeping bag, warm layers and rain gear.",
+        "Winter additions: an ice scraper, snow brush, hats, gloves and hand warmers.",
+        "Paper: a paper map, the owner's manual, insurance and registration, emergency contacts written down, and a pen and notepad."
+      ],
+      "do_not": [
+        "Do not bury the kit under luggage where you can't reach it at the roadside; keep the vest and flashlight within reach of the driver's seat.",
+        "Do not leave lithium jump packs or aerosol cans in extreme heat for long periods.",
+        "Do not assume the spare is good because you've never used it. Check its pressure when you check the other tires."
+      ],
+      "watch_for": [
+        "Expired items: food, water, first aid supplies and road flares all have expiry dates.",
+        "Flat batteries in flashlights and a drained jump pack."
+      ],
+      "notes": [
+        "Check the kit twice a year, for example when the clocks change, and swap in seasonal items.",
+        "Adapt to where you drive: more water for desert travel, more insulation and food for cold or remote routes.",
+        "Build this list in the Checklist tool to tick items off as you pack."
+      ],
+      "related_screen": "Checklist",
+      "related_screen_label": "Open Checklists"
     }
   ]
 }
