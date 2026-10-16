@@ -11,7 +11,7 @@
  *   it (Albania AIP GEN 3.6, Airservices Australia AIP SUP H102/26).
  * - `older`: the larger emergency code from WWII-era Air Ministry and later
  *   FAA / US Forest Service cards (FAA "Visual Emergency Signals", GPO 1985),
- *   still printed on survival cards and watch bezels. Pilots trained only on
+ *   still printed on many survival cards. Pilots trained only on
  *   the ICAO code may not know it, so the screen lists it second. In this
  *   code X meant "unable to proceed"; today X means medical help.
  *
