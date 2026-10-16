@@ -2,68 +2,66 @@ import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { Text } from '../../components/ScaledText';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
-import { GROUND_TO_AIR_SIGNALS } from './data';
+import {
+  AIR_ACKNOWLEDGEMENT,
+  GROUND_TO_AIR_SIGNALS,
+  GroundSignal,
+  ICAO_GROUND_SIGNALS,
+  OLDER_GROUND_SIGNALS,
+} from './data';
 
 const isAndroid = Platform.OS === 'android';
 
 /**
  * GroundToAirSignalsScreen component
  *
- * Displays a fully offline reference guide to internationally recognised
- * ground-to-air distress symbols. Each entry shows the symbol, its meaning,
- * recommended minimum construction size, and suggested materials.
+ * A fully offline reference to the symbols survivors lay on the ground for
+ * search aircraft. The current international code (ICAO Annex 12) comes
+ * first; the older emergency code that survival cards still print follows,
+ * labelled, because some of its symbols mean something else today. Each entry
+ * shows the symbol, its meaning, minimum size and suggested materials, and the
+ * screen ends with how a pilot acknowledges a signal.
  *
- * Based on ICAO Annex 12 and standard Search & Rescue conventions.
+ * Sources and wording rules are in `./data`.
  *
  * @returns A React element rendering the Ground-to-Air Signals reference screen.
  */
 export default function GroundToAirSignalsScreen() {
   const COLORS = useTheme();
+  const groundTone = isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND;
 
   return (
     <StackScreen
       title="Ground-to-Air Signals"
       subtitle={`${GROUND_TO_AIR_SIGNALS.length} symbols`}
-      note="Lay these symbols on open ground using rocks, logs, or any high-contrast material. Minimum 3 m per character. Best viewed from aircraft at altitude — choose a clearing with maximum sky visibility."
+      note="Lay these symbols on open ground using rocks, logs, or any high-contrast material. Make each at least 2.5 m (8 ft) long, and bigger if you can. Choose a clearing with maximum sky visibility."
     >
-      {GROUND_TO_AIR_SIGNALS.map((signal) => (
-        <View
-          key={signal.symbol}
-          style={[
-            styles.signalCard,
-            cardSurface(COLORS, { accent: COLORS.ACCENT }),
-          ]}
-        >
-          <View style={styles.signalHeader}>
-            <Text style={[styles.signalSymbol, { color: COLORS.ACCENT }]}>
-              {signal.symbol}
-            </Text>
-            <Text style={styles.signalMeaning}>{signal.meaning}</Text>
-          </View>
-          <View style={styles.sizeRow}>
-            <Icon name="resize-outline" size={14} color={COLORS.MUTED} />
-            <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
-              <Text style={styles.signalDetailLabel}>Min size: </Text>
-              {signal.minSize}
-            </Text>
-          </View>
-          <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
-            <Text style={styles.signalDetailLabel}>Materials: </Text>
-            {signal.materials}
-          </Text>
-        </View>
+      <SectionEyebrow>International code (ICAO)</SectionEyebrow>
+      {ICAO_GROUND_SIGNALS.map((signal) => (
+        <SignalCard key={signal.symbol} signal={signal} />
       ))}
 
-      <Text
-        style={[
-          styles.tip,
-          { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
-        ]}
-      >
+      <SectionEyebrow style={styles.eyebrow}>Older code</SectionEyebrow>
+      <Text style={[styles.prose, { color: groundTone }]}>
+        Still printed on many survival cards, but not part of today's
+        international code, so a pilot may not know them. In this older code X
+        meant "unable to proceed"; today it means you need medical help.
+      </Text>
+      {OLDER_GROUND_SIGNALS.map((signal) => (
+        <SignalCard key={signal.symbol} signal={signal} />
+      ))}
+
+      <SectionEyebrow style={styles.eyebrow}>Reply from the air</SectionEyebrow>
+      <Text style={[styles.prose, { color: groundTone }]}>
+        {AIR_ACKNOWLEDGEMENT}
+      </Text>
+
+      <Text style={[styles.prose, styles.tip, { color: groundTone }]}>
         Tip: pair ground signals with audio signals (whistle, Morse code) and
         movement at regular intervals to increase detectability.
       </Text>
@@ -71,7 +69,51 @@ export default function GroundToAirSignalsScreen() {
   );
 }
 
+/**
+ * One symbol. ICAO symbols carry the accent edge; the older code's don't, so
+ * the current code reads as the one to reach for.
+ */
+function SignalCard({ signal }: { signal: GroundSignal }) {
+  const COLORS = useTheme();
+  const current = signal.code === 'icao';
+
+  return (
+    <View
+      style={[
+        styles.signalCard,
+        cardSurface(COLORS, current ? { accent: COLORS.ACCENT } : {}),
+      ]}
+    >
+      <View style={styles.signalHeader}>
+        <Text
+          style={[
+            styles.signalSymbol,
+            { color: current ? COLORS.ACCENT : COLORS.BRAND },
+          ]}
+        >
+          {signal.symbol}
+        </Text>
+        <Text style={styles.signalMeaning}>{signal.meaning}</Text>
+      </View>
+      <View style={styles.sizeRow}>
+        <Icon name="resize-outline" size={14} color={COLORS.MUTED} />
+        <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
+          <Text style={styles.signalDetailLabel}>Min size: </Text>
+          {signal.minSize}
+        </Text>
+      </View>
+      <Text style={[styles.signalDetail, { color: COLORS.MUTED }]}>
+        <Text style={styles.signalDetailLabel}>Materials: </Text>
+        {signal.materials}
+      </Text>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
+  eyebrow: {
+    marginTop: SPACING.lg,
+  },
   signalCard: {
     // StackScreen's Android content is full-bleed; cards carry the gutter.
     marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
@@ -110,10 +152,13 @@ const styles = StyleSheet.create({
     marginTop: SPACING.xs,
     gap: SPACING.xs + 2,
   },
-  tip: {
+  prose: {
     fontSize: 13,
     lineHeight: 19,
-    marginTop: SPACING.sm,
+    marginBottom: SPACING.md,
     paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+  },
+  tip: {
+    marginTop: SPACING.sm,
   },
 });

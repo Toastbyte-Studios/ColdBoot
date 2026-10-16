@@ -271,7 +271,7 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     category: 'Survival',
     title: 'Ground-to-Air Signals',
     summary:
-      'Internationally recognised ground-to-air distress symbols for signaling rescue aircraft. Lay symbols on open ground using rocks, logs, or high-contrast materials.',
+      'The ICAO ground-to-air code for signaling rescue aircraft, plus the older symbols survival cards still print. Lay symbols on open ground using rocks, logs, or high-contrast materials.',
     difficulty: 'basic',
     tags: [
       'ground',
@@ -288,24 +288,25 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
       'sos',
     ],
     steps: [
-      'V — Need assistance (3 m × 3 m minimum)',
-      'X — Need medical help',
-      '→ (Arrow) — Traveling in this direction',
-      'F — Need food and water',
-      'LL — All is well',
+      'V — Require assistance',
+      'X — Require medical assistance',
       'N — No / Negative',
       'Y — Yes / Affirmative',
+      '→ (Arrow) — Proceeding in this direction',
+      'Make each symbol at least 2.5 m (8 ft) long, and bigger if you can',
       'Choose a clearing with maximum sky visibility and high contrast materials',
     ],
     do_not: [
-      'Do not make symbols smaller than 3 m — they must be visible from altitude',
+      'Do not make symbols smaller than 2.5 m (8 ft) — they must be visible from altitude',
+      'Do not rely on the older code (F, K, △, LL, JL) — pilots may not know it, and X in it meant "unable to proceed"',
     ],
     watch_for: [
+      'Wings rocking by day, or landing or navigation lights flashing twice at night — the pilot has understood',
       'Aircraft circling overhead — they may have spotted your signal',
       'Drop message from aircraft indicating help is coming',
     ],
     notes: [
-      'Based on ICAO Annex 12 and standard Search and Rescue conventions',
+      "The five symbols above are the ICAO Annex 12 survivors' code",
       'Trampled vegetation, snow trenches, or rock arrangements all work',
     ],
     related_screen: 'GroundToAirSignals',
