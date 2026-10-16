@@ -1,59 +1,47 @@
 {
   "metadata": {
     "name": "Radio Frequencies Reference",
-    "version": "1.0.0",
-    "last_updated": "2026-02-06",
-    "disclaimer": "This information is for general reference only. Always comply with FCC regulations and local laws. Operating on certain frequencies may require proper licensing. Transmitting without a license where required is illegal."
+    "version": "1.1.0",
+    "last_updated": "2026-10-16",
+    "disclaimer": "This information is for general reference only. Always comply with FCC regulations and local laws. Operating on certain frequencies may require proper licensing. Transmitting without a license where required is illegal.",
+    "sources": [
+      "FCC rules, 47 CFR Part 95: CB 95.931 and 95.967, FRS 95.563 and 95.567, GMRS 95.1763 and 95.1767, MURS 95.2763, 95.2767 and 95.2773",
+      "FCC rules, 47 CFR 97.301 (amateur licence privileges)",
+      "ARRL band plan (amateur simplex and calling frequencies)",
+      "Channel conventions not set by the FCC (CB 17, 19, 4, 13, 38; GMRS 20 with a 141.3 Hz tone; MURS Blue Dot and Green Dot) are labelled as conventions"
+    ]
   },
   "frequencies": {
     "HAM": {
       "id": "HAM",
       "title": "HAM (Amateur Radio)",
       "requiresLicense": true,
-      "licenseInfo": "⚠️ LICENSE REQUIRED: You must have an FCC Amateur Radio License (Technician, General, or Amateur Extra) to transmit on amateur radio frequencies. Unlicensed transmission is illegal and subject to penalties.",
+      "licenseInfo": "⚠️ LICENSE REQUIRED: You must have an FCC Amateur Radio License (Technician, General, or Amateur Extra) to transmit on amateur radio frequencies. A Technician license covers the VHF and UHF frequencies here; 29.600 MHz needs General or higher. Unlicensed transmission is illegal and subject to penalties.",
       "description": "Amateur Radio provides long-range communication capabilities. These are common nationwide frequencies accessible with appropriate licensing.",
       "channels": [
         {
           "name": "2m FM Simplex Calling",
           "frequency": "146.520 MHz",
           "mode": "FM",
-          "notes": "National simplex calling frequency"
+          "notes": "National simplex calling frequency. Make contact, then move to another simplex frequency"
         },
         {
-          "name": "70cm FM Simplex Calling",
+          "name": "70cm FM Simplex",
           "frequency": "446.000 MHz",
           "mode": "FM",
-          "notes": "National UHF simplex calling frequency"
+          "notes": "National UHF simplex frequency"
         },
         {
-          "name": "6m FM Calling",
+          "name": "6m FM Simplex",
           "frequency": "52.525 MHz",
           "mode": "FM",
-          "notes": "National 6-meter FM calling frequency"
+          "notes": "Primary 6-meter FM simplex frequency"
         },
         {
-          "name": "10m FM Calling",
+          "name": "10m FM Simplex",
           "frequency": "29.600 MHz",
           "mode": "FM",
-          "notes": "Popular 10-meter FM frequency"
-        },
-        {
-          "name": "HF Emergency",
-          "frequency": "7.285 MHz",
-          "mode": "LSB",
-          "notes": "40m ARES/RACES emergency frequency"
-        },
-        {
-          "name": "HF Emergency",
-          "frequency": "3.985 MHz",
-          "mode": "LSB",
-          "notes": "75m ARES/RACES emergency frequency"
-        },
-        {
-          "name": "2m Emergency",
-          "frequency": "146.520 MHz",
-          "mode": "FM",
-          "notes": "VHF emergency simplex"
+          "notes": "10-meter FM simplex frequency. General license or higher"
         }
       ]
     },
@@ -61,50 +49,44 @@
       "id": "CB",
       "title": "CB (Citizens Band)",
       "requiresLicense": false,
-      "licenseInfo": "✓ NO LICENSE REQUIRED: CB radio can be used by anyone in the United States without a license. Maximum power: 4 watts AM, 12 watts SSB.",
+      "licenseInfo": "✓ NO LICENSE REQUIRED: CB radio can be used by anyone in the United States without a license. Maximum power: 4 watts AM, 12 watts PEP SSB. Channel 9 may only be used for emergencies and traveler assistance.",
       "description": "Citizens Band radio operates on 40 channels between 26.965 and 27.405 MHz. Commonly used for short to medium-range communication.",
       "channels": [
         {
           "name": "Channel 9",
           "frequency": "27.065 MHz",
           "mode": "AM",
-          "notes": "Emergency/Traveler Assistance (monitored)"
+          "notes": "Emergencies and traveler assistance only (FCC rule)"
         },
         {
           "name": "Channel 19",
           "frequency": "27.185 MHz",
           "mode": "AM",
-          "notes": "Highway/Trucker channel - most active"
-        },
-        {
-          "name": "Channel 6",
-          "frequency": "27.025 MHz",
-          "mode": "AM",
-          "notes": "Unofficial AM calling frequency"
+          "notes": "Highway and trucker channel, usually the busiest (convention)"
         },
         {
           "name": "Channel 17",
           "frequency": "27.165 MHz",
           "mode": "AM",
-          "notes": "North/South highway travel"
+          "notes": "North/south highway traffic in some areas (convention)"
         },
         {
-          "name": "Channel 21",
-          "frequency": "27.215 MHz",
+          "name": "Channel 4",
+          "frequency": "27.005 MHz",
           "mode": "AM",
-          "notes": "East/West highway travel"
+          "notes": "Off-road and 4x4 groups (convention)"
         },
         {
-          "name": "Channel 11",
-          "frequency": "27.085 MHz",
+          "name": "Channel 13",
+          "frequency": "27.115 MHz",
           "mode": "AM",
-          "notes": "General calling/chat channel"
+          "notes": "Marine and RV users (convention)"
         },
         {
-          "name": "Channel 1",
-          "frequency": "26.965 MHz",
-          "mode": "AM",
-          "notes": "Mobile calls, general use"
+          "name": "Channel 38",
+          "frequency": "27.385 MHz",
+          "mode": "LSB",
+          "notes": "SSB calling channel (convention)"
         }
       ]
     },
@@ -112,56 +94,68 @@
       "id": "GMRS",
       "title": "GMRS (General Mobile Radio Service)",
       "requiresLicense": true,
-      "licenseInfo": "⚠️ LICENSE REQUIRED: GMRS requires an FCC license. The license covers you and your immediate family members. No exam required, but license fee applies.",
+      "licenseInfo": "⚠️ LICENSE REQUIRED: GMRS requires an FCC license. The license covers you and your immediate family members. No exam is required; the fee is currently $35 for a 10-year license.",
       "description": "GMRS operates on UHF frequencies with higher power limits than FRS, allowing for better range. Repeaters can extend coverage significantly.",
       "channels": [
         {
-          "name": "Channel 15 (Repeater)",
+          "name": "Channel 15 / 15R",
           "frequency": "462.550 MHz",
           "mode": "FM",
-          "notes": "Input: 467.550 MHz (National travel repeater)"
+          "notes": "Up to 50W. Repeater output; input 467.550 MHz"
         },
         {
-          "name": "Channel 16 (Repeater)",
+          "name": "Channel 16 / 16R",
           "frequency": "462.575 MHz",
           "mode": "FM",
-          "notes": "Input: 467.575 MHz"
+          "notes": "Up to 50W. Repeater output; input 467.575 MHz"
         },
         {
-          "name": "Channel 17 (Repeater)",
+          "name": "Channel 17 / 17R",
           "frequency": "462.600 MHz",
           "mode": "FM",
-          "notes": "Input: 467.600 MHz"
+          "notes": "Up to 50W. Repeater output; input 467.600 MHz"
         },
         {
-          "name": "Channel 18 (Repeater)",
+          "name": "Channel 18 / 18R",
           "frequency": "462.625 MHz",
           "mode": "FM",
-          "notes": "Input: 467.625 MHz"
+          "notes": "Up to 50W. Repeater output; input 467.625 MHz"
         },
         {
-          "name": "Channel 19 (Repeater)",
+          "name": "Channel 19 / 19R",
           "frequency": "462.650 MHz",
           "mode": "FM",
-          "notes": "Input: 467.650 MHz"
+          "notes": "Up to 50W. Repeater output; input 467.650 MHz"
         },
         {
-          "name": "Channel 20 (Repeater)",
+          "name": "Channel 20 / 20R",
           "frequency": "462.675 MHz",
           "mode": "FM",
-          "notes": "Input: 467.675 MHz"
+          "notes": "Up to 50W. Repeater output; input 467.675 MHz. Suggested by some groups as a travel/calling channel with a 141.3 Hz tone (convention, not an FCC rule)"
+        },
+        {
+          "name": "Channel 21 / 21R",
+          "frequency": "462.700 MHz",
+          "mode": "FM",
+          "notes": "Up to 50W. Repeater output; input 467.700 MHz"
+        },
+        {
+          "name": "Channel 22 / 22R",
+          "frequency": "462.725 MHz",
+          "mode": "FM",
+          "notes": "Up to 50W. Repeater output; input 467.725 MHz"
         },
         {
           "name": "Channel 1 (Simplex)",
           "frequency": "462.5625 MHz",
           "mode": "FM",
-          "notes": "Shared with FRS Ch 1"
+          "notes": "5W max. Shared with FRS Ch 1"
         },
         {
           "name": "Channel 2 (Simplex)",
           "frequency": "462.5875 MHz",
           "mode": "FM",
-          "notes": "Shared with FRS Ch 2"
+          "notes": "5W max. Shared with FRS Ch 2"
         }
       ]
     },
@@ -218,19 +212,91 @@
           "name": "Channel 8",
           "frequency": "467.5625 MHz",
           "mode": "FM",
-          "notes": "0.5W max - FRS only"
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
         },
         {
           "name": "Channel 9",
           "frequency": "467.5875 MHz",
           "mode": "FM",
-          "notes": "0.5W max - FRS only"
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
         },
         {
           "name": "Channel 10",
           "frequency": "467.6125 MHz",
           "mode": "FM",
-          "notes": "0.5W max - FRS only"
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
+        },
+        {
+          "name": "Channel 11",
+          "frequency": "467.6375 MHz",
+          "mode": "FM",
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
+        },
+        {
+          "name": "Channel 12",
+          "frequency": "467.6625 MHz",
+          "mode": "FM",
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
+        },
+        {
+          "name": "Channel 13",
+          "frequency": "467.6875 MHz",
+          "mode": "FM",
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
+        },
+        {
+          "name": "Channel 14",
+          "frequency": "467.7125 MHz",
+          "mode": "FM",
+          "notes": "0.5W max - Shared with GMRS (hand-helds only)"
+        },
+        {
+          "name": "Channel 15",
+          "frequency": "462.550 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 16",
+          "frequency": "462.575 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 17",
+          "frequency": "462.600 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 18",
+          "frequency": "462.625 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 19",
+          "frequency": "462.650 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 20",
+          "frequency": "462.675 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 21",
+          "frequency": "462.700 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
+        },
+        {
+          "name": "Channel 22",
+          "frequency": "462.725 MHz",
+          "mode": "FM",
+          "notes": "2W max - Shared with GMRS"
         }
       ]
     },
@@ -238,38 +304,38 @@
       "id": "MURS",
       "title": "MURS (Multi-Use Radio Service)",
       "requiresLicense": false,
-      "licenseInfo": "✓ NO LICENSE REQUIRED: MURS can be used without a license. Maximum power: 2 watts. External antennas are permitted, unlike FRS.",
+      "licenseInfo": "✓ NO LICENSE REQUIRED: MURS can be used without a license. Maximum power: 2 watts. External antennas are permitted, unlike FRS, up to 60 feet above the ground or 20 feet above the structure they are on. Repeaters are not allowed.",
       "description": "MURS operates on VHF frequencies (151-154 MHz) providing better range than UHF FRS, especially in wooded areas. Five channels available.",
       "channels": [
         {
-          "name": "Channel 1 (Blue Dot)",
+          "name": "Channel 1",
           "frequency": "151.820 MHz",
           "mode": "NFM (11.25 kHz)",
-          "notes": "Business/personal use"
+          "notes": "Narrowband channel"
         },
         {
-          "name": "Channel 2 (Green Dot)",
+          "name": "Channel 2",
           "frequency": "151.880 MHz",
           "mode": "NFM (11.25 kHz)",
-          "notes": "Business/personal use"
+          "notes": "Narrowband channel"
         },
         {
-          "name": "Channel 3 (Yellow Dot)",
+          "name": "Channel 3",
           "frequency": "151.940 MHz",
           "mode": "NFM (11.25 kHz)",
-          "notes": "Business/personal use"
+          "notes": "Narrowband channel"
         },
         {
-          "name": "Channel 4",
+          "name": "Channel 4 (Blue Dot)",
           "frequency": "154.570 MHz",
-          "mode": "NFM (20 kHz)",
-          "notes": "Formerly used by railroad - now open"
+          "mode": "FM (20 kHz)",
+          "notes": "Wider channel. \"Blue Dot\" is its business-radio nickname"
         },
         {
-          "name": "Channel 5",
+          "name": "Channel 5 (Green Dot)",
           "frequency": "154.600 MHz",
-          "mode": "NFM (20 kHz)",
-          "notes": "Formerly used by railroad - now open"
+          "mode": "FM (20 kHz)",
+          "notes": "Wider channel. \"Green Dot\" is its business-radio nickname"
         }
       ]
     }
