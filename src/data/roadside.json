@@ -4,7 +4,12 @@
     "version": "1.0.0",
     "last_updated": "2026-10-16",
     "disclaimer": "This information is general roadside guidance and is not a substitute for your vehicle's owner's manual or professional roadside assistance. Vehicles differ; follow the manufacturer's instructions where they disagree with this guide. Your safety comes before the car: if a repair means working near moving traffic, get clear and call for help if you can.",
-    "categories": ["Tires & Wheels", "Battery & Electrical", "Engine & Fluids"],
+    "categories": [
+      "Tires & Wheels",
+      "Battery & Electrical",
+      "Engine & Fluids",
+      "Stuck & Recovery"
+    ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
   "entries": [
@@ -532,6 +537,95 @@
       ],
       "related_screen": "ScenarioCards",
       "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "roadside_stuck_snow_mud_sand",
+      "category": "Stuck & Recovery",
+      "title": "Getting Unstuck from Snow, Mud or Sand",
+      "summary": "Free a vehicle with spinning wheels by clearing, adding traction and rocking, instead of digging in deeper.",
+      "difficulty": "intermediate",
+      "tags": [
+        "stuck",
+        "snow",
+        "mud",
+        "sand",
+        "spinning wheels",
+        "traction",
+        "rocking",
+        "air down",
+        "recovery"
+      ],
+      "steps": [
+        "Stop spinning the wheels as soon as you realize you're stuck. Spinning digs the tires in deeper and polishes snow into ice.",
+        "Get out and look. Check what's under the drive wheels and whether the car is high-centered (its underside resting on a snow ridge or hump). If the engine will be running in snow, make sure the tailpipe is clear.",
+        "Straighten the front wheels; turned wheels add resistance.",
+        "Clear snow, mud or sand from in front of and behind the drive wheels, and from under the car if it's resting on something. A shovel is best, but a floor mat or your hands will work.",
+        "Add traction under the drive wheels: traction boards, sand, clay cat litter, gravel, branches, or the floor mats (they may be ruined or flung away).",
+        "Pull away gently in the lowest gear. On ice, starting in second gear in a manual (or the snow mode in an automatic) reduces wheelspin. If traction control keeps cutting power so the car can't move, the manual explains how to switch it off temporarily.",
+        "If it won't climb out, rock it: drive forward gently until the wheels stop gaining ground, let the car stop, then reverse gently, and repeat. Each swing usually goes a little farther; when it has enough momentum, keep going.",
+        "In sand, let the tires down to about 15–20 psi (1.0–1.4 bar), roughly half their normal pressure, to widen the footprint. Drive slowly, keep moving, and avoid sharp turns. Reinflate before driving at road speeds.",
+        "If nothing works after a few tries, stop before you overheat anything and get a pull from another vehicle. See 'Towing or Being Towed with a Strap'."
+      ],
+      "do_not": [
+        "Do not spin the wheels at high speed. Tires can overheat and burst, and the car only digs in deeper.",
+        "Do not let anyone stand in front of or behind a spinning wheel. It throws mud, gravel and ice hard enough to injure. Helpers pushing should push from the corners, out of line with the tires.",
+        "Do not slam between drive and reverse while the wheels are still turning; it can damage the transmission.",
+        "Do not run the engine with the tailpipe buried in snow. Carbon monoxide can build up inside the car within minutes."
+      ],
+      "watch_for": [
+        "A burning smell or warning lights, which mean the transmission or engine is overheating. Stop and let it cool.",
+        "Deflated tires: aired-down tires must be pumped back up before normal driving, so only air down if you have a way to reinflate."
+      ],
+      "notes": [
+        "A folding shovel and a pair of traction boards are the most useful recovery gear you can carry.",
+        "Sand is softest in the heat of the day. Cool, damp sand early in the morning is much firmer."
+      ]
+    },
+    {
+      "id": "roadside_tow_strap",
+      "category": "Stuck & Recovery",
+      "title": "Towing or Being Towed with a Strap",
+      "summary": "Pull a stuck vehicle free, or move a disabled one off the road, using a recovery strap, rated attachment points and agreed signals.",
+      "difficulty": "advanced",
+      "tags": [
+        "tow strap",
+        "recovery strap",
+        "towing",
+        "pulled out",
+        "stuck",
+        "tow hook",
+        "recovery point",
+        "shackle",
+        "snatch strap"
+      ],
+      "steps": [
+        "Use a rated recovery or tow strap whose rating comfortably exceeds the stuck vehicle's weight. Check it for cuts and fraying before every use.",
+        "Attach it only to rated recovery points or tow eyes. Many cars carry a screw-in tow eye with the spare tire tools; the manual shows where it fits behind a small bumper cover. Use rated soft shackles, or bow shackles with the pin screwed in fully and backed off a quarter turn.",
+        "Agree on signals before anyone moves, including a clear STOP signal. One person directs; use the horn, hand signals or phones.",
+        "Clear bystanders back at least one and a half times the strap's length, and keep everyone out of line with the strap.",
+        "Lay a heavy jacket, bag or strap damper over the middle of the strap. If anything breaks, it pulls the strap down instead of letting it whip.",
+        "Pulling vehicle: drive forward slowly to take up the slack, then pull with steady, gentle throttle in a low gear. Stuck vehicle: steer straight and add light throttle in the direction of the pull once you start moving.",
+        "Once the stuck vehicle is on firm ground, both drivers stop and set their parking brakes before anyone detaches the strap.",
+        "To move a disabled car off the road on a strap: its driver keeps the ignition on (so the steering unlocks and the brake lights work), expects heavy steering and brakes with the engine off, and keeps the strap taut by braking gently. Go at walking pace and only as far as needed; call a tow truck for anything farther."
+      ],
+      "do_not": [
+        "Never attach a strap to a trailer hitch ball, bumper, axle, suspension or steering parts. They can tear off and fly like a bullet.",
+        "Never use a strap with metal hooks on its ends, or a chain, for pulling a stuck vehicle out; metal parts become projectiles if something fails.",
+        "Do not take a running start to yank a stuck vehicle with an ordinary tow strap. Only a kinetic recovery rope is built for that, and only with rated points and experience.",
+        "Do not tie knots in a recovery strap; a knot greatly weakens it and can be impossible to undo after loading.",
+        "Do not flat-tow an all-wheel-drive car or some automatics with drive wheels on the ground without checking the manual; it can wreck the drivetrain."
+      ],
+      "watch_for": [
+        "The strap riding over a sharp edge, which can cut it under load.",
+        "A recovery point bending or a bumper cover flexing. Stop and reattach.",
+        "The stuck vehicle sliding sideways toward the pulling vehicle as it comes free."
+      ],
+      "notes": [
+        "If all you have is rope, tie it to each tow eye with a bowline, which can still be untied after a heavy load. Expect rope to stretch and possibly snap, and keep everyone well clear.",
+        "Towing on a strap or rope is restricted or illegal on public roads in some places; use it to get off the road, then get proper help."
+      ],
+      "related_screen": "ToolsAndKnots",
+      "related_screen_label": "Open Tools & Knots"
     }
   ]
 }

@@ -2,6 +2,8 @@
  * @format
  */
 
+import fs from 'fs';
+import path from 'path';
 import emergencyData from '../src/data/emergency.json';
 import healthData from '../src/data/health.json';
 import roadsideData from '../src/data/roadside.json';
@@ -54,11 +56,14 @@ describe('Roadside reference data', () => {
     }
   });
 
-  test('related screen links point at real routes', () => {
-    const routes = ['ScenarioCards', 'ToolsAndKnots', 'Checklist'];
+  test('related screen links point at registered routes', () => {
+    const navigator = fs.readFileSync(
+      path.join(__dirname, '../src/navigation/AppNavigator.tsx'),
+      'utf8',
+    );
     for (const entry of entries as { related_screen?: string }[]) {
       if (entry.related_screen) {
-        expect(routes).toContain(entry.related_screen);
+        expect(navigator).toContain(`name="${entry.related_screen}"`);
       }
     }
   });
@@ -113,6 +118,9 @@ describe('Roadside search', () => {
     ['how do I check my engine oil', 'roadside_oil_coolant_check'],
     ['oil pressure warning light on dashboard', 'roadside_warning_lights'],
     ['ran out of gas on the highway', 'roadside_out_of_fuel'],
+    ['car stuck in snow wheels spinning', 'roadside_stuck_snow_mud_sand'],
+    ['stuck in sand', 'roadside_stuck_snow_mud_sand'],
+    ['tow strap pull a stuck truck out', 'roadside_tow_strap'],
   ])('natural-language search: "%s"', (query, id) => {
     const result = ragSearch(query);
     expect(result.results.map((r) => r.entry.id)).toContain(id);
