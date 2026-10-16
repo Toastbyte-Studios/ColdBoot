@@ -269,7 +269,7 @@ export default observer(function SearchScreen(): JSX.Element {
 
   const handleJumpToEntry = useCallback(
     (entry: ReferenceEntryType) => {
-      if (entry.related_screen) {
+      if (entry.id.startsWith('synthetic_') && entry.related_screen) {
         navigation.navigate(
           entry.related_screen as
             | 'MorseCode'
@@ -331,7 +331,7 @@ export default observer(function SearchScreen(): JSX.Element {
           rippleColor={COLORS.PRIMARY_LIGHT}
           hitSlop={8}
           onPress={() => handleJumpToEntry(result.entry)}
-          accessibilityLabel={`Jump to full section: ${result.entry.title}`}
+          accessibilityLabel={`Open ${result.entry.title}`}
           accessibilityRole="button"
         >
           <Ionicons
@@ -342,7 +342,9 @@ export default observer(function SearchScreen(): JSX.Element {
           <Text
             style={[styles.jumpButtonText, { color: COLORS.PRIMARY_LIGHT }]}
           >
-            {result.entry.related_screen_label ?? 'Jump to full section'}
+            {result.entry.id.startsWith('synthetic_')
+              ? (result.entry.related_screen_label ?? 'Open tool')
+              : 'Open full entry'}
           </Text>
         </Touchable>
       </View>

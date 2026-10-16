@@ -220,6 +220,12 @@ export const REFERENCE_TOOLS: ToolType[] = [
     icon: 'warning-outline',
     id: 'ref_emergency',
   },
+  {
+    name: 'Roadside',
+    screen: 'Roadside',
+    icon: 'car-outline',
+    id: 'ref_roadside',
+  },
 ];
 
 export const PREPPER_TOOLS: ToolType[] = [

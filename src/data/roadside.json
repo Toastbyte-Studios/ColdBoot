@@ -1,0 +1,849 @@
+{
+  "metadata": {
+    "name": "Roadside Service Reference",
+    "version": "1.0.0",
+    "last_updated": "2026-10-16",
+    "disclaimer": "This information is general roadside guidance and is not a substitute for your vehicle's owner's manual or professional roadside assistance. Vehicles differ; follow the manufacturer's instructions where they disagree with this guide. Your safety comes before the car: if a repair means working near moving traffic, get clear and call for help if you can.",
+    "categories": [
+      "Tires & Wheels",
+      "Battery & Electrical",
+      "Engine & Fluids",
+      "Stuck & Recovery",
+      "Roadside Safety",
+      "Vehicle Kit"
+    ],
+    "difficulty_levels": ["basic", "intermediate", "advanced"]
+  },
+  "entries": [
+    {
+      "id": "roadside_change_flat_spare",
+      "category": "Tires & Wheels",
+      "title": "Changing a Flat with the Spare",
+      "summary": "Swap a flat tire for the spare safely, from pulling over to the final lug nut check.",
+      "difficulty": "basic",
+      "tags": [
+        "flat tire",
+        "spare tire",
+        "change tire",
+        "jack",
+        "lug nuts",
+        "lug wrench",
+        "donut",
+        "puncture"
+      ],
+      "steps": [
+        "Get fully off the road onto flat, firm ground, as far from traffic as you can. On a highway, drive slowly to an exit or wide shoulder rather than stopping in a lane; a damaged rim is cheaper than being hit.",
+        "Turn on the hazard lights, put the car in park (or in gear for a manual), set the parking brake and turn off the engine. Get everyone out on the side away from traffic and have them wait well clear, behind a barrier if there is one.",
+        "Chock the wheel diagonally opposite the flat with a wheel chock, rock or block of wood. Set out warning triangles or flares behind the car if you have them.",
+        "Find the spare, jack and lug wrench: usually under the trunk floor, or under the rear of the vehicle on trucks and SUVs. Remove any wheel cover or lug nut caps, and find the locking lug key if your wheels use one.",
+        "With the tire still on the ground, loosen each lug nut about half a turn counterclockwise. Do not remove them yet.",
+        "Place the jack at the jack point nearest the flat (a reinforced notch on the pinch weld or a frame point; the owner's manual shows where). Raise the car until the flat is about 1 inch (2–3 cm) off the ground, enough room for the inflated spare.",
+        "Remove the lug nuts and keep them together in the wheel cover or a pocket. Pull the wheel straight off toward you.",
+        "Lift the spare onto the studs and thread every lug nut on by hand, tapered side facing the wheel.",
+        "Snug the nuts with the wrench in a star (crisscross) pattern so the wheel seats evenly.",
+        "Lower the car until the tire carries weight, then tighten the nuts fully, again in a star pattern. Lower the rest of the way and remove the jack.",
+        "Stow the flat, jack and tools so nothing flies around in a sudden stop. Check the spare's pressure as soon as you can, and recheck lug nut tightness after about 50 miles (80 km)."
+      ],
+      "do_not": [
+        "Never put any part of your body under a car held up only by a jack.",
+        "Do not jack on soft ground, a slope, or a plastic body panel.",
+        "Do not drive a compact 'donut' spare faster than its rated speed (usually 50 mph / 80 km/h) or farther than the distance on its sidewall or in the manual.",
+        "Do not oil or grease the wheel studs or lug nuts; lubricated nuts can over-tighten or work loose.",
+        "Do not change a tire on the traffic side of a busy road if you can move the car somewhere safer."
+      ],
+      "watch_for": [
+        "The car shifting or the jack leaning as it rises. Lower it and reset on firmer, flatter ground.",
+        "A spare that is flat or low itself. Spares lose air sitting in the trunk.",
+        "Wobble, clunking or vibration after you drive off. Stop and recheck the lug nuts."
+      ],
+      "notes": [
+        "Practice once in your driveway. It goes much faster the second time, and you find out whether the spare and tools are actually there.",
+        "Many newer cars carry a sealant kit instead of a spare. Know which yours has before you need it.",
+        "On soft ground, a short piece of thick board under the jack spreads the load."
+      ]
+    },
+    {
+      "id": "roadside_tire_plug_sealant",
+      "category": "Tires & Wheels",
+      "title": "Temporary Repair: Plug Kit or Sealant",
+      "summary": "Get a punctured tire holding air long enough to reach a shop when you have no spare, or no usable one.",
+      "difficulty": "intermediate",
+      "tags": [
+        "tire plug",
+        "sealant",
+        "puncture",
+        "nail in tire",
+        "slow leak",
+        "flat tire",
+        "repair kit",
+        "compressor"
+      ],
+      "steps": [
+        "Find the puncture: look for a nail or screw in the tread, listen for hissing, or spray or pour soapy water over the tread and watch for bubbles.",
+        "Decide whether it can be repaired. A small hole (about 1/4 inch / 6 mm or less) in the main tread is a candidate. Damage to the sidewall or shoulder, a cut or gash, or a tire that was driven flat for a distance needs the spare or a tow instead.",
+        "Sealant kit: shake the canister, remove the valve cap and connect the hose to the valve stem. Inject the sealant as the kit directs, then inflate with the kit's compressor to the pressure on the driver's door jamb.",
+        "After sealant, drive straight away for 3–6 miles (5–10 km) at moderate speed to spread it inside the tire, then stop and recheck the pressure.",
+        "Plug kit: pull the nail or screw out with pliers only when you are ready to plug immediately. Push the reamer tool in and out of the hole several times to clean and size it.",
+        "Thread a plug strip through the eye of the insertion tool so it is centered, and coat it with rubber cement if the kit includes some.",
+        "Push the plug into the hole until about a third to a half of the strip is still outside, then pull the tool straight out in one quick motion. The plug stays in.",
+        "Trim the plug ends to about 1/4 inch (6 mm) above the tread. Inflate to the door jamb pressure and check the plug with soapy water for bubbles."
+      ],
+      "do_not": [
+        "Do not plug or seal a sidewall or shoulder puncture; those cannot be repaired safely.",
+        "Do not exceed the speed and distance limits printed on a sealant kit (often about 50 mph / 80 km/h).",
+        "Do not treat a plug or sealant as permanent. Have the tire inspected and properly repaired from the inside as soon as you can.",
+        "Do not pull a nail out before you are ready to plug. Left in place, it slows the leak."
+      ],
+      "watch_for": [
+        "Pressure dropping again over the next few miles. Stop and reassess.",
+        "Vibration, a bulge, or the steering pulling to one side."
+      ],
+      "notes": [
+        "Tell the tire shop if you used sealant; it can foul tire pressure (TPMS) sensors and needs cleaning out.",
+        "A plug kit and a small 12 V compressor take up little room and cover most nail and screw punctures."
+      ]
+    },
+    {
+      "id": "roadside_tire_pressure",
+      "category": "Tires & Wheels",
+      "title": "Checking and Setting Tire Pressure",
+      "summary": "Keep tires at the right pressure for safe handling, fewer flats and better fuel economy.",
+      "difficulty": "basic",
+      "tags": [
+        "tire pressure",
+        "psi",
+        "inflate",
+        "air",
+        "gauge",
+        "tpms",
+        "low tire",
+        "compressor"
+      ],
+      "steps": [
+        "Find the right pressure on the placard inside the driver's door jamb (or in the owner's manual). Front and rear may differ.",
+        "Check when the tires are cold: before driving, or after the car has been parked for about three hours.",
+        "Remove the valve cap, press the gauge onto the valve firmly and straight so it doesn't hiss, and read it.",
+        "Add air in short bursts, checking with the gauge between bursts. If you overshoot, press the small pin in the center of the valve to let air out.",
+        "Check all four tires and the spare, then put the valve caps back on."
+      ],
+      "do_not": [
+        "Do not inflate to the 'max pressure' printed on the tire sidewall; that is a limit, not the target.",
+        "Do not let air out of hot tires to match the cold figure. They will be underinflated once they cool."
+      ],
+      "watch_for": [
+        "The tire pressure warning light: a horseshoe shape with an exclamation mark.",
+        "Pressure falls roughly 1 psi for every 10 °F (about 0.1 bar for every 5–6 °C) drop in temperature, which is why the warning light often comes on during the first cold mornings.",
+        "Uneven wear: worn edges suggest underinflation; a worn center suggests overinflation.",
+        "One tire that keeps losing air faster than the others, which usually means a slow puncture."
+      ],
+      "notes": [
+        "Check monthly and before long trips. A simple gauge in the glovebox costs little and beats guessing by eye.",
+        "Gas station gauges are often inaccurate; use your own."
+      ]
+    },
+    {
+      "id": "roadside_stuck_lug_nut",
+      "category": "Tires & Wheels",
+      "title": "Freeing a Stuck Lug Nut or Wheel",
+      "summary": "Loosen over-tightened or rusted lug nuts, and break free a wheel stuck to the hub.",
+      "difficulty": "intermediate",
+      "tags": [
+        "lug nut",
+        "stuck",
+        "seized",
+        "rusted",
+        "wheel stuck",
+        "breaker bar",
+        "lug wrench",
+        "flat tire"
+      ],
+      "steps": [
+        "Confirm you are turning counterclockwise. A few older vehicles use left-hand threads on one side; those studs are usually stamped 'L'.",
+        "Do this with the tire on the ground and the parking brake set, so the wheel cannot spin.",
+        "Seat the wrench fully on the nut with the handle roughly horizontal. Hold the car for balance and press down on the handle with your foot, using your body weight in a steady push.",
+        "If that fails, add leverage: slide a length of sturdy pipe over the wrench handle to lengthen it.",
+        "For rusted nuts, spray penetrating oil where the nut meets the stud, wait 10–15 minutes, and try again.",
+        "If the wheel stays stuck to the hub after the nuts are off, thread two nuts back on a few turns so the wheel cannot fall off, then kick the tire's sidewall firmly, working around it. Or strike the tire (not the rim) with a block of wood and a hammer.",
+        "Once the wheel breaks free, remove the nuts you threaded back on and pull the wheel off."
+      ],
+      "do_not": [
+        "Do not stand on a wrench that is only partly on the nut. It slips, rounds the nut, and can injure you.",
+        "Do not use heat near a tire.",
+        "Do not hammer on the wheel studs or the rim edge."
+      ],
+      "watch_for": [
+        "A nut starting to round off. Stop and use a correctly sized six-point socket if you have one.",
+        "The stud turning along with the nut, which means it has broken loose from the hub and needs a shop."
+      ],
+      "notes": [
+        "A cross-shaped (four-way) lug wrench or breaker bar gives far more leverage than the small wrench that comes with most cars.",
+        "Ask the shop to put a light coat of anti-seize on the hub face (not the studs) at your next tire service to stop the wheel rusting on."
+      ]
+    },
+    {
+      "id": "roadside_jump_start_cables",
+      "category": "Battery & Electrical",
+      "title": "Jump-Starting with Cables",
+      "summary": "Start a car with a dead battery using jumper cables and a second vehicle, connecting in the order that avoids sparks at the battery.",
+      "difficulty": "basic",
+      "tags": [
+        "jump start",
+        "jumper cables",
+        "dead battery",
+        "booster cables",
+        "battery",
+        "won't start",
+        "car won't start"
+      ],
+      "steps": [
+        "Check the dead battery first. If it is cracked, leaking, bulging or smells of rotten eggs, do not jump it.",
+        "Park the working car close enough for the cables to reach, nose to nose or side by side, without the cars touching. Turn off both engines, set both parking brakes, and switch off lights, radio and other accessories.",
+        "Find the terminals on each battery: positive (+), usually with a red cover, and negative (−). If the battery is in the trunk or under a seat, the owner's manual will show remote jump posts under the hood; use those.",
+        "Connect in this order: (1) red clamp to + on the dead battery; (2) the other red clamp to + on the good battery; (3) black clamp to − on the good battery; (4) the last black clamp to bare, unpainted metal on the dead car's engine or a marked ground point, away from the battery.",
+        "Start the working car and let it run for 2–5 minutes to put some charge into the dead battery.",
+        "Try to start the dead car. If it doesn't start, wait a few minutes and try again. Crank for no more than about 10 seconds at a time.",
+        "Once it starts, remove the cables in reverse order: black from the ground point, black from the good battery, red from the good battery, red from the revived battery. Keep the clamps from touching each other or the car.",
+        "Keep the revived car running for at least 20–30 minutes, ideally driving, to recharge the battery."
+      ],
+      "do_not": [
+        "Do not attach the final black clamp to the dead battery's negative post. Batteries give off hydrogen gas, and the last connection can spark.",
+        "Do not let the clamps touch each other while any of them is connected.",
+        "Do not jump a frozen battery; it can crack or explode. Let it thaw first.",
+        "Do not connect red to black (reversed polarity). It can damage the electronics in both cars.",
+        "Do not use a hybrid or electric car as the donor unless its manual says you can."
+      ],
+      "watch_for": [
+        "Sparks, smoke, or cables getting hot. Disconnect and recheck the connections.",
+        "The car dying again soon after the jump, which points to a failing alternator or a battery that won't hold charge.",
+        "Clicking instead of cranking even with cables attached. See 'Won't Start: Battery, Starter or Alternator?'."
+      ],
+      "notes": [
+        "Cables at least 12 ft (3.5 m) long and 4–6 gauge (thicker is better) make jumps easier.",
+        "Car batteries usually last 3–5 years, and less in hot climates. A battery that needs repeated jumps needs replacing."
+      ]
+    },
+    {
+      "id": "roadside_jump_pack",
+      "category": "Battery & Electrical",
+      "title": "Using a Portable Jump Starter",
+      "summary": "Start a car with a dead battery on your own, using a charged jump pack instead of a second vehicle.",
+      "difficulty": "basic",
+      "tags": [
+        "jump pack",
+        "jump starter",
+        "booster pack",
+        "dead battery",
+        "jump start",
+        "portable",
+        "lithium"
+      ],
+      "steps": [
+        "Check that the pack is charged; most have indicator lights. Read its instructions once, since packs differ slightly.",
+        "Turn off the ignition, lights and accessories.",
+        "With the pack switched off, connect the red clamp to the battery's positive (+) terminal, then the black clamp to the negative (−) terminal or a bare metal ground point, as the pack's manual directs.",
+        "Switch the pack on and wait for its ready light. If it signals a fault or reversed connection, switch it off and fix the clamps.",
+        "Start the car. Crank for no more than about 5 seconds per attempt, and let the pack rest 1–2 minutes between attempts.",
+        "As soon as the engine runs, switch the pack off and remove the black clamp, then the red.",
+        "Keep the car running or drive for at least 20–30 minutes, and recharge the pack when you get home."
+      ],
+      "do_not": [
+        "Do not let the clamps touch each other while the pack is on.",
+        "Do not leave the pack connected after the engine starts.",
+        "Do not leave a lithium jump pack baking in a closed car in extreme heat. Heat shortens its life and can be a fire risk.",
+        "Do not use a pack that is swollen, cracked or unusually hot."
+      ],
+      "watch_for": [
+        "The pack's reverse-polarity warning (light or beep).",
+        "Repeated failed attempts, which may mean the problem isn't the battery. See 'Won't Start: Battery, Starter or Alternator?'."
+      ],
+      "notes": [
+        "Top up the pack's charge every 3–6 months; they slowly drain in storage.",
+        "Match the pack to the engine. Large engines and diesels need a pack with more peak amps.",
+        "Many packs double as a USB power bank and flashlight, which is useful if you are stranded."
+      ]
+    },
+    {
+      "id": "roadside_no_start_diagnosis",
+      "category": "Battery & Electrical",
+      "title": "Won't Start: Battery, Starter or Alternator?",
+      "summary": "Read the symptoms when the car won't start, so you know whether a jump will help or something else has failed.",
+      "difficulty": "intermediate",
+      "tags": [
+        "won't start",
+        "car won't start",
+        "clicking",
+        "starter",
+        "alternator",
+        "dead battery",
+        "no crank",
+        "diagnose"
+      ],
+      "steps": [
+        "Turn the key or press start, and notice exactly what happens. Look at the dash lights and try the headlights.",
+        "Nothing at all, no dash lights: the battery is completely flat or a battery cable is loose or corroded. Check the terminals, then jump the car.",
+        "Rapid clicking with dim or flickering dash lights: the battery is too weak to turn the starter. A jump usually works.",
+        "Slow, labored cranking: a weak battery, often made worse by cold. Jump the car.",
+        "A single loud click while the lights stay bright: likely the starter motor or its relay. A jump probably won't help. Tapping the starter body firmly with a wrench while a helper turns the key sometimes gets one more start; keep hands clear of belts and the fan.",
+        "Normal cranking, but the engine won't fire: the battery is fine. Check the fuel gauge, and look for a flashing security or key light, which means the car doesn't recognize the key.",
+        "Starts with a jump but dies soon after, or the battery light comes on while driving and the lights dim: the alternator isn't charging. Turn off everything nonessential and drive straight to help."
+      ],
+      "do_not": [
+        "Do not crank continuously. Limit attempts to about 10 seconds and rest 30–60 seconds between them so the starter doesn't overheat.",
+        "Do not keep jumping a car that cranks normally but won't fire; the battery isn't the problem."
+      ],
+      "watch_for": [
+        "The battery-shaped warning light while driving.",
+        "A burning smell, squealing or whining from the engine bay, which can mean a slipping belt or failing alternator."
+      ],
+      "notes": [
+        "With a cheap multimeter: about 12.6 V across the terminals means fully charged, about 12.2 V half charged, and under 12.0 V discharged. With the engine running, 13.7–14.7 V means the alternator is charging.",
+        "A manual-transmission car can be push-started: ignition on, second gear, clutch down, roll to about 5–10 mph (8–15 km/h), then release the clutch quickly. This does not work on automatics."
+      ]
+    },
+    {
+      "id": "roadside_battery_terminals",
+      "category": "Battery & Electrical",
+      "title": "Cleaning Corroded Battery Terminals",
+      "summary": "Clear crusty buildup from the battery posts and clamps, a common cause of no-starts and weak starts.",
+      "difficulty": "basic",
+      "tags": [
+        "battery terminals",
+        "corrosion",
+        "battery",
+        "baking soda",
+        "won't start",
+        "clamps",
+        "posts"
+      ],
+      "steps": [
+        "Turn the engine off and remove the key. Wear gloves and eye protection if you have them.",
+        "Disconnect the negative (−) clamp first, then the positive (+).",
+        "Mix about a tablespoon of baking soda into a cup of water.",
+        "Pour or brush it over the white or blue-green crust. It will fizz as it neutralizes battery acid.",
+        "Scrub the posts and the inside of the clamps with an old toothbrush or wire brush until you see bare metal.",
+        "Rinse sparingly with clean water and dry with a rag.",
+        "Reconnect the positive (+) clamp first, then the negative (−). Tighten until you can't twist the clamps by hand.",
+        "Optionally, coat the terminals lightly with petroleum jelly or terminal grease to slow future corrosion."
+      ],
+      "do_not": [
+        "Do not let a metal tool touch both terminals at once, or the positive terminal and the car body at the same time; it will spark.",
+        "Do not let the cleaning solution run into the battery's vent caps.",
+        "Do not touch your eyes or face until you have washed your hands.",
+        "Do not overtighten the clamps; you can crack the battery posts."
+      ],
+      "watch_for": [
+        "Corrosion coming back quickly, which can mean overcharging or a leaking battery.",
+        "A cracked, swollen or leaking battery case. Replace it."
+      ],
+      "notes": [
+        "A clamp that is merely loose can look exactly like a dead battery. Wiggle-test the clamps before assuming the battery is flat.",
+        "In a pinch, a carbonated soft drink also loosens corrosion. Rinse well afterward."
+      ]
+    },
+    {
+      "id": "roadside_blown_fuse",
+      "category": "Battery & Electrical",
+      "title": "Finding and Replacing a Blown Fuse",
+      "summary": "Restore a single dead system, such as headlights, wipers or a power outlet, by swapping its fuse.",
+      "difficulty": "basic",
+      "tags": [
+        "fuse",
+        "blown fuse",
+        "fuse box",
+        "electrical",
+        "headlights out",
+        "wipers not working",
+        "power outlet"
+      ],
+      "steps": [
+        "Notice which one system stopped working: headlights, wipers, radio, a power outlet. A single dead system often means a fuse.",
+        "Turn off the ignition and the affected device.",
+        "Find the fuse box. Most cars have one under or beside the dashboard and another under the hood. The diagram on the cover or in the owner's manual shows which fuse serves which system.",
+        "Pull the fuse with the plastic puller (often clipped inside the fuse box) or needle-nose pliers.",
+        "Hold it up to the light. A blown blade fuse has a broken metal strip inside the plastic.",
+        "Replace it with a fuse of exactly the same amp rating; the number is printed on top and fuses are color-coded by rating.",
+        "Turn the ignition on and test the system.",
+        "No spare? Borrow a fuse of the same rating from something you can live without (radio, accessory outlet, heated seats) for something you need (headlights, wipers)."
+      ],
+      "do_not": [
+        "Never fit a fuse with a higher amp rating. The fuse protects the wiring from overheating and fire.",
+        "Never bridge a fuse slot with foil, wire or anything else.",
+        "Do not pull or insert fuses with the ignition on."
+      ],
+      "watch_for": [
+        "A new fuse blowing straight away, which means a short circuit. Stop replacing fuses and get it repaired, especially for lights.",
+        "A burning plastic smell from behind the dash."
+      ],
+      "notes": [
+        "Many fuse box lids hold a few spares. A small assortment of spare fuses costs very little and fits in the glovebox."
+      ]
+    },
+    {
+      "id": "roadside_overheating",
+      "category": "Engine & Fluids",
+      "title": "Engine Overheating",
+      "summary": "What to do when the temperature gauge climbs or steam comes from under the hood, and how to cool down safely.",
+      "difficulty": "basic",
+      "tags": [
+        "overheating",
+        "overheat",
+        "steam",
+        "coolant",
+        "radiator",
+        "temperature gauge",
+        "hot engine",
+        "antifreeze"
+      ],
+      "steps": [
+        "At the first sign (the temperature gauge climbing toward red, a warning light, steam, or a sweet smell), turn off the A/C and turn the heater to full heat with the fan on high. It pulls heat away from the engine.",
+        "If the gauge keeps rising, pull over somewhere safe, put the hazards on and turn off the engine.",
+        "If steam is pouring out, wait for it to stop before opening the hood. Then open the hood to let heat escape.",
+        "Wait at least 30 minutes, until the gauge is back to normal and the hood is cool to the touch.",
+        "Look for an obvious cause: a puddle of sweet-smelling green, orange or pink coolant, a burst or loose hose, a broken drive belt, or a radiator fan that doesn't run.",
+        "Check the coolant level in the plastic overflow reservoir, which is marked MIN and MAX. Top up to the line with coolant (a 50/50 premix is easiest). In an emergency, plain water will do.",
+        "Restart and watch the gauge. If it climbs again, stop and let it cool. If you must keep moving, drive short stretches with cool-down stops to reach safety or help."
+      ],
+      "do_not": [
+        "Never open the radiator cap or a pressurized reservoir cap on a hot engine. Scalding coolant can spray out.",
+        "Do not pour cold water onto a hot engine.",
+        "Do not keep driving with the gauge in the red. It can warp the cylinder head or seize the engine.",
+        "Keep hands clear of the radiator fan; electric fans can start on their own even with the engine off."
+      ],
+      "watch_for": [
+        "White, sweet-smelling exhaust smoke or milky, light-brown oil on the dipstick, which can mean a failed head gasket.",
+        "Coolant that keeps disappearing, which means a leak that needs repair."
+      ],
+      "notes": [
+        "Water is only an emergency fix. It boils sooner and freezes in winter, so have the system refilled with proper coolant afterward.",
+        "In hot climates, carry a jug of premixed coolant and extra drinking water."
+      ]
+    },
+    {
+      "id": "roadside_oil_coolant_check",
+      "category": "Engine & Fluids",
+      "title": "Checking and Topping Up Oil and Coolant",
+      "summary": "Read the dipstick and coolant reservoir, and add the right fluid without overfilling.",
+      "difficulty": "basic",
+      "tags": [
+        "oil",
+        "dipstick",
+        "engine oil",
+        "coolant",
+        "antifreeze",
+        "top up",
+        "fluids",
+        "low oil"
+      ],
+      "steps": [
+        "Park on level ground and turn the engine off. For oil, wait 5–10 minutes after driving so it drains back down; for coolant, wait until the engine is cold.",
+        "Oil: pull out the dipstick (usually a yellow or orange handle), wipe it clean, push it all the way back in, and pull it out again.",
+        "Read the level between the two marks (MIN/MAX, two holes, or a crosshatched area).",
+        "If it's low, add the oil grade listed in the manual or on the oil filler cap (for example 0W-20) through the filler cap on top of the engine. Add about half a quart (0.5 L) at a time, wait a minute, and recheck.",
+        "Some newer cars have no dipstick. The oil level is shown in a menu on the dashboard instead; the manual explains where.",
+        "Coolant: with the engine cold, check the plastic reservoir. The level should sit between MIN and MAX.",
+        "If it's low, add the coolant type listed in the manual, or a 50/50 premix, up to the MAX line.",
+        "While the hood is open, check the windshield washer fluid as well."
+      ],
+      "do_not": [
+        "Do not overfill the oil. Too much oil can foam and damage the engine.",
+        "Do not open a coolant cap on a hot engine.",
+        "Do not mix different coolant types long term if you can avoid it. A universal premix is fine as a top-up until the next service."
+      ],
+      "watch_for": [
+        "The red oil-can warning light. Stop the engine as soon as it is safe.",
+        "Milky or foamy oil, which suggests coolant is getting into it.",
+        "Needing to add oil or coolant often, which means a leak or the engine burning oil."
+      ],
+      "notes": [
+        "Check the oil monthly or every other fill-up, and carry a quart (1 L) of the right oil on long trips."
+      ]
+    },
+    {
+      "id": "roadside_warning_lights",
+      "category": "Engine & Fluids",
+      "title": "Dashboard Warning Lights: When to Stop",
+      "summary": "Know which warning lights mean pull over now and which mean get it checked soon.",
+      "difficulty": "basic",
+      "tags": [
+        "warning lights",
+        "dashboard",
+        "check engine",
+        "oil pressure",
+        "battery light",
+        "brake light",
+        "dash lights",
+        "abs"
+      ],
+      "steps": [
+        "Color is the first clue: red means stop safely as soon as possible, amber or yellow means get it checked soon, and green or blue is information only.",
+        "Oil pressure (red oil can): pull over and turn off the engine immediately. Check the oil level, and don't drive on until the oil is topped up and the light stays off.",
+        "Engine temperature (red thermometer in liquid): the engine is overheating. See 'Engine Overheating'.",
+        "Charging system (red battery): the alternator isn't charging. Turn off everything nonessential and drive straight to a safe place or a shop; the battery may last only minutes to an hour.",
+        "Brake system (red BRAKE, or an exclamation mark in a circle): first make sure the parking brake is fully released. If the light stays on, brake fluid may be low or there's a fault. Test the brakes gently; if the pedal feels soft or sinks, stop driving.",
+        "Flashing check engine light (amber engine outline): a severe misfire that can overheat and ruin the catalytic converter. Slow down, avoid hard acceleration, and get to a shop.",
+        "Steady check engine light: get it checked soon. First make sure the fuel cap is tight; a loose cap is a common cause.",
+        "Tire pressure (amber horseshoe with an exclamation mark): check the tires. See 'Checking and Setting Tire Pressure'.",
+        "ABS (amber): normal braking still works but the anti-lock system won't. Allow extra stopping distance and brake gently on slick roads.",
+        "Airbag (red or amber seated figure with a circle): the airbags may not deploy in a crash. Get it checked."
+      ],
+      "do_not": [
+        "Do not ignore a red warning light in the hope it goes away.",
+        "Do not keep driving with the oil pressure light on, even for a short distance."
+      ],
+      "watch_for": [
+        "Several lights coming on at once, which often means the charging system is failing.",
+        "Any light that comes with a new noise, smell, vibration or loss of power."
+      ],
+      "notes": [
+        "Symbols vary between makes. Save a photo of the warning-light page from your owner's manual on your phone so it's available offline.",
+        "An inexpensive OBD-II code reader can tell you why the check engine light is on, with no internet needed."
+      ]
+    },
+    {
+      "id": "roadside_out_of_fuel",
+      "category": "Engine & Fluids",
+      "title": "Running Out of Fuel",
+      "summary": "Stretch the last of your fuel, get off the road safely if you run dry, and restart once you've refueled.",
+      "difficulty": "basic",
+      "tags": [
+        "out of gas",
+        "out of fuel",
+        "empty tank",
+        "gas can",
+        "fuel",
+        "low fuel",
+        "ran out of gas",
+        "diesel"
+      ],
+      "steps": [
+        "When the low-fuel light comes on, many cars have roughly 25–50 miles (40–80 km) left, but it varies widely; the manual may say. Drive smoothly at a steady, moderate speed with the A/C off.",
+        "If the engine sputters or loses power, signal, put the hazards on and coast onto the shoulder or off the road while you still have momentum. Steering and brakes get heavier once the engine stops.",
+        "Once stopped, turn the hazards on and get out on the side away from traffic.",
+        "Call for roadside help if you can. Walk to a station only if it's close and the route is safe; in remote areas, staying with the vehicle is usually safer.",
+        "Refuel with at least a couple of gallons (about 8 L) from an approved fuel container.",
+        "Gasoline cars: turn the ignition to ON (not start) for a few seconds and back off, two or three times, to let the fuel pump refill the lines, then start the engine.",
+        "Diesels: many reprime the same way by cycling the ignition, but some need air bled from the fuel system. Check the owner's manual."
+      ],
+      "do_not": [
+        "Do not carry fuel in anything other than an approved fuel container.",
+        "Do not fill a fuel container while it sits in the car or a truck bed. Set it on the ground first so static can't spark.",
+        "Do not smoke or use an open flame nearby.",
+        "Do not put gasoline in a diesel or diesel in a gasoline car.",
+        "Do not routinely drive on a near-empty tank; the fuel helps cool the in-tank pump."
+      ],
+      "watch_for": [
+        "Deciding whether to walk or wait. The Vehicle Breakdown scenario card covers staying with the vehicle in remote areas."
+      ],
+      "notes": [
+        "Refill at a quarter tank, especially in remote areas or in winter. A full tank also gives you hours of heat if you're stranded in the cold."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "roadside_stuck_snow_mud_sand",
+      "category": "Stuck & Recovery",
+      "title": "Getting Unstuck from Snow, Mud or Sand",
+      "summary": "Free a vehicle with spinning wheels by clearing, adding traction and rocking, instead of digging in deeper.",
+      "difficulty": "intermediate",
+      "tags": [
+        "stuck",
+        "snow",
+        "mud",
+        "sand",
+        "spinning wheels",
+        "traction",
+        "rocking",
+        "air down",
+        "recovery"
+      ],
+      "steps": [
+        "Stop spinning the wheels as soon as you realize you're stuck. Spinning digs the tires in deeper and polishes snow into ice.",
+        "Get out and look. Check what's under the drive wheels and whether the car is high-centered (its underside resting on a snow ridge or hump). If the engine will be running in snow, make sure the tailpipe is clear.",
+        "Straighten the front wheels; turned wheels add resistance.",
+        "Clear snow, mud or sand from in front of and behind the drive wheels, and from under the car if it's resting on something. A shovel is best, but a floor mat or your hands will work.",
+        "Add traction under the drive wheels: traction boards, sand, clay cat litter, gravel, branches, or the floor mats (they may be ruined or flung away).",
+        "Pull away gently in the lowest gear. On ice, starting in second gear in a manual (or the snow mode in an automatic) reduces wheelspin. If traction control keeps cutting power so the car can't move, the manual explains how to switch it off temporarily.",
+        "If it won't climb out, rock it: drive forward gently until the wheels stop gaining ground, let the car stop, then reverse gently, and repeat. Each swing usually goes a little farther; when it has enough momentum, keep going.",
+        "In sand, let the tires down to about 15–20 psi (1.0–1.4 bar), roughly half their normal pressure, to widen the footprint. Drive slowly, keep moving, and avoid sharp turns. Reinflate before driving at road speeds.",
+        "If nothing works after a few tries, stop before you overheat anything and get a pull from another vehicle. See 'Towing or Being Towed with a Strap'."
+      ],
+      "do_not": [
+        "Do not spin the wheels at high speed. Tires can overheat and burst, and the car only digs in deeper.",
+        "Do not let anyone stand in front of or behind a spinning wheel. It throws mud, gravel and ice hard enough to injure. Helpers pushing should push from the corners, out of line with the tires.",
+        "Do not slam between drive and reverse while the wheels are still turning; it can damage the transmission.",
+        "Do not run the engine with the tailpipe buried in snow. Carbon monoxide can build up inside the car within minutes."
+      ],
+      "watch_for": [
+        "A burning smell or warning lights, which mean the transmission or engine is overheating. Stop and let it cool.",
+        "Deflated tires: aired-down tires must be pumped back up before normal driving, so only air down if you have a way to reinflate."
+      ],
+      "notes": [
+        "A folding shovel and a pair of traction boards are the most useful recovery gear you can carry.",
+        "Sand is softest in the heat of the day. Cool, damp sand early in the morning is much firmer."
+      ]
+    },
+    {
+      "id": "roadside_tow_strap",
+      "category": "Stuck & Recovery",
+      "title": "Towing or Being Towed with a Strap",
+      "summary": "Pull a stuck vehicle free, or move a disabled one off the road, using a recovery strap, rated attachment points and agreed signals.",
+      "difficulty": "advanced",
+      "tags": [
+        "tow strap",
+        "recovery strap",
+        "towing",
+        "pulled out",
+        "stuck",
+        "tow hook",
+        "recovery point",
+        "shackle",
+        "snatch strap"
+      ],
+      "steps": [
+        "Use a rated recovery or tow strap whose rating comfortably exceeds the stuck vehicle's weight. Check it for cuts and fraying before every use.",
+        "For extracting a stuck vehicle, attach only to points the vehicle manufacturer explicitly approves for recovery loads. Do not assume a factory screw-in tow eye is suitable; it may be intended only for road towing or loading. For moving a disabled vehicle, use only attachment points and methods approved in its owner's manual. Use rated shackles according to their manufacturer's instructions.",
+        "Agree on signals before anyone moves, including a clear STOP signal. One person directs; use the horn, hand signals or phones.",
+        "Clear bystanders back at least one and a half times the strap's length, and keep everyone out of line with the strap.",
+        "Lay a heavy jacket, bag or strap damper over the middle of the strap. If anything breaks, it pulls the strap down instead of letting it whip.",
+        "Pulling vehicle: drive forward slowly to take up the slack, then pull with steady, gentle throttle in a low gear. Stuck vehicle: steer straight and add light throttle in the direction of the pull once you start moving.",
+        "Once the stuck vehicle is on firm ground, both drivers stop and set their parking brakes before anyone detaches the strap.",
+        "To move a disabled car off the road on a strap: its driver keeps the ignition on (so the steering unlocks and the brake lights work), expects heavy steering and brakes with the engine off, and keeps the strap taut by braking gently. Go at walking pace and only as far as needed; call a tow truck for anything farther."
+      ],
+      "do_not": [
+        "Never attach a strap to a trailer hitch ball, bumper, axle, suspension or steering parts. They can tear off and fly like a bullet.",
+        "Never use a strap with metal hooks on its ends, or a chain, for pulling a stuck vehicle out; metal parts become projectiles if something fails.",
+        "Do not take a running start to yank a stuck vehicle with an ordinary tow strap. Only a kinetic recovery rope is built for that, and only with rated points and experience.",
+        "Do not tie knots in a recovery strap; a knot greatly weakens it and can be impossible to undo after loading.",
+        "Do not flat-tow an all-wheel-drive car or some automatics with drive wheels on the ground without checking the manual; it can wreck the drivetrain."
+      ],
+      "watch_for": [
+        "The strap riding over a sharp edge, which can cut it under load.",
+        "A recovery point bending or a bumper cover flexing. Stop and reattach.",
+        "The stuck vehicle sliding sideways toward the pulling vehicle as it comes free."
+      ],
+      "notes": [
+        "If all you have is rope, tie it to each tow eye with a bowline, which can still be untied after a heavy load. Expect rope to stretch and possibly snap, and keep everyone well clear.",
+        "Towing on a strap or rope is restricted or illegal on public roads in some places; use it to get off the road, then get proper help."
+      ],
+      "related_screen": "ToolsAndKnots",
+      "related_screen_label": "Open Tools & Knots"
+    },
+    {
+      "id": "roadside_pulling_over_safely",
+      "category": "Roadside Safety",
+      "title": "Pulling Over Safely and Warning Other Drivers",
+      "summary": "Choose where to stop, make the car visible, and decide whether to wait inside or outside when you break down.",
+      "difficulty": "basic",
+      "tags": [
+        "pull over",
+        "breakdown",
+        "hazard lights",
+        "warning triangle",
+        "flares",
+        "shoulder",
+        "highway",
+        "visibility"
+      ],
+      "steps": [
+        "Signal and turn on the hazard lights early, then move toward the outside shoulder when safe: right in right-driving countries, left in left-driving countries. Get off the road entirely if there is a safe place to do so.",
+        "Pick a straight stretch where approaching drivers can see you from far away. If you can still roll, avoid stopping just past a curve or the crest of a hill, on a bridge, or in a tunnel.",
+        "On a divided highway, prefer the outside shoulder rather than the median when safely reachable. Once stopped, turn the front wheels away from the road so the car won't roll into traffic if it's hit.",
+        "Set the parking brake and leave the hazards on. At night or in poor visibility, keep the parking lights on as well.",
+        "Get out on the side away from traffic. If there is a safe place well away from the road, such as behind a guardrail or up a bank, wait there, not between the car and traffic or directly behind it.",
+        "If there is no safe place to stand, for example a narrow freeway shoulder, stay in the car with your seatbelt fastened and the hazards on.",
+        "Set out warning triangles behind the car at increasing distances: roughly 10 ft (3 m), 100 ft (30 m), and on fast roads or before a curve or hill, 300 ft (100 m) or more. Walk along the shoulder facing traffic and carry each triangle in front of you.",
+        "Raise the hood or tie a bright cloth to the antenna or driver's door to show you need help.",
+        "When you call for help, give the road, direction of travel and nearest exit or mile marker. If you're unsure where you are, the Map shows your GPS position."
+      ],
+      "do_not": [
+        "Do not stand directly behind or in front of the car on the shoulder.",
+        "Do not attempt repairs on the traffic side if the car can be moved somewhere safer.",
+        "Do not walk along a freeway unless staying put is more dangerous.",
+        "Do not light flares near spilled fuel, a fuel smell, or dry grass."
+      ],
+      "watch_for": [
+        "Vehicles drifting onto the shoulder, especially at night when tired or impaired drivers are more common. Be ready to move away from the car.",
+        "Your own visibility: a reflective vest or bright clothing makes you far easier to see."
+      ],
+      "notes": [
+        "Many places have 'move over' laws for vehicles stopped on the shoulder, but don't count on every driver obeying them.",
+        "Keep a reflective vest within reach of the driver's seat, not buried in the trunk."
+      ],
+      "related_screen": "MapScreen",
+      "related_screen_label": "Open Map"
+    },
+    {
+      "id": "roadside_winter_stranded",
+      "category": "Roadside Safety",
+      "title": "Stranded in a Car in Winter",
+      "summary": "Stay warm, avoid carbon monoxide poisoning, and stay findable while you wait out a breakdown or storm in the cold.",
+      "difficulty": "intermediate",
+      "tags": [
+        "stranded",
+        "winter",
+        "snow",
+        "blizzard",
+        "carbon monoxide",
+        "cold",
+        "tailpipe",
+        "stuck in car",
+        "hypothermia"
+      ],
+      "steps": [
+        "Stay with the vehicle unless help is visible and close. The car is shelter, and it's far easier for rescuers to find than a person on foot.",
+        "Before running the engine, clear snow away from the tailpipe, and check it again every time you restart. A blocked exhaust can fill the car with carbon monoxide within minutes.",
+        "Run the engine and heater for about 10–15 minutes each hour, with a downwind window cracked open slightly for fresh air.",
+        "Make the car visible: hazards on while the engine runs, the dome light on at night for the same time, and a bright cloth on the antenna or door. Once snow stops falling, raise the hood as a distress signal.",
+        "Stay warm: put on every layer you have, keep a hat and gloves on, and use blankets, floor mats, seat covers or paper for insulation. Huddle together if there are several of you.",
+        "Move your arms and legs regularly to keep blood flowing, but avoid working hard enough to sweat; damp clothing chills you fast.",
+        "Drink fluids and eat small snacks; your body needs fuel to make heat. Melt snow before drinking it rather than eating it.",
+        "Conserve fuel and battery: keep lights off when not signaling, and put your phone in low-power mode, kept warm inside your jacket.",
+        "If more than one person is in the car, take turns sleeping so someone is always awake."
+      ],
+      "do_not": [
+        "Do not sleep with the engine running and the windows closed.",
+        "Do not run the engine without first checking the tailpipe is clear.",
+        "Do not leave the car on foot in a blizzard or whiteout. People get lost within a few feet of their vehicle.",
+        "Do not overexert yourself shoveling. Heavy exertion in the cold strains the heart."
+      ],
+      "watch_for": [
+        "Carbon monoxide symptoms: headache, dizziness, nausea, drowsiness or confusion. Get fresh air immediately and shut off the engine.",
+        "Hypothermia: intense shivering, slurred speech, clumsiness or confusion. The Health and Weather sections cover treatment.",
+        "Frostbite: numb skin that turns white, gray or waxy, usually on fingers, toes, nose or ears."
+      ],
+      "notes": [
+        "A winter kit belongs in the car from late fall: blankets, hats and gloves, a shovel, an ice scraper, food, water, a flashlight and hand warmers.",
+        "The Vehicle Breakdown scenario card covers deciding whether to stay or go."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "roadside_key_fob_lockout",
+      "category": "Roadside Safety",
+      "title": "Dead Key Fob or Locked Out",
+      "summary": "Get into and start a car when the key fob battery dies, and what to do if the keys are locked inside.",
+      "difficulty": "basic",
+      "tags": [
+        "key fob",
+        "dead fob",
+        "locked out",
+        "keys locked in car",
+        "push button start",
+        "key not detected",
+        "coin battery",
+        "lockout"
+      ],
+      "steps": [
+        "Dead fob, doors won't unlock: most fobs hide a metal key. Slide or press the release on the fob and pull the key out.",
+        "Find the keyhole on the driver's door. On many cars it's hidden behind a small cap on the door handle; pry the cap off gently with the tip of the key.",
+        "Push-button start with a dead fob: press the brake and hold the fob right against the start button while you press it, or place the fob in the backup slot or pocket the manual describes (often in the console or cup holder). The car can read the fob's chip even when its battery is flat.",
+        "If the alarm goes off after a manual unlock, starting the car or pressing the fob to the start button usually silences it.",
+        "Replace the fob battery: most use a coin cell (CR2032 is common). Pry the case apart at the seam with the metal key or a coin, and fit the new cell the same way up as the old one.",
+        "Keys locked inside: check every door and the trunk first. Then call roadside assistance, a locksmith or the dealer. Some manufacturers' phone apps can unlock the car if you have signal.",
+        "If a child or pet is locked inside in heat or cold, call emergency services immediately."
+      ],
+      "do_not": [
+        "Do not use a coat hanger or wedge on a modern car. It can damage door seals, wiring and side airbag parts.",
+        "Do not break a window unless a person or animal inside is in danger. If you must, choose a side window marked TEMPERED, as far as possible from them, and use a suitable emergency window-breaking tool near a corner. Windshields and some side windows are laminated; ordinary window breakers cannot create an opening through laminated glass. Do not delay emergency assistance trying to shatter it.",
+      ],
+      "watch_for": [
+        "'Key not detected' or 'key battery low' messages. The fob battery is going; replace it soon."
+      ],
+      "notes": [
+        "Keep a spare coin cell in the glovebox.",
+        "Keep a spare key somewhere other than the car, with a trusted person, or carry a slim door-only key in your wallet."
+      ]
+    },
+    {
+      "id": "roadside_minor_collision",
+      "category": "Roadside Safety",
+      "title": "First Steps After a Minor Collision",
+      "summary": "Stay safe, swap the right information, and document the scene after a fender-bender.",
+      "difficulty": "basic",
+      "tags": [
+        "accident",
+        "collision",
+        "crash",
+        "fender bender",
+        "insurance",
+        "exchange information",
+        "police report",
+        "car accident"
+      ],
+      "steps": [
+        "Stop. Leaving the scene of a collision is illegal nearly everywhere, even a minor one.",
+        "Check yourself and your passengers for injuries. Call emergency services if anyone is hurt, the road is blocked, or the other driver seems impaired or hostile.",
+        "If no one is hurt and the cars can be driven, move them out of traffic to the shoulder or a parking lot; many places require this. Hazards on, engines off.",
+        "On a busy road, set out warning triangles or flares.",
+        "Exchange information with the other driver: names, phone numbers, driver's license numbers, insurance company and policy number, license plates, and each vehicle's make, model and color. Note the exact location and time.",
+        "Photograph both vehicles, all damage, the plates, the wider scene and the road conditions. With permission, photograph the other driver's license and insurance card.",
+        "Get the names and phone numbers of any witnesses.",
+        "File a police report where required (usually when anyone is injured or damage is above a set amount) and tell your insurer promptly."
+      ],
+      "do_not": [
+        "Do not admit fault or speculate about blame; stick to the facts.",
+        "Do not argue with the other driver.",
+        "Do not sign anything except police or insurance paperwork.",
+        "Do not move an injured person unless they're in immediate danger, such as from fire."
+      ],
+      "watch_for": [
+        "Leaking fluid, smoke, or a fuel smell. Move everyone well away from the vehicles.",
+        "Injury symptoms that appear hours or days later, such as neck pain, headache or dizziness. Get checked by a doctor."
+      ],
+      "notes": [
+        "Laws on reporting differ by state and country. Keep your insurance card and registration where you can reach them quickly.",
+        "Use the Notepad to record details and photos while they're fresh."
+      ],
+      "related_screen": "Notepad",
+      "related_screen_label": "Open Notepad"
+    },
+    {
+      "id": "roadside_vehicle_kit",
+      "category": "Vehicle Kit",
+      "title": "Vehicle Emergency Kit Checklist",
+      "summary": "What to keep in the car so you can handle a flat, a dead battery or a long wait for help.",
+      "difficulty": "basic",
+      "tags": [
+        "car kit",
+        "emergency kit",
+        "roadside kit",
+        "vehicle kit",
+        "checklist",
+        "what to keep in car",
+        "jumper cables",
+        "spare tire",
+        "winter kit"
+      ],
+      "steps": [
+        "Tire change: an inflated spare (or the car's sealant kit), jack, lug wrench, wheel chock, and the locking lug key if your wheels use one.",
+        "Tire repair: a plug kit, a 12 V compressor and a tire pressure gauge.",
+        "Power: jumper cables or a charged jump pack, plus a phone charging cable and a power bank.",
+        "Visibility: warning triangles or flares, a reflective vest, and a flashlight or headlamp with spare batteries.",
+        "Fluids: a quart (1 L) of the right engine oil, a jug of premixed coolant, and windshield washer fluid.",
+        "Tools: a multi-tool, duct tape, zip ties, work gloves, rags, spare fuses, and a tow strap with soft shackles.",
+        "Recovery: a folding shovel, and traction boards or a bag of sand or clay cat litter.",
+        "Survival: water (about a gallon / 4 L per person), nonperishable food, a first aid kit, a blanket or sleeping bag, warm layers and rain gear.",
+        "Winter additions: an ice scraper, snow brush, hats, gloves and hand warmers.",
+        "Paper: a paper map, the owner's manual, insurance and registration, emergency contacts written down, and a pen and notepad."
+      ],
+      "do_not": [
+        "Do not bury the kit under luggage where you can't reach it at the roadside; keep the vest and flashlight within reach of the driver's seat.",
+        "Do not leave lithium jump packs or aerosol cans in extreme heat for long periods.",
+        "Do not assume the spare is good because you've never used it. Check its pressure when you check the other tires."
+      ],
+      "watch_for": [
+        "Expired items: food, water, first aid supplies and road flares all have expiry dates.",
+        "Flat batteries in flashlights and a drained jump pack."
+      ],
+      "notes": [
+        "Check the kit twice a year, for example when the clocks change, and swap in seasonal items.",
+        "Adapt to where you drive: more water for desert travel, more insulation and food for cold or remote routes.",
+        "Build this list in the Checklist tool to tick items off as you pack."
+      ],
+      "related_screen": "Checklist",
+      "related_screen_label": "Open Checklists"
+    }
+  ]
+}
