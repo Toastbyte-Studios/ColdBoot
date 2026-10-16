@@ -1,5 +1,6 @@
 import emergencyData from '../data/emergency.json';
 import healthData from '../data/health.json';
+import roadsideData from '../data/roadside.json';
 import scenarioCardsData from '../data/scenarioCards.json';
 import survivalData from '../data/survival.json';
 import toolsData from '../data/tools.json';
@@ -924,6 +925,7 @@ const ALL_ENTRIES: ReferenceEntryType[] = [
   ...(emergencyData.entries as ReferenceEntryType[]),
   ...(toolsData.entries as ReferenceEntryType[]),
   ...(weatherData.entries as ReferenceEntryType[]),
+  ...(roadsideData.entries as ReferenceEntryType[]),
   ...(scenarioCardsData.entries as ScenarioCardType[]).map(scenarioCardToEntry),
   ...SYNTHETIC_TOOL_ENTRIES,
 ];

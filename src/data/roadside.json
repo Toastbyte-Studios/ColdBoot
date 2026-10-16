@@ -1,0 +1,177 @@
+{
+  "metadata": {
+    "name": "Roadside Service Reference",
+    "version": "1.0.0",
+    "last_updated": "2026-10-16",
+    "disclaimer": "This information is general roadside guidance and is not a substitute for your vehicle's owner's manual or professional roadside assistance. Vehicles differ; follow the manufacturer's instructions where they disagree with this guide. Your safety comes before the car: if a repair means working near moving traffic, get clear and call for help if you can.",
+    "categories": ["Tires & Wheels"],
+    "difficulty_levels": ["basic", "intermediate", "advanced"]
+  },
+  "entries": [
+    {
+      "id": "roadside_change_flat_spare",
+      "category": "Tires & Wheels",
+      "title": "Changing a Flat with the Spare",
+      "summary": "Swap a flat tire for the spare safely, from pulling over to the final lug nut check.",
+      "difficulty": "basic",
+      "tags": [
+        "flat tire",
+        "spare tire",
+        "change tire",
+        "jack",
+        "lug nuts",
+        "lug wrench",
+        "donut",
+        "puncture"
+      ],
+      "steps": [
+        "Get fully off the road onto flat, firm ground, as far from traffic as you can. On a highway, drive slowly to an exit or wide shoulder rather than stopping in a lane; a damaged rim is cheaper than being hit.",
+        "Turn on the hazard lights, put the car in park (or in gear for a manual), set the parking brake and turn off the engine. Get everyone out on the side away from traffic and have them wait well clear, behind a barrier if there is one.",
+        "Chock the wheel diagonally opposite the flat with a wheel chock, rock or block of wood. Set out warning triangles or flares behind the car if you have them.",
+        "Find the spare, jack and lug wrench: usually under the trunk floor, or under the rear of the vehicle on trucks and SUVs. Remove any wheel cover or lug nut caps, and find the locking lug key if your wheels use one.",
+        "With the tire still on the ground, loosen each lug nut about half a turn counterclockwise. Do not remove them yet.",
+        "Place the jack at the jack point nearest the flat (a reinforced notch on the pinch weld or a frame point; the owner's manual shows where). Raise the car until the flat is about 1 inch (2–3 cm) off the ground, enough room for the inflated spare.",
+        "Remove the lug nuts and keep them together in the wheel cover or a pocket. Pull the wheel straight off toward you.",
+        "Lift the spare onto the studs and thread every lug nut on by hand, tapered side facing the wheel.",
+        "Snug the nuts with the wrench in a star (crisscross) pattern so the wheel seats evenly.",
+        "Lower the car until the tire carries weight, then tighten the nuts fully, again in a star pattern. Lower the rest of the way and remove the jack.",
+        "Stow the flat, jack and tools so nothing flies around in a sudden stop. Check the spare's pressure as soon as you can, and recheck lug nut tightness after about 50 miles (80 km)."
+      ],
+      "do_not": [
+        "Never put any part of your body under a car held up only by a jack.",
+        "Do not jack on soft ground, a slope, or a plastic body panel.",
+        "Do not drive a compact 'donut' spare faster than its rated speed (usually 50 mph / 80 km/h) or farther than the distance on its sidewall or in the manual.",
+        "Do not oil or grease the wheel studs or lug nuts; lubricated nuts can over-tighten or work loose.",
+        "Do not change a tire on the traffic side of a busy road if you can move the car somewhere safer."
+      ],
+      "watch_for": [
+        "The car shifting or the jack leaning as it rises. Lower it and reset on firmer, flatter ground.",
+        "A spare that is flat or low itself. Spares lose air sitting in the trunk.",
+        "Wobble, clunking or vibration after you drive off. Stop and recheck the lug nuts."
+      ],
+      "notes": [
+        "Practice once in your driveway. It goes much faster the second time, and you find out whether the spare and tools are actually there.",
+        "Many newer cars carry a sealant kit instead of a spare. Know which yours has before you need it.",
+        "On soft ground, a short piece of thick board under the jack spreads the load."
+      ]
+    },
+    {
+      "id": "roadside_tire_plug_sealant",
+      "category": "Tires & Wheels",
+      "title": "Temporary Repair: Plug Kit or Sealant",
+      "summary": "Get a punctured tire holding air long enough to reach a shop when you have no spare, or no usable one.",
+      "difficulty": "intermediate",
+      "tags": [
+        "tire plug",
+        "sealant",
+        "puncture",
+        "nail in tire",
+        "slow leak",
+        "flat tire",
+        "repair kit",
+        "compressor"
+      ],
+      "steps": [
+        "Find the puncture: look for a nail or screw in the tread, listen for hissing, or spray or pour soapy water over the tread and watch for bubbles.",
+        "Decide whether it can be repaired. A small hole (about 1/4 inch / 6 mm or less) in the main tread is a candidate. Damage to the sidewall or shoulder, a cut or gash, or a tire that was driven flat for a distance needs the spare or a tow instead.",
+        "Sealant kit: shake the canister, remove the valve cap and connect the hose to the valve stem. Inject the sealant as the kit directs, then inflate with the kit's compressor to the pressure on the driver's door jamb.",
+        "After sealant, drive straight away for 3–6 miles (5–10 km) at moderate speed to spread it inside the tire, then stop and recheck the pressure.",
+        "Plug kit: pull the nail or screw out with pliers only when you are ready to plug immediately. Push the reamer tool in and out of the hole several times to clean and size it.",
+        "Thread a plug strip through the eye of the insertion tool so it is centered, and coat it with rubber cement if the kit includes some.",
+        "Push the plug into the hole until about a third to a half of the strip is still outside, then pull the tool straight out in one quick motion. The plug stays in.",
+        "Trim the plug ends to about 1/4 inch (6 mm) above the tread. Inflate to the door jamb pressure and check the plug with soapy water for bubbles."
+      ],
+      "do_not": [
+        "Do not plug or seal a sidewall or shoulder puncture; those cannot be repaired safely.",
+        "Do not exceed the speed and distance limits printed on a sealant kit (often about 50 mph / 80 km/h).",
+        "Do not treat a plug or sealant as permanent. Have the tire inspected and properly repaired from the inside as soon as you can.",
+        "Do not pull a nail out before you are ready to plug. Left in place, it slows the leak."
+      ],
+      "watch_for": [
+        "Pressure dropping again over the next few miles. Stop and reassess.",
+        "Vibration, a bulge, or the steering pulling to one side."
+      ],
+      "notes": [
+        "Tell the tire shop if you used sealant; it can foul tire pressure (TPMS) sensors and needs cleaning out.",
+        "A plug kit and a small 12 V compressor take up little room and cover most nail and screw punctures."
+      ]
+    },
+    {
+      "id": "roadside_tire_pressure",
+      "category": "Tires & Wheels",
+      "title": "Checking and Setting Tire Pressure",
+      "summary": "Keep tires at the right pressure for safe handling, fewer flats and better fuel economy.",
+      "difficulty": "basic",
+      "tags": [
+        "tire pressure",
+        "psi",
+        "inflate",
+        "air",
+        "gauge",
+        "tpms",
+        "low tire",
+        "compressor"
+      ],
+      "steps": [
+        "Find the right pressure on the placard inside the driver's door jamb (or in the owner's manual). Front and rear may differ.",
+        "Check when the tires are cold: before driving, or after the car has been parked for about three hours.",
+        "Remove the valve cap, press the gauge onto the valve firmly and straight so it doesn't hiss, and read it.",
+        "Add air in short bursts, checking with the gauge between bursts. If you overshoot, press the small pin in the center of the valve to let air out.",
+        "Check all four tires and the spare, then put the valve caps back on."
+      ],
+      "do_not": [
+        "Do not inflate to the 'max pressure' printed on the tire sidewall; that is a limit, not the target.",
+        "Do not let air out of hot tires to match the cold figure. They will be underinflated once they cool."
+      ],
+      "watch_for": [
+        "The tire pressure warning light: a horseshoe shape with an exclamation mark.",
+        "Pressure falls roughly 1 psi for every 10 °F (about 0.1 bar for every 5–6 °C) drop in temperature, which is why the warning light often comes on during the first cold mornings.",
+        "Uneven wear: worn edges suggest underinflation; a worn center suggests overinflation.",
+        "One tire that keeps losing air faster than the others, which usually means a slow puncture."
+      ],
+      "notes": [
+        "Check monthly and before long trips. A simple gauge in the glovebox costs little and beats guessing by eye.",
+        "Gas station gauges are often inaccurate; use your own."
+      ]
+    },
+    {
+      "id": "roadside_stuck_lug_nut",
+      "category": "Tires & Wheels",
+      "title": "Freeing a Stuck Lug Nut or Wheel",
+      "summary": "Loosen over-tightened or rusted lug nuts, and break free a wheel stuck to the hub.",
+      "difficulty": "intermediate",
+      "tags": [
+        "lug nut",
+        "stuck",
+        "seized",
+        "rusted",
+        "wheel stuck",
+        "breaker bar",
+        "lug wrench",
+        "flat tire"
+      ],
+      "steps": [
+        "Confirm you are turning counterclockwise. A few older vehicles use left-hand threads on one side; those studs are usually stamped 'L'.",
+        "Do this with the tire on the ground and the parking brake set, so the wheel cannot spin.",
+        "Seat the wrench fully on the nut with the handle roughly horizontal. Hold the car for balance and press down on the handle with your foot, using your body weight in a steady push.",
+        "If that fails, add leverage: slide a length of sturdy pipe over the wrench handle to lengthen it.",
+        "For rusted nuts, spray penetrating oil where the nut meets the stud, wait 10–15 minutes, and try again.",
+        "If the wheel stays stuck to the hub after the nuts are off, thread two nuts back on a few turns so the wheel cannot fall off, then kick the tire's sidewall firmly, working around it. Or strike the tire (not the rim) with a block of wood and a hammer.",
+        "Once the wheel breaks free, remove the nuts you threaded back on and pull the wheel off."
+      ],
+      "do_not": [
+        "Do not stand on a wrench that is only partly on the nut. It slips, rounds the nut, and can injure you.",
+        "Do not use heat near a tire.",
+        "Do not hammer on the wheel studs or the rim edge."
+      ],
+      "watch_for": [
+        "A nut starting to round off. Stop and use a correctly sized six-point socket if you have one.",
+        "The stud turning along with the nut, which means it has broken loose from the hub and needs a shop."
+      ],
+      "notes": [
+        "A cross-shaped (four-way) lug wrench or breaker bar gives far more leverage than the small wrench that comes with most cars.",
+        "Ask the shop to put a light coat of anti-seize on the hub face (not the studs) at your next tire service to stop the wheel rusting on."
+      ]
+    }
+  ]
+}
