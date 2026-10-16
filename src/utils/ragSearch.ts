@@ -250,9 +250,9 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     steps: [
       'HAM (Amateur Radio) — requires FCC license; national simplex calling 146.520 MHz',
       'CB (Citizens Band) — no license required; Channel 9 emergency (27.065 MHz)',
-      'GMRS — requires FCC license; 462–467 MHz range; higher power than FRS',
-      'FRS (Family Radio Service) — no license; 462–467 MHz; limited to 2W',
-      'MURS (Multi-Use Radio Service) — no license; 151–154 MHz; 5 channels',
+      'GMRS — requires FCC license, no exam; 462–467 MHz range; up to 50W and repeaters',
+      'FRS (Family Radio Service) — no license; 22 channels shared with GMRS; 2W max (0.5W on 8–14)',
+      'MURS (Multi-Use Radio Service) — no license; 151–154 MHz; 5 channels; 2W max',
     ],
     do_not: [
       'Do not transmit on amateur radio frequencies without a valid FCC license',
@@ -261,7 +261,8 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     watch_for: [],
     notes: [
       'Always comply with FCC regulations and local laws',
-      'Channel 9 CB and 146.520 MHz HAM are monitored emergency frequencies',
+      'CB Channel 9 is reserved for emergencies and traveler assistance',
+      '146.520 MHz is the national 2 m simplex calling frequency for HAM operators',
     ],
     related_screen: 'RadioFrequencies',
     related_screen_label: 'Open Radio Frequencies',
