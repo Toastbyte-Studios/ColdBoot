@@ -5,14 +5,31 @@ import { CategoryType } from '../../types/common-types';
 
 const categoryMap: Record<string, string> = {
   TiresAndWheels: 'Tires & Wheels',
+  BatteryAndElectrical: 'Battery & Electrical',
+  EngineAndFluids: 'Engine & Fluids',
 };
 
-const roadsideCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const roadsideCategories: CategoryType[] = [
   {
     title: 'Tires & Wheels',
     icon: 'disc-outline',
     id: 'roadside_tires_wheels',
     category: categoryMap.TiresAndWheels,
+    data: data.entries,
+  },
+  {
+    title: 'Battery & Electrical',
+    icon: 'battery-charging-outline',
+    id: 'roadside_battery_electrical',
+    category: categoryMap.BatteryAndElectrical,
+    data: data.entries,
+  },
+  {
+    title: 'Engine & Fluids',
+    icon: 'speedometer-outline',
+    id: 'roadside_engine_fluids',
+    category: categoryMap.EngineAndFluids,
     data: data.entries,
   },
 ];

@@ -8,8 +8,13 @@ import roadsideData from '../src/data/roadside.json';
 import survivalData from '../src/data/survival.json';
 import toolsData from '../src/data/tools.json';
 import weatherData from '../src/data/weather.json';
+import { roadsideCategories } from '../src/screens/Reference/RoadsideScreen';
 import { ragSearch } from '../src/utils/ragSearch';
 import { searchItems } from '../src/utils/searchData';
+
+// The screen module renders CategoryList, which pulls in navigation; only
+// its category list is under test here.
+jest.mock('../src/components/CategoryList', () => () => null);
 
 const entries = roadsideData.entries;
 
@@ -38,6 +43,23 @@ describe('Roadside reference data', () => {
     }
     for (const category of categories) {
       expect(entries.some((e) => e.category === category)).toBe(true);
+    }
+  });
+
+  test('the Roadside screen lists exactly the data categories', () => {
+    const screenTitles = roadsideCategories.map((c) => c.title).sort();
+    expect(screenTitles).toEqual([...roadsideData.metadata.categories].sort());
+    for (const category of roadsideCategories) {
+      expect(category.category).toBe(category.title);
+    }
+  });
+
+  test('related screen links point at real routes', () => {
+    const routes = ['ScenarioCards', 'ToolsAndKnots', 'Checklist'];
+    for (const entry of entries as { related_screen?: string }[]) {
+      if (entry.related_screen) {
+        expect(routes).toContain(entry.related_screen);
+      }
     }
   });
 
@@ -79,6 +101,21 @@ describe('Roadside search', () => {
     expect(result.hasResults).toBe(true);
     const ids = result.results.map((r) => r.entry.id);
     expect(ids).toContain('roadside_change_flat_spare');
+  });
+
+  test.each([
+    ['jump start a dead battery with cables', 'roadside_jump_start_cables'],
+    ['portable jump starter pack', 'roadside_jump_pack'],
+    ["car won't start just clicking", 'roadside_no_start_diagnosis'],
+    ['corroded battery terminals', 'roadside_battery_terminals'],
+    ['headlights stopped working blown fuse', 'roadside_blown_fuse'],
+    ['engine overheating steam from hood', 'roadside_overheating'],
+    ['how do I check my engine oil', 'roadside_oil_coolant_check'],
+    ['oil pressure warning light on dashboard', 'roadside_warning_lights'],
+    ['ran out of gas on the highway', 'roadside_out_of_fuel'],
+  ])('natural-language search: "%s"', (query, id) => {
+    const result = ragSearch(query);
+    expect(result.results.map((r) => r.entry.id)).toContain(id);
   });
 
   test('natural-language search finds the plug kit guide', () => {
