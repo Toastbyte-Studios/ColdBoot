@@ -11,6 +11,7 @@ import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import emergencyData from '../../data/emergency.json';
 import healthData from '../../data/health.json';
+import roadsideData from '../../data/roadside.json';
 import survivalData from '../../data/survival.json';
 import toolsData from '../../data/tools.json';
 import weatherData from '../../data/weather.json';
@@ -52,6 +53,7 @@ export default function BookmarkScreen(): JSX.Element {
     const allEntries = [
       ...emergencyData.entries,
       ...healthData.entries,
+      ...roadsideData.entries,
       ...survivalData.entries,
       ...toolsData.entries,
       ...weatherData.entries,
