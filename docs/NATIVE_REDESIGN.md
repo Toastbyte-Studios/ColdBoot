@@ -143,7 +143,8 @@ See the sweep progress below.
 `rg -l '<Modal\b' src/` gives the real list:
 
 - `components/` (4): `SettingsModal`, `HelpModal`, `ManageOfflineMapsModal`,
-  `Footer/components/NotificationsModal`.
+  `Footer/components/NotificationsModal`. (`ManageOfflineMapsModal` has since
+  been removed: offline maps live in the Map's Library sheet.)
 - Modal components in feature directories (2): `EmergencyPlan/ImportModal`,
   `EmergencyPlan/ContactPickerModal`.
 - **Screens with a modal inlined into them (3)**: `RepeaterBookScreen`,

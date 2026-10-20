@@ -64,7 +64,7 @@ import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
-import LibrarySheet from './components/LibrarySheet';
+import LibrarySheet, { type LibraryTab } from './components/LibrarySheet';
 import { haversineMeters } from './components/LibrarySheet/waypointGeometry';
 import MapPanel, {
   DELTA,
@@ -201,6 +201,8 @@ const isAndroid = Platform.OS === 'android';
 type MapScreenRouteParams = {
   center?: { latitude: number; longitude: number };
   radiusMiles?: number;
+  /** Opens the Library sheet on this tab, e.g. 'maps' from Settings. */
+  library?: LibraryTab;
 };
 
 export default observer(function MapScreen() {
@@ -244,6 +246,10 @@ export default observer(function MapScreen() {
   // Holds the AbortController for the in-flight Nominatim request
   const geocodeAbortRef = useRef<AbortController | null>(null);
   const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
+  /** Tab to open the Library on; undefined keeps the last one shown. */
+  const [libraryOpenTab, setLibraryOpenTab] = useState<LibraryTab | undefined>(
+    undefined,
+  );
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
   const [mapReady, setMapReady] = useState(false);
@@ -513,6 +519,7 @@ export default observer(function MapScreen() {
         coordinate.latitude,
         coordinate.longitude,
       );
+      setLibraryOpenTab('waypoints');
       setLibrarySheetOpen(true);
     },
     [waypointStore],
@@ -685,6 +692,18 @@ export default observer(function MapScreen() {
     [flyToRegion],
   );
 
+  // Other screens link to a Library tab (Settings → Offline maps opens Maps).
+  // Unlike the centring below, this doesn't wait for the map to load.
+  const requestedLibraryTab = route.params?.library;
+  useEffect(() => {
+    if (!requestedLibraryTab) {
+      return;
+    }
+    setLibraryOpenTab(requestedLibraryTab);
+    setLibrarySheetOpen(true);
+    navigation.setParams({ library: undefined });
+  }, [navigation, requestedLibraryTab]);
+
   // A download runs in the background after its modal closes. Re-read the
   // library when one finishes so the Maps tab lists it without a reopen.
   useEffect(() => {
@@ -767,7 +786,10 @@ export default observer(function MapScreen() {
         <IconButton
           name="library-outline"
           size={22}
-          onPress={() => setLibrarySheetOpen(true)}
+          onPress={() => {
+            setLibraryOpenTab(undefined);
+            setLibrarySheetOpen(true);
+          }}
           accessibilityLabel="Open library"
         />
         {/* Not an IconButton while recording: only the glyph pulses, so the
@@ -843,6 +865,7 @@ export default observer(function MapScreen() {
             tracks={trackStore.tracks}
             currentCoords={coords}
             isOpen={librarySheetOpen}
+            openTab={libraryOpenTab}
             onClose={() => setLibrarySheetOpen(false)}
             onNavigate={handleNavigateWaypoint}
             onDelete={handleDeleteWaypoint}

@@ -43,7 +43,7 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
   Home: undefined;
   Search: undefined;
   DownloadArea: undefined;
-  MapLibrary: undefined;
+  MapScreen: { library: 'maps' };
 }>;
 
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
@@ -367,7 +367,9 @@ export default function AppShell({ children }: Props) {
       <SettingsModal
         visible={isSettingsVisible}
         onClose={() => setIsSettingsVisible(false)}
-        onManageOfflineMaps={() => navigation.navigate('MapLibrary')}
+        onManageOfflineMaps={() =>
+          navigation.navigate('MapScreen', { library: 'maps' })
+        }
         onOpenHelp={() => setIsHelpVisible(true)}
       />
 

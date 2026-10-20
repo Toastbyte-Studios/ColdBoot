@@ -153,6 +153,21 @@ describe('OfflineMapLibraryStore', () => {
     expect(store.busyPackId).toBeNull();
   });
 
+  it('keeps the saved name on the old pack when removing it fails', async () => {
+    (OfflineMapService.downloadRegion as jest.Mock).mockResolvedValue({
+      id: 'pack-2',
+    });
+    (OfflineMapService.deletePack as jest.Mock).mockRejectedValue(
+      new Error('delete failed'),
+    );
+
+    await expect(
+      store.refreshPack(makePack(), { highDetail: false }),
+    ).rejects.toThrow('delete failed');
+    expect(transferPackNameOverride).not.toHaveBeenCalled();
+    expect(store.busyPackId).toBeNull();
+  });
+
   it('reports a pack it cannot place on the map instead of refreshing it', async () => {
     const pack = makePack();
     pack.metadata.centerLat = Number.NaN;

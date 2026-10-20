@@ -25,6 +25,15 @@ function getFallbackShortcut(slot: number, used: Set<string>): string {
   );
 }
 
+/**
+ * Tools that were removed, mapped to where their job lives now, so a shortcut
+ * saved to one keeps pointing somewhere useful instead of falling back to a
+ * default. The Map Library screen became the Map's Library sheet.
+ */
+const RETIRED_TOOL_IDS: Readonly<Record<string, string>> = {
+  nav_map_library: 'nav_map',
+};
+
 export function resolveShortcutIds(value: unknown): string[] {
   const stored =
     Array.isArray(value) && value.length === DEFAULT_SHORTCUTS.length
@@ -33,7 +42,9 @@ export function resolveShortcutIds(value: unknown): string[] {
   const used = new Set<string>();
 
   return DEFAULT_SHORTCUTS.map((_, slot) => {
-    const candidate = stored[slot];
+    const raw: unknown = stored[slot];
+    const candidate =
+      typeof raw === 'string' ? (RETIRED_TOOL_IDS[raw] ?? raw) : raw;
     if (
       typeof candidate === 'string' &&
       getToolById(candidate) &&

@@ -63,8 +63,14 @@ export interface LibrarySheetProps {
   tracks?: Track[];
   /** Current GPS coords of the device (used for live distance/bearing in rows). */
   currentCoords: Coords | null;
-  /** Whether the sheet is open (controlled externally via the FAB). */
+  /** Whether the sheet is open (controlled by the map's Library button). */
   isOpen: boolean;
+  /**
+   * The tab to show when the sheet opens, e.g. 'maps' when another part of
+   * the app links to offline maps. Left out, the sheet keeps whichever tab
+   * was showing last.
+   */
+  openTab?: LibraryTab;
   /** Called when the user closes the sheet via button or swipe. */
   onClose: () => void;
   /** Called when user taps Navigate on a waypoint. */
@@ -101,6 +107,7 @@ export default function LibrarySheet({
   tracks = [],
   currentCoords,
   isOpen,
+  openTab,
   onClose,
   onNavigate,
   onDelete,
@@ -151,6 +158,10 @@ export default function LibrarySheet({
 
   useEffect(() => {
     if (isOpen) {
+      if (openTab) {
+        setActiveTab(openTab);
+        setShowAddForm(false);
+      }
       setSheetState('open');
       snapOpen();
     } else {
@@ -167,7 +178,7 @@ export default function LibrarySheet({
         }
       });
     }
-  }, [isOpen, snapOpen, translateY]);
+  }, [isOpen, openTab, snapOpen, translateY]);
 
   // PanResponder for drag-to-dismiss
   const panResponder = useRef(

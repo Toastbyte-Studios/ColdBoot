@@ -17,14 +17,23 @@ jest.mock('react-native-safe-area-context', () => ({
   useSafeAreaInsets: () => ({ bottom: 0, top: 0, left: 0, right: 0 }),
 }));
 
+// Route params per test; Settings → Offline maps sends { library: 'maps' }.
+// Like the real navigator, the navigation object is stable across renders
+// and setParams merges into the route's params.
+let mockRouteParams: Record<string, unknown> | undefined;
+const mockSetParams = jest.fn((next: Record<string, unknown>) => {
+  mockRouteParams = { ...mockRouteParams, ...next };
+});
+const mockNavigation = {
+  canGoBack: () => false,
+  goBack: jest.fn(),
+  navigate: jest.fn(),
+  setParams: mockSetParams,
+};
+
 jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    canGoBack: () => false,
-    goBack: jest.fn(),
-    navigate: jest.fn(),
-    setParams: jest.fn(),
-  }),
-  useRoute: () => ({ params: undefined }),
+  useNavigation: () => mockNavigation,
+  useRoute: () => ({ params: mockRouteParams }),
 }));
 
 jest.mock('../src/navigation/navigationRef', () => ({
@@ -49,12 +58,14 @@ jest.mock('../src/utils/reverseGeocode', () => ({
   reverseGeocode: jest.fn(() => Promise.resolve(null)),
 }));
 
+const mockWaypointStore = {
+  waypoints: [],
+  activeWaypointId: null,
+  addWaypoint: jest.fn(() => Promise.resolve()),
+};
+
 jest.mock('../src/stores/StoreContext', () => ({
-  useWaypointStore: () => ({
-    waypoints: [],
-    activeWaypointId: null,
-    addWaypoint: jest.fn(),
-  }),
+  useWaypointStore: () => mockWaypointStore,
   useTrackStore: () => ({ tracks: [] }),
   useSettingsStore: () => ({ measurementSystem: 'imperial' }),
   useOfflineDownloadStore: () => ({ state: 'inactive' }),
@@ -62,13 +73,15 @@ jest.mock('../src/stores/StoreContext', () => ({
   useDevToolsStore: () => ({ simulatedOffline: false }),
 }));
 
-// The sheet has its own tests; here it only needs to report whether it's open.
+// The sheet has its own tests; here it only reports whether it's open and
+// which tab it was asked to open on.
 jest.mock('../src/screens/Map/components/LibrarySheet', () => {
   const { View: MockView } = require('react-native');
-  return ({ isOpen }: { isOpen: boolean }) => (
+  return ({ isOpen, openTab }: { isOpen: boolean; openTab?: string }) => (
     <MockView
       testID="library-sheet"
       accessibilityState={{ expanded: isOpen }}
+      accessibilityValue={{ text: openTab ?? 'last' }}
     />
   );
 });
@@ -111,11 +124,19 @@ async function renderScreen(permission: boolean) {
   return tree;
 }
 
+const sheet = (tree: ReactTestRenderer.ReactTestRenderer) =>
+  tree.root.findByProps({ testID: 'library-sheet' }).props;
 const sheetIsOpen = (tree: ReactTestRenderer.ReactTestRenderer) =>
-  tree.root.findByProps({ testID: 'library-sheet' }).props.accessibilityState
-    .expanded;
+  sheet(tree).accessibilityState.expanded;
+const sheetTab = (tree: ReactTestRenderer.ReactTestRenderer) =>
+  sheet(tree).accessibilityValue.text;
 
-describe('MapScreen toolbar', () => {
+describe('MapScreen Library', () => {
+  beforeEach(() => {
+    mockRouteParams = undefined;
+    mockSetParams.mockClear();
+  });
+
   afterEach(() => {
     (LocationManager.requestPermissions as jest.Mock).mockResolvedValue(true);
   });
@@ -149,5 +170,46 @@ describe('MapScreen toolbar', () => {
     expect(findButton(tree, 'Center map on my location').props.disabled).toBe(
       true,
     );
+  });
+
+  it('opens on the Maps tab when linked from Settings', async () => {
+    mockRouteParams = { library: 'maps' };
+
+    const tree = await renderScreen(true);
+
+    expect(sheetIsOpen(tree)).toBe(true);
+    expect(sheetTab(tree)).toBe('maps');
+    // The param is consumed so returning to the screen doesn't reopen it.
+    expect(mockSetParams).toHaveBeenCalledWith({ library: undefined });
+  });
+
+  it('keeps the last tab when opened from the toolbar', async () => {
+    mockRouteParams = { library: 'maps' };
+    const tree = await renderScreen(true);
+
+    await ReactTestRenderer.act(async () => {
+      findButton(tree, 'Open library').props.onPress();
+    });
+
+    expect(sheetTab(tree)).toBe('last');
+  });
+
+  it('opens on Waypoints after a long-press drops one', async () => {
+    const tree = await renderScreen(true);
+    const map = tree.root.findByProps({ testID: 'map-view' });
+
+    await ReactTestRenderer.act(async () => {
+      await map.props.onLongPress({
+        nativeEvent: { lngLat: [-115.07, 36.14] },
+      });
+    });
+
+    expect(mockWaypointStore.addWaypoint).toHaveBeenCalledWith(
+      'Waypoint 1',
+      36.14,
+      -115.07,
+    );
+    expect(sheetIsOpen(tree)).toBe(true);
+    expect(sheetTab(tree)).toBe('waypoints');
   });
 });
