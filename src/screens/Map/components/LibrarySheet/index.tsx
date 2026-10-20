@@ -1,5 +1,6 @@
 /**
- * WaypointBottomSheet — Animated bottom sheet that slides up over the map.
+ * LibrarySheet — everything saved for the map, in one place: waypoints,
+ * recorded tracks and downloaded offline areas, one tab each.
  * Uses Animated + PanResponder (no Modal) so the map remains visible above.
  */
 
@@ -28,8 +29,10 @@ import { useSettingsStore } from '../../../../stores/StoreContext';
 import { Track } from '../../../../stores/TrackStore';
 import { Waypoint } from '../../../../stores/WaypointStore';
 import AddWaypointForm from './AddWaypointForm';
+import MapsTab from './MapsTab';
 import TrackRow from './TrackRow';
 import WaypointRow from './WaypointRow';
+import type { PackRegion } from '../../../../utils/offlinePacks';
 
 // ---------- constants -------------------------------------------------------
 
@@ -40,11 +43,12 @@ const HANDLE_HEIGHT = 28;
 // ---------- types -----------------------------------------------------------
 
 type SheetState = 'closed' | 'open';
-type ActiveTab = 'waypoints' | 'tracks';
+export type LibraryTab = 'waypoints' | 'tracks' | 'maps';
 
-const TAB_OPTIONS: { value: ActiveTab; label: string }[] = [
+const TAB_OPTIONS: { value: LibraryTab; label: string }[] = [
   { value: 'waypoints', label: 'Waypoints' },
   { value: 'tracks', label: 'Tracks' },
+  { value: 'maps', label: 'Maps' },
 ];
 
 interface Coords {
@@ -52,15 +56,21 @@ interface Coords {
   longitude: number;
 }
 
-export interface WaypointBottomSheetProps {
+export interface LibrarySheetProps {
   /** All saved waypoints. */
   waypoints: Waypoint[];
   /** All saved tracks. */
   tracks?: Track[];
   /** Current GPS coords of the device (used for live distance/bearing in rows). */
   currentCoords: Coords | null;
-  /** Whether the sheet is open (controlled externally via the FAB). */
+  /** Whether the sheet is open (controlled by the map's Library button). */
   isOpen: boolean;
+  /**
+   * The tab to show when the sheet opens, e.g. 'maps' when another part of
+   * the app links to offline maps. Left out, the sheet keeps whichever tab
+   * was showing last.
+   */
+  openTab?: LibraryTab;
   /** Called when the user closes the sheet via button or swipe. */
   onClose: () => void;
   /** Called when user taps Navigate on a waypoint. */
@@ -84,15 +94,20 @@ export interface WaypointBottomSheetProps {
   onViewTrack?: (track: Track) => void;
   /** Called when the user taps Delete on a saved track. */
   onDeleteTrack?: (id: string) => void;
+  /** Called when the user taps View on a downloaded offline area. */
+  onViewRegion: (region: PackRegion) => void;
+  /** Called when the user wants to download a new offline area. */
+  onDownloadArea: () => void;
 }
 
 // ---------- component -------------------------------------------------------
 
-export default function WaypointBottomSheet({
+export default function LibrarySheet({
   waypoints,
   tracks = [],
   currentCoords,
   isOpen,
+  openTab,
   onClose,
   onNavigate,
   onDelete,
@@ -101,7 +116,9 @@ export default function WaypointBottomSheet({
   containerHeight,
   onViewTrack,
   onDeleteTrack,
-}: WaypointBottomSheetProps) {
+  onViewRegion,
+  onDownloadArea,
+}: LibrarySheetProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const settingsStore = useSettingsStore();
@@ -120,7 +137,7 @@ export default function WaypointBottomSheet({
 
   const [sheetState, setSheetState] = useState<SheetState>('closed');
   const [showAddForm, setShowAddForm] = useState(false);
-  const [activeTab, setActiveTab] = useState<ActiveTab>('waypoints');
+  const [activeTab, setActiveTab] = useState<LibraryTab>('waypoints');
 
   // translateY: 0 = fully visible, positive = hidden below the container
   const translateY = useRef(new Animated.Value(SHEET_HEIGHT)).current;
@@ -134,13 +151,17 @@ export default function WaypointBottomSheet({
     }).start();
   }, [translateY]);
 
-  const handleTabChange = useCallback((tab: ActiveTab) => {
+  const handleTabChange = useCallback((tab: LibraryTab) => {
     setActiveTab(tab);
     setShowAddForm(false);
   }, []);
 
   useEffect(() => {
     if (isOpen) {
+      if (openTab) {
+        setActiveTab(openTab);
+        setShowAddForm(false);
+      }
       setSheetState('open');
       snapOpen();
     } else {
@@ -157,7 +178,7 @@ export default function WaypointBottomSheet({
         }
       });
     }
-  }, [isOpen, snapOpen, translateY]);
+  }, [isOpen, openTab, snapOpen, translateY]);
 
   // PanResponder for drag-to-dismiss
   const panResponder = useRef(
@@ -224,7 +245,7 @@ export default function WaypointBottomSheet({
           options={TAB_OPTIONS}
           value={activeTab}
           onChange={handleTabChange}
-          accessibilityLabel="Show waypoints or tracks"
+          accessibilityLabel="Show waypoints, tracks or offline maps"
           style={styles.tabs}
         />
 
@@ -239,11 +260,21 @@ export default function WaypointBottomSheet({
               accessibilityLabel="Add waypoint"
             />
           )}
+          {activeTab === 'maps' && (
+            <AppButton
+              label="Download"
+              icon="download-outline"
+              size="small"
+              tint={COLORS.SECONDARY_ACCENT}
+              onPress={onDownloadArea}
+              accessibilityLabel="Download an offline area"
+            />
+          )}
           {!showAddForm && (
             <IconButton
               name="close-outline"
               size={20}
-              accessibilityLabel="Close waypoints sheet"
+              accessibilityLabel="Close library"
               onPress={onClose}
             />
           )}
@@ -251,7 +282,9 @@ export default function WaypointBottomSheet({
       </View>
 
       {/* Tab content */}
-      {activeTab === 'waypoints' ? (
+      {activeTab === 'maps' ? (
+        <MapsTab onViewRegion={onViewRegion} onDownload={onDownloadArea} />
+      ) : activeTab === 'waypoints' ? (
         showAddForm ? (
           <ScrollView
             style={styles.list}

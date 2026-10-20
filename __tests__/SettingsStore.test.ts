@@ -323,6 +323,32 @@ describe('SettingsStore', () => {
         'earth_sun_time',
       ]);
     });
+
+    it('points a shortcut to the retired Map Library at the Map', async () => {
+      await settingsStore.restoreShortcuts([
+        'core_flashlight',
+        'nav_map_library',
+        'core_voice_log',
+      ]);
+      expect(settingsStore.shortcuts).toEqual([
+        'core_flashlight',
+        'nav_map',
+        'core_voice_log',
+      ]);
+    });
+
+    it('falls back when the Map is already a shortcut', async () => {
+      await settingsStore.restoreShortcuts([
+        'nav_map',
+        'nav_map_library',
+        'comm_radio_frequency',
+      ]);
+      expect(settingsStore.shortcuts).toEqual([
+        'nav_map',
+        'core_flashlight',
+        'comm_radio_frequency',
+      ]);
+    });
   });
 
   describe('database initialization', () => {

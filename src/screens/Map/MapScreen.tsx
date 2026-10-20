@@ -56,6 +56,7 @@ import {
   useWaypointStore,
   useSettingsStore,
   useOfflineDownloadStore,
+  useOfflineMapLibraryStore,
   useDevToolsStore,
 } from '../../stores/StoreContext';
 import { Track, TrackPoint } from '../../stores/TrackStore';
@@ -63,6 +64,8 @@ import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
+import LibrarySheet, { type LibraryTab } from './components/LibrarySheet';
+import { haversineMeters } from './components/LibrarySheet/waypointGeometry';
 import MapPanel, {
   DELTA,
   LocationPermissionStatus,
@@ -70,9 +73,8 @@ import MapPanel, {
   zoomFromDelta,
 } from './components/MapPanel';
 import DownloadProgressChip from './components/offline/DownloadProgressChip';
-import WaypointBottomSheet from './components/WaypointBottomSheet';
-import { haversineMeters } from './components/WaypointBottomSheet/waypointGeometry';
 import { requestForegroundNotificationPermission } from './requestForegroundNotificationPermission';
+import type { PackRegion } from '../../utils/offlinePacks';
 
 /**
  * Dev-only simulated-offline banner colours. Same fixed amber as
@@ -199,6 +201,8 @@ const isAndroid = Platform.OS === 'android';
 type MapScreenRouteParams = {
   center?: { latitude: number; longitude: number };
   radiusMiles?: number;
+  /** Opens the Library sheet on this tab, e.g. 'maps' from Settings. */
+  library?: LibraryTab;
 };
 
 export default observer(function MapScreen() {
@@ -214,6 +218,7 @@ export default observer(function MapScreen() {
   const trackStore = useTrackStore();
   const settingsStore = useSettingsStore();
   const offlineDownloadStore = useOfflineDownloadStore();
+  const offlineMapLibrary = useOfflineMapLibraryStore();
   const devToolsStore = useDevToolsStore();
   // Per-session dismissal of the simulated-offline banner. Intentionally not
   // persisted — we want the banner to reappear each time the toggle is flipped
@@ -240,7 +245,11 @@ export default observer(function MapScreen() {
   const watchIdRef = useRef<number | null>(null);
   // Holds the AbortController for the in-flight Nominatim request
   const geocodeAbortRef = useRef<AbortController | null>(null);
-  const [waypointSheetOpen, setWaypointSheetOpen] = useState(false);
+  const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
+  /** Tab to open the Library on; undefined keeps the last one shown. */
+  const [libraryOpenTab, setLibraryOpenTab] = useState<LibraryTab | undefined>(
+    undefined,
+  );
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
   const [mapReady, setMapReady] = useState(false);
@@ -434,6 +443,27 @@ export default observer(function MapScreen() {
     });
   };
 
+  /** Frames a downloaded area: its centre, zoomed out to show the radius. */
+  const flyToRegion = useCallback(
+    (center: { latitude: number; longitude: number }, radiusMiles?: number) => {
+      if (!cameraRef.current) {
+        return;
+      }
+      let targetLatitudeDelta = DELTA.latitudeDelta;
+      if (typeof radiusMiles === 'number' && radiusMiles > 0) {
+        const [, south, , north] = boundsFromRadius(center, radiusMiles);
+        targetLatitudeDelta = Math.max(DELTA.latitudeDelta, north - south);
+      }
+      cameraRef.current.setStop({
+        center: [center.longitude, center.latitude],
+        zoom: zoomFromDelta(targetLatitudeDelta),
+        duration: MAP_ANIMATE_DURATION_MS,
+        easing: 'fly',
+      });
+    },
+    [],
+  );
+
   const handleAddWaypointFromLocation = useCallback(
     async (name: string) => {
       if (!coords) {
@@ -454,7 +484,7 @@ export default observer(function MapScreen() {
   const handleNavigateWaypoint = useCallback(
     (id: string) => {
       waypointStore.setActiveWaypoint(id);
-      setWaypointSheetOpen(false);
+      setLibrarySheetOpen(false);
       // Pan the map to centre on the selected waypoint
       const waypoint = waypointStore.waypoints.find((w) => w.id === id);
       if (waypoint && cameraRef.current) {
@@ -489,7 +519,8 @@ export default observer(function MapScreen() {
         coordinate.latitude,
         coordinate.longitude,
       );
-      setWaypointSheetOpen(true);
+      setLibraryOpenTab('waypoints');
+      setLibrarySheetOpen(true);
     },
     [waypointStore],
   );
@@ -627,7 +658,7 @@ export default observer(function MapScreen() {
 
   const handleViewTrack = useCallback((track: Track) => {
     setViewedTrack(track);
-    setWaypointSheetOpen(false);
+    setLibrarySheetOpen(false);
     // Pan map to first point of track
     if (track.points.length > 0 && cameraRef.current) {
       cameraRef.current.setStop({
@@ -653,9 +684,35 @@ export default observer(function MapScreen() {
     navigationRef.current?.navigate('DownloadArea' as never);
   }, []);
 
-  const handleMapLibraryPress = useCallback(() => {
-    navigation.navigate('MapLibrary');
-  }, [navigation]);
+  const handleViewRegion = useCallback(
+    (region: PackRegion) => {
+      setLibrarySheetOpen(false);
+      navigation.setParams({
+        center: region.center,
+        radiusMiles: region.radiusMiles,
+      });
+    },
+    [navigation],
+  );
+
+  // Other screens link to a Library tab (Settings → Offline maps opens Maps).
+  const requestedLibraryTab = route.params?.library;
+  useEffect(() => {
+    if (!requestedLibraryTab) {
+      return;
+    }
+    setLibraryOpenTab(requestedLibraryTab);
+    setLibrarySheetOpen(true);
+    navigation.setParams({ library: undefined });
+  }, [navigation, requestedLibraryTab]);
+
+  // A download runs in the background after its modal closes. Re-read the
+  // library when one finishes so the Maps tab lists it without a reopen.
+  useEffect(() => {
+    if (offlineDownloadStore.state === 'complete') {
+      offlineMapLibrary.load().catch(() => {});
+    }
+  }, [offlineDownloadStore.state, offlineMapLibrary]);
 
   useEffect(() => {
     if (!mapReady) {
@@ -671,23 +728,12 @@ export default observer(function MapScreen() {
       return;
     }
     lastCenteredKeyRef.current = centerKey;
-    const radiusMiles = route.params?.radiusMiles;
-    let targetLatitudeDelta = DELTA.latitudeDelta;
-    if (typeof radiusMiles === 'number' && radiusMiles > 0) {
-      const [, south, , north] = boundsFromRadius(center, radiusMiles);
-      targetLatitudeDelta = Math.max(DELTA.latitudeDelta, north - south);
-    }
-    cameraRef.current.setStop({
-      center: [center.longitude, center.latitude],
-      zoom: zoomFromDelta(targetLatitudeDelta),
-      duration: MAP_ANIMATE_DURATION_MS,
-      easing: 'fly',
-    });
+    flyToRegion(center, route.params?.radiusMiles);
     navigation.setParams({
       center: undefined,
       radiusMiles: undefined,
     });
-  }, [mapReady, navigation, route.params]);
+  }, [flyToRegion, mapReady, navigation, route.params]);
 
   // ────────────────────────────────────────────────────────
 
@@ -734,14 +780,19 @@ export default observer(function MapScreen() {
       />
 
       {/* Every map control lives here rather than floating over the tiles:
-          the map is the point of the screen, so nothing sits on top of it. */}
+          the map is the point of the screen, so nothing sits on top of it.
+          Saved waypoints, tracks and offline maps (including new downloads)
+          all live in the Library sheet, so it opens without location access:
+          what's already saved doesn't need a GPS fix. */}
       <View style={styles.mapActions}>
         <IconButton
-          name="flag-outline"
+          name="library-outline"
           size={22}
-          onPress={() => setWaypointSheetOpen(true)}
-          disabled={permissionStatus !== 'granted'}
-          accessibilityLabel="Open waypoints"
+          onPress={() => {
+            setLibraryOpenTab(undefined);
+            setLibrarySheetOpen(true);
+          }}
+          accessibilityLabel="Open library"
         />
         {/* Not an IconButton while recording: only the glyph pulses, so the
             animation has to wrap the icon rather than the pressable. */}
@@ -782,19 +833,6 @@ export default observer(function MapScreen() {
           disabled={permissionStatus !== 'granted'}
           accessibilityLabel="Center map on my location"
         />
-        <IconButton
-          name="download-outline"
-          size={22}
-          onPress={handleDownloadAreaPress}
-          disabled={permissionStatus !== 'granted'}
-          accessibilityLabel="Download offline area"
-        />
-        <IconButton
-          name="layers-outline"
-          size={22}
-          onPress={handleMapLibraryPress}
-          accessibilityLabel="Map Library"
-        />
       </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
@@ -822,13 +860,15 @@ export default observer(function MapScreen() {
               onDiscardTrack={handleDiscardTrack}
             />
           </View>
-          {/* Waypoint bottom sheet — positioned absolutely within the map area */}
-          <WaypointBottomSheet
+          {/* Library sheet (waypoints, tracks, offline maps) — positioned
+              absolutely within the map area */}
+          <LibrarySheet
             waypoints={waypointStore.waypoints}
             tracks={trackStore.tracks}
             currentCoords={coords}
-            isOpen={waypointSheetOpen}
-            onClose={() => setWaypointSheetOpen(false)}
+            isOpen={librarySheetOpen}
+            openTab={libraryOpenTab}
+            onClose={() => setLibrarySheetOpen(false)}
             onNavigate={handleNavigateWaypoint}
             onDelete={handleDeleteWaypoint}
             onAddFromLocation={handleAddWaypointFromLocation}
@@ -836,6 +876,8 @@ export default observer(function MapScreen() {
             containerHeight={mapContainerHeight}
             onViewTrack={handleViewTrack}
             onDeleteTrack={handleDeleteTrack}
+            onViewRegion={handleViewRegion}
+            onDownloadArea={handleDownloadAreaPress}
           />
           {/* Download progress chip — non-blocking overlay, hidden when inactive */}
           <DownloadProgressChip store={offlineDownloadStore} />

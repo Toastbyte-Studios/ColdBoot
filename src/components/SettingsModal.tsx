@@ -67,8 +67,8 @@ interface SettingsModalProps {
   visible: boolean;
   onClose: () => void;
   /**
-   * Opens the "Manage offline maps" surface. Supplied by the host (AppShell),
-   * which owns that modal's visibility and navigation access.
+   * Opens the downloaded offline maps (the Map's Library sheet, on its Maps
+   * tab). Supplied by the host (AppShell), which owns navigation.
    */
   onManageOfflineMaps?: () => void;
   /**
