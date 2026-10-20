@@ -4,6 +4,8 @@ import {
   Layer,
   Map,
   useCurrentPosition,
+  type CameraRef,
+  type InitialViewState,
   type OfflinePack,
 } from '@maplibre/maplibre-react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -42,7 +44,26 @@ import { createOfflineRegionWithSmartName } from './offlinePackNaming';
 
 const RETRY_TIMEOUT_MS = 15_000;
 const FREE_DISK_BUFFER_BYTES = 500 * 1024 * 1024; // 500 MB safety margin
-const RADIUS_MILES = 50;
+/** Area sizes on offer, as a radius in miles (what pack metadata stores). */
+const RADIUS_OPTIONS_MILES = [10, 25, 50] as const;
+type RadiusMiles = (typeof RADIUS_OPTIONS_MILES)[number];
+/** The size before this choice existed; a default that keeps that behaviour. */
+const DEFAULT_RADIUS_MILES: RadiusMiles = 50;
+
+const KM_PER_MILE = 1.609344;
+
+/** "25 mi", or "40 km" for metric users. The radius itself stays in miles. */
+function formatRadius(
+  miles: number,
+  system: 'imperial' | 'metric' | undefined,
+): string {
+  return system === 'metric'
+    ? `${Math.round(miles * KM_PER_MILE)} km`
+    : `${miles} mi`;
+}
+
+/** Room around the area box when the preview fits it. */
+const PREVIEW_PADDING = { top: 16, right: 16, bottom: 16, left: 16 };
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 /** Where the area is centred: the user's GPS fix, or a point they pan to. */
@@ -55,18 +76,13 @@ const AREA_OPTIONS: { value: AreaMode; label: string }[] = [
 
 type LatLng = { latitude: number; longitude: number };
 
-/** Preview zoom for a 50-mile area: the whole box with some margin. */
-const AREA_PREVIEW_ZOOM = 7;
-
 /**
  * Where "Choose on map" opens without a GPS fix: the contiguous US, zoomed
  * out to pan from. Offline-pack size estimates are US-only, see
  * OfflineMapService.
  */
-const FALLBACK_VIEW = {
-  center: { latitude: 39.83, longitude: -98.58 },
-  zoom: 3.5,
-};
+const FALLBACK_CENTER: LatLng = { latitude: 39.83, longitude: -98.58 };
+const FALLBACK_ZOOM = 3.5;
 
 type Props = {
   onDismiss: () => void;
@@ -100,10 +116,11 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   /** Centre of the "Choose on map" area: the preview map's centre. */
   const [customCenter, setCustomCenter] = useState<LatLng | null>(null);
   /** Where the "Choose on map" preview opens; fixed so panning isn't reset. */
-  const [customStartView, setCustomStartView] = useState<{
-    center: LatLng;
-    zoom: number;
-  } | null>(null);
+  const [customStartView, setCustomStartView] =
+    useState<InitialViewState | null>(null);
+  const [radiusMiles, setRadiusMiles] =
+    useState<RadiusMiles>(DEFAULT_RADIUS_MILES);
+  const cameraRef = useRef<CameraRef>(null);
   /** A finger is on the pannable preview, so the page mustn't scroll. */
   const [mapTouched, setMapTouched] = useState(false);
 
@@ -160,11 +177,24 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
       centerLat !== undefined && centerLng !== undefined
         ? boundsFromRadius(
             { longitude: centerLng, latitude: centerLat },
-            RADIUS_MILES,
+            radiusMiles,
           )
         : null,
-    [centerLat, centerLng],
+    [centerLat, centerLng, radiusMiles],
   );
+
+  // A new size refits the preview around the same centre. (The first fit is
+  // each preview's initialViewState.)
+  const fittedRadiusRef = useRef<number>(radiusMiles);
+  useEffect(() => {
+    if (fittedRadiusRef.current === radiusMiles || !bounds) {
+      return;
+    }
+    fittedRadiusRef.current = radiusMiles;
+    cameraRef.current
+      ?.setStop({ bounds, padding: PREVIEW_PADDING, duration: 300 })
+      ?.catch(() => {});
+  }, [bounds, radiusMiles]);
 
   // Panning the preview would also drag the modal down to dismiss it.
   useEffect(() => {
@@ -174,21 +204,27 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   const handleModeChange = useCallback(
     (next: AreaMode) => {
       if (next === 'custom' && !customStartView) {
-        const start = coords
-          ? {
-              center: {
-                latitude: coords.latitude,
-                longitude: coords.longitude,
-              },
-              zoom: AREA_PREVIEW_ZOOM,
-            }
-          : FALLBACK_VIEW;
-        setCustomStartView(start);
-        setCustomCenter(start.center);
+        if (coords) {
+          const start = {
+            latitude: coords.latitude,
+            longitude: coords.longitude,
+          };
+          setCustomStartView({
+            bounds: boundsFromRadius(start, radiusMiles),
+            padding: PREVIEW_PADDING,
+          });
+          setCustomCenter(start);
+        } else {
+          setCustomStartView({
+            center: [FALLBACK_CENTER.longitude, FALLBACK_CENTER.latitude],
+            zoom: FALLBACK_ZOOM,
+          });
+          setCustomCenter(FALLBACK_CENTER);
+        }
       }
       setMode(next);
     },
-    [coords, customStartView],
+    [coords, customStartView, radiusMiles],
   );
 
   const estimatedBytes = useMemo(
@@ -226,7 +262,7 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
         bounds,
         centerLat,
         centerLng,
-        radiusMiles: RADIUS_MILES,
+        radiusMiles,
         zoomRange,
         onProgress: (p, s) => store.handleProgress(p, s),
         onError: (p, e) => store.handleError(p, e),
@@ -238,7 +274,27 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
       store.handleError({ id: '' } as unknown as OfflinePack, { message: msg });
       onDismiss();
     }
-  }, [bounds, centerLat, centerLng, zoomRange, store, starting, onDismiss]);
+  }, [
+    bounds,
+    centerLat,
+    centerLng,
+    radiusMiles,
+    zoomRange,
+    store,
+    starting,
+    onDismiss,
+  ]);
+
+  const measurementSystem = settingsStore.measurementSystem;
+  const radiusOptions = useMemo(
+    () =>
+      RADIUS_OPTIONS_MILES.map((miles) => ({
+        value: String(miles),
+        label: formatRadius(miles, measurementSystem),
+      })),
+    [measurementSystem],
+  );
+  const radiusLabel = formatRadius(radiusMiles, measurementSystem);
 
   const boundsLayers = boundsGeoJSON && (
     <GeoJSONSource id="download-bounds" data={boundsGeoJSON}>
@@ -296,15 +352,7 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
                 setCustomCenter({ latitude, longitude });
               }}
             >
-              <Camera
-                initialViewState={{
-                  center: [
-                    customStartView.center.longitude,
-                    customStartView.center.latitude,
-                  ],
-                  zoom: customStartView.zoom,
-                }}
-              />
+              <Camera ref={cameraRef} initialViewState={customStartView} />
               {boundsLayers}
             </Map>
             {/* The area is centred here; the box catches up when the pan
@@ -355,12 +403,10 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
                 logo={false}
                 attribution={false}
               >
-                {coords && (
+                {bounds && (
                   <Camera
-                    initialViewState={{
-                      center: [coords.longitude, coords.latitude],
-                      zoom: 9,
-                    }}
+                    ref={cameraRef}
+                    initialViewState={{ bounds, padding: PREVIEW_PADDING }}
                   />
                 )}
                 {boundsLayers}
@@ -368,6 +414,18 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
             )}
           </View>
         )}
+
+        {/* Area size */}
+        <View style={styles.sizeRow}>
+          <Text style={styles.label}>Area size</Text>
+          <SegmentedControl
+            options={radiusOptions}
+            value={String(radiusMiles)}
+            onChange={(value) => setRadiusMiles(Number(value) as RadiusMiles)}
+            accessibilityLabel="Area size, as a radius"
+            style={styles.sizeControl}
+          />
+        </View>
 
         {/* Storage pressure warning */}
         {storagePressure && (
@@ -406,8 +464,8 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
 
         <Text style={styles.radiusNote}>
           {mode === 'custom'
-            ? `Covers a ~${RADIUS_MILES}-mile radius around the crosshair · pan and zoom to move it · works in airplane mode`
-            : `Covers a ~${RADIUS_MILES}-mile radius around your current location · works in airplane mode`}
+            ? `Covers a ~${radiusLabel} radius around the crosshair · pan and zoom to move it · works in airplane mode`
+            : `Covers a ~${radiusLabel} radius around your current location · works in airplane mode`}
         </Text>
 
         {/* Download button */}
@@ -471,6 +529,14 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       borderColor: colors.SECONDARY_ACCENT,
     },
     map: {
+      flex: 1,
+    },
+    sizeRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+    },
+    sizeControl: {
       flex: 1,
     },
     crosshair: {

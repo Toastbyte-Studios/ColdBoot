@@ -22,10 +22,12 @@ jest.mock('../src/components/ScaledText', () => ({
   Text: require('react-native').Text,
 }));
 
+let mockMeasurementSystem: 'imperial' | 'metric' = 'imperial';
 jest.mock('../src/stores', () => ({
   useSettingsStore: () => ({
     highDetailOffline: false,
     setHighDetailOffline: jest.fn(),
+    measurementSystem: mockMeasurementSystem,
   }),
 }));
 
@@ -102,6 +104,7 @@ const allText = (tree: ReactTestRenderer.ReactTestRenderer) =>
 describe('DownloadConfirmScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockMeasurementSystem = 'imperial';
   });
 
   it('downloads the area around the user by default', async () => {
@@ -151,17 +154,18 @@ describe('DownloadConfirmScreen', () => {
     expect(east).toBeGreaterThan(-115.37);
   });
 
-  it('starts choosing from the user, at area zoom', async () => {
+  it('starts choosing from the user, fitted to the area', async () => {
     const { tree } = await renderScreen(VEGAS);
     await chooseOnMap(tree);
 
     const camera = tree.root.find(
       (node) => node.props.initialViewState !== undefined,
     );
-    expect(camera.props.initialViewState).toEqual({
-      center: [-115.0677, 36.1405],
-      zoom: 7,
-    });
+    const { bounds, padding } = camera.props.initialViewState;
+    const [west, south, east, north] = bounds;
+    expect((south + north) / 2).toBeCloseTo(36.1405, 3);
+    expect((west + east) / 2).toBeCloseTo(-115.0677, 3);
+    expect(padding).toEqual({ top: 16, right: 16, bottom: 16, left: 16 });
   });
 
   it('lets the user choose an area without a GPS fix', async () => {
@@ -236,5 +240,97 @@ describe('DownloadConfirmScreen', () => {
     expect(createOfflineRegionWithSmartName).toHaveBeenCalledWith(
       expect.objectContaining({ centerLat: 36.1405, centerLng: -115.0677 }),
     );
+  });
+
+  describe('area size', () => {
+    const sizeControl = (tree: ReactTestRenderer.ReactTestRenderer) =>
+      tree.root.find(
+        (node) =>
+          Array.isArray(node.props.values) &&
+          node.props.accessibilityLabel === 'Area size, as a radius',
+      );
+
+    async function chooseSize(
+      tree: ReactTestRenderer.ReactTestRenderer,
+      index: number,
+    ) {
+      await ReactTestRenderer.act(async () => {
+        sizeControl(tree).props.onChange({
+          nativeEvent: { selectedSegmentIndex: index },
+        });
+      });
+    }
+
+    const estimate = (tree: ReactTestRenderer.ReactTestRenderer) => {
+      const label = tree.root.find(
+        (node) => node.props.children === 'Estimated size',
+      );
+      const row = label.parent?.parent;
+      return row
+        ?.findAll((node) => typeof node.props.children === 'string')
+        .map((node) => node.props.children)
+        .find((text: string) => text !== 'Estimated size');
+    };
+
+    it('offers 10, 25 and 50 miles, starting at 50', async () => {
+      const { tree } = await renderScreen(VEGAS);
+
+      expect(sizeControl(tree).props.values).toEqual([
+        '10 mi',
+        '25 mi',
+        '50 mi',
+      ]);
+      expect(sizeControl(tree).props.selectedIndex).toBe(2);
+    });
+
+    it('labels sizes in kilometres for metric users', async () => {
+      mockMeasurementSystem = 'metric';
+      const { tree } = await renderScreen(VEGAS);
+
+      expect(sizeControl(tree).props.values).toEqual([
+        '16 km',
+        '40 km',
+        '80 km',
+      ]);
+    });
+
+    it('downloads a smaller area, for less storage', async () => {
+      const { tree } = await renderScreen(VEGAS);
+      const fullSize = estimate(tree);
+
+      await chooseSize(tree, 0);
+
+      expect(allText(tree)).toContain('~10 mi radius');
+      expect(estimate(tree)).not.toBe(fullSize);
+      await pressDownload(tree);
+
+      const args = (createOfflineRegionWithSmartName as jest.Mock).mock
+        .calls[0][0];
+      expect(args.radiusMiles).toBe(10);
+      const [, south, , north] = args.bounds;
+      // ~10 miles each way is ~0.29° of latitude.
+      expect(north - south).toBeCloseTo(0.29, 1);
+    });
+
+    it('keeps the size when choosing on the map', async () => {
+      const { tree } = await renderScreen(VEGAS);
+      await chooseSize(tree, 1);
+      await chooseOnMap(tree);
+      await ReactTestRenderer.act(async () => {
+        previewMap(tree).props.onRegionDidChange({
+          nativeEvent: { center: [-115.37, 38.62] },
+        });
+      });
+
+      await pressDownload(tree);
+
+      expect(createOfflineRegionWithSmartName).toHaveBeenCalledWith(
+        expect.objectContaining({
+          centerLat: 38.62,
+          centerLng: -115.37,
+          radiusMiles: 25,
+        }),
+      );
+    });
   });
 });
