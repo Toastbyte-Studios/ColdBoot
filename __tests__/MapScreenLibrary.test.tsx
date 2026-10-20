@@ -21,6 +21,14 @@ jest.mock('react-native-safe-area-context', () => ({
 // Like the real navigator, the navigation object is stable across renders
 // and setParams merges into the route's params.
 let mockRouteParams: Record<string, unknown> | undefined;
+let mockLibraryProps:
+  | {
+      onViewRegion?: (region: {
+        center: { latitude: number; longitude: number };
+        radiusMiles: number;
+      }) => void;
+    }
+  | undefined;
 const mockSetParams = jest.fn((next: Record<string, unknown>) => {
   mockRouteParams = { ...mockRouteParams, ...next };
 });
@@ -77,13 +85,27 @@ jest.mock('../src/stores/StoreContext', () => ({
 // which tab it was asked to open on.
 jest.mock('../src/screens/Map/components/LibrarySheet', () => {
   const { View: MockView } = require('react-native');
-  return ({ isOpen, openTab }: { isOpen: boolean; openTab?: string }) => (
-    <MockView
-      testID="library-sheet"
-      accessibilityState={{ expanded: isOpen }}
-      accessibilityValue={{ text: openTab ?? 'last' }}
-    />
-  );
+  return ({
+    isOpen,
+    openTab,
+    ...props
+  }: {
+    isOpen: boolean;
+    openTab?: string;
+    onViewRegion?: (region: {
+      center: { latitude: number; longitude: number };
+      radiusMiles: number;
+    }) => void;
+  }) => {
+    mockLibraryProps = props;
+    return (
+      <MockView
+        testID="library-sheet"
+        accessibilityState={{ expanded: isOpen }}
+        accessibilityValue={{ text: openTab ?? 'last' }}
+      />
+    );
+  };
 });
 
 jest.mock(
@@ -134,6 +156,7 @@ const sheetTab = (tree: ReactTestRenderer.ReactTestRenderer) =>
 describe('MapScreen Library', () => {
   beforeEach(() => {
     mockRouteParams = undefined;
+    mockLibraryProps = undefined;
     mockSetParams.mockClear();
   });
 
@@ -181,6 +204,43 @@ describe('MapScreen Library', () => {
     expect(sheetTab(tree)).toBe('maps');
     // The param is consumed so returning to the screen doesn't reopen it.
     expect(mockSetParams).toHaveBeenCalledWith({ library: undefined });
+  });
+
+  it('queues a selected map region until the map is ready', async () => {
+    const tree = await renderScreen(true);
+    const region = {
+      center: { latitude: 36.14, longitude: -115.07 },
+      radiusMiles: 50,
+    };
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onViewRegion?.(region);
+    });
+
+    expect(mockSetParams).toHaveBeenCalledWith({
+      center: region.center,
+      radiusMiles: region.radiusMiles,
+    });
+    expect(mockRouteParams).toEqual({
+      center: region.center,
+      radiusMiles: region.radiusMiles,
+    });
+
+    await ReactTestRenderer.act(async () => {
+      tree.update(<MapScreen />);
+    });
+    expect(mockSetParams).toHaveBeenCalledTimes(1);
+
+    await ReactTestRenderer.act(async () => {
+      tree.root
+        .findByProps({ testID: 'map-view' })
+        .props.onDidFinishLoadingMap();
+    });
+
+    expect(mockSetParams).toHaveBeenLastCalledWith({
+      center: undefined,
+      radiusMiles: undefined,
+    });
   });
 
   it('keeps the last tab when opened from the toolbar', async () => {

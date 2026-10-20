@@ -687,13 +687,15 @@ export default observer(function MapScreen() {
   const handleViewRegion = useCallback(
     (region: PackRegion) => {
       setLibrarySheetOpen(false);
-      flyToRegion(region.center, region.radiusMiles);
+      navigation.setParams({
+        center: region.center,
+        radiusMiles: region.radiusMiles,
+      });
     },
-    [flyToRegion],
+    [navigation],
   );
 
   // Other screens link to a Library tab (Settings → Offline maps opens Maps).
-  // Unlike the centring below, this doesn't wait for the map to load.
   const requestedLibraryTab = route.params?.library;
   useEffect(() => {
     if (!requestedLibraryTab) {

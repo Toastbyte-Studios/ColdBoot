@@ -1,5 +1,5 @@
 import React from 'react';
-import { Alert, TextInput } from 'react-native';
+import { Alert, ScrollView, TextInput } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import { OfflineMapService } from '../src/navigation/services/OfflineMapService';
 import MapsTab from '../src/screens/Map/components/LibrarySheet/MapsTab';
@@ -152,6 +152,30 @@ describe('Library sheet — Maps tab', () => {
       button.props.onPress();
     });
     expect(onDownload).toHaveBeenCalled();
+  });
+
+  it('shows a retry instruction when the initial library read fails', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockRejectedValue(
+      new Error('native failure'),
+    );
+    jest.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    const tree = await renderTab({});
+
+    expect(collectText(tree)).toContain(
+      'Close and reopen the Library to try again.',
+    );
+    expect(collectText(tree)).not.toContain('No offline maps yet.');
+  });
+
+  it('adjusts the Maps list for the keyboard', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([makePack()]);
+
+    const tree = await renderTab({});
+
+    expect(
+      tree.root.findByType(ScrollView).props.automaticallyAdjustKeyboardInsets,
+    ).toBe(true);
   });
 
   it('shows an area on the map with its centre and radius', async () => {

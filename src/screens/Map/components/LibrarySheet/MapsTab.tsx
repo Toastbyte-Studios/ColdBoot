@@ -31,13 +31,21 @@ export default observer(function MapsTab({
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const library = useOfflineMapLibraryStore();
   const settingsStore = useSettingsStore();
+  const [loadFailed, setLoadFailed] = React.useState(false);
 
   // Re-read on every visit: a download may have finished since the last one,
   // and the list is a cheap read of MapLibre's local database.
   useEffect(() => {
+    let isCurrent = true;
     library.load().catch((error) => {
       console.error('Failed to load offline maps:', error);
+      if (isCurrent) {
+        setLoadFailed(true);
+      }
     });
+    return () => {
+      isCurrent = false;
+    };
   }, [library]);
 
   const handleView = useCallback(
@@ -131,8 +139,23 @@ export default observer(function MapsTab({
     return <View style={styles.list} />;
   }
 
+  if (loadFailed) {
+    return (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyStateText}>
+          Could not load offline maps. Close and reopen the Library to try
+          again.
+        </Text>
+      </View>
+    );
+  }
+
   return (
-    <ScrollView style={styles.list} keyboardShouldPersistTaps="handled">
+    <ScrollView
+      style={styles.list}
+      keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+    >
       {library.packs.length === 0 ? (
         <View style={styles.emptyState}>
           <Text style={styles.emptyStateText}>

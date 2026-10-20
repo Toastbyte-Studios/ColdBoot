@@ -31,6 +31,7 @@ export class OfflineMapLibraryStore {
   /** True until the first load settles, so lists can skip the empty state. */
   loading = false;
   hasLoaded = false;
+  private loadGeneration = 0;
   /** The pack a delete or refresh is running on. One at a time. */
   busyPackId: string | null = null;
 
@@ -58,21 +59,26 @@ export class OfflineMapLibraryStore {
   // ── Actions ──────────────────────────────────────────────────────────────
 
   async load(): Promise<void> {
+    const generation = ++this.loadGeneration;
     this.loading = true;
     try {
       const [packs, overrides] = await Promise.all([
         OfflineMapService.listPacks(),
         loadPackNameOverrides(),
       ]);
-      runInAction(() => {
-        this.packs = packs;
-        this.nameOverrides = overrides;
-      });
+      if (generation === this.loadGeneration) {
+        runInAction(() => {
+          this.packs = packs;
+          this.nameOverrides = overrides;
+        });
+      }
     } finally {
-      runInAction(() => {
-        this.loading = false;
-        this.hasLoaded = true;
-      });
+      if (generation === this.loadGeneration) {
+        runInAction(() => {
+          this.loading = false;
+          this.hasLoaded = true;
+        });
+      }
     }
   }
 

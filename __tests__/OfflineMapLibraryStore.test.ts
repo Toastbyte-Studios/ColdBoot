@@ -86,6 +86,40 @@ describe('OfflineMapLibraryStore', () => {
     expect(store.loading).toBe(false);
   });
 
+  it('only commits the latest overlapping load and its loading state', async () => {
+    let finishFirst: ((packs: OfflineMapPack[]) => void) | undefined;
+    let finishSecond: ((packs: OfflineMapPack[]) => void) | undefined;
+    (OfflineMapService.listPacks as jest.Mock)
+      .mockImplementationOnce(
+        () =>
+          new Promise<OfflineMapPack[]>((resolve) => {
+            finishFirst = resolve;
+          }),
+      )
+      .mockImplementationOnce(
+        () =>
+          new Promise<OfflineMapPack[]>((resolve) => {
+            finishSecond = resolve;
+          }),
+      );
+
+    const firstLoad = store.load();
+    const secondLoad = store.load();
+    finishFirst?.([makePack({ id: 'stale-pack' })]);
+    await firstLoad;
+
+    expect(store.loading).toBe(true);
+    expect(store.hasLoaded).toBe(false);
+    expect(store.packs).toEqual([]);
+
+    finishSecond?.([makePack({ id: 'latest-pack' })]);
+    await secondLoad;
+
+    expect(store.loading).toBe(false);
+    expect(store.hasLoaded).toBe(true);
+    expect(store.packs.map((pack) => pack.id)).toEqual(['latest-pack']);
+  });
+
   it('deletes a pack, clears its name and reloads', async () => {
     (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([]);
 
