@@ -243,7 +243,7 @@ export default observer(function MapScreen() {
   const watchIdRef = useRef<number | null>(null);
   // Holds the AbortController for the in-flight Nominatim request
   const geocodeAbortRef = useRef<AbortController | null>(null);
-  const [waypointSheetOpen, setWaypointSheetOpen] = useState(false);
+  const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
   const [mapReady, setMapReady] = useState(false);
@@ -478,7 +478,7 @@ export default observer(function MapScreen() {
   const handleNavigateWaypoint = useCallback(
     (id: string) => {
       waypointStore.setActiveWaypoint(id);
-      setWaypointSheetOpen(false);
+      setLibrarySheetOpen(false);
       // Pan the map to centre on the selected waypoint
       const waypoint = waypointStore.waypoints.find((w) => w.id === id);
       if (waypoint && cameraRef.current) {
@@ -513,7 +513,7 @@ export default observer(function MapScreen() {
         coordinate.latitude,
         coordinate.longitude,
       );
-      setWaypointSheetOpen(true);
+      setLibrarySheetOpen(true);
     },
     [waypointStore],
   );
@@ -651,7 +651,7 @@ export default observer(function MapScreen() {
 
   const handleViewTrack = useCallback((track: Track) => {
     setViewedTrack(track);
-    setWaypointSheetOpen(false);
+    setLibrarySheetOpen(false);
     // Pan map to first point of track
     if (track.points.length > 0 && cameraRef.current) {
       cameraRef.current.setStop({
@@ -677,13 +677,9 @@ export default observer(function MapScreen() {
     navigationRef.current?.navigate('DownloadArea' as never);
   }, []);
 
-  const handleMapLibraryPress = useCallback(() => {
-    navigation.navigate('MapLibrary');
-  }, [navigation]);
-
   const handleViewRegion = useCallback(
     (region: PackRegion) => {
-      setWaypointSheetOpen(false);
+      setLibrarySheetOpen(false);
       flyToRegion(region.center, region.radiusMiles);
     },
     [flyToRegion],
@@ -763,13 +759,15 @@ export default observer(function MapScreen() {
       />
 
       {/* Every map control lives here rather than floating over the tiles:
-          the map is the point of the screen, so nothing sits on top of it. */}
+          the map is the point of the screen, so nothing sits on top of it.
+          Saved waypoints, tracks and offline maps (including new downloads)
+          all live in the Library sheet, so it opens without location access:
+          what's already saved doesn't need a GPS fix. */}
       <View style={styles.mapActions}>
         <IconButton
-          name="flag-outline"
+          name="library-outline"
           size={22}
-          onPress={() => setWaypointSheetOpen(true)}
-          disabled={permissionStatus !== 'granted'}
+          onPress={() => setLibrarySheetOpen(true)}
           accessibilityLabel="Open library"
         />
         {/* Not an IconButton while recording: only the glyph pulses, so the
@@ -811,19 +809,6 @@ export default observer(function MapScreen() {
           disabled={permissionStatus !== 'granted'}
           accessibilityLabel="Center map on my location"
         />
-        <IconButton
-          name="download-outline"
-          size={22}
-          onPress={handleDownloadAreaPress}
-          disabled={permissionStatus !== 'granted'}
-          accessibilityLabel="Download offline area"
-        />
-        <IconButton
-          name="layers-outline"
-          size={22}
-          onPress={handleMapLibraryPress}
-          accessibilityLabel="Map Library"
-        />
       </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
@@ -857,8 +842,8 @@ export default observer(function MapScreen() {
             waypoints={waypointStore.waypoints}
             tracks={trackStore.tracks}
             currentCoords={coords}
-            isOpen={waypointSheetOpen}
-            onClose={() => setWaypointSheetOpen(false)}
+            isOpen={librarySheetOpen}
+            onClose={() => setLibrarySheetOpen(false)}
             onNavigate={handleNavigateWaypoint}
             onDelete={handleDeleteWaypoint}
             onAddFromLocation={handleAddWaypointFromLocation}
