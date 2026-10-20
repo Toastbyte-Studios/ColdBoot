@@ -6,6 +6,7 @@ import {
   useCurrentPosition,
   type OfflinePack,
 } from '@maplibre/maplibre-react-native';
+import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
   useCallback,
@@ -25,6 +26,7 @@ import DeviceInfo from 'react-native-device-info';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../../components/AppButton';
 import AppSwitch from '../../../../components/AppSwitch';
+import SegmentedControl from '../../../../components/SegmentedControl';
 import { useTheme } from '../../../../hooks/useTheme';
 import {
   DEFAULT_OFFLINE_ZOOM,
@@ -42,6 +44,29 @@ const RETRY_TIMEOUT_MS = 15_000;
 const FREE_DISK_BUFFER_BYTES = 500 * 1024 * 1024; // 500 MB safety margin
 const RADIUS_MILES = 50;
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
+
+/** Where the area is centred: the user's GPS fix, or a point they pan to. */
+type AreaMode = 'nearby' | 'custom';
+
+const AREA_OPTIONS: { value: AreaMode; label: string }[] = [
+  { value: 'nearby', label: 'Around me' },
+  { value: 'custom', label: 'Choose on map' },
+];
+
+type LatLng = { latitude: number; longitude: number };
+
+/** Preview zoom for a 50-mile area: the whole box with some margin. */
+const AREA_PREVIEW_ZOOM = 7;
+
+/**
+ * Where "Choose on map" opens without a GPS fix: the contiguous US, zoomed
+ * out to pan from. Offline-pack size estimates are US-only, see
+ * OfflineMapService.
+ */
+const FALLBACK_VIEW = {
+  center: { latitude: 39.83, longitude: -98.58 },
+  zoom: 3.5,
+};
 
 type Props = {
   onDismiss: () => void;
@@ -69,6 +94,18 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
     [COLORS.SECONDARY_ACCENT],
   );
   const store = useOfflineDownloadStore();
+  const navigation = useNavigation();
+
+  const [mode, setMode] = useState<AreaMode>('nearby');
+  /** Centre of the "Choose on map" area: the preview map's centre. */
+  const [customCenter, setCustomCenter] = useState<LatLng | null>(null);
+  /** Where the "Choose on map" preview opens; fixed so panning isn't reset. */
+  const [customStartView, setCustomStartView] = useState<{
+    center: LatLng;
+    zoom: number;
+  } | null>(null);
+  /** A finger is on the pannable preview, so the page mustn't scroll. */
+  const [mapTouched, setMapTouched] = useState(false);
 
   const mlPosition = useCurrentPosition();
   const [gpsReady, setGpsReady] = useState(false);
@@ -110,15 +147,48 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   }, [startRetryTimer]);
 
   const coords = mlPosition?.coords;
+  const center: LatLng | null =
+    mode === 'custom'
+      ? customCenter
+      : coords
+        ? { latitude: coords.latitude, longitude: coords.longitude }
+        : null;
+  const centerLat = center?.latitude;
+  const centerLng = center?.longitude;
   const bounds = useMemo(
     () =>
-      coords
+      centerLat !== undefined && centerLng !== undefined
         ? boundsFromRadius(
-            { longitude: coords.longitude, latitude: coords.latitude },
+            { longitude: centerLng, latitude: centerLat },
             RADIUS_MILES,
           )
         : null,
-    [coords],
+    [centerLat, centerLng],
+  );
+
+  // Panning the preview would also drag the modal down to dismiss it.
+  useEffect(() => {
+    navigation.setOptions({ gestureEnabled: mode !== 'custom' });
+  }, [mode, navigation]);
+
+  const handleModeChange = useCallback(
+    (next: AreaMode) => {
+      if (next === 'custom' && !customStartView) {
+        const start = coords
+          ? {
+              center: {
+                latitude: coords.latitude,
+                longitude: coords.longitude,
+              },
+              zoom: AREA_PREVIEW_ZOOM,
+            }
+          : FALLBACK_VIEW;
+        setCustomStartView(start);
+        setCustomCenter(start.center);
+      }
+      setMode(next);
+    },
+    [coords, customStartView],
   );
 
   const estimatedBytes = useMemo(
@@ -148,13 +218,14 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   }, [estimatedBytes]);
 
   const handleDownload = useCallback(async () => {
-    if (!bounds || !coords || starting) return;
+    if (!bounds || centerLat === undefined || centerLng === undefined) return;
+    if (starting) return;
     setStarting(true);
     try {
       const pack = await createOfflineRegionWithSmartName({
         bounds,
-        centerLat: coords.latitude,
-        centerLng: coords.longitude,
+        centerLat,
+        centerLng,
         radiusMiles: RADIUS_MILES,
         zoomRange,
         onProgress: (p, s) => store.handleProgress(p, s),
@@ -167,13 +238,20 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
       store.handleError({ id: '' } as unknown as OfflinePack, { message: msg });
       onDismiss();
     }
-  }, [bounds, coords, zoomRange, store, starting, onDismiss]);
+  }, [bounds, centerLat, centerLng, zoomRange, store, starting, onDismiss]);
+
+  const boundsLayers = boundsGeoJSON && (
+    <GeoJSONSource id="download-bounds" data={boundsGeoJSON}>
+      <Layer id="download-bounds-fill" type="fill" style={fillLayerStyle} />
+      <Layer id="download-bounds-line" type="line" style={lineLayerStyle} />
+    </GeoJSONSource>
+  );
 
   return (
     <View style={styles.root}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Download your area</Text>
+        <Text style={styles.title}>Download an area</Text>
         <AppButton
           label="Cancel"
           variant="plain"
@@ -187,62 +265,109 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
         style={styles.scroll}
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        scrollEnabled={!mapTouched}
       >
+        <SegmentedControl
+          options={AREA_OPTIONS}
+          value={mode}
+          onChange={handleModeChange}
+          accessibilityLabel="Area to download"
+        />
+
         {/* Map preview */}
-        <View style={styles.mapContainer}>
-          {!gpsReady ? (
-            <View style={styles.gpsWaiting}>
-              {gpsTimedOut ? (
-                <>
-                  <Text style={styles.gpsText}>GPS fix timed out</Text>
-                  <AppButton
-                    label="Retry"
-                    variant="plain"
-                    size="small"
-                    tint={COLORS.SECONDARY_ACCENT}
-                    onPress={startRetryTimer}
-                    accessibilityLabel="Retry waiting for a GPS fix"
-                  />
-                </>
-              ) : (
-                <>
-                  <ActivityIndicator color={COLORS.SECONDARY_ACCENT} />
-                  <Text style={styles.gpsText}>Waiting for GPS…</Text>
-                </>
-              )}
-            </View>
-          ) : (
+        {mode === 'custom' && customStartView ? (
+          <View
+            style={styles.mapContainer}
+            // Keep the page still while the preview is being panned: on
+            // Android the scroll view would otherwise take vertical drags.
+            onTouchStart={() => setMapTouched(true)}
+            onTouchEnd={() => setMapTouched(false)}
+            onTouchCancel={() => setMapTouched(false)}
+          >
             <Map
+              key="custom"
               style={styles.map}
               mapStyle={MAP_STYLE_URL}
               logo={false}
               attribution={false}
+              accessibilityLabel="Area to download. Pan and zoom to centre it."
+              onRegionDidChange={(event) => {
+                const [longitude, latitude] = event.nativeEvent.center;
+                setCustomCenter({ latitude, longitude });
+              }}
             >
-              {coords && (
-                <Camera
-                  initialViewState={{
-                    center: [coords.longitude, coords.latitude],
-                    zoom: 9,
-                  }}
-                />
-              )}
-              {boundsGeoJSON && (
-                <GeoJSONSource id="download-bounds" data={boundsGeoJSON}>
-                  <Layer
-                    id="download-bounds-fill"
-                    type="fill"
-                    style={fillLayerStyle}
-                  />
-                  <Layer
-                    id="download-bounds-line"
-                    type="line"
-                    style={lineLayerStyle}
-                  />
-                </GeoJSONSource>
-              )}
+              <Camera
+                initialViewState={{
+                  center: [
+                    customStartView.center.longitude,
+                    customStartView.center.latitude,
+                  ],
+                  zoom: customStartView.zoom,
+                }}
+              />
+              {boundsLayers}
             </Map>
-          )}
-        </View>
+            {/* The area is centred here; the box catches up when the pan
+                ends. */}
+            <View style={styles.crosshair} pointerEvents="none">
+              <Icon
+                name="add-outline"
+                size={28}
+                color={COLORS.SECONDARY_ACCENT}
+              />
+            </View>
+          </View>
+        ) : (
+          <View style={styles.mapContainer}>
+            {!gpsReady ? (
+              <View style={styles.gpsWaiting}>
+                {gpsTimedOut ? (
+                  <>
+                    <Text style={styles.gpsText}>GPS fix timed out</Text>
+                    <AppButton
+                      label="Retry"
+                      variant="plain"
+                      size="small"
+                      tint={COLORS.SECONDARY_ACCENT}
+                      onPress={startRetryTimer}
+                      accessibilityLabel="Retry waiting for a GPS fix"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <ActivityIndicator color={COLORS.SECONDARY_ACCENT} />
+                    <Text style={styles.gpsText}>Waiting for GPS…</Text>
+                  </>
+                )}
+                <AppButton
+                  label="Choose on map instead"
+                  variant="plain"
+                  size="small"
+                  tint={COLORS.SECONDARY_ACCENT}
+                  onPress={() => handleModeChange('custom')}
+                />
+              </View>
+            ) : (
+              <Map
+                key="nearby"
+                style={styles.map}
+                mapStyle={MAP_STYLE_URL}
+                logo={false}
+                attribution={false}
+              >
+                {coords && (
+                  <Camera
+                    initialViewState={{
+                      center: [coords.longitude, coords.latitude],
+                      zoom: 9,
+                    }}
+                  />
+                )}
+                {boundsLayers}
+              </Map>
+            )}
+          </View>
+        )}
 
         {/* Storage pressure warning */}
         {storagePressure && (
@@ -275,13 +400,14 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
         <View style={styles.estimateRow}>
           <Text style={styles.estimateLabel}>Estimated size</Text>
           <Text style={styles.estimateValue}>
-            {gpsReady ? formatBytes(estimatedBytes) : '—'}
+            {bounds ? formatBytes(estimatedBytes) : '—'}
           </Text>
         </View>
 
         <Text style={styles.radiusNote}>
-          Covers a ~{RADIUS_MILES}-mile radius around your current location ·
-          works in airplane mode
+          {mode === 'custom'
+            ? `Covers a ~${RADIUS_MILES}-mile radius around the crosshair · pan and zoom to move it · works in airplane mode`
+            : `Covers a ~${RADIUS_MILES}-mile radius around your current location · works in airplane mode`}
         </Text>
 
         {/* Download button */}
@@ -290,7 +416,7 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
           size="large"
           tint={COLORS.SECONDARY_ACCENT}
           fullWidth
-          disabled={!gpsReady}
+          disabled={!bounds}
           loading={starting}
           onPress={handleDownload}
           accessibilityLabel="Start download"
@@ -346,6 +472,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     },
     map: {
       flex: 1,
+    },
+    crosshair: {
+      ...StyleSheet.absoluteFillObject,
+      alignItems: 'center',
+      justifyContent: 'center',
     },
     gpsWaiting: {
       flex: 1,

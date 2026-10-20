@@ -4,6 +4,8 @@
 
 const DeviceInfo = {
   getVersion: jest.fn(() => '1.0.0'),
+  // 64 GB free: comfortably more than any offline map pack.
+  getFreeDiskStorage: jest.fn(() => Promise.resolve(64 * 1024 ** 3)),
   getBuildNumber: jest.fn(() => '1'),
   getApplicationName: jest.fn(() => 'Cold Boot'),
   getBundleId: jest.fn(() => 'studio.toastbyte.coldboot'),
