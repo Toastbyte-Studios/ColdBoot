@@ -29,6 +29,8 @@ export type CameraRef = {
   }) => void;
 };
 
+export const mockSetStop = jest.fn().mockResolvedValue(undefined);
+
 /**
  * Minimal mock for the MapLibre Map component.
  * Supported props: mapStyle, compass, compassPosition, attribution,
@@ -90,7 +92,7 @@ export const Camera = React.forwardRef<
   }
 >((_props, ref) => {
   React.useImperativeHandle(ref, () => ({
-    setStop: jest.fn().mockResolvedValue(undefined),
+    setStop: mockSetStop,
     jumpTo: jest.fn(),
     easeTo: jest.fn(),
   }));

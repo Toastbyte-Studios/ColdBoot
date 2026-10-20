@@ -41,6 +41,12 @@ export interface IconButtonProps {
    */
   disabledColor?: string;
   disabled?: boolean;
+  /**
+   * On state for a toggle (e.g. the map's follow-my-location button): a
+   * tinted circle behind the glyph, announced as selected. Leave it undefined
+   * for an ordinary button so nothing is announced.
+   */
+  selected?: boolean;
   accessibilityHint?: string;
   /** Layout and positioning only; the target size is fixed. */
   style?: StyleProp<ViewStyle>;
@@ -64,6 +70,7 @@ export default function IconButton({
   color,
   disabledColor,
   disabled = false,
+  selected,
   accessibilityHint,
   style,
   borderless = true,
@@ -82,7 +89,9 @@ export default function IconButton({
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
-      accessibilityState={{ disabled }}
+      accessibilityState={
+        selected === undefined ? { disabled } : { disabled, selected }
+      }
       hitSlop={8}
       android_ripple={
         disabled
@@ -95,6 +104,7 @@ export default function IconButton({
       }
       style={({ pressed }) => [
         styles.base,
+        selected && { backgroundColor: withAlpha(tint, 0.16) },
         Platform.OS === 'ios' && pressed && !disabled && styles.pressed,
         style,
       ]}
@@ -110,6 +120,7 @@ const styles = StyleSheet.create({
     minHeight: TARGET,
     alignItems: 'center',
     justifyContent: 'center',
+    borderRadius: TARGET / 2,
   },
   pressed: {
     opacity: 0.4,

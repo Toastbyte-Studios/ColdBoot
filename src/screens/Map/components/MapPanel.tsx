@@ -50,8 +50,18 @@ type LatLng = { latitude: number; longitude: number };
 
 type Props = {
   permissionStatus: LocationPermissionStatus;
-  /** Centres the map once tiles finish loading; the control itself lives on MapScreen. */
-  onLocateMe: () => void;
+  /**
+   * Keep the camera centred on the user as they move (MapLibre's native
+   * follow mode). Ignored without location permission.
+   */
+  followUser?: boolean;
+  /**
+   * The native follow mode ended on its own — the user panned or zoomed the
+   * map — so the owner can switch its follow toggle off to match.
+   */
+  onFollowUserEnded?: () => void;
+  /** A direct user pan or zoom, including while a locate flight is in progress. */
+  onUserCameraGesture?: () => void;
   locationReady: boolean;
   cameraRef: React.RefObject<CameraRef | null>;
   onMapReady?: () => void;
@@ -84,7 +94,9 @@ function formatElapsed(seconds: number): string {
 
 export default function MapPanel({
   permissionStatus,
-  onLocateMe,
+  followUser = false,
+  onFollowUserEnded,
+  onUserCameraGesture,
   locationReady,
   cameraRef,
   onMapReady,
@@ -150,8 +162,10 @@ export default function MapPanel({
             logo={false}
             onDidFinishLoadingMap={() => {
               onMapReady?.();
-              if (permissionStatus === 'granted') {
-                onLocateMe();
+            }}
+            onRegionIsChanging={(event) => {
+              if (event.nativeEvent.userInteraction) {
+                onUserCameraGesture?.();
               }
             }}
             onLongPress={(event) => {
@@ -170,8 +184,15 @@ export default function MapPanel({
                 zoom: zoomFromDelta(DELTA.latitudeDelta),
               }}
               trackUserLocation={
-                permissionStatus === 'granted' ? 'default' : undefined
+                followUser && permissionStatus === 'granted'
+                  ? 'default'
+                  : undefined
               }
+              onTrackUserLocationChange={(event) => {
+                if (event.nativeEvent.trackUserLocation === null) {
+                  onFollowUserEnded?.();
+                }
+              }}
             />
             {permissionStatus === 'granted' && <UserLocation accuracy />}
             {waypoints.map((wp) => (
