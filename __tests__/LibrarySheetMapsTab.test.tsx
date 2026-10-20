@@ -178,6 +178,21 @@ describe('Library sheet — Maps tab', () => {
     ).toBe(true);
   });
 
+  it('offers another download after the list', async () => {
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([makePack()]);
+    const onDownload = jest.fn();
+
+    const tree = await renderTab({ onDownload });
+    const button = tree.root.findByProps({
+      testID: 'app-button-Download another area',
+    });
+    await ReactTestRenderer.act(async () => {
+      button.props.onPress();
+    });
+
+    expect(onDownload).toHaveBeenCalled();
+  });
+
   it('shows an area on the map with its centre and radius', async () => {
     (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([makePack()]);
     const onViewRegion = jest.fn();

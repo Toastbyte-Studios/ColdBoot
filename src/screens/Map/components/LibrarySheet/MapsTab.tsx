@@ -15,7 +15,10 @@ import type { PackRegion } from '../../../../utils/offlinePacks';
 interface MapsTabProps {
   /** Shows a downloaded area on the map. */
   onViewRegion: (region: PackRegion) => void;
-  /** Starts the "Download your area" flow. */
+  /**
+   * Starts the "Download your area" flow. The tab is the only place that
+   * offers it: the empty state, or the button after the list.
+   */
   onDownload: () => void;
 }
 
@@ -171,19 +174,31 @@ export default observer(function MapsTab({
           />
         </View>
       ) : (
-        library.packs.map((pack) => (
-          <MapPackRow
-            key={pack.id}
-            pack={pack}
-            displayName={library.displayName(pack)}
-            isBusy={library.busyPackId === pack.id}
-            isAnyBusy={library.isBusy}
-            onView={handleView}
-            onRename={handleRename}
-            onRefresh={handleRefresh}
-            onDelete={handleDelete}
-          />
-        ))
+        <>
+          {library.packs.map((pack) => (
+            <MapPackRow
+              key={pack.id}
+              pack={pack}
+              displayName={library.displayName(pack)}
+              isBusy={library.busyPackId === pack.id}
+              isAnyBusy={library.isBusy}
+              onView={handleView}
+              onRename={handleRename}
+              onRefresh={handleRefresh}
+              onDelete={handleDelete}
+            />
+          ))}
+          <View style={styles.footer}>
+            <AppButton
+              label="Download another area"
+              icon="download-outline"
+              size="small"
+              variant="plain"
+              tint={COLORS.SECONDARY_ACCENT}
+              onPress={onDownload}
+            />
+          </View>
+        </>
       )}
     </ScrollView>
   );
@@ -199,6 +214,11 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       paddingVertical: 32,
       alignItems: 'center',
       gap: 16,
+    },
+    footer: {
+      paddingHorizontal: 16,
+      paddingVertical: 12,
+      alignItems: 'flex-start',
     },
     emptyStateText: {
       fontSize: 14,

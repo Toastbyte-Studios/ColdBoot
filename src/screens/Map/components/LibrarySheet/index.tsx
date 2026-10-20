@@ -12,7 +12,9 @@ import React, {
   useState,
 } from 'react';
 import {
+  AccessibilityActionEvent,
   Animated,
+  BackHandler,
   Dimensions,
   Keyboard,
   PanResponder,
@@ -21,8 +23,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import AppButton from '../../../../components/AppButton';
-import IconButton from '../../../../components/IconButton';
 import SegmentedControl from '../../../../components/SegmentedControl';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useSettingsStore } from '../../../../stores/StoreContext';
@@ -44,6 +44,8 @@ const HANDLE_HEIGHT = 28;
 
 type SheetState = 'closed' | 'open';
 export type LibraryTab = 'waypoints' | 'tracks' | 'maps';
+/** Where the sheet can open: a tab, or straight into a new waypoint's form. */
+export type LibraryOpenTarget = LibraryTab | 'new-waypoint';
 
 const TAB_OPTIONS: { value: LibraryTab; label: string }[] = [
   { value: 'waypoints', label: 'Waypoints' },
@@ -66,11 +68,16 @@ export interface LibrarySheetProps {
   /** Whether the sheet is open (controlled by the map's Library button). */
   isOpen: boolean;
   /**
-   * The tab to show when the sheet opens, e.g. 'maps' when another part of
-   * the app links to offline maps. Left out, the sheet keeps whichever tab
-   * was showing last.
+   * Where to open: a tab, e.g. 'maps' when Settings links to offline maps, or
+   * 'new-waypoint' for the map's flag button. Left out, the sheet keeps
+   * whichever tab was showing last.
    */
-  openTab?: LibraryTab;
+  openTab?: LibraryOpenTarget;
+  /**
+   * Bumped by the owner on every request to open on `openTab`, so asking for
+   * the same target twice (the flag pressed again) still applies it.
+   */
+  openRequestId?: number;
   /** Called when the user closes the sheet via button or swipe. */
   onClose: () => void;
   /** Called when user taps Navigate on a waypoint. */
@@ -96,7 +103,7 @@ export interface LibrarySheetProps {
   onDeleteTrack?: (id: string) => void;
   /** Called when the user taps View on a downloaded offline area. */
   onViewRegion: (region: PackRegion) => void;
-  /** Called when the user wants to download a new offline area. */
+  /** Called when the user wants to download a new offline area (Maps tab). */
   onDownloadArea: () => void;
 }
 
@@ -108,6 +115,7 @@ export default function LibrarySheet({
   currentCoords,
   isOpen,
   openTab,
+  openRequestId,
   onClose,
   onNavigate,
   onDelete,
@@ -158,7 +166,10 @@ export default function LibrarySheet({
 
   useEffect(() => {
     if (isOpen) {
-      if (openTab) {
+      if (openTab === 'new-waypoint') {
+        setActiveTab('waypoints');
+        setShowAddForm(true);
+      } else if (openTab) {
         setActiveTab(openTab);
         setShowAddForm(false);
       }
@@ -178,7 +189,35 @@ export default function LibrarySheet({
         }
       });
     }
-  }, [isOpen, openTab, snapOpen, translateY]);
+  }, [isOpen, openTab, openRequestId, snapOpen, translateY]);
+
+  // There's no close button: the sheet is dragged down. Android's back
+  // gesture closes it first, as it does any bottom sheet, rather than leaving
+  // the map screen behind it.
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        onClose();
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [isOpen, onClose]);
+
+  // Screen readers can't drag the handle; VoiceOver's escape gesture (and
+  // TalkBack's equivalent action) closes the sheet instead.
+  const handleAccessibilityAction = useCallback(
+    (event: AccessibilityActionEvent) => {
+      if (event.nativeEvent.actionName === 'escape') {
+        onClose();
+      }
+    },
+    [onClose],
+  );
 
   // PanResponder for drag-to-dismiss
   const panResponder = useRef(
@@ -233,6 +272,8 @@ export default function LibrarySheet({
       ]}
       pointerEvents={isOpen ? 'auto' : 'none'}
       accessibilityViewIsModal={false}
+      accessibilityActions={[{ name: 'escape', label: 'Close library' }]}
+      onAccessibilityAction={handleAccessibilityAction}
     >
       {/* Drag handle */}
       <View style={styles.handleArea} {...panResponder.panHandlers}>
@@ -248,37 +289,6 @@ export default function LibrarySheet({
           accessibilityLabel="Show waypoints, tracks or offline maps"
           style={styles.tabs}
         />
-
-        <View style={styles.headerActions}>
-          {activeTab === 'waypoints' && !showAddForm && (
-            <AppButton
-              label="Add"
-              icon="add-outline"
-              size="small"
-              tint={COLORS.SECONDARY_ACCENT}
-              onPress={() => setShowAddForm(true)}
-              accessibilityLabel="Add waypoint"
-            />
-          )}
-          {activeTab === 'maps' && (
-            <AppButton
-              label="Download"
-              icon="download-outline"
-              size="small"
-              tint={COLORS.SECONDARY_ACCENT}
-              onPress={onDownloadArea}
-              accessibilityLabel="Download an offline area"
-            />
-          )}
-          {!showAddForm && (
-            <IconButton
-              name="close-outline"
-              size={20}
-              accessibilityLabel="Close library"
-              onPress={onClose}
-            />
-          )}
-        </View>
       </View>
 
       {/* Tab content */}
@@ -303,7 +313,8 @@ export default function LibrarySheet({
             {waypoints.length === 0 ? (
               <View style={styles.emptyState}>
                 <Text style={styles.emptyStateText}>
-                  No waypoints saved. Add one to get started.
+                  No waypoints yet. Tap the flag above the map, or press and
+                  hold on the map, to save one.
                 </Text>
               </View>
             ) : (
@@ -385,16 +396,9 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       paddingHorizontal: 16,
       paddingBottom: 8,
     },
-    // The segmented control has no intrinsic width; take the space the header
-    // actions leave.
+    // The segmented control has no intrinsic width; it takes the whole row.
     tabs: {
       flex: 1,
-      marginRight: 12,
-    },
-    headerActions: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      gap: 8,
     },
     list: {
       flex: 1,
