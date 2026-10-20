@@ -52,6 +52,16 @@ type Props = {
   permissionStatus: LocationPermissionStatus;
   /** Centres the map once tiles finish loading; the control itself lives on MapScreen. */
   onLocateMe: () => void;
+  /**
+   * Keep the camera centred on the user as they move (MapLibre's native
+   * follow mode). Ignored without location permission.
+   */
+  followUser?: boolean;
+  /**
+   * The native follow mode ended on its own — the user panned or zoomed the
+   * map — so the owner can switch its follow toggle off to match.
+   */
+  onFollowUserEnded?: () => void;
   locationReady: boolean;
   cameraRef: React.RefObject<CameraRef | null>;
   onMapReady?: () => void;
@@ -85,6 +95,8 @@ function formatElapsed(seconds: number): string {
 export default function MapPanel({
   permissionStatus,
   onLocateMe,
+  followUser = false,
+  onFollowUserEnded,
   locationReady,
   cameraRef,
   onMapReady,
@@ -170,8 +182,15 @@ export default function MapPanel({
                 zoom: zoomFromDelta(DELTA.latitudeDelta),
               }}
               trackUserLocation={
-                permissionStatus === 'granted' ? 'default' : undefined
+                followUser && permissionStatus === 'granted'
+                  ? 'default'
+                  : undefined
               }
+              onTrackUserLocationChange={(event) => {
+                if (event.nativeEvent.trackUserLocation === null) {
+                  onFollowUserEnded?.();
+                }
+              }}
             />
             {permissionStatus === 'granted' && <UserLocation accuracy />}
             {waypoints.map((wp) => (

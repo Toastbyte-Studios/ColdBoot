@@ -64,7 +64,10 @@ import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
-import LibrarySheet, { type LibraryTab } from './components/LibrarySheet';
+import LibrarySheet, {
+  type LibraryOpenTarget,
+  type LibraryTab,
+} from './components/LibrarySheet';
 import { haversineMeters } from './components/LibrarySheet/waypointGeometry';
 import MapPanel, {
   DELTA,
@@ -198,6 +201,18 @@ const GEOCODE_THRESHOLD = 0.001;
 
 const isAndroid = Platform.OS === 'android';
 
+/**
+ * The locate button's follow toggle. 'locating' is the fly to the user's
+ * position; native follow mode takes over in 'following' once it lands, so
+ * the camera doesn't zoom from wherever the user had scrolled to.
+ */
+type FollowMode = 'off' | 'locating' | 'following';
+
+type CameraStop = Parameters<CameraRef['setStop']>[0];
+
+/** Fallback in case a platform never settles the fly-to-user promise. */
+const FOLLOW_ENGAGE_TIMEOUT_MS = 600;
+
 type MapScreenRouteParams = {
   center?: { latitude: number; longitude: number };
   radiusMiles?: number;
@@ -247,9 +262,15 @@ export default observer(function MapScreen() {
   const geocodeAbortRef = useRef<AbortController | null>(null);
   const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
   /** Tab to open the Library on; undefined keeps the last one shown. */
-  const [libraryOpenTab, setLibraryOpenTab] = useState<LibraryTab | undefined>(
-    undefined,
-  );
+  const [libraryOpenTab, setLibraryOpenTab] = useState<
+    LibraryOpenTarget | undefined
+  >(undefined);
+  const [libraryOpenRequestId, setLibraryOpenRequestId] = useState(0);
+  const [followMode, setFollowMode] = useState<FollowMode>('off');
+  /** followMode as of the last commit, for callbacks that outlive a render. */
+  const followModeRef = useRef<FollowMode>('off');
+  /** A camera move waiting for follow mode to release the camera. */
+  const pendingCameraStopRef = useRef<CameraStop | null>(null);
   // Measured height of the map container — used to keep the sheet within map bounds.
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
   const [mapReady, setMapReady] = useState(false);
@@ -443,25 +464,82 @@ export default observer(function MapScreen() {
     });
   };
 
+  /** Opens the Library on a tab or form; undefined keeps the last tab. */
+  const openLibrary = useCallback((target?: LibraryOpenTarget) => {
+    setLibraryOpenTab(target);
+    setLibraryOpenRequestId((id) => id + 1);
+    setLibrarySheetOpen(true);
+  }, []);
+
+  // Native follow mode owns the camera while it's on, so a move the app makes
+  // itself (to a waypoint, a track, an area) turns following off first and
+  // runs once the camera is released; otherwise it would snap straight back.
+  useEffect(() => {
+    followModeRef.current = followMode;
+    if (followMode === 'off' && pendingCameraStopRef.current) {
+      const stop = pendingCameraStopRef.current;
+      pendingCameraStopRef.current = null;
+      cameraRef.current?.setStop(stop)?.catch(() => {});
+    }
+  }, [followMode]);
+
+  const moveCamera = useCallback((stop: CameraStop) => {
+    if (followModeRef.current === 'off') {
+      cameraRef.current?.setStop(stop)?.catch(() => {});
+      return;
+    }
+    pendingCameraStopRef.current = stop;
+    setFollowMode('off');
+  }, []);
+
+  /**
+   * Toggles following the user. On: fly to them at street level, then hand
+   * the camera to native follow mode, which keeps them centred as they move.
+   * Off: the camera stays where it is.
+   */
+  const handleFollowPress = useCallback(async () => {
+    if (followModeRef.current !== 'off') {
+      setFollowMode('off');
+      return;
+    }
+    setFollowMode('locating');
+    if (cameraRef.current && mlPosition) {
+      const flight = cameraRef.current.setStop({
+        center: [mlPosition.coords.longitude, mlPosition.coords.latitude],
+        zoom: zoomFromDelta(DELTA.latitudeDelta),
+        duration: 300,
+        easing: 'fly',
+      });
+      await Promise.race([
+        Promise.resolve(flight).catch(() => {}),
+        new Promise((resolve) => setTimeout(resolve, FOLLOW_ENGAGE_TIMEOUT_MS)),
+      ]);
+    }
+    // Pressed again mid-flight? Then stay off.
+    setFollowMode((mode) => (mode === 'locating' ? 'following' : mode));
+  }, [mlPosition]);
+
+  /** Follow mode ended natively because the user moved the map. */
+  const handleFollowUserEnded = useCallback(() => {
+    setFollowMode((mode) => (mode === 'following' ? 'off' : mode));
+  }, []);
+
   /** Frames a downloaded area: its centre, zoomed out to show the radius. */
   const flyToRegion = useCallback(
     (center: { latitude: number; longitude: number }, radiusMiles?: number) => {
-      if (!cameraRef.current) {
-        return;
-      }
       let targetLatitudeDelta = DELTA.latitudeDelta;
       if (typeof radiusMiles === 'number' && radiusMiles > 0) {
         const [, south, , north] = boundsFromRadius(center, radiusMiles);
         targetLatitudeDelta = Math.max(DELTA.latitudeDelta, north - south);
       }
-      cameraRef.current.setStop({
+      moveCamera({
         center: [center.longitude, center.latitude],
         zoom: zoomFromDelta(targetLatitudeDelta),
         duration: MAP_ANIMATE_DURATION_MS,
         easing: 'fly',
       });
     },
-    [],
+    [moveCamera],
   );
 
   const handleAddWaypointFromLocation = useCallback(
@@ -487,8 +565,8 @@ export default observer(function MapScreen() {
       setLibrarySheetOpen(false);
       // Pan the map to centre on the selected waypoint
       const waypoint = waypointStore.waypoints.find((w) => w.id === id);
-      if (waypoint && cameraRef.current) {
-        cameraRef.current.setStop({
+      if (waypoint) {
+        moveCamera({
           center: [waypoint.longitude, waypoint.latitude],
           zoom: zoomFromDelta(DELTA.latitudeDelta),
           duration: MAP_ANIMATE_DURATION_MS,
@@ -496,7 +574,7 @@ export default observer(function MapScreen() {
         });
       }
     },
-    [waypointStore],
+    [moveCamera, waypointStore],
   );
 
   const handleDeleteWaypoint = useCallback(
@@ -519,10 +597,9 @@ export default observer(function MapScreen() {
         coordinate.latitude,
         coordinate.longitude,
       );
-      setLibraryOpenTab('waypoints');
-      setLibrarySheetOpen(true);
+      openLibrary('waypoints');
     },
-    [waypointStore],
+    [openLibrary, waypointStore],
   );
 
   // ── Recording handlers ───────────────────────────────────────────────────────
@@ -656,19 +733,22 @@ export default observer(function MapScreen() {
     recordingDistanceRef.current = 0;
   }, []);
 
-  const handleViewTrack = useCallback((track: Track) => {
-    setViewedTrack(track);
-    setLibrarySheetOpen(false);
-    // Pan map to first point of track
-    if (track.points.length > 0 && cameraRef.current) {
-      cameraRef.current.setStop({
-        center: [track.points[0].longitude, track.points[0].latitude],
-        zoom: zoomFromDelta(DELTA.latitudeDelta),
-        duration: MAP_ANIMATE_DURATION_MS,
-        easing: 'fly',
-      });
-    }
-  }, []);
+  const handleViewTrack = useCallback(
+    (track: Track) => {
+      setViewedTrack(track);
+      setLibrarySheetOpen(false);
+      // Pan map to first point of track
+      if (track.points.length > 0) {
+        moveCamera({
+          center: [track.points[0].longitude, track.points[0].latitude],
+          zoom: zoomFromDelta(DELTA.latitudeDelta),
+          duration: MAP_ANIMATE_DURATION_MS,
+          easing: 'fly',
+        });
+      }
+    },
+    [moveCamera],
+  );
 
   const handleDeleteTrack = useCallback(
     async (id: string) => {
@@ -701,10 +781,9 @@ export default observer(function MapScreen() {
     if (!requestedLibraryTab) {
       return;
     }
-    setLibraryOpenTab(requestedLibraryTab);
-    setLibrarySheetOpen(true);
+    openLibrary(requestedLibraryTab);
     navigation.setParams({ library: undefined });
-  }, [navigation, requestedLibraryTab]);
+  }, [navigation, openLibrary, requestedLibraryTab]);
 
   // A download runs in the background after its modal closes. Re-read the
   // library when one finishes so the Maps tab lists it without a reopen.
@@ -782,17 +861,30 @@ export default observer(function MapScreen() {
       {/* Every map control lives here rather than floating over the tiles:
           the map is the point of the screen, so nothing sits on top of it.
           Saved waypoints, tracks and offline maps (including new downloads)
-          all live in the Library sheet, so it opens without location access:
-          what's already saved doesn't need a GPS fix. */}
+          all live in the Library sheet, so it and the flag open without
+          location access: what's saved, or typed in by hand, needs no fix. */}
       <View style={styles.mapActions}>
         <IconButton
           name="library-outline"
           size={22}
           onPress={() => {
-            setLibraryOpenTab(undefined);
-            setLibrarySheetOpen(true);
+            if (librarySheetOpen) {
+              setLibrarySheetOpen(false);
+              return;
+            }
+            openLibrary();
           }}
-          accessibilityLabel="Open library"
+          accessibilityLabel={
+            librarySheetOpen ? 'Close library' : 'Open library'
+          }
+        />
+        <IconButton
+          name="flag-outline"
+          size={22}
+          onPress={() => {
+            openLibrary('new-waypoint');
+          }}
+          accessibilityLabel="Add waypoint"
         />
         {/* Not an IconButton while recording: only the glyph pulses, so the
             animation has to wrap the icon rather than the pressable. */}
@@ -829,9 +921,16 @@ export default observer(function MapScreen() {
         <IconButton
           name="locate-outline"
           size={22}
-          onPress={handleLocateMe}
+          onPress={handleFollowPress}
           disabled={permissionStatus !== 'granted'}
-          accessibilityLabel="Center map on my location"
+          selected={followMode !== 'off'}
+          color={followMode !== 'off' ? COLORS.BRAND : undefined}
+          accessibilityLabel="Follow my location"
+          accessibilityHint={
+            followMode !== 'off'
+              ? 'Stops keeping the map centred on you'
+              : 'Keeps the map centred on you as you move'
+          }
         />
       </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
@@ -844,6 +943,8 @@ export default observer(function MapScreen() {
             <MapPanel
               permissionStatus={permissionStatus}
               onLocateMe={handleLocateMe}
+              followUser={followMode === 'following'}
+              onFollowUserEnded={handleFollowUserEnded}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
@@ -868,6 +969,7 @@ export default observer(function MapScreen() {
             currentCoords={coords}
             isOpen={librarySheetOpen}
             openTab={libraryOpenTab}
+            openRequestId={libraryOpenRequestId}
             onClose={() => setLibrarySheetOpen(false)}
             onNavigate={handleNavigateWaypoint}
             onDelete={handleDeleteWaypoint}

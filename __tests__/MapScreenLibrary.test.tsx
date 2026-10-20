@@ -1,4 +1,5 @@
 import {
+  Camera,
   LocationManager,
   useCurrentPosition,
 } from '@maplibre/maplibre-react-native';
@@ -26,6 +27,10 @@ let mockLibraryProps:
       onViewRegion?: (region: {
         center: { latitude: number; longitude: number };
         radiusMiles: number;
+      }) => void;
+      onViewTrack?: (track: {
+        id: string;
+        points: { latitude: number; longitude: number }[];
       }) => void;
     }
   | undefined;
@@ -96,6 +101,10 @@ jest.mock('../src/screens/Map/components/LibrarySheet', () => {
       center: { latitude: number; longitude: number };
       radiusMiles: number;
     }) => void;
+    onViewTrack?: (track: {
+      id: string;
+      points: { latitude: number; longitude: number }[];
+    }) => void;
   }) => {
     mockLibraryProps = props;
     return (
@@ -164,12 +173,42 @@ describe('MapScreen Library', () => {
     (LocationManager.requestPermissions as jest.Mock).mockResolvedValue(true);
   });
 
-  it('has one Library button in place of waypoints, download and map library', async () => {
+  it('has Library, Add waypoint, Record and Follow in the toolbar', async () => {
     const tree = await renderScreen(true);
 
     expect(findButton(tree, 'Open library')).toBeDefined();
+    expect(findButton(tree, 'Add waypoint')).toBeDefined();
+    expect(findButton(tree, 'Start recording')).toBeDefined();
+    expect(findButton(tree, 'Follow my location')).toBeDefined();
     expect(findButton(tree, 'Download offline area')).toBeUndefined();
     expect(findButton(tree, 'Map Library')).toBeUndefined();
+  });
+
+  it('closes the Library when its button is pressed again', async () => {
+    const tree = await renderScreen(true);
+
+    await ReactTestRenderer.act(async () => {
+      findButton(tree, 'Open library').props.onPress();
+    });
+    expect(sheetIsOpen(tree)).toBe(true);
+
+    await ReactTestRenderer.act(async () => {
+      findButton(tree, 'Close library').props.onPress();
+    });
+    expect(sheetIsOpen(tree)).toBe(false);
+  });
+
+  it('opens the new-waypoint form from the flag, without location access', async () => {
+    const tree = await renderScreen(false);
+    const flag = findButton(tree, 'Add waypoint');
+
+    expect(flag.props.disabled).toBeFalsy();
+    await ReactTestRenderer.act(async () => {
+      flag.props.onPress();
+    });
+
+    expect(sheetIsOpen(tree)).toBe(true);
+    expect(sheetTab(tree)).toBe('new-waypoint');
   });
 
   it('opens the Library without location access', async () => {
@@ -190,9 +229,7 @@ describe('MapScreen Library', () => {
     const tree = await renderScreen(false);
 
     expect(findButton(tree, 'Start recording').props.disabled).toBe(true);
-    expect(findButton(tree, 'Center map on my location').props.disabled).toBe(
-      true,
-    );
+    expect(findButton(tree, 'Follow my location').props.disabled).toBe(true);
   });
 
   it('opens on the Maps tab when linked from Settings', async () => {
@@ -247,10 +284,15 @@ describe('MapScreen Library', () => {
     mockRouteParams = { library: 'maps' };
     const tree = await renderScreen(true);
 
+    // Open from Settings; close it, then reopen from the toolbar.
+    await ReactTestRenderer.act(async () => {
+      findButton(tree, 'Close library').props.onPress();
+    });
     await ReactTestRenderer.act(async () => {
       findButton(tree, 'Open library').props.onPress();
     });
 
+    expect(sheetIsOpen(tree)).toBe(true);
     expect(sheetTab(tree)).toBe('last');
   });
 
@@ -271,5 +313,78 @@ describe('MapScreen Library', () => {
     );
     expect(sheetIsOpen(tree)).toBe(true);
     expect(sheetTab(tree)).toBe('waypoints');
+  });
+});
+
+describe('MapScreen follow-my-location toggle', () => {
+  const camera = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    tree.root.findByType(Camera);
+  const follow = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    findButton(tree, 'Follow my location');
+
+  beforeEach(() => {
+    mockRouteParams = undefined;
+    mockLibraryProps = undefined;
+  });
+
+  async function pressFollow(tree: ReactTestRenderer.ReactTestRenderer) {
+    await ReactTestRenderer.act(async () => {
+      await follow(tree).props.onPress();
+    });
+  }
+
+  it('starts off, without following', async () => {
+    const tree = await renderScreen(true);
+
+    expect(follow(tree).props.selected).toBe(false);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
+  });
+
+  it('flies to the user, then follows them', async () => {
+    const tree = await renderScreen(true);
+
+    await pressFollow(tree);
+
+    expect(follow(tree).props.selected).toBe(true);
+    expect(camera(tree).props.trackUserLocation).toBe('default');
+  });
+
+  it('stops following when pressed again', async () => {
+    const tree = await renderScreen(true);
+    await pressFollow(tree);
+
+    await pressFollow(tree);
+
+    expect(follow(tree).props.selected).toBe(false);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
+  });
+
+  it('turns off when the user moves the map themselves', async () => {
+    const tree = await renderScreen(true);
+    await pressFollow(tree);
+
+    await ReactTestRenderer.act(async () => {
+      camera(tree).props.onTrackUserLocationChange({
+        nativeEvent: { trackUserLocation: null },
+      });
+    });
+
+    expect(follow(tree).props.selected).toBe(false);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
+  });
+
+  it('stops following before showing a saved track', async () => {
+    const tree = await renderScreen(true);
+    await pressFollow(tree);
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onViewTrack?.({
+        id: 'track-1',
+        points: [{ latitude: 36.2, longitude: -115.1 }],
+      });
+    });
+
+    expect(follow(tree).props.selected).toBe(false);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
   });
 });
