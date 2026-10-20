@@ -2,6 +2,7 @@ import { useCurrentPosition } from '@maplibre/maplibre-react-native';
 import React from 'react';
 import { ScrollView } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
+import { boundsFromRadius } from '../src/navigation/utils/boundsFromRadius';
 import DownloadConfirmScreen, {
   type DownloadAreaParams,
 } from '../src/screens/Map/components/offline/DownloadConfirmScreen';
@@ -232,9 +233,52 @@ describe('DownloadConfirmScreen', () => {
     expect(scroll().props.scrollEnabled).toBe(false);
 
     await ReactTestRenderer.act(async () => {
-      container.props.onTouchEnd();
+      container.props.onTouchEnd({ nativeEvent: { touches: [{}] } });
+    });
+    expect(scroll().props.scrollEnabled).toBe(false);
+
+    await ReactTestRenderer.act(async () => {
+      container.props.onTouchEnd({ nativeEvent: { touches: [] } });
     });
     expect(scroll().props.scrollEnabled).toBe(true);
+  });
+
+  it('restores the chosen center and radius when returning to custom mode', async () => {
+    const { tree } = await renderScreen(VEGAS);
+    await chooseOnMap(tree);
+    await ReactTestRenderer.act(async () => {
+      previewMap(tree).props.onRegionDidChange({
+        nativeEvent: { center: [-115.37, 38.62] },
+      });
+    });
+
+    await ReactTestRenderer.act(async () => {
+      tree.root
+        .find(
+          (node) =>
+            Array.isArray(node.props.values) &&
+            node.props.accessibilityLabel === 'Area size, as a radius',
+        )
+        .props.onChange({ nativeEvent: { selectedSegmentIndex: 1 } });
+    });
+    await ReactTestRenderer.act(async () => {
+      areaControl(tree).props.onChange({
+        nativeEvent: { selectedSegmentIndex: 0 },
+      });
+    });
+    await ReactTestRenderer.act(async () => {
+      areaControl(tree).props.onChange({
+        nativeEvent: { selectedSegmentIndex: 1 },
+      });
+    });
+
+    const camera = tree.root.find(
+      (node) => node.props.initialViewState !== undefined,
+    );
+    expect(camera.props.initialViewState).toEqual({
+      bounds: boundsFromRadius({ latitude: 38.62, longitude: -115.37 }, 25),
+      padding: { top: 16, right: 16, bottom: 16, left: 16 },
+    });
   });
 
   it('goes back to the area around the user', async () => {

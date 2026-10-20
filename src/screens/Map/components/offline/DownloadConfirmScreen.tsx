@@ -234,27 +234,31 @@ function DownloadConfirmScreen({
 
   const handleModeChange = useCallback(
     (next: AreaMode) => {
-      if (next === 'custom' && !customStartView) {
-        // The main map's view if we were given it, else the user's fix.
-        const start =
-          initialCenter ??
-          (coords
-            ? { latitude: coords.latitude, longitude: coords.longitude }
-            : null);
-        if (start) {
-          setCustomStartView(fittedView(start, radiusMiles));
-          setCustomCenter(start);
+      if (next === 'custom') {
+        if (customCenter) {
+          setCustomStartView(fittedView(customCenter, radiusMiles));
         } else {
-          setCustomStartView({
-            center: [FALLBACK_CENTER.longitude, FALLBACK_CENTER.latitude],
-            zoom: FALLBACK_ZOOM,
-          });
-          setCustomCenter(FALLBACK_CENTER);
+          // The main map's view if we were given it, else the user's fix.
+          const start =
+            initialCenter ??
+            (coords
+              ? { latitude: coords.latitude, longitude: coords.longitude }
+              : null);
+          if (start) {
+            setCustomStartView(fittedView(start, radiusMiles));
+            setCustomCenter(start);
+          } else {
+            setCustomStartView({
+              center: [FALLBACK_CENTER.longitude, FALLBACK_CENTER.latitude],
+              zoom: FALLBACK_ZOOM,
+            });
+            setCustomCenter(FALLBACK_CENTER);
+          }
         }
       }
       setMode(next);
     },
-    [coords, customStartView, initialCenter, radiusMiles],
+    [coords, customCenter, initialCenter, radiusMiles],
   );
 
   const estimatedBytes = useMemo(
@@ -367,7 +371,9 @@ function DownloadConfirmScreen({
             // Keep the page still while the preview is being panned: on
             // Android the scroll view would otherwise take vertical drags.
             onTouchStart={() => setMapTouched(true)}
-            onTouchEnd={() => setMapTouched(false)}
+            onTouchEnd={(event) =>
+              setMapTouched(event.nativeEvent.touches.length > 0)
+            }
             onTouchCancel={() => setMapTouched(false)}
           >
             <Map
