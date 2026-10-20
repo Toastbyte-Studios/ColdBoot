@@ -275,6 +275,8 @@ export default observer(function MapScreen() {
   const [mapContainerHeight, setMapContainerHeight] = useState(0);
   const [mapReady, setMapReady] = useState(false);
   const lastCenteredKeyRef = useRef<string | null>(null);
+  const initialCenteringDoneRef = useRef(false);
+  const followAttemptGenerationRef = useRef(0);
 
   // ── Recording state ────────────────────────────────────────────────────────────
   /** Mutable ref so GPS callback closure always reads the latest value. */
@@ -452,18 +454,6 @@ export default observer(function MapScreen() {
     }
   }, [recordingState, pulseAnim]);
 
-  const handleLocateMe = () => {
-    if (!cameraRef.current || !mlPosition) {
-      return;
-    }
-    cameraRef.current.setStop({
-      center: [mlPosition.coords.longitude, mlPosition.coords.latitude],
-      zoom: zoomFromDelta(DELTA.latitudeDelta),
-      duration: 300,
-      easing: 'fly',
-    });
-  };
-
   /** Opens the Library on a tab or form; undefined keeps the last tab. */
   const openLibrary = useCallback((target?: LibraryOpenTarget) => {
     setLibraryOpenTab(target);
@@ -488,6 +478,10 @@ export default observer(function MapScreen() {
       cameraRef.current?.setStop(stop)?.catch(() => {});
       return;
     }
+    if (followModeRef.current === 'locating') {
+      ++followAttemptGenerationRef.current;
+    }
+    followModeRef.current = 'off';
     pendingCameraStopRef.current = stop;
     setFollowMode('off');
   }, []);
@@ -498,10 +492,13 @@ export default observer(function MapScreen() {
    * Off: the camera stays where it is.
    */
   const handleFollowPress = useCallback(async () => {
+    const generation = ++followAttemptGenerationRef.current;
     if (followModeRef.current !== 'off') {
+      followModeRef.current = 'off';
       setFollowMode('off');
       return;
     }
+    followModeRef.current = 'locating';
     setFollowMode('locating');
     if (cameraRef.current && mlPosition) {
       const flight = cameraRef.current.setStop({
@@ -515,13 +512,30 @@ export default observer(function MapScreen() {
         new Promise((resolve) => setTimeout(resolve, FOLLOW_ENGAGE_TIMEOUT_MS)),
       ]);
     }
-    // Pressed again mid-flight? Then stay off.
-    setFollowMode((mode) => (mode === 'locating' ? 'following' : mode));
+    if (
+      generation === followAttemptGenerationRef.current &&
+      followModeRef.current === 'locating'
+    ) {
+      followModeRef.current = 'following';
+      setFollowMode('following');
+    }
   }, [mlPosition]);
 
   /** Follow mode ended natively because the user moved the map. */
   const handleFollowUserEnded = useCallback(() => {
-    setFollowMode((mode) => (mode === 'following' ? 'off' : mode));
+    if (followModeRef.current === 'following') {
+      ++followAttemptGenerationRef.current;
+      followModeRef.current = 'off';
+      setFollowMode('off');
+    }
+  }, []);
+
+  const handleUserCameraGesture = useCallback(() => {
+    if (followModeRef.current === 'locating') {
+      ++followAttemptGenerationRef.current;
+      followModeRef.current = 'off';
+      setFollowMode('off');
+    }
   }, []);
 
   /** Frames a downloaded area: its centre, zoomed out to show the radius. */
@@ -814,6 +828,26 @@ export default observer(function MapScreen() {
     });
   }, [flyToRegion, mapReady, navigation, route.params]);
 
+  useEffect(() => {
+    if (!mapReady || permissionStatus !== 'granted') {
+      return;
+    }
+    if (route.params?.center) {
+      initialCenteringDoneRef.current = true;
+      return;
+    }
+    if (initialCenteringDoneRef.current || !mlPosition || !cameraRef.current) {
+      return;
+    }
+    initialCenteringDoneRef.current = true;
+    cameraRef.current.setStop({
+      center: [mlPosition.coords.longitude, mlPosition.coords.latitude],
+      zoom: zoomFromDelta(DELTA.latitudeDelta),
+      duration: 300,
+      easing: 'fly',
+    });
+  }, [mapReady, mlPosition, permissionStatus, route.params?.center]);
+
   // ────────────────────────────────────────────────────────
 
   // Ring rotates opposite to heading so the needle appears fixed pointing up
@@ -942,9 +976,9 @@ export default observer(function MapScreen() {
           <View style={styles.mapInner}>
             <MapPanel
               permissionStatus={permissionStatus}
-              onLocateMe={handleLocateMe}
               followUser={followMode === 'following'}
               onFollowUserEnded={handleFollowUserEnded}
+              onUserCameraGesture={handleUserCameraGesture}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}

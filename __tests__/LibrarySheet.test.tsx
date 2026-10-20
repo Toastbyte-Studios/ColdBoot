@@ -3,7 +3,20 @@ import { BackHandler, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import LibrarySheet from '../src/screens/Map/components/LibrarySheet';
 
+let mockIsFocused = true;
+
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
+
+jest.mock('@react-navigation/native', () => {
+  const ReactHooks = require('react');
+  return {
+    useFocusEffect: (callback: () => void | (() => void)) =>
+      ReactHooks.useEffect(
+        () => (mockIsFocused ? callback() : undefined),
+        [callback],
+      ),
+  };
+});
 
 jest.mock('../src/hooks/useTheme', () => ({
   useTheme: () => require('../src/theme/colors').LIGHT_COLORS,
@@ -67,6 +80,10 @@ async function render(
 }
 
 describe('LibrarySheet', () => {
+  beforeEach(() => {
+    mockIsFocused = true;
+  });
+
   it('offers waypoints, tracks and maps', async () => {
     const tree = await render({ isOpen: true });
     const control = tree.root.find((node) => Array.isArray(node.props.values));
@@ -170,22 +187,36 @@ describe('LibrarySheet', () => {
     addListener.mockRestore();
   });
 
+  it('removes the Android back handler when the route loses focus', async () => {
+    const addListener = jest.spyOn(BackHandler, 'addEventListener');
+    const tree = await render({ isOpen: true });
+    const subscription = addListener.mock.results.at(-1)?.value;
+    const remove = jest.spyOn(subscription, 'remove');
+
+    mockIsFocused = false;
+    await ReactTestRenderer.act(async () => {
+      tree.update(<LibrarySheet {...baseProps} isOpen onClose={jest.fn()} />);
+    });
+
+    expect(remove).toHaveBeenCalled();
+    addListener.mockRestore();
+  });
+
   it('closes on the screen reader escape gesture', async () => {
     const onClose = jest.fn();
     const tree = await render({ isOpen: true, onClose });
     const sheet = tree.root.find(
       (node) =>
         Array.isArray(node.props.accessibilityActions) &&
-        typeof node.props.onAccessibilityAction === 'function',
+        typeof node.props.onAccessibilityAction === 'function' &&
+        typeof node.props.onAccessibilityEscape === 'function',
     );
 
     expect(sheet.props.accessibilityActions).toEqual([
       { name: 'escape', label: 'Close library' },
     ]);
     await ReactTestRenderer.act(async () => {
-      sheet.props.onAccessibilityAction({
-        nativeEvent: { actionName: 'escape' },
-      });
+      sheet.props.onAccessibilityEscape();
     });
     expect(onClose).toHaveBeenCalled();
   });

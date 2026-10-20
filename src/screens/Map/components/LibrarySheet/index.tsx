@@ -4,6 +4,7 @@
  * Uses Animated + PanResponder (no Modal) so the map remains visible above.
  */
 
+import { useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
   useEffect,
@@ -194,19 +195,21 @@ export default function LibrarySheet({
   // There's no close button: the sheet is dragged down. Android's back
   // gesture closes it first, as it does any bottom sheet, rather than leaving
   // the map screen behind it.
-  useEffect(() => {
-    if (!isOpen) {
-      return;
-    }
-    const subscription = BackHandler.addEventListener(
-      'hardwareBackPress',
-      () => {
-        onClose();
-        return true;
-      },
-    );
-    return () => subscription.remove();
-  }, [isOpen, onClose]);
+  useFocusEffect(
+    useCallback(() => {
+      if (!isOpen) {
+        return;
+      }
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        () => {
+          onClose();
+          return true;
+        },
+      );
+      return () => subscription.remove();
+    }, [isOpen, onClose]),
+  );
 
   // Screen readers can't drag the handle; VoiceOver's escape gesture (and
   // TalkBack's equivalent action) closes the sheet instead.
@@ -274,6 +277,7 @@ export default function LibrarySheet({
       accessibilityViewIsModal={false}
       accessibilityActions={[{ name: 'escape', label: 'Close library' }]}
       onAccessibilityAction={handleAccessibilityAction}
+      onAccessibilityEscape={onClose}
     >
       {/* Drag handle */}
       <View style={styles.handleArea} {...panResponder.panHandlers}>

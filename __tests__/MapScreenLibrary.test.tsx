@@ -5,6 +5,7 @@ import {
 } from '@maplibre/maplibre-react-native';
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
+import { mockSetStop } from '../__mocks__/@maplibre/maplibre-react-native';
 import MapScreen from '../src/screens/Map/MapScreen';
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
@@ -138,13 +139,14 @@ const STABLE_POSITION = {
   timestamp: 0,
 };
 
-async function renderScreen(permission: boolean) {
+async function renderScreen(
+  permission: boolean,
+  position = permission ? STABLE_POSITION : null,
+) {
   (LocationManager.requestPermissions as jest.Mock).mockResolvedValue(
     permission,
   );
-  (useCurrentPosition as jest.Mock).mockReturnValue(
-    permission ? STABLE_POSITION : null,
-  );
+  (useCurrentPosition as jest.Mock).mockReturnValue(position);
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(<MapScreen />);
@@ -167,6 +169,7 @@ describe('MapScreen Library', () => {
     mockRouteParams = undefined;
     mockLibraryProps = undefined;
     mockSetParams.mockClear();
+    mockSetStop.mockReset().mockResolvedValue(undefined);
   });
 
   afterEach(() => {
@@ -274,10 +277,40 @@ describe('MapScreen Library', () => {
         .props.onDidFinishLoadingMap();
     });
 
+    expect(mockSetStop).toHaveBeenCalledTimes(1);
+    expect(mockSetStop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        center: [region.center.longitude, region.center.latitude],
+      }),
+    );
     expect(mockSetParams).toHaveBeenLastCalledWith({
       center: undefined,
       radiusMiles: undefined,
     });
+  });
+
+  it('centres when a GPS fix arrives after the map has loaded', async () => {
+    const tree = await renderScreen(true, null);
+    const map = tree.root.findByProps({ testID: 'map-view' });
+
+    await ReactTestRenderer.act(async () => {
+      map.props.onDidFinishLoadingMap();
+    });
+    expect(mockSetStop).not.toHaveBeenCalled();
+
+    (useCurrentPosition as jest.Mock).mockReturnValue(STABLE_POSITION);
+    await ReactTestRenderer.act(async () => {
+      tree.root
+        .find((node) => typeof node.props.onLayout === 'function')
+        .props.onLayout({ nativeEvent: { layout: { height: 400 } } });
+    });
+
+    expect(mockSetStop).toHaveBeenCalledTimes(1);
+    expect(mockSetStop).toHaveBeenCalledWith(
+      expect.objectContaining({
+        center: [-115.0677, 36.1405],
+      }),
+    );
   });
 
   it('keeps the last tab when opened from the toolbar', async () => {
@@ -369,6 +402,70 @@ describe('MapScreen follow-my-location toggle', () => {
       });
     });
 
+    expect(follow(tree).props.selected).toBe(false);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
+  });
+
+  it('ignores an older follow flight after a newer attempt starts', async () => {
+    const tree = await renderScreen(true);
+    let resolveFirst!: () => void;
+    let resolveSecond!: () => void;
+    const firstFlight = new Promise<void>((resolve) => {
+      resolveFirst = resolve;
+    });
+    const secondFlight = new Promise<void>((resolve) => {
+      resolveSecond = resolve;
+    });
+    mockSetStop
+      .mockImplementationOnce(() => firstFlight)
+      .mockImplementationOnce(() => secondFlight);
+
+    let firstAttempt!: Promise<void>;
+    await ReactTestRenderer.act(async () => {
+      firstAttempt = follow(tree).props.onPress();
+    });
+    await pressFollow(tree);
+    let secondAttempt!: Promise<void>;
+    await ReactTestRenderer.act(async () => {
+      secondAttempt = follow(tree).props.onPress();
+    });
+
+    await ReactTestRenderer.act(async () => {
+      resolveFirst();
+      await firstAttempt;
+    });
+    expect(follow(tree).props.selected).toBe(true);
+    expect(camera(tree).props.trackUserLocation).toBeUndefined();
+
+    await ReactTestRenderer.act(async () => {
+      resolveSecond();
+      await secondAttempt;
+    });
+    expect(camera(tree).props.trackUserLocation).toBe('default');
+  });
+
+  it('cancels a pending follow activation when the user pans', async () => {
+    const tree = await renderScreen(true);
+    let resolveFlight!: () => void;
+    const flight = new Promise<void>((resolve) => {
+      resolveFlight = resolve;
+    });
+    mockSetStop.mockImplementationOnce(() => flight);
+    let attempt!: Promise<void>;
+
+    await ReactTestRenderer.act(async () => {
+      attempt = follow(tree).props.onPress();
+    });
+    await ReactTestRenderer.act(async () => {
+      tree.root.findByProps({ testID: 'map-view' }).props.onRegionIsChanging({
+        nativeEvent: { userInteraction: true },
+      });
+    });
+
+    await ReactTestRenderer.act(async () => {
+      resolveFlight();
+      await attempt;
+    });
     expect(follow(tree).props.selected).toBe(false);
     expect(camera(tree).props.trackUserLocation).toBeUndefined();
   });
