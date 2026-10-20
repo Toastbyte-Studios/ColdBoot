@@ -2,7 +2,9 @@ import { useCurrentPosition } from '@maplibre/maplibre-react-native';
 import React from 'react';
 import { ScrollView } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
-import DownloadConfirmScreen from '../src/screens/Map/components/offline/DownloadConfirmScreen';
+import DownloadConfirmScreen, {
+  type DownloadAreaParams,
+} from '../src/screens/Map/components/offline/DownloadConfirmScreen';
 import { createOfflineRegionWithSmartName } from '../src/screens/Map/components/offline/offlinePackNaming';
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
@@ -52,15 +54,23 @@ const VEGAS = {
   timestamp: 0,
 };
 
-async function renderScreen(position: typeof VEGAS | null) {
+// Unmounted after each test: the screen's GPS retry timer (15 s) would
+// otherwise outlive it and fire into whichever suite runs next.
+const mounted: ReactTestRenderer.ReactTestRenderer[] = [];
+
+async function renderScreen(
+  position: typeof VEGAS | null,
+  params: DownloadAreaParams = {},
+) {
   (useCurrentPosition as jest.Mock).mockReturnValue(position);
   const onDismiss = jest.fn();
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(
-      <DownloadConfirmScreen onDismiss={onDismiss} />,
+      <DownloadConfirmScreen {...params} onDismiss={onDismiss} />,
     );
   });
+  mounted.push(tree);
   return { tree, onDismiss };
 }
 
@@ -105,6 +115,12 @@ describe('DownloadConfirmScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMeasurementSystem = 'imperial';
+  });
+
+  afterEach(async () => {
+    await ReactTestRenderer.act(async () => {
+      mounted.splice(0).forEach((tree) => tree.unmount());
+    });
   });
 
   it('downloads the area around the user by default', async () => {
@@ -331,6 +347,53 @@ describe('DownloadConfirmScreen', () => {
           radiusMiles: 25,
         }),
       );
+    });
+  });
+
+  describe('starting points', () => {
+    const HIKE = { latitude: 38.62, longitude: -115.37 };
+
+    const startView = (tree: ReactTestRenderer.ReactTestRenderer) =>
+      tree.root.find((node) => node.props.initialViewState !== undefined).props
+        .initialViewState;
+
+    it('opens on a waypoint, already choosing on the map', async () => {
+      const { tree } = await renderScreen(VEGAS, {
+        center: HIKE,
+        startMode: 'custom',
+      });
+
+      expect(areaControl(tree).props.selectedIndex).toBe(1);
+      const [west, south, east, north] = startView(tree).bounds;
+      expect((south + north) / 2).toBeCloseTo(HIKE.latitude, 3);
+      expect((west + east) / 2).toBeCloseTo(HIKE.longitude, 3);
+
+      await pressDownload(tree);
+      expect(createOfflineRegionWithSmartName).toHaveBeenCalledWith(
+        expect.objectContaining({ centerLat: 38.62, centerLng: -115.37 }),
+      );
+    });
+
+    it('opens on a waypoint even without a GPS fix', async () => {
+      const { tree } = await renderScreen(null, {
+        center: HIKE,
+        startMode: 'custom',
+      });
+
+      expect(downloadButton(tree).props.disabled).toBe(false);
+    });
+
+    it("starts choosing at the main map's view, not the user", async () => {
+      const { tree } = await renderScreen(VEGAS, { center: HIKE });
+
+      // Still defaults to around the user…
+      expect(areaControl(tree).props.selectedIndex).toBe(0);
+      await chooseOnMap(tree);
+
+      // …but choosing starts where the main map was looking.
+      const [west, south, east, north] = startView(tree).bounds;
+      expect((south + north) / 2).toBeCloseTo(HIKE.latitude, 3);
+      expect((west + east) / 2).toBeCloseTo(HIKE.longitude, 3);
     });
   });
 });

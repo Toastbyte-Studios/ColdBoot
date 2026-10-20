@@ -60,6 +60,8 @@ type Props = {
    * map — so the owner can switch its follow toggle off to match.
    */
   onFollowUserEnded?: () => void;
+  /** The map settled on a new centre, after a pan, zoom or camera move. */
+  onCenterChange?: (center: LatLng) => void;
   /** A direct user pan or zoom, including while a locate flight is in progress. */
   onUserCameraGesture?: () => void;
   locationReady: boolean;
@@ -97,6 +99,7 @@ export default function MapPanel({
   followUser = false,
   onFollowUserEnded,
   onUserCameraGesture,
+  onCenterChange,
   locationReady,
   cameraRef,
   onMapReady,
@@ -162,6 +165,10 @@ export default function MapPanel({
             logo={false}
             onDidFinishLoadingMap={() => {
               onMapReady?.();
+            }}
+            onRegionDidChange={(event) => {
+              const [longitude, latitude] = event.nativeEvent.center;
+              onCenterChange?.({ latitude, longitude });
             }}
             onRegionIsChanging={(event) => {
               if (event.nativeEvent.userInteraction) {

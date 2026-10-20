@@ -67,14 +67,14 @@ const PREVIEW_PADDING = { top: 16, right: 16, bottom: 16, left: 16 };
 const MAP_STYLE_URL = 'https://tiles.openfreemap.org/styles/liberty';
 
 /** Where the area is centred: the user's GPS fix, or a point they pan to. */
-type AreaMode = 'nearby' | 'custom';
+export type AreaMode = 'nearby' | 'custom';
 
 const AREA_OPTIONS: { value: AreaMode; label: string }[] = [
   { value: 'nearby', label: 'Around me' },
   { value: 'custom', label: 'Choose on map' },
 ];
 
-type LatLng = { latitude: number; longitude: number };
+export type LatLng = { latitude: number; longitude: number };
 
 /**
  * Where "Choose on map" opens without a GPS fix: the contiguous US, zoomed
@@ -84,9 +84,28 @@ type LatLng = { latitude: number; longitude: number };
 const FALLBACK_CENTER: LatLng = { latitude: 39.83, longitude: -98.58 };
 const FALLBACK_ZOOM = 3.5;
 
-type Props = {
+/** Route params for the DownloadArea modal. */
+export type DownloadAreaParams = {
+  /**
+   * Where "Choose on map" starts: the main map's centre, or a waypoint's
+   * position. Without it, choosing starts at the user's GPS fix.
+   */
+  center?: LatLng;
+  /** Open in this mode; 'custom' goes straight to choosing at `center`. */
+  startMode?: AreaMode;
+};
+
+type Props = DownloadAreaParams & {
   onDismiss: () => void;
 };
+
+/** Fits the preview to an area of `radiusMiles` around `center`. */
+function fittedView(center: LatLng, radiusMiles: number): InitialViewState {
+  return {
+    bounds: boundsFromRadius(center, radiusMiles),
+    padding: PREVIEW_PADDING,
+  };
+}
 
 /**
  * Modal sheet for confirming an offline map download.
@@ -97,7 +116,11 @@ type Props = {
  * (`SettingsStore.highDetailOffline`) so the choice carries across downloads
  * and matches the toggle surfaced in Settings.
  */
-function DownloadConfirmScreen({ onDismiss }: Props) {
+function DownloadConfirmScreen({
+  onDismiss,
+  center: initialCenter,
+  startMode,
+}: Props) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const settingsStore = useSettingsStore();
@@ -112,12 +135,20 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   const store = useOfflineDownloadStore();
   const navigation = useNavigation();
 
-  const [mode, setMode] = useState<AreaMode>('nearby');
+  // Opened on a given point in "Choose on map" (a waypoint): start there.
+  const opensOnPoint = startMode === 'custom' && initialCenter !== undefined;
+  const [mode, setMode] = useState<AreaMode>(
+    opensOnPoint ? 'custom' : 'nearby',
+  );
   /** Centre of the "Choose on map" area: the preview map's centre. */
-  const [customCenter, setCustomCenter] = useState<LatLng | null>(null);
+  const [customCenter, setCustomCenter] = useState<LatLng | null>(
+    opensOnPoint ? initialCenter : null,
+  );
   /** Where the "Choose on map" preview opens; fixed so panning isn't reset. */
   const [customStartView, setCustomStartView] =
-    useState<InitialViewState | null>(null);
+    useState<InitialViewState | null>(() =>
+      opensOnPoint ? fittedView(initialCenter, DEFAULT_RADIUS_MILES) : null,
+    );
   const [radiusMiles, setRadiusMiles] =
     useState<RadiusMiles>(DEFAULT_RADIUS_MILES);
   const cameraRef = useRef<CameraRef>(null);
@@ -204,15 +235,14 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
   const handleModeChange = useCallback(
     (next: AreaMode) => {
       if (next === 'custom' && !customStartView) {
-        if (coords) {
-          const start = {
-            latitude: coords.latitude,
-            longitude: coords.longitude,
-          };
-          setCustomStartView({
-            bounds: boundsFromRadius(start, radiusMiles),
-            padding: PREVIEW_PADDING,
-          });
+        // The main map's view if we were given it, else the user's fix.
+        const start =
+          initialCenter ??
+          (coords
+            ? { latitude: coords.latitude, longitude: coords.longitude }
+            : null);
+        if (start) {
+          setCustomStartView(fittedView(start, radiusMiles));
           setCustomCenter(start);
         } else {
           setCustomStartView({
@@ -224,7 +254,7 @@ function DownloadConfirmScreen({ onDismiss }: Props) {
       }
       setMode(next);
     },
-    [coords, customStartView, radiusMiles],
+    [coords, customStartView, initialCenter, radiusMiles],
   );
 
   const estimatedBytes = useMemo(

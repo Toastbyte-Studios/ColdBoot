@@ -75,6 +75,7 @@ import MapPanel, {
   RecordingState,
   zoomFromDelta,
 } from './components/MapPanel';
+import { type DownloadAreaParams } from './components/offline/DownloadConfirmScreen';
 import DownloadProgressChip from './components/offline/DownloadProgressChip';
 import { requestForegroundNotificationPermission } from './requestForegroundNotificationPermission';
 import type { PackRegion } from '../../utils/offlinePacks';
@@ -774,9 +775,43 @@ export default observer(function MapScreen() {
     [trackStore, viewedTrack],
   );
 
+  /**
+   * The main map's centre once it has settled somewhere real, so a download
+   * can start from what the map shows (Choose on map opens there).
+   */
+  const mapCenterRef = useRef<{ latitude: number; longitude: number } | null>(
+    null,
+  );
+  const handleMapCenterChange = useCallback(
+    (center: { latitude: number; longitude: number }) => {
+      // The camera starts at 0°, 0° until it finds the user; that's a
+      // placeholder, not somewhere they chose to look.
+      if (
+        Math.abs(center.latitude) < 0.01 &&
+        Math.abs(center.longitude) < 0.01
+      ) {
+        return;
+      }
+      mapCenterRef.current = center;
+    },
+    [],
+  );
+
   const handleDownloadAreaPress = useCallback(() => {
-    navigationRef.current?.navigate('DownloadArea' as never);
+    const params: DownloadAreaParams = mapCenterRef.current
+      ? { center: mapCenterRef.current }
+      : {};
+    navigationRef.current?.navigate('DownloadArea', params);
   }, []);
+
+  /** Opens the download screen choosing an area centred on a waypoint. */
+  const handleDownloadAroundWaypoint = useCallback(
+    (center: { latitude: number; longitude: number }) => {
+      const params: DownloadAreaParams = { center, startMode: 'custom' };
+      navigationRef.current?.navigate('DownloadArea', params);
+    },
+    [],
+  );
 
   const handleViewRegion = useCallback(
     (region: PackRegion) => {
@@ -979,6 +1014,7 @@ export default observer(function MapScreen() {
               followUser={followMode === 'following'}
               onFollowUserEnded={handleFollowUserEnded}
               onUserCameraGesture={handleUserCameraGesture}
+              onCenterChange={handleMapCenterChange}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
@@ -1014,6 +1050,7 @@ export default observer(function MapScreen() {
             onDeleteTrack={handleDeleteTrack}
             onViewRegion={handleViewRegion}
             onDownloadArea={handleDownloadAreaPress}
+            onDownloadAroundWaypoint={handleDownloadAroundWaypoint}
           />
           {/* Download progress chip — non-blocking overlay, hidden when inactive */}
           <DownloadProgressChip store={offlineDownloadStore} />
