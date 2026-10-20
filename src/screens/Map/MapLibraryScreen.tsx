@@ -20,28 +20,19 @@ import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import {
-  DEFAULT_OFFLINE_ZOOM,
-  HIGH_DETAIL_OFFLINE_ZOOM,
-  OfflineMapService,
-  type OfflineMapPack,
-} from '../../navigation/services/OfflineMapService';
-import { boundsFromRadius } from '../../navigation/utils/boundsFromRadius';
+import { type OfflineMapPack } from '../../navigation/services/OfflineMapService';
 import { formatBytes } from '../../navigation/utils/formatBytes';
-import { useSettingsStore } from '../../stores';
+import { useOfflineMapLibraryStore, useSettingsStore } from '../../stores';
 import { withAlpha } from '../../theme/colorUtils';
 import {
-  clearPackNameOverride,
-  getPackDisplayName,
-  loadPackNameOverrides,
-  setPackNameOverride,
-  transferPackNameOverride,
-} from '../../utils/offlinePackNames';
+  describePackStatus,
+  formatPackDownloadedDate,
+  getValidRegionMetadata,
+} from '../../utils/offlinePacks';
 
 type RenameState = {
   packId: string;
   value: string;
-  original: string;
 };
 
 type MapLibraryRoutes = {
@@ -55,66 +46,6 @@ type MapLibraryRoutes = {
 };
 
 type MapLibraryNavigationProp = NativeStackNavigationProp<MapLibraryRoutes>;
-
-function getValidRegionMetadata(pack: OfflineMapPack): {
-  center: { latitude: number; longitude: number };
-  radiusMiles: number;
-} | null {
-  const { centerLng, centerLat, radiusMiles } = pack.metadata;
-  const isValid =
-    Number.isFinite(centerLng) &&
-    centerLng >= -180 &&
-    centerLng <= 180 &&
-    Number.isFinite(centerLat) &&
-    centerLat >= -90 &&
-    centerLat <= 90 &&
-    Number.isFinite(radiusMiles) &&
-    radiusMiles > 0;
-
-  if (!isValid) {
-    return null;
-  }
-
-  return {
-    center: {
-      latitude: centerLat,
-      longitude: centerLng,
-    },
-    radiusMiles,
-  };
-}
-
-function formatDownloadedDate(createdAt: string): string {
-  const date = new Date(createdAt);
-  if (isNaN(date.getTime())) {
-    return 'unknown';
-  }
-  return date.toLocaleDateString(undefined, {
-    day: 'numeric',
-    month: 'short',
-  });
-}
-
-function describeStatus(pack: OfflineMapPack): string | null {
-  const required = pack.status.requiredResourceCount ?? 0;
-  const completed = pack.status.completedResourceCount ?? 0;
-
-  if (pack.status.state === 'active') {
-    const pct = required > 0 ? Math.round((completed / required) * 100) : 0;
-    return `downloading ${pct}%`;
-  }
-
-  if (pack.status.state === 'complete') {
-    return null;
-  }
-
-  if (required > 0 && completed < required) {
-    const pct = Math.round((completed / required) * 100);
-    return `incomplete ${pct}%`;
-  }
-
-  return 'failed';
-}
 
 function makeStyles(COLORS: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
@@ -200,92 +131,62 @@ function MapLibraryScreen() {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const settingsStore = useSettingsStore();
+  const library = useOfflineMapLibraryStore();
 
-  const [packs, setPacks] = useState<OfflineMapPack[]>([]);
-  const [packNameOverrides, setPackNameOverrides] = useState<
-    Record<string, string>
-  >({});
-  const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [busyPackId, setBusyPackId] = useState<string | null>(null);
   const [renameState, setRenameState] = useState<RenameState | null>(null);
-
-  const loadData = useCallback(async () => {
-    const [nextPacks, overrides] = await Promise.all([
-      OfflineMapService.listPacks(),
-      loadPackNameOverrides(),
-    ]);
-    setPacks(nextPacks);
-    setPackNameOverrides(overrides);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-    loadData()
-      .catch((error) => {
-        console.error('Failed to load map library:', error);
-        if (!cancelled) {
-          Alert.alert(
-            'Could Not Load Maps',
-            'Something went wrong reading your downloaded maps. Please try again.',
-          );
-        }
-      })
-      .finally(() => {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      });
+    library.load().catch((error) => {
+      console.error('Failed to load map library:', error);
+      if (!cancelled) {
+        Alert.alert(
+          'Could Not Load Maps',
+          'Something went wrong reading your downloaded maps. Please try again.',
+        );
+      }
+    });
 
     return () => {
       cancelled = true;
     };
-  }, [loadData]);
+  }, [library]);
 
-  const totalBytes = useMemo(
-    () =>
-      packs.reduce((sum, p) => sum + (p.status?.completedResourceSize ?? 0), 0),
-    [packs],
-  );
+  const { packs } = library;
 
   const subtitle = useMemo(() => {
     const label = `${packs.length} area${packs.length === 1 ? '' : 's'}`;
-    return `${label} · ${formatBytes(totalBytes)}`;
-  }, [packs.length, totalBytes]);
+    return `${label} · ${formatBytes(library.totalBytes)}`;
+  }, [packs.length, library.totalBytes]);
 
   const handleRefreshAll = useCallback(async () => {
     setRefreshing(true);
     try {
-      await loadData();
+      await library.load();
     } finally {
       setRefreshing(false);
     }
-  }, [loadData]);
+  }, [library]);
 
   const performDelete = useCallback(
     async (pack: OfflineMapPack) => {
-      setBusyPackId(pack.id);
       try {
-        await OfflineMapService.deletePack(pack.id);
-        await clearPackNameOverride(pack.id);
-        await loadData();
+        await library.deletePack(pack);
       } catch (error) {
         console.error('Failed to delete offline pack:', error);
         Alert.alert(
           'Delete Failed',
           'Could not delete this map. Please try again.',
         );
-      } finally {
-        setBusyPackId(null);
       }
     },
-    [loadData],
+    [library],
   );
 
   const confirmDelete = useCallback(
     (pack: OfflineMapPack) => {
-      const displayName = getPackDisplayName(pack, packNameOverrides);
+      const displayName = library.displayName(pack);
       Alert.alert(
         'Delete Offline Map',
         `Delete "${displayName}"? This frees up the storage it uses. You can download it again later.`,
@@ -299,63 +200,35 @@ function MapLibraryScreen() {
         ],
       );
     },
-    [packNameOverrides, performDelete],
+    [library, performDelete],
   );
 
   const performRefresh = useCallback(
     async (pack: OfflineMapPack) => {
-      setBusyPackId(pack.id);
       try {
-        const regionMetadata = getValidRegionMetadata(pack);
-        if (!regionMetadata) {
+        const result = await library.refreshPack(pack, {
+          highDetail: settingsStore.highDetailOffline,
+        });
+        if (result === 'missing-region') {
           Alert.alert(
             'Refresh Unavailable',
             'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
           );
-          return;
         }
-        const bounds = boundsFromRadius(
-          {
-            longitude: regionMetadata.center.longitude,
-            latitude: regionMetadata.center.latitude,
-          },
-          regionMetadata.radiusMiles,
-        );
-        const zoomRange = settingsStore.highDetailOffline
-          ? HIGH_DETAIL_OFFLINE_ZOOM
-          : DEFAULT_OFFLINE_ZOOM;
-
-        const replacementPack = await OfflineMapService.downloadRegion({
-          bounds,
-          metadata: {
-            name: pack.metadata.name,
-            createdAt: new Date().toISOString(),
-            centerLng: regionMetadata.center.longitude,
-            centerLat: regionMetadata.center.latitude,
-            radiusMiles: regionMetadata.radiusMiles,
-          },
-          zoomRange,
-        });
-
-        await OfflineMapService.deletePack(pack.id);
-        await transferPackNameOverride(pack.id, replacementPack.id);
-        await loadData();
       } catch (error) {
         console.error('Failed to refresh offline pack:', error);
         Alert.alert(
           'Refresh Failed',
           'Could not refresh this map. Your existing offline map was kept. Please try again.',
         );
-      } finally {
-        setBusyPackId(null);
       }
     },
-    [loadData, settingsStore.highDetailOffline],
+    [library, settingsStore.highDetailOffline],
   );
 
   const confirmRefresh = useCallback(
     (pack: OfflineMapPack) => {
-      const displayName = getPackDisplayName(pack, packNameOverrides);
+      const displayName = library.displayName(pack);
       Alert.alert(
         'Refresh Offline Map',
         `Refreshing "${displayName}" downloads it again with fresh tiles, then replaces the existing copy. This re-incurs the download size. Continue?`,
@@ -368,18 +241,14 @@ function MapLibraryScreen() {
         ],
       );
     },
-    [packNameOverrides, performRefresh],
+    [library, performRefresh],
   );
 
   const openRename = useCallback(
     (pack: OfflineMapPack) => {
-      setRenameState({
-        packId: pack.id,
-        value: getPackDisplayName(pack, packNameOverrides),
-        original: getPackDisplayName(pack, packNameOverrides),
-      });
+      setRenameState({ packId: pack.id, value: library.displayName(pack) });
     },
-    [packNameOverrides],
+    [library],
   );
 
   const cancelRename = useCallback(() => {
@@ -390,18 +259,8 @@ function MapLibraryScreen() {
     if (!renameState) {
       return;
     }
-
-    const trimmed = renameState.value.trim();
-    if (!trimmed || trimmed === renameState.original) {
-      setRenameState(null);
-      return;
-    }
     try {
-      await setPackNameOverride(renameState.packId, trimmed);
-      setPackNameOverrides((prev) => ({
-        ...prev,
-        [renameState.packId]: trimmed,
-      }));
+      await library.renamePack(renameState.packId, renameState.value);
       setRenameState(null);
     } catch (error) {
       console.error('Failed to rename offline pack:', error);
@@ -410,7 +269,7 @@ function MapLibraryScreen() {
         'Could not rename this map. Please try again.',
       );
     }
-  }, [renameState]);
+  }, [library, renameState]);
 
   return (
     <StackScreen title="Map Library" subtitle={subtitle}>
@@ -424,7 +283,7 @@ function MapLibraryScreen() {
           />
         }
       >
-        {loading ? null : packs.length === 0 ? (
+        {!library.hasLoaded ? null : packs.length === 0 ? (
           <View style={styles.emptyCard}>
             <Text style={styles.emptyTitle}>No offline areas yet</Text>
             <Text style={styles.emptyBody}>
@@ -438,17 +297,17 @@ function MapLibraryScreen() {
           </View>
         ) : (
           packs.map((pack) => {
-            const displayName = getPackDisplayName(pack, packNameOverrides);
-            const isBusy = busyPackId === pack.id;
-            const isAnyBusy = busyPackId !== null;
+            const displayName = library.displayName(pack);
+            const isBusy = library.busyPackId === pack.id;
+            const isAnyBusy = library.isBusy;
             const sizeText = formatBytes(
               pack.status?.completedResourceSize ?? 0,
             );
-            const status = describeStatus(pack);
+            const status = describePackStatus(pack);
             const subtitleParts = [
               `~${pack.metadata.radiusMiles} mi radius`,
               sizeText,
-              `downloaded ${formatDownloadedDate(pack.metadata.createdAt)}`,
+              `downloaded ${formatPackDownloadedDate(pack.metadata.createdAt)}`,
               status,
             ].filter(Boolean);
 

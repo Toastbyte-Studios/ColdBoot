@@ -4,6 +4,7 @@ import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import { OfflineMapService } from '../src/navigation/services/OfflineMapService';
 import MapLibraryScreen from '../src/screens/Map/MapLibraryScreen';
+import { OfflineMapLibraryStore } from '../src/stores/OfflineMapLibraryStore';
 import {
   loadPackNameOverrides,
   transferPackNameOverride,
@@ -19,8 +20,14 @@ jest.mock('../src/hooks/useTheme', () => ({
   }),
 }));
 
+// A real library store, rebuilt per test, so the screen runs against the
+// same load/refresh/delete logic the app does. Only the native service and
+// AsyncStorage helpers below it are mocked.
+let mockLibraryStore: OfflineMapLibraryStore;
+
 jest.mock('../src/stores', () => ({
   useSettingsStore: () => ({ highDetailOffline: false }),
+  useOfflineMapLibraryStore: () => mockLibraryStore,
 }));
 
 jest.mock('../src/components/ScaledText', () => {
@@ -135,6 +142,7 @@ describe('MapLibraryScreen', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockLibraryStore = new OfflineMapLibraryStore();
     (useNavigation as jest.Mock).mockReturnValue({ navigate });
     jest.spyOn(Alert, 'alert').mockImplementation(() => undefined);
     (loadPackNameOverrides as jest.Mock).mockResolvedValue({

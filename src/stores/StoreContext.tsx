@@ -80,4 +80,6 @@ export const useWaypointStore = () => useStores().waypointStore;
 export const useTrackStore = () => useStores().trackStore;
 export const useAstronomyEventStore = () => useStores().astronomyEventStore;
 export const useOfflineDownloadStore = () => useStores().offlineDownloadStore;
+export const useOfflineMapLibraryStore = () =>
+  useStores().offlineMapLibraryStore;
 export const useDevToolsStore = () => useStores().devToolsStore;

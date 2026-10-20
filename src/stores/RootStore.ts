@@ -10,6 +10,7 @@ import { NavigationStore } from './NavigationStore';
 import { NotesStore } from './NotesStore';
 import { NotificationsStore } from './NotificationsStore';
 import { OfflineDownloadStore } from './OfflineDownloadStore';
+import { OfflineMapLibraryStore } from './OfflineMapLibraryStore';
 import { PantryStore } from './PantryStore';
 import { RepeaterBookStore } from './RepeaterBookStore';
 import { SettingsStore } from './SettingsStore';
@@ -42,6 +43,7 @@ export class RootStore {
   trackStore: TrackStore;
   astronomyEventStore: AstronomyEventStore;
   offlineDownloadStore: OfflineDownloadStore;
+  offlineMapLibraryStore: OfflineMapLibraryStore;
   devToolsStore: DevToolsStore;
 
   constructor() {
@@ -65,6 +67,7 @@ export class RootStore {
     this.trackStore = new TrackStore();
     this.astronomyEventStore = new AstronomyEventStore();
     this.offlineDownloadStore = new OfflineDownloadStore();
+    this.offlineMapLibraryStore = new OfflineMapLibraryStore();
     this.devToolsStore = new DevToolsStore();
     this.startupPromise = this.initializeSettings();
   }
@@ -151,6 +154,7 @@ export class RootStore {
     this.trackStore = new TrackStore();
     this.astronomyEventStore = new AstronomyEventStore();
     this.offlineDownloadStore = new OfflineDownloadStore();
+    this.offlineMapLibraryStore = new OfflineMapLibraryStore();
     this.devToolsStore = new DevToolsStore();
     this.coreStore.startDeviceStatusMonitoring();
     this.astronomyEventStore.start(this.coreStore);

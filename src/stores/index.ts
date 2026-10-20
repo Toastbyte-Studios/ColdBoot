@@ -43,6 +43,10 @@ export { WeatherOutlookStore } from './WeatherOutlookStore';
 export { WaypointStore, type Waypoint } from './WaypointStore';
 export { TrackStore, type Track, type TrackPoint } from './TrackStore';
 export {
+  OfflineMapLibraryStore,
+  type RefreshPackResult,
+} from './OfflineMapLibraryStore';
+export {
   AstronomyEventStore,
   type AstronomyEvent,
   type AstronomyEventType,
@@ -67,6 +71,7 @@ export {
   useWeatherOutlookStore,
   useWaypointStore,
   useTrackStore,
+  useOfflineMapLibraryStore,
   useAstronomyEventStore,
   useDevToolsStore,
 } from './StoreContext';
