@@ -19,7 +19,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../components/AppButton';
 import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
-import { formatDistance } from './WaypointBottomSheet/waypointGeometry';
+import { formatDistance } from './LibrarySheet/waypointGeometry';
 import type { MeasurementSystem } from '../../../stores/SettingsStore';
 
 export type LocationPermissionStatus = 'undetermined' | 'granted' | 'denied';
