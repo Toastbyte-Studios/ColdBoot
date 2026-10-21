@@ -6,6 +6,7 @@ import {
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { mockSetStop } from '../__mocks__/@maplibre/maplibre-react-native';
+import { navigationRef } from '../src/navigation/navigationRef';
 import MapScreen from '../src/screens/Map/MapScreen';
 
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
@@ -32,6 +33,11 @@ let mockLibraryProps:
       onViewTrack?: (track: {
         id: string;
         points: { latitude: number; longitude: number }[];
+      }) => void;
+      onDownloadArea?: () => void;
+      onDownloadAroundWaypoint?: (center: {
+        latitude: number;
+        longitude: number;
       }) => void;
     }
   | undefined;
@@ -483,5 +489,67 @@ describe('MapScreen follow-my-location toggle', () => {
 
     expect(follow(tree).props.selected).toBe(false);
     expect(camera(tree).props.trackUserLocation).toBeUndefined();
+  });
+});
+
+describe('MapScreen download shortcuts', () => {
+  const navigate = () => navigationRef.current?.navigate as jest.Mock;
+
+  beforeEach(() => {
+    mockRouteParams = undefined;
+    mockLibraryProps = undefined;
+    navigate().mockClear();
+  });
+
+  async function settleMapAt(
+    tree: ReactTestRenderer.ReactTestRenderer,
+    center: [number, number],
+  ) {
+    await ReactTestRenderer.act(async () => {
+      tree.root
+        .findByProps({ testID: 'map-view' })
+        .props.onRegionDidChange({ nativeEvent: { center } });
+    });
+  }
+
+  it("starts a download from the main map's view", async () => {
+    const tree = await renderScreen(true);
+    // Panned north of Vegas, to the hike.
+    await settleMapAt(tree, [-115.37, 38.62]);
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onDownloadArea?.();
+    });
+
+    expect(navigate()).toHaveBeenCalledWith('DownloadArea', {
+      center: { latitude: 38.62, longitude: -115.37 },
+    });
+  });
+
+  it('ignores the placeholder centre the map starts at', async () => {
+    const tree = await renderScreen(false);
+    await settleMapAt(tree, [0, 0]);
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onDownloadArea?.();
+    });
+
+    expect(navigate()).toHaveBeenCalledWith('DownloadArea', {});
+  });
+
+  it('downloads an area centred on a waypoint', async () => {
+    await renderScreen(true);
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onDownloadAroundWaypoint?.({
+        latitude: 38.62,
+        longitude: -115.37,
+      });
+    });
+
+    expect(navigate()).toHaveBeenCalledWith('DownloadArea', {
+      center: { latitude: 38.62, longitude: -115.37 },
+      startMode: 'custom',
+    });
   });
 });

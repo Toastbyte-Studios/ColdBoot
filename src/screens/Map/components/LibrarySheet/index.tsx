@@ -106,6 +106,8 @@ export interface LibrarySheetProps {
   onViewRegion: (region: PackRegion) => void;
   /** Called when the user wants to download a new offline area (Maps tab). */
   onDownloadArea: () => void;
+  /** Called to download an offline area centred on a saved waypoint. */
+  onDownloadAroundWaypoint?: (center: Coords) => void;
 }
 
 // ---------- component -------------------------------------------------------
@@ -127,6 +129,7 @@ export default function LibrarySheet({
   onDeleteTrack,
   onViewRegion,
   onDownloadArea,
+  onDownloadAroundWaypoint,
 }: LibrarySheetProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
@@ -330,6 +333,7 @@ export default function LibrarySheet({
                   measurementSystem={measurementSystem}
                   onNavigate={onNavigate}
                   onDelete={onDelete}
+                  onDownloadArea={onDownloadAroundWaypoint}
                 />
               ))
             )}

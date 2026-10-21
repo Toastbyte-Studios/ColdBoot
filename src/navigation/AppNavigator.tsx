@@ -38,7 +38,9 @@ import InventoryScreen from '../screens/Inventory/InventoryScreen';
 import ManageInventoryCategoriesScreen from '../screens/Inventory/ManageInventoryCategoriesScreen';
 import NewInventoryItemScreen from '../screens/Inventory/NewInventoryItemScreen';
 import LunarCyclesScreen from '../screens/LunarCycles/LunarCyclesScreen';
-import DownloadConfirmScreen from '../screens/Map/components/offline/DownloadConfirmScreen';
+import DownloadConfirmScreen, {
+  type DownloadAreaParams,
+} from '../screens/Map/components/offline/DownloadConfirmScreen';
 import MapScreen from '../screens/Map/MapScreen';
 import AlphaToMorseScreen from '../screens/MorseCode/AlphaToMorseScreen';
 import MorseCodeCheatSheet from '../screens/MorseCode/MorseCodeCheatSheet';
@@ -152,8 +154,11 @@ function NavigatorContent(): JSX.Element {
               gestureDirection: 'vertical',
             }}
           >
-            {({ navigation }) => (
-              <DownloadConfirmScreen onDismiss={() => navigation.goBack()} />
+            {({ navigation, route }) => (
+              <DownloadConfirmScreen
+                {...(route.params as DownloadAreaParams | undefined)}
+                onDismiss={() => navigation.goBack()}
+              />
             )}
           </Stack.Screen>
           {/* Shared */}
