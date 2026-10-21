@@ -130,8 +130,18 @@ export const GeoJSONSource = ({
   children?: React.ReactNode;
 }) => <View>{children}</View>;
 
-export const Layer = (_props: { id?: string; type?: string; style?: object }) =>
-  null;
+export const Layer = (_props: {
+  id?: string;
+  type?: string;
+  style?: object;
+  [key: string]: unknown;
+}) => null;
+
+/** Registers style images; renders nothing. Find it by type to read `images`. */
+export const Images = (_props: {
+  images: Record<string, unknown>;
+  testID?: string;
+}) => null;
 
 export const ShapeSource = ({
   testID,

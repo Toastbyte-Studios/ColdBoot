@@ -1,0 +1,115 @@
+diff --git a/node_modules/react-native-compass-heading/android/src/main/java/com/compassheading/CompassHeadingModule.kt b/node_modules/react-native-compass-heading/android/src/main/java/com/compassheading/CompassHeadingModule.kt
+index 32a3532..20b7666 100644
+--- a/node_modules/react-native-compass-heading/android/src/main/java/com/compassheading/CompassHeadingModule.kt
++++ b/node_modules/react-native-compass-heading/android/src/main/java/com/compassheading/CompassHeadingModule.kt
+@@ -23,8 +23,9 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
+     }
+ 
+     private val mApplicationContext: Context = reactContext.applicationContext
+-    private var mAzimuth: Int = 0 // degree
++    private var mAzimuth: Int? = null // degree
+     private var mFilter: Int = 1
++    private var mDeclination: Float? = null
+     private var sensorManager: SensorManager? = null
+     private val mGravity = FloatArray(3)
+     private val mGeomagnetic = FloatArray(3)
+@@ -68,6 +69,26 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
+         Log.d(NAME, "Compass heading stopped")
+     }
+ 
++    @ReactMethod
++    fun setLocation(latitude: Double, longitude: Double, altitude: Double) {
++        if (!latitude.isFinite() || latitude !in -90.0..90.0 ||
++            !longitude.isFinite() || longitude !in -180.0..180.0 ||
++            !altitude.isFinite()
++        ) {
++            return
++        }
++
++        val declination = android.hardware.GeomagneticField(
++            latitude.toFloat(),
++            longitude.toFloat(),
++            altitude.toFloat(),
++            System.currentTimeMillis()
++        ).declination
++        synchronized(this) {
++            mDeclination = declination
++        }
++    }
++
+     @ReactMethod
+     fun hasCompass(promise: Promise) {
+         try {
+@@ -118,10 +139,18 @@ class CompassHeadingModule(reactContext: ReactApplicationContext) :
+ 
+                 Log.d(NAME, "Adjusted azimuth after rotation: $newAzimuth")
+ 
+-                if (abs(mAzimuth - newAzimuth) > mFilter) {
+-                    mAzimuth = newAzimuth.toInt()
++                val declination = mDeclination ?: return
++                val trueHeading = (newAzimuth + declination.toDouble() + 360) % 360
++                val lastAzimuth = mAzimuth
++                val difference = lastAzimuth?.let { abs(it - trueHeading) }
++                if (
++                    difference == null ||
++                    minOf(difference, 360 - difference) > mFilter
++                ) {
++                    val heading = trueHeading.toInt()
++                    mAzimuth = heading
+                     val params = Arguments.createMap().apply {
+-                        putDouble("heading", mAzimuth.toDouble())
++                        putDouble("heading", heading.toDouble())
+                         putDouble("accuracy", 1.0)
+                     }
+                     reactApplicationContext
+diff --git a/node_modules/react-native-compass-heading/ios/CompassHeading.swift b/node_modules/react-native-compass-heading/ios/CompassHeading.swift
+index 409871f..0959d28 100644
+--- a/node_modules/react-native-compass-heading/ios/CompassHeading.swift
++++ b/node_modules/react-native-compass-heading/ios/CompassHeading.swift
+@@ -58,8 +58,8 @@ class CompassHeading: RCTEventEmitter, CLLocationManagerDelegate {
+ 
+     func locationManager(_ manager: CLLocationManager, didUpdateHeading newHeading: CLHeading) {
+         // Only send event if there are listeners
+-        if hasListeners && newHeading.headingAccuracy >= 0 {
+-            let adjustedHeading = adjustHeadingForOrientation(newHeading.magneticHeading)
++        if hasListeners && newHeading.headingAccuracy >= 0 && newHeading.trueHeading >= 0 {
++            let adjustedHeading = adjustHeadingForOrientation(newHeading.trueHeading)
+             let headingData: [String: Any] = [
+                 "heading": adjustedHeading,
+                 "accuracy": newHeading.headingAccuracy
+@@ -85,22 +85,29 @@ class CompassHeading: RCTEventEmitter, CLLocationManagerDelegate {
+             .compactMap { $0 as? UIWindowScene }
+             .first?.interfaceOrientation
+ 
++        let adjustedHeading: Double
+         switch interfaceOrientation {
+         case .portrait:
+-            return heading
++            adjustedHeading = heading
+         case .portraitUpsideDown:
+-            return fmod(heading + 180, 360)
++            adjustedHeading = heading + 180
+         case .landscapeLeft:
+-            return fmod(heading - 90, 360)
++            adjustedHeading = heading - 90
+         case .landscapeRight:
+-            return fmod(heading + 90, 360)
++            adjustedHeading = heading + 90
+         default:
+-            return heading
++            adjustedHeading = heading
+         }
++        return (adjustedHeading.truncatingRemainder(dividingBy: 360) + 360)
++            .truncatingRemainder(dividingBy: 360)
+     }
+ 
+     @objc func handleOrientationChange() {
+-        if let heading = locationManager?.heading?.magneticHeading, let accuracy = locationManager?.heading?.headingAccuracy {
++        if let heading = locationManager?.heading?.trueHeading,
++           let accuracy = locationManager?.heading?.headingAccuracy,
++           heading >= 0,
++           accuracy >= 0,
++           hasListeners {
+             let adjustedHeading = adjustHeadingForOrientation(heading)
+             let headingData: [String: Any] = [
+                 "heading": adjustedHeading,

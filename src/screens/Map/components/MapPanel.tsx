@@ -1,6 +1,7 @@
 import {
   Camera,
   GeoJSONSource,
+  Images,
   Layer,
   Map,
   Marker,
@@ -20,6 +21,7 @@ import AppButton from '../../../components/AppButton';
 import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
 import { formatDistance } from './LibrarySheet/waypointGeometry';
+import UserHeadingPuck, { USER_HEADING_IMAGES } from './UserHeadingPuck';
 import type { MeasurementSystem } from '../../../stores/SettingsStore';
 
 export type LocationPermissionStatus = 'undetermined' | 'granted' | 'denied';
@@ -62,6 +64,11 @@ type Props = {
   onFollowUserEnded?: () => void;
   /** The map settled on a new centre, after a pan, zoom or camera move. */
   onCenterChange?: (center: LatLng) => void;
+  /**
+   * Compass heading in degrees, for the arrow on the user's position. Null
+   * until the compass reports, which shows a plain dot instead.
+   */
+  userHeading?: number | null;
   /** A direct user pan or zoom, including while a locate flight is in progress. */
   onUserCameraGesture?: () => void;
   locationReady: boolean;
@@ -100,6 +107,7 @@ export default function MapPanel({
   onFollowUserEnded,
   onUserCameraGesture,
   onCenterChange,
+  userHeading = null,
   locationReady,
   cameraRef,
   onMapReady,
@@ -201,7 +209,12 @@ export default function MapPanel({
                 }
               }}
             />
-            {permissionStatus === 'granted' && <UserLocation accuracy />}
+            <Images images={USER_HEADING_IMAGES} />
+            {permissionStatus === 'granted' && (
+              <UserLocation>
+                <UserHeadingPuck heading={userHeading} />
+              </UserLocation>
+            )}
             {waypoints.map((wp) => (
               <Marker
                 key={wp.id}

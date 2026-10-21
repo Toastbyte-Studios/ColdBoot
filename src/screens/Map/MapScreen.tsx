@@ -244,6 +244,9 @@ export default observer(function MapScreen() {
     useState<LocationPermissionStatus>('undetermined');
   const [locationReady, setLocationReady] = useState(false);
   const [heading, setHeading] = useState(0);
+  /** False until the compass first reports, so the map shows a dot, not a
+   * north-pointing arrow it can't vouch for. */
+  const [compassReady, setCompassReady] = useState(false);
   const needleRotation = useRef(new Animated.Value(0)).current;
   // Pulses the record glyph while a track is recording. It used to live in
   // MapPanel with the floating button; the control moved to the action row,
@@ -329,10 +332,10 @@ export default observer(function MapScreen() {
     permissionStatusRef.current = permissionStatus;
   }, [permissionStatus]);
 
-  // Subscribe to CLLocationManager heading (tilt-compensated, same as native compass)
+  // Subscribe to native tilt-compensated compass headings.
   useEffect(() => {
     type HeadingData = { heading: number; accuracy: number };
-    // Degree threshold before a heading update is fired (1° = smooth)
+    // The native module reports true-north headings on both platforms.
     CompassHeading.start(1, ({ heading: newHeading }: HeadingData) => {
       // Always take the shortest arc to avoid spinning past 360°
       let delta = newHeading - lastHeading.current;
@@ -346,6 +349,7 @@ export default observer(function MapScreen() {
       lastHeading.current = smoothed;
 
       setHeading(Math.round(newHeading));
+      setCompassReady(true);
       Animated.spring(needleRotation, {
         toValue: smoothed,
         useNativeDriver: true,
@@ -355,6 +359,14 @@ export default observer(function MapScreen() {
     });
     return () => CompassHeading.stop();
   }, [needleRotation]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'android' || !mlPosition) {
+      return;
+    }
+    const { latitude, longitude, altitude } = mlPosition.coords;
+    CompassHeading.setLocation?.(latitude, longitude, altitude ?? 0);
+  }, [mlPosition]);
 
   // Drive coords and geocoding from MapLibre's useCurrentPosition hook.
   // This replaces the previous Geolocation.watchPosition for non-recording use.
@@ -1015,6 +1027,7 @@ export default observer(function MapScreen() {
               onFollowUserEnded={handleFollowUserEnded}
               onUserCameraGesture={handleUserCameraGesture}
               onCenterChange={handleMapCenterChange}
+              userHeading={compassReady ? heading : null}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
