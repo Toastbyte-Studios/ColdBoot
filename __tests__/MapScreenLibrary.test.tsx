@@ -1,9 +1,12 @@
 import {
   Camera,
+  Images,
+  Layer,
   LocationManager,
   useCurrentPosition,
 } from '@maplibre/maplibre-react-native';
 import React from 'react';
+import CompassHeading from 'react-native-compass-heading';
 import ReactTestRenderer from 'react-test-renderer';
 import { mockSetStop } from '../__mocks__/@maplibre/maplibre-react-native';
 import { navigationRef } from '../src/navigation/navigationRef';
@@ -551,5 +554,59 @@ describe('MapScreen download shortcuts', () => {
       center: { latitude: 38.62, longitude: -115.37 },
       startMode: 'custom',
     });
+  });
+});
+
+describe('MapScreen user heading arrow', () => {
+  beforeEach(() => {
+    mockRouteParams = undefined;
+    mockLibraryProps = undefined;
+  });
+
+  /** Fires the compass callback MapScreen registered. */
+  async function compassReads(heading: number) {
+    const start = CompassHeading.start as jest.Mock;
+    const callback = start.mock.calls.at(-1)?.[1];
+    await ReactTestRenderer.act(async () => {
+      callback({ heading, accuracy: 1 });
+    });
+  }
+
+  const arrow = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    tree.root
+      .findAllByType(Layer)
+      .find((node) => node.props.id === 'coldboot-user-heading');
+
+  it('registers the arrow image with the map', async () => {
+    const tree = await renderScreen(true);
+
+    expect(Object.keys(tree.root.findByType(Images).props.images)).toContain(
+      'coldboot-user-heading',
+    );
+  });
+
+  it('shows a dot until the compass reports, then an arrow', async () => {
+    const tree = await renderScreen(true);
+    expect(arrow(tree)).toBeUndefined();
+
+    await compassReads(212);
+
+    expect(arrow(tree)?.props.layout['icon-rotate']).toBe(212);
+  });
+
+  it('points where the compass says as the user turns', async () => {
+    const tree = await renderScreen(true);
+    await compassReads(10);
+
+    await compassReads(355);
+
+    expect(arrow(tree)?.props.layout['icon-rotate']).toBe(355);
+  });
+
+  it('shows no position marker without location access', async () => {
+    const tree = await renderScreen(false);
+    await compassReads(90);
+
+    expect(arrow(tree)).toBeUndefined();
   });
 });

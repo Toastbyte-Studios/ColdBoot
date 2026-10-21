@@ -244,6 +244,9 @@ export default observer(function MapScreen() {
     useState<LocationPermissionStatus>('undetermined');
   const [locationReady, setLocationReady] = useState(false);
   const [heading, setHeading] = useState(0);
+  /** False until the compass first reports, so the map shows a dot, not a
+   * north-pointing arrow it can't vouch for. */
+  const [compassReady, setCompassReady] = useState(false);
   const needleRotation = useRef(new Animated.Value(0)).current;
   // Pulses the record glyph while a track is recording. It used to live in
   // MapPanel with the floating button; the control moved to the action row,
@@ -346,6 +349,7 @@ export default observer(function MapScreen() {
       lastHeading.current = smoothed;
 
       setHeading(Math.round(newHeading));
+      setCompassReady(true);
       Animated.spring(needleRotation, {
         toValue: smoothed,
         useNativeDriver: true,
@@ -1015,6 +1019,7 @@ export default observer(function MapScreen() {
               onFollowUserEnded={handleFollowUserEnded}
               onUserCameraGesture={handleUserCameraGesture}
               onCenterChange={handleMapCenterChange}
+              userHeading={compassReady ? heading : null}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
