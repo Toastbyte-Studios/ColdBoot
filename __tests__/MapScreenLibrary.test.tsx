@@ -132,7 +132,14 @@ jest.mock(
   () => () => null,
 );
 jest.mock('../src/screens/Map/components/CompassRing', () => () => null);
-jest.mock('../src/screens/Map/components/CompassDataPanel', () => () => null);
+jest.mock(
+  '../src/screens/Map/components/CompassDataPanel',
+  () =>
+    ({ heading }: { heading: number }) => {
+      const { View: MockView } = require('react-native');
+      return <MockView testID="compass-data-panel" heading={heading} />;
+    },
+);
 
 const findButton = (tree: ReactTestRenderer.ReactTestRenderer, label: string) =>
   tree.root.findAll(
@@ -594,13 +601,16 @@ describe('MapScreen user heading arrow', () => {
     expect(arrow(tree)?.props.layout['icon-rotate']).toBe(212);
   });
 
-  it('points where the compass says as the user turns', async () => {
+  it('shares the true heading between the arrow and compass panel', async () => {
     const tree = await renderScreen(true);
     await compassReads(10);
 
     await compassReads(355);
 
     expect(arrow(tree)?.props.layout['icon-rotate']).toBe(355);
+    expect(
+      tree.root.findByProps({ testID: 'compass-data-panel' }).props.heading,
+    ).toBe(355);
   });
 
   it('shows no position marker without location access', async () => {
