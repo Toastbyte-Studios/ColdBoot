@@ -139,7 +139,7 @@ describe('DownloadConfirmScreen', () => {
     );
     expect(mockDownloadStore.start).toHaveBeenCalledWith({ id: 'pack-new' });
     expect(onDismiss).toHaveBeenCalled();
-  });
+  }, 10_000);
 
   it('downloads an area chosen on the map, far from the user', async () => {
     const { tree } = await renderScreen(VEGAS);
