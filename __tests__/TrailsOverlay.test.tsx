@@ -121,7 +121,11 @@ describe('TrailsOverlay', () => {
 
     expect(names['source-layer']).toBe('transportation_name');
     expect(names.layout['text-font']).toEqual(['Noto Sans Regular']);
-    expect(keeps(names, { class: 'path' })).toBe(true);
+    expect(keeps(names, { class: 'path', subclass: 'path' })).toBe(true);
+    expect(keeps(names, { class: 'path', subclass: 'bridleway' })).toBe(true);
+    expect(keeps(names, { class: 'path', subclass: 'footway' })).toBe(false);
+    expect(keeps(names, { class: 'path', subclass: 'cycleway' })).toBe(false);
+    expect(keeps(names, { class: 'path', subclass: 'steps' })).toBe(false);
     expect(keeps(names, { class: 'track' })).toBe(true);
     expect(keeps(names, { class: 'primary' })).toBe(false);
   });

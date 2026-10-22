@@ -46,11 +46,9 @@ const IS_TRAIL: ExpressionSpecification = [
 
 /** Named paths and tracks, for their labels. */
 const IS_TRAIL_OR_TRACK_NAME: FilterSpecification = [
-  'match',
-  ['get', 'class'],
-  ['path', 'track'],
-  true,
-  false,
+  'any',
+  IS_TRAIL,
+  ['==', ['get', 'class'], 'track'],
 ];
 
 /** Summits, volcanic or not; saddles and ridges aren't drawn. */
