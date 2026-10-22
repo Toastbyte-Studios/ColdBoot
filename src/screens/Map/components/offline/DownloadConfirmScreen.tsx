@@ -33,6 +33,7 @@ import { useTheme } from '../../../../hooks/useTheme';
 import {
   DEFAULT_OFFLINE_ZOOM,
   HIGH_DETAIL_OFFLINE_ZOOM,
+  MAX_TILES_PER_DOWNLOAD,
   OfflineMapService,
 } from '../../../../navigation/services/OfflineMapService';
 import { boundsFromRadius } from '../../../../navigation/utils/boundsFromRadius';
@@ -151,6 +152,11 @@ function DownloadConfirmScreen({
     );
   const [radiusMiles, setRadiusMiles] =
     useState<RadiusMiles>(DEFAULT_RADIUS_MILES);
+  /**
+   * Until the user picks a size, it follows the largest that fits one
+   * download for the current area and detail (see below).
+   */
+  const [radiusChosen, setRadiusChosen] = useState(false);
   const cameraRef = useRef<CameraRef>(null);
   /** A finger is on the pannable preview, so the page mustn't scroll. */
   const [mapTouched, setMapTouched] = useState(false);
@@ -213,6 +219,40 @@ function DownloadConfirmScreen({
         : null,
     [centerLat, centerLng, radiusMiles],
   );
+
+  // OpenFreeMap caps each offline download; tile counts grow with detail and
+  // toward the poles, so what fits depends on where and how detailed.
+  const tileCount = useMemo(
+    () => (bounds ? OfflineMapService.countTiles({ bounds, zoomRange }) : 0),
+    [bounds, zoomRange],
+  );
+  const tooLarge = tileCount > MAX_TILES_PER_DOWNLOAD;
+  const largestFittingRadius = useMemo(() => {
+    if (centerLat === undefined || centerLng === undefined) {
+      return null;
+    }
+    const centre = { latitude: centerLat, longitude: centerLng };
+    return (
+      [...RADIUS_OPTIONS_MILES].reverse().find((miles) =>
+        OfflineMapService.fitsOneDownload({
+          bounds: boundsFromRadius(centre, miles),
+          zoomRange,
+        }),
+      ) ?? null
+    );
+  }, [centerLat, centerLng, zoomRange]);
+
+  // Before the user picks a size, offer the largest that fits: 50 mi around
+  // Vegas, 25 mi further north or with high detail on.
+  useEffect(() => {
+    if (
+      !radiusChosen &&
+      largestFittingRadius !== null &&
+      largestFittingRadius !== radiusMiles
+    ) {
+      setRadiusMiles(largestFittingRadius);
+    }
+  }, [largestFittingRadius, radiusChosen, radiusMiles]);
 
   // A new size refits the preview around the same centre. (The first fit is
   // each preview's initialViewState.)
@@ -289,7 +329,7 @@ function DownloadConfirmScreen({
 
   const handleDownload = useCallback(async () => {
     if (!bounds || centerLat === undefined || centerLng === undefined) return;
-    if (starting) return;
+    if (starting || tooLarge) return;
     setStarting(true);
     try {
       const pack = await createOfflineRegionWithSmartName({
@@ -316,6 +356,7 @@ function DownloadConfirmScreen({
     zoomRange,
     store,
     starting,
+    tooLarge,
     onDismiss,
   ]);
 
@@ -457,11 +498,39 @@ function DownloadConfirmScreen({
           <SegmentedControl
             options={radiusOptions}
             value={String(radiusMiles)}
-            onChange={(value) => setRadiusMiles(Number(value) as RadiusMiles)}
+            onChange={(value) => {
+              setRadiusChosen(true);
+              setRadiusMiles(Number(value) as RadiusMiles);
+            }}
             accessibilityLabel="Area size, as a radius"
             style={styles.sizeControl}
           />
         </View>
+
+        {/* Over the per-download tile cap */}
+        {tooLarge && (
+          <View style={styles.warningBanner} accessibilityRole="alert">
+            <Icon name="warning-outline" size={16} color={WARNING_FOREGROUND} />
+            <View style={styles.warningBody}>
+              <Text style={styles.warningMessage}>
+                {`Too large for one download: about ${tileCount.toLocaleString('en-US')} map tiles, and the limit is ${MAX_TILES_PER_DOWNLOAD.toLocaleString('en-US')}. Choose a smaller area${highDetail ? ' or turn off high detail' : ''}.`}
+              </Text>
+              {largestFittingRadius !== null && (
+                <AppButton
+                  label={`Use ${formatRadius(largestFittingRadius, measurementSystem)}`}
+                  variant="plain"
+                  size="small"
+                  tint={WARNING_FOREGROUND}
+                  onPress={() => {
+                    setRadiusChosen(true);
+                    setRadiusMiles(largestFittingRadius);
+                  }}
+                  style={styles.warningAction}
+                />
+              )}
+            </View>
+          </View>
+        )}
 
         {/* Storage pressure warning */}
         {storagePressure && (
@@ -510,7 +579,7 @@ function DownloadConfirmScreen({
           size="large"
           tint={COLORS.SECONDARY_ACCENT}
           fullWidth
-          disabled={!bounds}
+          disabled={!bounds || tooLarge}
           loading={starting}
           onPress={handleDownload}
           accessibilityLabel="Start download"
@@ -604,6 +673,21 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       flex: 1,
       fontSize: 13,
       color: WARNING_FOREGROUND,
+    },
+    // Text and its fix stacked beside the icon. (warningText's flex: 1 is for
+    // a row; in this column it would collapse the text.)
+    warningBody: {
+      flex: 1,
+      alignItems: 'flex-start',
+      gap: 4,
+    },
+    warningMessage: {
+      fontSize: 13,
+      color: WARNING_FOREGROUND,
+    },
+    warningAction: {
+      // Line the plain button's label up with the text above it.
+      marginLeft: -8,
     },
     row: {
       flexDirection: 'row',

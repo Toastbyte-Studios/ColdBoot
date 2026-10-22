@@ -54,6 +54,9 @@ jest.mock('../src/components/AppButton', () => {
 jest.mock('../src/navigation/services/OfflineMapService', () => ({
   ...jest.requireActual('../src/navigation/services/OfflineMapService'),
   OfflineMapService: {
+    // Real tile counting, so refreshes are checked against the cap.
+    ...jest.requireActual('../src/navigation/services/OfflineMapService')
+      .OfflineMapService,
     listPacks: jest.fn(),
     deletePack: jest.fn(),
     downloadRegion: jest.fn(),
@@ -273,6 +276,33 @@ describe('Library sheet — Maps tab', () => {
 
     expect(OfflineMapService.deletePack).toHaveBeenCalledWith('pack-1');
     expect(collectText(tree)).toContain('No offline maps yet.');
+  });
+
+  it('explains when an area is too large to download again', async () => {
+    // Saved before the tile cap: 50 miles around Seattle is over it even at
+    // standard detail.
+    const pack = makePack();
+    pack.metadata = { ...pack.metadata, centerLat: 47.6, centerLng: -122.3 };
+    (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([pack]);
+    (Alert.alert as jest.Mock).mockImplementation((title, _msg, buttons) => {
+      if (title === 'Refresh Offline Map') {
+        buttons?.[1]?.onPress?.();
+      }
+    });
+
+    const tree = await renderTab({});
+    await ReactTestRenderer.act(async () => {
+      findMenu(tree).props.onPressAction({ nativeEvent: { event: 'refresh' } });
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+
+    expect(OfflineMapService.downloadRegion).not.toHaveBeenCalled();
+    expect(OfflineMapService.deletePack).not.toHaveBeenCalled();
+    expect(Alert.alert).toHaveBeenCalledWith(
+      'Area Too Large',
+      expect.stringContaining('existing offline map was kept'),
+    );
   });
 
   it('disables refresh and delete while another area is updating', async () => {

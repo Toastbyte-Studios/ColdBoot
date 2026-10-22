@@ -11,6 +11,9 @@ import type { OfflineMapPack } from '../src/navigation/services/OfflineMapServic
 jest.mock('../src/navigation/services/OfflineMapService', () => ({
   ...jest.requireActual('../src/navigation/services/OfflineMapService'),
   OfflineMapService: {
+    // Real tile counting, so refreshes are checked against the cap.
+    ...jest.requireActual('../src/navigation/services/OfflineMapService')
+      .OfflineMapService,
     listPacks: jest.fn(),
     deletePack: jest.fn(),
     downloadRegion: jest.fn(),
@@ -156,13 +159,13 @@ describe('OfflineMapLibraryStore', () => {
       makePack({ id: 'pack-2' }),
     ]);
 
-    const result = await store.refreshPack(makePack(), { highDetail: true });
+    const result = await store.refreshPack(makePack(), { highDetail: false });
 
     expect(result).toBe('refreshed');
     expect(calls).toEqual(['download', 'delete']);
     expect(OfflineMapService.downloadRegion).toHaveBeenCalledWith(
       expect.objectContaining({
-        zoomRange: { min: 8, max: 14 },
+        zoomRange: { min: 8, max: 13 },
         metadata: expect.objectContaining({
           name: 'Area Download 10/12/2026',
           radiusMiles: 50,
@@ -173,6 +176,52 @@ describe('OfflineMapLibraryStore', () => {
     );
     expect(transferPackNameOverride).toHaveBeenCalledWith('pack-1', 'pack-2');
     expect(store.packs.map((p) => p.id)).toEqual(['pack-2']);
+  });
+
+  describe('within the per-download tile cap', () => {
+    beforeEach(() => {
+      (OfflineMapService.downloadRegion as jest.Mock).mockResolvedValue({
+        id: 'pack-2',
+      });
+      (OfflineMapService.listPacks as jest.Mock).mockResolvedValue([]);
+    });
+
+    const packAt = (radiusMiles: number, centerLat = 36.14) => {
+      const pack = makePack();
+      pack.metadata = { ...pack.metadata, radiusMiles, centerLat };
+      return pack;
+    };
+
+    it('keeps high detail where it fits', async () => {
+      const result = await store.refreshPack(packAt(10), { highDetail: true });
+
+      expect(result).toBe('refreshed');
+      expect(OfflineMapService.downloadRegion).toHaveBeenCalledWith(
+        expect.objectContaining({ zoomRange: { min: 8, max: 14 } }),
+      );
+    });
+
+    it('drops to standard detail when high detail is over the cap', async () => {
+      // 50 miles around Vegas: ~2,300 tiles standard, ~9,100 high detail.
+      const result = await store.refreshPack(packAt(50), { highDetail: true });
+
+      expect(result).toBe('refreshed');
+      expect(OfflineMapService.downloadRegion).toHaveBeenCalledWith(
+        expect.objectContaining({ zoomRange: { min: 8, max: 13 } }),
+      );
+    });
+
+    it('refuses an area over the cap at any detail, keeping the old one', async () => {
+      // 50 miles around Seattle is over the cap even at standard detail.
+      const result = await store.refreshPack(packAt(50, 47.6), {
+        highDetail: false,
+      });
+
+      expect(result).toBe('too-large');
+      expect(OfflineMapService.downloadRegion).not.toHaveBeenCalled();
+      expect(OfflineMapService.deletePack).not.toHaveBeenCalled();
+      expect(store.busyPackId).toBeNull();
+    });
   });
 
   it('keeps the original pack when the refresh download fails', async () => {
