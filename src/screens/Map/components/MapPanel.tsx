@@ -20,6 +20,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../components/AppButton';
 import IconButton from '../../../components/IconButton';
 import { useTheme } from '../../../hooks/useTheme';
+import { SPACING } from '../../../theme/constants';
 import { Waypoint } from '../../../stores/WaypointStore';
 import { formatDistance } from './LibrarySheet/waypointGeometry';
 import UserHeadingPuck, { USER_HEADING_IMAGES } from './UserHeadingPuck';
@@ -415,14 +416,14 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     },
     trackChip: {
       position: 'absolute',
-      bottom: 8,
-      left: 8,
+      bottom: SPACING.sm,
+      left: SPACING.sm,
       // Leave the attribution button (bottom-right) clear.
       maxWidth: '75%',
       flexDirection: 'row',
       alignItems: 'center',
       gap: 6,
-      paddingLeft: 12,
+      paddingLeft: SPACING.md,
       backgroundColor: 'rgba(0,0,0,0.55)',
       borderRadius: 8,
     },
@@ -435,7 +436,7 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     trackChipClose: {
       // IconButton keeps its full touch target; pull it in so the chip
       // isn't taller than it needs to be.
-      marginVertical: -4,
+      marginVertical: -SPACING.xs,
     },
     saveToolbar: {
       position: 'absolute',
