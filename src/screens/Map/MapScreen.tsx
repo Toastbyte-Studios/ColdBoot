@@ -777,6 +777,10 @@ export default observer(function MapScreen() {
     [moveCamera],
   );
 
+  const handleHideTrack = useCallback(() => {
+    setViewedTrack(null);
+  }, []);
+
   const handleDeleteTrack = useCallback(
     async (id: string) => {
       await trackStore.deleteTrack(id);
@@ -1037,6 +1041,8 @@ export default observer(function MapScreen() {
               recordingState={recordingState}
               recordingPolylineCoords={recordingPolylineCoords}
               viewedTrackCoords={viewedTrackCoords}
+              viewedTrackName={viewedTrack?.name ?? null}
+              onClearViewedTrack={handleHideTrack}
               recordingElapsed={recordingElapsed}
               recordingDistance={recordingDistance}
               measurementSystem={settingsStore.measurementSystem}
@@ -1061,6 +1067,8 @@ export default observer(function MapScreen() {
             containerHeight={mapContainerHeight}
             onViewTrack={handleViewTrack}
             onDeleteTrack={handleDeleteTrack}
+            viewedTrackId={viewedTrack?.id ?? null}
+            onHideTrack={handleHideTrack}
             onViewRegion={handleViewRegion}
             onDownloadArea={handleDownloadAreaPress}
             onDownloadAroundWaypoint={handleDownloadAroundWaypoint}

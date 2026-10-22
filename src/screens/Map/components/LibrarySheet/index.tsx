@@ -102,6 +102,10 @@ export interface LibrarySheetProps {
   onViewTrack?: (track: Track) => void;
   /** Called when the user taps Delete on a saved track. */
   onDeleteTrack?: (id: string) => void;
+  /** The track drawn on the map, if any; its row offers Hide. */
+  viewedTrackId?: string | null;
+  /** Called when the user hides the track drawn on the map. */
+  onHideTrack?: () => void;
   /** Called when the user taps View on a downloaded offline area. */
   onViewRegion: (region: PackRegion) => void;
   /** Called when the user wants to download a new offline area (Maps tab). */
@@ -127,6 +131,8 @@ export default function LibrarySheet({
   containerHeight,
   onViewTrack,
   onDeleteTrack,
+  viewedTrackId = null,
+  onHideTrack,
   onViewRegion,
   onDownloadArea,
   onDownloadAroundWaypoint,
@@ -355,6 +361,8 @@ export default function LibrarySheet({
                 measurementSystem={measurementSystem}
                 onView={(t) => onViewTrack?.(t)}
                 onDelete={(id) => onDeleteTrack?.(id)}
+                isViewed={track.id === viewedTrackId}
+                onHide={onHideTrack}
               />
             ))
           )}
