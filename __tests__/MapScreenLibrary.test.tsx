@@ -35,8 +35,12 @@ let mockLibraryProps:
       }) => void;
       onViewTrack?: (track: {
         id: string;
+        name?: string;
         points: { latitude: number; longitude: number }[];
       }) => void;
+      onHideTrack?: () => void;
+      onDeleteTrack?: (id: string) => Promise<void> | void;
+      viewedTrackId?: string | null;
       onDownloadArea?: () => void;
       onDownloadAroundWaypoint?: (center: {
         latitude: number;
@@ -618,5 +622,86 @@ describe('MapScreen user heading arrow', () => {
     await compassReads(90);
 
     expect(arrow(tree)).toBeUndefined();
+  });
+});
+
+describe('MapScreen viewed track', () => {
+  const TRACK = {
+    id: 'track-1',
+    name: 'Red Rock loop',
+    createdAt: '2026-10-20T00:00:00.000Z',
+    durationSeconds: 3600,
+    distanceMeters: 5000,
+    points: [
+      { latitude: 36.13, longitude: -115.42, altitude: null, timestamp: 0 },
+      { latitude: 36.14, longitude: -115.43, altitude: null, timestamp: 1 },
+    ],
+  };
+
+  beforeEach(() => {
+    mockRouteParams = undefined;
+    mockLibraryProps = undefined;
+  });
+
+  const trackLine = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    tree.root
+      .findAllByType(Layer)
+      .find((node) => node.props.id === 'viewed-track-layer');
+
+  const clearButton = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    findButton(tree, 'Hide track Red Rock loop from map');
+
+  async function viewTrack(tree: ReactTestRenderer.ReactTestRenderer) {
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onViewTrack?.(TRACK);
+    });
+    return tree;
+  }
+
+  it('labels the track drawn on the map, with a way to clear it', async () => {
+    const tree = await viewTrack(await renderScreen(true));
+
+    expect(trackLine(tree)).toBeDefined();
+    expect(
+      tree.root.findAll((node) => node.props.children === 'Red Rock loop'),
+    ).not.toHaveLength(0);
+    expect(clearButton(tree)).toBeDefined();
+  });
+
+  it('clears the track from the map', async () => {
+    const tree = await viewTrack(await renderScreen(true));
+
+    await ReactTestRenderer.act(async () => {
+      clearButton(tree).props.onPress();
+    });
+
+    expect(trackLine(tree)).toBeUndefined();
+    expect(clearButton(tree)).toBeUndefined();
+    expect(mockLibraryProps?.viewedTrackId).toBeNull();
+  });
+
+  it('tells the Library which track is shown, and hides it from there', async () => {
+    const tree = await viewTrack(await renderScreen(true));
+    expect(mockLibraryProps?.viewedTrackId).toBe('track-1');
+
+    await ReactTestRenderer.act(async () => {
+      mockLibraryProps?.onHideTrack?.();
+    });
+
+    expect(trackLine(tree)).toBeUndefined();
+    expect(clearButton(tree)).toBeUndefined();
+  });
+
+  it('shows no label when no track is drawn', async () => {
+    const tree = await renderScreen(true);
+
+    expect(trackLine(tree)).toBeUndefined();
+    expect(
+      tree.root.findAll(
+        (node) =>
+          typeof node.props.accessibilityLabel === 'string' &&
+          node.props.accessibilityLabel.startsWith('Hide track'),
+      ),
+    ).toHaveLength(0);
   });
 });

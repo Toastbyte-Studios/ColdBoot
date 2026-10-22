@@ -11,6 +11,9 @@ interface TrackRowProps {
   measurementSystem: MeasurementSystem;
   onView: (track: Track) => void;
   onDelete: (id: string) => void;
+  /** This track is the one drawn on the map; its button hides it instead. */
+  isViewed?: boolean;
+  onHide?: () => void;
 }
 
 /** Formats seconds as "Xh Xm" or "Xm Xs". */
@@ -46,6 +49,8 @@ export default function TrackRow({
   measurementSystem,
   onView,
   onDelete,
+  isViewed = false,
+  onHide,
 }: TrackRowProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
@@ -77,14 +82,26 @@ export default function TrackRow({
           {formatDuration(track.durationSeconds)}
         </Text>
       </View>
-      <AppButton
-        label="View"
-        size="small"
-        tint={COLORS.SECONDARY_ACCENT}
-        onPress={() => onView(track)}
-        accessibilityLabel={`View track ${track.name} on map`}
-        style={styles.action}
-      />
+      {isViewed ? (
+        <AppButton
+          label="Hide"
+          size="small"
+          variant="outlined"
+          tint={COLORS.SECONDARY_ACCENT}
+          onPress={() => onHide?.()}
+          accessibilityLabel={`Hide track ${track.name} from map`}
+          style={styles.action}
+        />
+      ) : (
+        <AppButton
+          label="View"
+          size="small"
+          tint={COLORS.SECONDARY_ACCENT}
+          onPress={() => onView(track)}
+          accessibilityLabel={`View track ${track.name} on map`}
+          style={styles.action}
+        />
+      )}
       <AppButton
         label="Delete"
         size="small"

@@ -18,6 +18,7 @@ import {
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../components/AppButton';
+import IconButton from '../../../components/IconButton';
 import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
 import { formatDistance } from './LibrarySheet/waypointGeometry';
@@ -83,6 +84,10 @@ type Props = {
   recordingState?: RecordingState;
   recordingPolylineCoords?: LatLng[];
   viewedTrackCoords?: LatLng[];
+  /** Name of the saved track drawn on the map; shows a label to clear it. */
+  viewedTrackName?: string | null;
+  /** Clears the saved track from the map. */
+  onClearViewedTrack?: () => void;
   recordingElapsed?: number;
   recordingDistance?: number;
   measurementSystem?: MeasurementSystem;
@@ -117,6 +122,8 @@ export default function MapPanel({
   recordingState = 'idle',
   recordingPolylineCoords = [],
   viewedTrackCoords = [],
+  viewedTrackName = null,
+  onClearViewedTrack,
   recordingElapsed = 0,
   recordingDistance = 0,
   measurementSystem = 'metric',
@@ -299,6 +306,30 @@ export default function MapPanel({
             </View>
           )}
 
+          {/* Which saved track is drawn, and the way to clear it. Bottom-left:
+              the top belongs to the recording HUD, the save bar and the
+              download chip, and attribution sits bottom-right. */}
+          {viewedTrackName !== null && (
+            <View style={styles.trackChip}>
+              <Icon
+                name="footsteps-outline"
+                size={14}
+                color={OVERLAY_FOREGROUND}
+              />
+              <Text style={styles.trackChipText} numberOfLines={1}>
+                {viewedTrackName}
+              </Text>
+              <IconButton
+                name="close-outline"
+                size={18}
+                color={OVERLAY_FOREGROUND}
+                onPress={() => onClearViewedTrack?.()}
+                accessibilityLabel={`Hide track ${viewedTrackName} from map`}
+                style={styles.trackChipClose}
+              />
+            </View>
+          )}
+
           {recordingState === 'stopped' && (
             <View style={styles.saveToolbar}>
               <TextInput
@@ -381,6 +412,30 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     },
     hudSecondIcon: {
       marginLeft: 8,
+    },
+    trackChip: {
+      position: 'absolute',
+      bottom: 8,
+      left: 8,
+      // Leave the attribution button (bottom-right) clear.
+      maxWidth: '75%',
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      paddingLeft: 12,
+      backgroundColor: 'rgba(0,0,0,0.55)',
+      borderRadius: 8,
+    },
+    trackChipText: {
+      flexShrink: 1,
+      fontSize: 13,
+      fontWeight: '700',
+      color: OVERLAY_FOREGROUND,
+    },
+    trackChipClose: {
+      // IconButton keeps its full touch target; pull it in so the chip
+      // isn't taller than it needs to be.
+      marginVertical: -4,
     },
     saveToolbar: {
       position: 'absolute',
