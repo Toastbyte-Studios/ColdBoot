@@ -85,6 +85,12 @@ export class SettingsStore {
    * download flow when starting a new pack.
    */
   highDetailOffline: boolean = false;
+  /**
+   * When true, the map draws footpaths, dirt tracks, trail names and peaks
+   * over the base map. It's an overlay on the same map data, so it changes
+   * nothing about what's downloaded and works in every offline area.
+   */
+  showTrails: boolean = true;
   private settingsDb: SQLiteDatabase | null = null;
 
   constructor() {
@@ -172,6 +178,17 @@ export class SettingsStore {
   async setHighDetailOffline(enabled: boolean) {
     runInAction(() => {
       this.highDetailOffline = enabled;
+    });
+    await this.persistSettings();
+  }
+
+  /**
+   * Sets whether the map draws the trails overlay.
+   * @param enabled - True to draw trails, tracks and peaks over the base map.
+   */
+  async setShowTrails(enabled: boolean) {
+    runInAction(() => {
+      this.showTrails = enabled;
     });
     await this.persistSettings();
   }
@@ -352,6 +369,17 @@ export class SettingsStore {
         });
       }
 
+      // Load trails overlay preference
+      const showTrailsRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'showTrails'",
+      );
+      if (showTrailsRes[0].rows.length > 0) {
+        const value = showTrailsRes[0].rows.item(0).value;
+        runInAction(() => {
+          this.showTrails = value !== 'false';
+        });
+      }
+
       // Load last backup timestamp
       const lastBackupRes = await this.settingsDb.executeSql(
         "SELECT value FROM settings WHERE key = 'lastBackupAt'",
@@ -415,6 +443,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('highDetailOffline', ?)",
         [this.highDetailOffline ? 'true' : 'false'],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('showTrails', ?)",
+        [this.showTrails ? 'true' : 'false'],
       );
       if (this.lastBackupAt !== null) {
         await this.settingsDb.executeSql(
