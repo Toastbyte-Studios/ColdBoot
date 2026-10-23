@@ -91,6 +91,11 @@ export default observer(function MapsTab({
                     'Refresh Unavailable',
                     'This offline map is missing the location data needed to refresh it. Delete it and download it again.',
                   );
+                } else if (result === 'too-large') {
+                  Alert.alert(
+                    'Area Too Large',
+                    'This area is too large to download again in one go. Your existing offline map was kept. To update it, download a smaller area.',
+                  );
                 }
               } catch (error) {
                 console.error('Failed to refresh offline pack:', error);

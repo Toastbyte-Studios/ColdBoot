@@ -7,8 +7,11 @@ import {
   OfflineMapService,
   DEFAULT_OFFLINE_ZOOM,
   HIGH_DETAIL_OFFLINE_ZOOM,
+  MAX_TILES_PER_DOWNLOAD,
+  OfflineAreaTooLargeError,
   OPENFREEMAP_STYLE,
 } from '../src/navigation/services/OfflineMapService';
+import { boundsFromRadius } from '../src/navigation/utils/boundsFromRadius';
 import type { OfflinePackCreateOptions } from '@maplibre/maplibre-react-native';
 
 // ---------------------------------------------------------------------------
@@ -33,6 +36,12 @@ const _offlinePackCreateOptionsTypeCheck: OfflinePackCreateOptions = {
 const LV_BOUNDS: [number, number, number, number] = [
   -116.42, 35.45, -113.85, 36.89,
 ];
+
+/** A 10-mile radius around Las Vegas: within the tile cap at any detail. */
+const LV_10MI_BOUNDS = boundsFromRadius(
+  { latitude: 36.1716, longitude: -115.1391 },
+  10,
+);
 
 /** Single-cell bounds (point-like) — should always produce at least 1 tile. */
 const POINT_BOUNDS: [number, number, number, number] = [
@@ -172,14 +181,14 @@ describe('OfflineMapService — OfflineManager delegation', () => {
     };
 
     await OfflineMapService.downloadRegion({
-      bounds: LV_BOUNDS,
+      bounds: LV_10MI_BOUNDS,
       metadata,
     });
 
     expect(OfflineManager.createPack).toHaveBeenCalledWith(
       expect.objectContaining({
         mapStyle: expect.stringContaining('openfreemap'),
-        bounds: LV_BOUNDS,
+        bounds: LV_10MI_BOUNDS,
         minZoom: DEFAULT_OFFLINE_ZOOM.min,
         maxZoom: DEFAULT_OFFLINE_ZOOM.max,
         metadata,
@@ -194,7 +203,7 @@ describe('OfflineMapService — OfflineManager delegation', () => {
     const onError = jest.fn();
 
     await OfflineMapService.downloadRegion({
-      bounds: LV_BOUNDS,
+      bounds: LV_10MI_BOUNDS,
       metadata: {
         name: 'HD Area',
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -219,7 +228,7 @@ describe('OfflineMapService — OfflineManager delegation', () => {
 
   test('downloadRegion uses no-op listeners when none are provided', async () => {
     await OfflineMapService.downloadRegion({
-      bounds: LV_BOUNDS,
+      bounds: LV_10MI_BOUNDS,
       metadata: {
         name: 'No Listeners',
         createdAt: '2026-01-01T00:00:00.000Z',
@@ -277,5 +286,98 @@ describe('OfflineMapService — OfflineManager delegation', () => {
   test('unsubscribe calls OfflineManager.removeListener', () => {
     OfflineMapService.unsubscribe('some-uuid');
     expect(OfflineManager.removeListener).toHaveBeenCalledWith('some-uuid');
+  });
+});
+
+describe('OfflineMapService — per-download tile cap', () => {
+  const VEGAS = { latitude: 36.1716, longitude: -115.1391 };
+  const SEATTLE = { latitude: 47.6062, longitude: -122.3321 };
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  test('caps downloads at 2,500 tiles, under OpenFreeMap’s 3,000', () => {
+    expect(MAX_TILES_PER_DOWNLOAD).toBe(2_500);
+    expect(MAX_TILES_PER_DOWNLOAD).toBeLessThan(3_000);
+  });
+
+  test('counts one tile per zoom for a point', () => {
+    expect(
+      OfflineMapService.countTiles({
+        bounds: POINT_BOUNDS,
+        zoomRange: DEFAULT_OFFLINE_ZOOM,
+      }),
+    ).toBe(DEFAULT_OFFLINE_ZOOM.max - DEFAULT_OFFLINE_ZOOM.min + 1);
+  });
+
+  test('fits 50 miles around Vegas at standard detail, not high detail', () => {
+    const bounds = boundsFromRadius(VEGAS, 50);
+
+    expect(
+      OfflineMapService.fitsOneDownload({
+        bounds,
+        zoomRange: DEFAULT_OFFLINE_ZOOM,
+      }),
+    ).toBe(true);
+    expect(
+      OfflineMapService.fitsOneDownload({
+        bounds,
+        zoomRange: HIGH_DETAIL_OFFLINE_ZOOM,
+      }),
+    ).toBe(false);
+  });
+
+  test('needs more tiles for the same area further north', () => {
+    const vegas = OfflineMapService.countTiles({
+      bounds: boundsFromRadius(VEGAS, 50),
+      zoomRange: DEFAULT_OFFLINE_ZOOM,
+    });
+    const seattle = OfflineMapService.countTiles({
+      bounds: boundsFromRadius(SEATTLE, 50),
+      zoomRange: DEFAULT_OFFLINE_ZOOM,
+    });
+
+    expect(seattle).toBeGreaterThan(vegas);
+    expect(seattle).toBeGreaterThan(MAX_TILES_PER_DOWNLOAD);
+  });
+
+  test('refuses to start a download over the cap', async () => {
+    const download = OfflineMapService.downloadRegion({
+      bounds: CONUS_BOUNDS,
+      metadata: {
+        name: 'Everything',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        radiusMiles: 1000,
+        centerLng: -98.58,
+        centerLat: 39.83,
+      },
+    });
+
+    await expect(download).rejects.toBeInstanceOf(OfflineAreaTooLargeError);
+    await expect(download).rejects.toMatchObject({
+      tileCount: expect.any(Number),
+    });
+    expect(OfflineManager.createPack).not.toHaveBeenCalled();
+  });
+
+  test('starts a download at the cap', async () => {
+    const bounds = boundsFromRadius(VEGAS, 50);
+    expect(
+      OfflineMapService.countTiles({ bounds, zoomRange: DEFAULT_OFFLINE_ZOOM }),
+    ).toBeLessThanOrEqual(MAX_TILES_PER_DOWNLOAD);
+
+    await OfflineMapService.downloadRegion({
+      bounds,
+      metadata: {
+        name: 'Vegas',
+        createdAt: '2026-01-01T00:00:00.000Z',
+        radiusMiles: 50,
+        centerLng: VEGAS.longitude,
+        centerLat: VEGAS.latitude,
+      },
+    });
+
+    expect(OfflineManager.createPack).toHaveBeenCalled();
   });
 });

@@ -15,7 +15,12 @@ import {
 } from '../utils/offlinePackNames';
 import { getValidRegionMetadata } from '../utils/offlinePacks';
 
-export type RefreshPackResult = 'refreshed' | 'missing-region';
+/**
+ * - `refreshed`: downloaded again and swapped in
+ * - `missing-region`: the pack can't be placed on the map
+ * - `too-large`: even standard detail is over the per-download tile cap
+ */
+export type RefreshPackResult = 'refreshed' | 'missing-region' | 'too-large';
 
 /**
  * The downloaded offline map areas, held alongside waypoints and tracks so
@@ -104,9 +109,23 @@ export class OfflineMapLibraryStore {
       return 'missing-region';
     }
 
+    // Areas saved before the tile cap can be over it. Use high detail only
+    // where it fits, else standard detail; past that, ask for a smaller area
+    // rather than download more than OpenFreeMap allows.
+    const bounds = boundsFromRadius(region.center, region.radiusMiles);
+    const zoomRange = [
+      ...(options.highDetail ? [HIGH_DETAIL_OFFLINE_ZOOM] : []),
+      DEFAULT_OFFLINE_ZOOM,
+    ].find((range) =>
+      OfflineMapService.fitsOneDownload({ bounds, zoomRange: range }),
+    );
+    if (!zoomRange) {
+      return 'too-large';
+    }
+
     await this.runBusy(pack.id, async () => {
       const replacement = await OfflineMapService.downloadRegion({
-        bounds: boundsFromRadius(region.center, region.radiusMiles),
+        bounds,
         metadata: {
           name: pack.metadata.name,
           createdAt: new Date().toISOString(),
@@ -114,9 +133,7 @@ export class OfflineMapLibraryStore {
           centerLat: region.center.latitude,
           radiusMiles: region.radiusMiles,
         },
-        zoomRange: options.highDetail
-          ? HIGH_DETAIL_OFFLINE_ZOOM
-          : DEFAULT_OFFLINE_ZOOM,
+        zoomRange,
       });
 
       await OfflineMapService.deletePack(pack.id);

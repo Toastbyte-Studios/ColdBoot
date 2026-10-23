@@ -56,3 +56,24 @@ diff --git a/node_modules/@maplibre/maplibre-react-native/src/components/map/Nat
 -    output: "base64" | "file",
 +    output: string,
    ) => Promise<string>;
+diff --git a/node_modules/@maplibre/maplibre-react-native/android/src/main/java/org/maplibre/reactnative/modules/MLRNTransformRequestModule.kt b/node_modules/@maplibre/maplibre-react-native/android/src/main/java/org/maplibre/reactnative/modules/MLRNTransformRequestModule.kt
+index ded9239..a75ff25 100644
+--- a/node_modules/@maplibre/maplibre-react-native/android/src/main/java/org/maplibre/reactnative/modules/MLRNTransformRequestModule.kt
++++ b/node_modules/@maplibre/maplibre-react-native/android/src/main/java/org/maplibre/reactnative/modules/MLRNTransformRequestModule.kt
+@@ -136,9 +136,13 @@ class MLRNTransformRequestModule(
+ 
+     private fun getDispatcher(): Dispatcher {
+         val dispatcher = Dispatcher()
+-        // Matches core limit set on
+-        // https://github.com/mapbox/mapbox-gl-native/blob/master/platform/android/src/http_file_source.cpp#L192
+-        dispatcher.maxRequestsPerHost = 20
++        // ColdBoot: OpenFreeMap allows offline downloads at most 4 parallel
++        // requests (https://openfreemap.org/quick_start/, "Mobile Apps").
++        // MapLibre Native's offline downloader keeps up to 20 in flight and
++        // doesn't expose that limit, so cap them here: OkHttp queues calls
++        // past this per host and starts each as one finishes. Applies to the
++        // live map too, which is the same host. (Upstream default: 20.)
++        dispatcher.maxRequestsPerHost = 4
+         return dispatcher
+     }
+ }

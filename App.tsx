@@ -3,7 +3,12 @@ import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import AppNavigator from './src/navigation/AppNavigator';
+import { identifyMapRequests } from './src/navigation/services/mapRequestIdentity';
 import { StoreProvider } from './src/stores';
+
+// Before anything renders: the stores resume interrupted offline downloads as
+// they start, and those requests must already carry ColdBoot's User-Agent.
+identifyMapRequests();
 
 export default function App() {
   useEffect(() => {

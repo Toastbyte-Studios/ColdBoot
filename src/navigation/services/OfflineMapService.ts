@@ -42,6 +42,31 @@ export const DEFAULT_OFFLINE_ZOOM = { min: 8, max: 13 } as const;
 /** "High detail" toggle includes z14 (~2× storage). */
 export const HIGH_DETAIL_OFFLINE_ZOOM = { min: 8, max: 14 } as const;
 
+/**
+ * Most tiles one offline download may fetch.
+ *
+ * OpenFreeMap allows offline downloads of up to 3,000 tiles or 50 MB each
+ * (https://openfreemap.org/quick_start/, "Mobile Apps"). We stop at 2,500 to
+ * keep a margin: our count is computed here, before MapLibre's own.
+ */
+export const MAX_TILES_PER_DOWNLOAD = 2_500;
+
+type Bounds = [west: number, south: number, east: number, north: number];
+type ZoomRange = { min: number; max: number };
+
+/** Thrown by `downloadRegion` for an area over `MAX_TILES_PER_DOWNLOAD`. */
+export class OfflineAreaTooLargeError extends Error {
+  readonly tileCount: number;
+
+  constructor(tileCount: number) {
+    super(
+      `Offline area needs ${tileCount} tiles; one download may fetch at most ${MAX_TILES_PER_DOWNLOAD}.`,
+    );
+    this.name = 'OfflineAreaTooLargeError';
+    this.tileCount = tileCount;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Tile-count math (Web Mercator / "slippy map" tile coordinates)
 // Note: does not handle antimeridian-crossing bounds (fine for US-only use).
@@ -128,6 +153,16 @@ export const OfflineMapService = {
   }): Promise<OfflinePack> {
     const zoom = args.zoomRange ?? DEFAULT_OFFLINE_ZOOM;
 
+    // The screens keep downloads under the cap; this is the backstop, so
+    // nothing past OpenFreeMap's limit is ever requested.
+    const tileCount = OfflineMapService.countTiles({
+      bounds: args.bounds,
+      zoomRange: zoom,
+    });
+    if (tileCount > MAX_TILES_PER_DOWNLOAD) {
+      throw new OfflineAreaTooLargeError(tileCount);
+    }
+
     // The v11 API marks both listeners as required; fall back to no-ops so we
     // never pass undefined past the type boundary.
     const progressListener: OfflinePackProgressListener =
@@ -193,6 +228,20 @@ export const OfflineMapService = {
 
   unsubscribe(id: string): void {
     OfflineManager.removeListener(id);
+  },
+
+  /** Tiles a download of `bounds` across `zoomRange` fetches (style tiles). */
+  countTiles(args: { bounds: Bounds; zoomRange: ZoomRange }): number {
+    let total = 0;
+    for (let z = args.zoomRange.min; z <= args.zoomRange.max; z++) {
+      total += tileCountForBoundsAtZoom(args.bounds, z);
+    }
+    return total;
+  },
+
+  /** Whether one download of `bounds` across `zoomRange` is within the cap. */
+  fitsOneDownload(args: { bounds: Bounds; zoomRange: ZoomRange }): boolean {
+    return OfflineMapService.countTiles(args) <= MAX_TILES_PER_DOWNLOAD;
   },
 
   /**

@@ -26,9 +26,10 @@ jest.mock('../src/components/ScaledText', () => ({
 }));
 
 let mockMeasurementSystem: 'imperial' | 'metric' = 'imperial';
+let mockHighDetail = false;
 jest.mock('../src/stores', () => ({
   useSettingsStore: () => ({
-    highDetailOffline: false,
+    highDetailOffline: mockHighDetail,
     setHighDetailOffline: jest.fn(),
     measurementSystem: mockMeasurementSystem,
   }),
@@ -116,6 +117,7 @@ describe('DownloadConfirmScreen', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockMeasurementSystem = 'imperial';
+    mockHighDetail = false;
   });
 
   afterEach(async () => {
@@ -159,7 +161,9 @@ describe('DownloadConfirmScreen', () => {
       expect.objectContaining({
         centerLat: 38.62,
         centerLng: -115.37,
-        radiusMiles: 50,
+        // 50 mi up there is just over the 2,500-tile cap, so the screen
+        // offers the largest size that fits.
+        radiusMiles: 25,
       }),
     );
     const { bounds } = (createOfflineRegionWithSmartName as jest.Mock).mock
@@ -438,6 +442,115 @@ describe('DownloadConfirmScreen', () => {
       const [west, south, east, north] = startView(tree).bounds;
       expect((south + north) / 2).toBeCloseTo(HIKE.latitude, 3);
       expect((west + east) / 2).toBeCloseTo(HIKE.longitude, 3);
+    });
+  });
+
+  describe('per-download tile cap', () => {
+    const SEATTLE = {
+      coords: { latitude: 47.6062, longitude: -122.3321, altitude: 50 },
+      timestamp: 0,
+    };
+
+    const sizeControl = (tree: ReactTestRenderer.ReactTestRenderer) =>
+      tree.root.find(
+        (node) =>
+          Array.isArray(node.props.values) &&
+          node.props.accessibilityLabel === 'Area size, as a radius',
+      );
+
+    async function chooseSize(
+      tree: ReactTestRenderer.ReactTestRenderer,
+      index: number,
+    ) {
+      await ReactTestRenderer.act(async () => {
+        sizeControl(tree).props.onChange({
+          nativeEvent: { selectedSegmentIndex: index },
+        });
+      });
+    }
+
+    const fixButton = (tree: ReactTestRenderer.ReactTestRenderer) =>
+      tree.root.findAll(
+        (node) =>
+          typeof node.props.label === 'string' &&
+          node.props.label.startsWith('Use ') &&
+          typeof node.props.onPress === 'function',
+      )[0];
+
+    it('offers 50 mi around Vegas at standard detail', async () => {
+      const { tree } = await renderScreen(VEGAS);
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(2);
+      expect(allText(tree)).not.toContain('Too large');
+    });
+
+    it('starts at the largest size that fits with high detail on', async () => {
+      mockHighDetail = true;
+      const { tree } = await renderScreen(VEGAS);
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(1);
+      await pressDownload(tree);
+
+      expect(createOfflineRegionWithSmartName).toHaveBeenCalledWith(
+        expect.objectContaining({
+          radiusMiles: 25,
+          zoomRange: { min: 8, max: 14 },
+        }),
+      );
+    });
+
+    it('starts smaller further north, where tiles are denser', async () => {
+      const { tree } = await renderScreen(SEATTLE);
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(1);
+    });
+
+    it('blocks a chosen size over the cap, and offers one that fits', async () => {
+      mockHighDetail = true;
+      const { tree } = await renderScreen(VEGAS);
+
+      await chooseSize(tree, 2);
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(2);
+      expect(allText(tree)).toContain('Too large for one download');
+      expect(allText(tree)).toContain('or turn off high detail');
+      expect(downloadButton(tree).props.disabled).toBe(true);
+
+      await ReactTestRenderer.act(async () => {
+        fixButton(tree).props.onPress();
+      });
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(1);
+      expect(allText(tree)).not.toContain('Too large');
+      expect(downloadButton(tree).props.disabled).toBe(false);
+    });
+
+    it('never starts a download over the cap', async () => {
+      mockHighDetail = true;
+      const { tree } = await renderScreen(VEGAS);
+      await chooseSize(tree, 2);
+
+      await pressDownload(tree);
+
+      expect(createOfflineRegionWithSmartName).not.toHaveBeenCalled();
+      expect(mockDownloadStore.start).not.toHaveBeenCalled();
+    });
+
+    it('keeps a size the user chose, even when moved somewhere it no longer fits', async () => {
+      const { tree } = await renderScreen(VEGAS);
+      await chooseSize(tree, 2);
+      await chooseOnMap(tree);
+
+      await ReactTestRenderer.act(async () => {
+        previewMap(tree).props.onRegionDidChange({
+          nativeEvent: { center: [-122.3321, 47.6062] },
+        });
+      });
+
+      expect(sizeControl(tree).props.selectedIndex).toBe(2);
+      expect(allText(tree)).toContain('Too large for one download');
+      expect(allText(tree)).not.toContain('or turn off high detail');
+      expect(fixButton(tree)?.props.label).toBe('Use 25 mi');
     });
   });
 });
