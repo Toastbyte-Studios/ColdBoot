@@ -36,6 +36,18 @@ describe('OpenFreeMap parallel request cap', () => {
     expect(throttle).toContain('"tiles.openfreemap.org"');
   });
 
+  it('declares no iOS property URLProtocol already has', () => {
+    const throttle = read('ios/ColdBoot/MapRequestThrottle.swift');
+
+    // URLProtocol defines these; redeclaring one is a compile error
+    // ("Cannot override with a stored property 'task'").
+    for (const inherited of ['task', 'request', 'client', 'cachedResponse']) {
+      expect(throttle).not.toMatch(
+        new RegExp(String.raw`\b(?:var|let)\s+${inherited}\s*:`),
+      );
+    }
+  });
+
   it('installs the iOS throttle before React Native starts', () => {
     const appDelegate = read('ios/ColdBoot/AppDelegate.swift');
     const install = appDelegate.indexOf('MapRequestThrottle.install()');
