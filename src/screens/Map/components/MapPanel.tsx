@@ -23,6 +23,7 @@ import { useTheme } from '../../../hooks/useTheme';
 import { Waypoint } from '../../../stores/WaypointStore';
 import { SPACING } from '../../../theme/constants';
 import { formatDistance } from './LibrarySheet/waypointGeometry';
+import TrailsOverlay from './TrailsOverlay';
 import UserHeadingPuck, { USER_HEADING_IMAGES } from './UserHeadingPuck';
 import type { MeasurementSystem } from '../../../stores/SettingsStore';
 
@@ -71,6 +72,8 @@ type Props = {
    * until the compass reports, which shows a plain dot instead.
    */
   userHeading?: number | null;
+  /** Draw footpaths, tracks, trail names and peaks over the base map. */
+  showTrails?: boolean;
   /** A direct user pan or zoom, including while a locate flight is in progress. */
   onUserCameraGesture?: () => void;
   locationReady: boolean;
@@ -114,6 +117,7 @@ export default function MapPanel({
   onUserCameraGesture,
   onCenterChange,
   userHeading = null,
+  showTrails = false,
   locationReady,
   cameraRef,
   onMapReady,
@@ -216,6 +220,12 @@ export default function MapPanel({
                   onFollowUserEnded?.();
                 }
               }}
+            />
+            {/* First, so the user's position and any drawn track (added
+                later) sit above the trail labels. */}
+            <TrailsOverlay
+              visible={showTrails}
+              measurementSystem={measurementSystem}
             />
             <Images images={USER_HEADING_IMAGES} />
             {permissionStatus === 'granted' && (

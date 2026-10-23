@@ -259,6 +259,36 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('setShowTrails', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('shows trails by default', () => {
+      expect(settingsStore.showTrails).toBe(true);
+    });
+
+    it('turns trails off and saves the choice', async () => {
+      await settingsStore.setShowTrails(false);
+
+      expect(settingsStore.showTrails).toBe(false);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('showTrails', ?)",
+        ['false'],
+      );
+    });
+
+    it('remembers the choice across launches', async () => {
+      await settingsStore.setShowTrails(false);
+
+      const relaunched = new SettingsStore();
+      await relaunched.initSettingsDb(mockDb);
+      await relaunched.loadSettings(mockDb);
+
+      expect(relaunched.showTrails).toBe(false);
+    });
+  });
+
   describe('shortcuts', () => {
     beforeEach(async () => {
       await settingsStore.initSettingsDb(mockDb);

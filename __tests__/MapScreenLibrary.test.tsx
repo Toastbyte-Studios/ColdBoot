@@ -5,6 +5,7 @@ import {
   LocationManager,
   useCurrentPosition,
 } from '@maplibre/maplibre-react-native';
+import { makeAutoObservable, runInAction } from 'mobx';
 import React from 'react';
 import CompassHeading from 'react-native-compass-heading';
 import ReactTestRenderer from 'react-test-renderer';
@@ -91,10 +92,24 @@ const mockWaypointStore = {
   addWaypoint: jest.fn(() => Promise.resolve()),
 };
 
+// Observable, like the real store, so the observer screen re-renders on change.
+const mockSettingsStore = makeAutoObservable(
+  {
+    measurementSystem: 'imperial',
+    showTrails: true,
+    setShowTrails: jest.fn((enabled: boolean) => {
+      runInAction(() => {
+        mockSettingsStore.showTrails = enabled;
+      });
+    }),
+  },
+  { setShowTrails: false },
+);
+
 jest.mock('../src/stores/StoreContext', () => ({
   useWaypointStore: () => mockWaypointStore,
   useTrackStore: () => ({ tracks: [] }),
-  useSettingsStore: () => ({ measurementSystem: 'imperial' }),
+  useSettingsStore: () => mockSettingsStore,
   useOfflineDownloadStore: () => ({ state: 'inactive' }),
   useOfflineMapLibraryStore: () => ({ load: jest.fn(() => Promise.resolve()) }),
   useDevToolsStore: () => ({ simulatedOffline: false }),
@@ -703,5 +718,54 @@ describe('MapScreen viewed track', () => {
           node.props.accessibilityLabel.startsWith('Hide track'),
       ),
     ).toHaveLength(0);
+  });
+});
+
+describe('MapScreen trails toggle', () => {
+  beforeEach(async () => {
+    mockRouteParams = undefined;
+    mockLibraryProps = undefined;
+    // Screens from earlier tests still observe the store; reset inside act.
+    await ReactTestRenderer.act(async () => {
+      runInAction(() => {
+        mockSettingsStore.showTrails = true;
+      });
+    });
+    mockSettingsStore.setShowTrails.mockClear();
+  });
+
+  const trailLayers = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    tree.root
+      .findAllByType(Layer)
+      .filter((node) => String(node.props.id).startsWith('coldboot-trail'));
+
+  it('draws trails by default, shown as on in the toolbar', async () => {
+    const tree = await renderScreen(true);
+
+    expect(findButton(tree, 'Show trails').props.selected).toBe(true);
+    expect(trailLayers(tree).length).toBeGreaterThan(0);
+    for (const layer of trailLayers(tree)) {
+      expect(layer.props.layout.visibility).toBe('visible');
+    }
+  });
+
+  it('turns trails off and on, saving the choice', async () => {
+    const tree = await renderScreen(true);
+
+    await ReactTestRenderer.act(async () => {
+      findButton(tree, 'Show trails').props.onPress();
+    });
+
+    expect(mockSettingsStore.setShowTrails).toHaveBeenCalledWith(false);
+    expect(findButton(tree, 'Show trails').props.selected).toBe(false);
+    for (const layer of trailLayers(tree)) {
+      expect(layer.props.layout.visibility).toBe('none');
+    }
+  });
+
+  it('works without location access', async () => {
+    const tree = await renderScreen(false);
+
+    expect(findButton(tree, 'Show trails').props.disabled).toBeFalsy();
   });
 });

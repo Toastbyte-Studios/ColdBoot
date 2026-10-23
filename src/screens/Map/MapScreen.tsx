@@ -1017,6 +1017,20 @@ export default observer(function MapScreen() {
               : 'Keeps the map centred on you as you move'
           }
         />
+        {/* Trails sit over the base map, so this needs no location access. */}
+        <IconButton
+          name="trail-sign-outline"
+          size={22}
+          onPress={() => settingsStore.setShowTrails(!settingsStore.showTrails)}
+          selected={settingsStore.showTrails}
+          color={settingsStore.showTrails ? COLORS.BRAND : undefined}
+          accessibilityLabel="Show trails"
+          accessibilityHint={
+            settingsStore.showTrails
+              ? 'Hides trails, tracks and peaks'
+              : 'Draws trails, tracks and peaks over the map'
+          }
+        />
       </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
@@ -1032,6 +1046,7 @@ export default observer(function MapScreen() {
               onUserCameraGesture={handleUserCameraGesture}
               onCenterChange={handleMapCenterChange}
               userHeading={compassReady ? heading : null}
+              showTrails={settingsStore.showTrails}
               locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
