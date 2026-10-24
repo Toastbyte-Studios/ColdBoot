@@ -51,7 +51,8 @@ final class MapRequestThrottle: URLProtocol {
 
   private let stateLock = NSLock()
   private var stopped = false
-  private var task: URLSessionDataTask?
+  /// The inner session's task. (Not `task`: URLProtocol has one already.)
+  private var loadTask: URLSessionDataTask?
 
   /// URL loading calls `startLoading` on a thread whose run loop expects
   /// client callbacks back on it.
@@ -83,7 +84,7 @@ final class MapRequestThrottle: URLProtocol {
   override func stopLoading() {
     stateLock.lock()
     stopped = true
-    let running = task
+    let running = loadTask
     stateLock.unlock()
 
     // Still queued: drop it; it never took a slot. Otherwise cancel it; its
@@ -102,13 +103,13 @@ final class MapRequestThrottle: URLProtocol {
       Self.gate.release()
       return
     }
-    let task = Self.session.dataTask(with: request) { [weak self] data, response, error in
+    let dataTask = Self.session.dataTask(with: request) { [weak self] data, response, error in
       Self.gate.release()
       self?.deliver(data: data, response: response, error: error)
     }
-    self.task = task
+    loadTask = dataTask
     stateLock.unlock()
-    task.resume()
+    dataTask.resume()
   }
 
   private func deliver(data: Data?, response: URLResponse?, error: Error?) {
