@@ -51,10 +51,19 @@ describe('OpenFreeMap parallel request cap', () => {
   it('installs the iOS throttle before React Native starts', () => {
     const appDelegate = read('ios/ColdBoot/AppDelegate.swift');
     const install = appDelegate.indexOf('MapRequestThrottle.install()');
-    const start = appDelegate.indexOf('factory.startReactNative(');
+    const factory = appDelegate.indexOf('RCTReactNativeFactory(delegate:');
 
     expect(install).toBeGreaterThan(-1);
-    expect(start).toBeGreaterThan(install);
+    expect(factory).toBeGreaterThan(install);
+
+    // UIKit connects scenes only after didFinishLaunching returns, and the
+    // scene starts React Native with the factory AppDelegate built there.
+    const sceneDelegate = read('ios/SceneDelegate.swift');
+    const takeFactory = sceneDelegate.indexOf('appDelegate.reactNativeFactory');
+    const start = sceneDelegate.indexOf('factory.startReactNative(');
+
+    expect(takeFactory).toBeGreaterThan(-1);
+    expect(start).toBeGreaterThan(takeFactory);
   });
 
   it('builds the iOS throttle into the app target', () => {
