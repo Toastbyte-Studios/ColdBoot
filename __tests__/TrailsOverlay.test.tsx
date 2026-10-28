@@ -138,6 +138,9 @@ describe('TrailsOverlay', () => {
     );
     expect(label(peaks, { name: 'Unmeasured Peak' })).toBe('Unmeasured Peak');
     expect(label(peaks, { ele_ft: 5280 })).toBe('5,280 ft');
+    expect(label(peaks, { ele_ft: 1000 })).toBe('1,000 ft');
+    expect(label(peaks, { ele_ft: 1001 })).toBe('1,001 ft');
+    expect(label(peaks, { ele_ft: 1010 })).toBe('1,010 ft');
   });
 
   it('labels peaks in metres for metric users', async () => {
