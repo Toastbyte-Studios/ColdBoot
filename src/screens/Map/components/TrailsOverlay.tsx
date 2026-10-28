@@ -104,13 +104,55 @@ const CASING_WIDTH: ExpressionSpecification = [
   7,
 ];
 
+/**
+ * `value` rounded to a whole number and rendered with a thousands separator,
+ * e.g. `11916` -> `"11,916"`. Built from plain arithmetic/string expressions
+ * rather than the `number-format` expression: its options argument is an
+ * object literal, and that shape crashes MapLibre's native style parser when
+ * it crosses the React Native bridge (filed as a MapLibre Native issue).
+ * Good up to 999,999, far past any peak's elevation in feet or metres.
+ */
+function withThousandsSeparator(
+  value: ExpressionSpecification,
+): ExpressionSpecification {
+  const paddedRemainder: ExpressionSpecification = [
+    'case',
+    ['<', ['var', 'remainder'], 10],
+    ['concat', '00', ['to-string', ['var', 'remainder']]],
+    ['<', ['var', 'remainder'], 100],
+    ['concat', '0', ['to-string', ['var', 'remainder']]],
+    ['to-string', ['var', 'remainder']],
+  ];
+  return [
+    'let',
+    'wholeValue',
+    ['round', value],
+    [
+      'case',
+      ['>=', ['var', 'wholeValue'], 1000],
+      [
+        'let',
+        'remainder',
+        ['%', ['var', 'wholeValue'], 1000],
+        [
+          'concat',
+          ['to-string', ['floor', ['/', ['var', 'wholeValue'], 1000]]],
+          ',',
+          paddedRemainder,
+        ],
+      ],
+      ['to-string', ['var', 'wholeValue']],
+    ],
+  ];
+}
+
 /** "Mount Charleston\n11,916 ft", "Mount Charleston", or "3,632 m". */
 function peakLabel(system: MeasurementSystem): ExpressionSpecification {
   const elevationKey = system === 'metric' ? 'ele' : 'ele_ft';
   const unit = system === 'metric' ? ' m' : ' ft';
   const elevation: ExpressionSpecification = [
     'concat',
-    ['number-format', ['get', elevationKey], {}],
+    withThousandsSeparator(['get', elevationKey]),
     unit,
   ];
   return [
