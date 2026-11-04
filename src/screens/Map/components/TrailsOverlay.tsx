@@ -155,15 +155,23 @@ function peakLabel(system: MeasurementSystem): ExpressionSpecification {
     withThousandsSeparator(['get', elevationKey]),
     unit,
   ];
+  // Each `case` below has a single condition rather than branching on
+  // `['has', 'name']` and `['has', elevationKey]` together with `all`: a
+  // `case` with 2+ conditions where one is `all`/`any`/`!` doesn't survive
+  // MapLibre Native iOS's NSExpression round trip (the compound condition
+  // comes back as a stray predicate object instead of JSON), which then
+  // crashes the native style parser. A single-condition `case` takes a
+  // different, unaffected code path (filed as a MapLibre Native issue).
   return [
     'case',
-    ['all', ['has', 'name'], ['has', elevationKey]],
-    ['concat', ['get', 'name'], '\n', elevation],
     ['has', 'name'],
-    ['get', 'name'],
-    ['has', elevationKey],
-    elevation,
-    '',
+    [
+      'case',
+      ['has', elevationKey],
+      ['concat', ['get', 'name'], '\n', elevation],
+      ['get', 'name'],
+    ],
+    ['case', ['has', elevationKey], elevation, ''],
   ];
 }
 
