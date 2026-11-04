@@ -22,9 +22,7 @@ type Props = {
  * Persists across navigation because it's mounted on MapScreen (which stays
  * in the stack) and reads from the MobX store. Hidden when state is 'inactive'.
  */
-const DownloadProgressChip = observer(function DownloadProgressChip({
-  store,
-}: Props) {
+export default observer(function DownloadProgressChip({ store }: Props) {
   const COLORS = useTheme();
 
   // ── Success toast ──────────────────────────────────────────────────────────
@@ -108,8 +106,6 @@ const DownloadProgressChip = observer(function DownloadProgressChip({
     </View>
   );
 });
-
-export default DownloadProgressChip;
 
 // ── DownloadErrorBanner ─────────────────────────────────────────────────────
 
