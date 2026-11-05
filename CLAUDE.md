@@ -86,6 +86,8 @@ covers it:
 | A lookup table (morse, NATO)      | `components/ReferenceTable`                                 |
 | A note composer                   | `screens/Notepad/Shared/NoteEditor`                         |
 | Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                  |
+| Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)      |
+| A row that shows a status colour  | `ModuleRow` with `iconColor`                                |
 
 ```tsx
 import { observer } from 'mobx-react-lite';

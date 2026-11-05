@@ -1,5 +1,5 @@
 import Geolocation from 'react-native-geolocation-service';
-import { CoreStore } from '../src/stores/CoreStore';
+import { CoreStore, LOCATION_PERMISSION_DENIED } from '../src/stores/CoreStore';
 
 jest.mock('react-native-geolocation-service', () => ({
   getCurrentPosition: jest.fn((success, _error, _options) => {
@@ -74,6 +74,20 @@ describe('CoreStore location permission flow', () => {
     expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
     expect(store.lastFix).not.toBeNull();
 
+    store.stopDeviceStatusMonitoring();
+  });
+
+  test('normalizes a GPS permission-denied error', async () => {
+    geolocation.getCurrentPosition.mockImplementationOnce((_success, error) => {
+      if (!error) throw new Error('missing geolocation error callback');
+      error({ code: 1, message: 'Location permission denied' });
+    });
+    const store = new CoreStore();
+
+    store.startDeviceStatusMonitoring();
+    await flushPromises();
+
+    expect(store.locationError).toBe(LOCATION_PERMISSION_DENIED);
     store.stopDeviceStatusMonitoring();
   });
 });
