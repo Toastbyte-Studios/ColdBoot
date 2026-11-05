@@ -43,14 +43,14 @@ async function render() {
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(<SunTimeScreen />);
+    renderedTrees.push(tree);
   });
-  renderedTrees.push(tree);
   return tree;
 }
 
-function unmountRenderedTrees() {
-  renderedTrees.splice(0).forEach((tree) => {
-    ReactTestRenderer.act(() => tree.unmount());
+async function unmountRenderedTrees() {
+  await ReactTestRenderer.act(async () => {
+    renderedTrees.splice(0).forEach((tree) => tree.unmount());
   });
 }
 
@@ -64,8 +64,8 @@ const svgWidth = (tree: ReactTestRenderer.ReactTestRenderer) =>
   )[0]?.props.width;
 
 describe('SunTimeScreen daylight chart', () => {
-  afterEach(() => {
-    unmountRenderedTrees();
+  afterEach(async () => {
+    await unmountRenderedTrees();
     jest.useRealTimers();
   });
 
@@ -128,8 +128,8 @@ describe('SunTimeScreen sun rise animation', () => {
     });
   });
 
-  afterEach(() => {
-    unmountRenderedTrees();
+  afterEach(async () => {
+    await unmountRenderedTrees();
     jest.useRealTimers();
     jest.restoreAllMocks();
   });
