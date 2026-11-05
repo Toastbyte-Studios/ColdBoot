@@ -8,12 +8,25 @@ export const FlashlightModes: FlashlightModeType = {
   NIGHTVISION: 'nightvision',
 };
 
+// Alphabetical by display name: this is the order the home screen lists them.
 export const MODULES: ToolType[] = [
+  {
+    name: 'Comms',
+    screen: 'CommunicationsModule',
+    icon: 'chatbubbles-outline',
+    id: 'home_communications',
+  },
   {
     name: 'Core',
     screen: 'CoreModule',
     icon: 'pulse-outline',
     id: 'home_core',
+  },
+  {
+    name: 'Earth',
+    screen: 'EarthModule',
+    icon: 'earth-outline',
+    id: 'home_earth',
   },
   {
     name: 'Navigation',
@@ -22,28 +35,16 @@ export const MODULES: ToolType[] = [
     id: 'home_navigation',
   },
   {
-    name: 'Reference',
-    screen: 'ReferenceModule',
-    icon: 'book-outline',
-    id: 'home_reference',
-  },
-  {
-    name: 'Comms',
-    screen: 'CommunicationsModule',
-    icon: 'chatbubbles-outline',
-    id: 'home_communications',
-  },
-  {
     name: 'Prepper',
     screen: 'PrepperModule',
     icon: 'shield-checkmark-outline',
     id: 'home_prepper',
   },
   {
-    name: 'Earth',
-    screen: 'EarthModule',
-    icon: 'earth-outline',
-    id: 'home_earth',
+    name: 'Reference',
+    screen: 'ReferenceModule',
+    icon: 'book-outline',
+    id: 'home_reference',
   },
 ];
 
