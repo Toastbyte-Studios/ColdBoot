@@ -1,4 +1,7 @@
-import { natoPhoneticNumerals } from '../src/screens/MorseCode/natoPhonetic';
+import {
+  natoPhoneticAlphabet,
+  natoPhoneticNumerals,
+} from '../src/screens/MorseCode/natoPhonetic';
 
 describe('natoPhoneticNumerals', () => {
   it('covers 0-9 with the ICAO radio pronunciations', () => {
@@ -16,5 +19,15 @@ describe('natoPhoneticNumerals', () => {
       '8': 'Eight',
       '9': 'Niner',
     });
+  });
+});
+
+describe('natoPhoneticAlphabet', () => {
+  it('uses the official ICAO spellings for A and J', () => {
+    const codeFor = (letter: string) =>
+      natoPhoneticAlphabet.find((item) => item.letter === letter)?.code;
+
+    expect(codeFor('A')).toBe('Alfa');
+    expect(codeFor('J')).toBe('Juliett');
   });
 });

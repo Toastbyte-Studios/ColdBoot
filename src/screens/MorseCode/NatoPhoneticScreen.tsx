@@ -5,7 +5,7 @@ import StackScreen from '../../components/StackScreen';
 import { natoPhoneticAlphabet, natoPhoneticNumerals } from './natoPhonetic';
 
 /**
- * Displays the NATO Phonetic Alphabet: the 26 letter code words (A - Alpha,
+ * Displays the NATO Phonetic Alphabet: the 26 letter code words (A - Alfa,
  * B - Bravo, and so on), then the 10 radio numerals (3 - Tree, 9 - Niner), as
  * two lookup tables.
  *

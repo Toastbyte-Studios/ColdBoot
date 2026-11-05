@@ -193,7 +193,7 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     category: 'Communications',
     title: 'NATO Phonetic Alphabet',
     summary:
-      'The NATO/ICAO phonetic alphabet for spelling out words and numbers clearly over radio or telephone. Alpha, Bravo, Charlie; Tree, Fife, Niner — reduces miscommunication in noisy environments.',
+      'The NATO/ICAO phonetic alphabet for spelling out words and numbers clearly over radio or telephone. Alfa, Bravo, Charlie; Tree, Fife, Niner — reduces miscommunication in noisy environments.',
     difficulty: 'basic',
     tags: [
       'nato',
@@ -202,6 +202,8 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
       'radio',
       'spelling',
       'alpha',
+      'alfa',
+      'juliett',
       'bravo',
       'charlie',
       'communication',
@@ -214,8 +216,8 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     ],
     steps: [
       'Use the phonetic alphabet to spell call signs, names, or critical words over radio',
-      'Alpha = A, Bravo = B, Charlie = C, Delta = D, Echo = E, Foxtrot = F',
-      'Golf = G, Hotel = H, India = I, Juliet = J, Kilo = K, Lima = L',
+      'Alfa = A, Bravo = B, Charlie = C, Delta = D, Echo = E, Foxtrot = F',
+      'Golf = G, Hotel = H, India = I, Juliett = J, Kilo = K, Lima = L',
       'Mike = M, November = N, Oscar = O, Papa = P, Quebec = Q, Romeo = R',
       'Sierra = S, Tango = T, Uniform = U, Victor = V, Whiskey = W, X-ray = X',
       'Yankee = Y, Zulu = Z',

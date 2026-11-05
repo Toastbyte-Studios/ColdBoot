@@ -1,6 +1,11 @@
-/** NATO/ICAO spelling alphabet code words, A–Z. */
+/**
+ * NATO/ICAO spelling alphabet code words, A–Z, in the official spellings:
+ * "Alfa" and "Juliett" are deliberate, so speakers of any language say them
+ * the same way ("Alpha" can be read with an F or a P sound; a single-t
+ * "Juliet" can lose its final T in French).
+ */
 export const natoPhoneticAlphabet = [
-  { letter: 'A', code: 'Alpha' },
+  { letter: 'A', code: 'Alfa' },
   { letter: 'B', code: 'Bravo' },
   { letter: 'C', code: 'Charlie' },
   { letter: 'D', code: 'Delta' },
@@ -9,7 +14,7 @@ export const natoPhoneticAlphabet = [
   { letter: 'G', code: 'Golf' },
   { letter: 'H', code: 'Hotel' },
   { letter: 'I', code: 'India' },
-  { letter: 'J', code: 'Juliet' },
+  { letter: 'J', code: 'Juliett' },
   { letter: 'K', code: 'Kilo' },
   { letter: 'L', code: 'Lima' },
   { letter: 'M', code: 'Mike' },
