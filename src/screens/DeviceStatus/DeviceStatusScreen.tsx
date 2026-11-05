@@ -4,6 +4,7 @@ import StackScreen from '../../components/StackScreen';
 import BatterySection from './components/BatterySection';
 import ConnectivitySection from './components/ConnectivitySection';
 import LocationSection from './components/LocationSection';
+import ReadinessSection from './components/ReadinessSection';
 import SensorsSection from './components/SensorsSection';
 import StorageSection from './components/StorageSection';
 
@@ -23,6 +24,7 @@ import StorageSection from './components/StorageSection';
 function DeviceStatusScreen() {
   return (
     <StackScreen title="Device Status">
+      <ReadinessSection />
       <LocationSection />
 
       <BatterySection />

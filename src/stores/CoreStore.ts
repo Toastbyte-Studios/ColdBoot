@@ -14,6 +14,9 @@ import DeviceInfo from 'react-native-device-info';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
 
+/** `locationError` when the user has not granted location access. */
+export const LOCATION_PERMISSION_DENIED = 'Location permission not granted';
+
 export class CoreStore {
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -311,7 +314,7 @@ export class CoreStore {
       this.gpsIv = setInterval(() => this.gpsGetFix(), 60000);
     } else {
       runInAction(() => {
-        this.locationError = 'Location permission not granted';
+        this.locationError = LOCATION_PERMISSION_DENIED;
       });
     }
   }
