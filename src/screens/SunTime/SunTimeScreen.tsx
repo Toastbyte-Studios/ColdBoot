@@ -5,6 +5,7 @@ import {
   LayoutChangeEvent,
   Platform,
   StyleSheet,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import Svg, {
@@ -20,7 +21,13 @@ import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useCoreStore } from '../../stores/StoreContext';
-import { RADIUS, SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import {
+  RADIUS,
+  SCREEN_GUTTER,
+  SCREEN_INSET,
+  SPACING,
+  TEXT_GUTTER,
+} from '../../theme';
 import { withAlpha } from '../../theme/colorUtils';
 import { formatDuration, getSolarSnapshot } from '../../utils/sunTimes';
 import { formatTime } from '../../utils/timeFormat';
@@ -35,6 +42,16 @@ const CHART_HEIGHT = 132;
 /** Vertical room left below the arc for the horizon rule and its labels. */
 const CHART_BASELINE = 104;
 const CHART_PEAK = 18;
+
+/**
+ * Horizontal space around the chart, used to estimate its width for the first
+ * frame. iOS: screen inset and gutter each side (as `KnotStepCarousel`), plus
+ * the card's 1pt outline. Android: the card's gutter each side; StackScreen's
+ * content is full-bleed there and Material cards have no outline.
+ */
+const ESTIMATED_CHART_INSET = isAndroid
+  ? SCREEN_GUTTER * 2
+  : (SCREEN_INSET + SCREEN_GUTTER) * 2 + 2;
 
 /**
  * Sun Times.
@@ -57,7 +74,17 @@ const SunTimeScreen = observer(() => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => new Date());
-  const [chartWidth, setChartWidth] = useState(0);
+  const { width: screenWidth } = useWindowDimensions();
+  const [measuredChartWidth, setMeasuredChartWidth] = useState<number | null>(
+    null,
+  );
+  // The arc used to wait for onLayout and draw nothing until it reported a
+  // width. On a fresh push that first report could be missing or zero, so the
+  // hero chart stayed blank until the screen was opened a second time. Draw
+  // from an estimate straight away; the measured width replaces it when it
+  // arrives.
+  const chartWidth =
+    measuredChartWidth ?? Math.max(0, screenWidth - ESTIMATED_CHART_INSET);
 
   useEffect(() => {
     let isMounted = true;
@@ -129,7 +156,11 @@ const SunTimeScreen = observer(() => {
     : null;
 
   const handleChartLayout = (event: LayoutChangeEvent) => {
-    setChartWidth(event.nativeEvent.layout.width);
+    const width = Math.round(event.nativeEvent.layout.width);
+    // Ignore an empty measurement rather than letting it hide the chart.
+    if (width > 0 && width !== measuredChartWidth) {
+      setMeasuredChartWidth(width);
+    }
   };
 
   const coordinates = fix
