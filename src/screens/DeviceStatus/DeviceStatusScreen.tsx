@@ -4,6 +4,7 @@ import StackScreen from '../../components/StackScreen';
 import BatterySection from './components/BatterySection';
 import ConnectivitySection from './components/ConnectivitySection';
 import LocationSection from './components/LocationSection';
+import SensorsSection from './components/SensorsSection';
 import StorageSection from './components/StorageSection';
 
 /**
@@ -29,6 +30,7 @@ function DeviceStatusScreen() {
       <ConnectivitySection />
 
       <StorageSection />
+      <SensorsSection />
     </StackScreen>
   );
 }
