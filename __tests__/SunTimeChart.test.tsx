@@ -32,10 +32,13 @@ jest.mock('../src/components/GroupContainer', () => {
   );
 });
 
+const mounted: ReactTestRenderer.ReactTestRenderer[] = [];
+
 async function render() {
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(<SunTimeScreen />);
+    mounted.push(tree);
   });
   return tree;
 }
@@ -50,7 +53,12 @@ const svgWidth = (tree: ReactTestRenderer.ReactTestRenderer) =>
   )[0]?.props.width;
 
 describe('SunTimeScreen daylight chart', () => {
-  afterEach(() => jest.useRealTimers());
+  afterEach(async () => {
+    await ReactTestRenderer.act(async () => {
+      mounted.splice(0).forEach((tree) => tree.unmount());
+    });
+    jest.useRealTimers();
+  });
 
   it('draws the arc before any layout event arrives', async () => {
     const tree = await render();
