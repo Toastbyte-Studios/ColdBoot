@@ -24,9 +24,12 @@ async function renderDot() {
     tree = ReactTestRenderer.create(<ConnectionDot />);
   });
   const dot = tree.root.findByProps({ testID: 'connection-dot' });
+  const style = StyleSheet.flatten(dot.props.style);
   return {
     label: dot.props.accessibilityLabel as string,
-    color: StyleSheet.flatten(dot.props.style).backgroundColor,
+    borderRadius: style.borderRadius,
+    borderWidth: style.borderWidth,
+    backgroundColor: style.backgroundColor,
   };
 }
 
@@ -44,7 +47,9 @@ describe('ConnectionDot', () => {
     mockCore.netInfo = { isConnected: true };
     expect(await renderDot()).toEqual({
       label: 'Connected',
-      color: LIGHT_COLORS.SUCCESS,
+      borderRadius: 4,
+      borderWidth: 0,
+      backgroundColor: LIGHT_COLORS.SUCCESS,
     });
   });
 
@@ -52,7 +57,9 @@ describe('ConnectionDot', () => {
     mockCore.netInfo = { isConnected: false };
     expect(await renderDot()).toEqual({
       label: 'Not connected',
-      color: LIGHT_COLORS.ERROR,
+      borderRadius: 0,
+      borderWidth: 0,
+      backgroundColor: LIGHT_COLORS.ERROR,
     });
   });
 
@@ -60,7 +67,9 @@ describe('ConnectionDot', () => {
     mockCore.netInfo = null;
     expect(await renderDot()).toEqual({
       label: 'Connection status unknown',
-      color: LIGHT_COLORS.MUTED,
+      borderRadius: 4,
+      borderWidth: 1,
+      backgroundColor: 'transparent',
     });
   });
 });

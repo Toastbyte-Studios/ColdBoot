@@ -47,8 +47,10 @@ const ConnectionDot = observer(({ size = 8 }: ConnectionDotProps) => {
         {
           width: size,
           height: size,
-          borderRadius: size / 2,
-          backgroundColor: color,
+          borderRadius: state === 'offline' ? 0 : size / 2,
+          borderWidth: state === 'unknown' ? 1 : 0,
+          borderColor: color,
+          backgroundColor: state === 'unknown' ? 'transparent' : color,
         },
       ]}
     />
