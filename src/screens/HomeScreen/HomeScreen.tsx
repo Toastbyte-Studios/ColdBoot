@@ -42,8 +42,7 @@ function SupportingLine() {
  * The app's landing screen: pick a module, and see the one time-critical fact
  * — the next solar event — without navigating anywhere.
  *
- * The module list preserves the long-standing module order from `MODULES`, so
- * the redesigned shell still opens in the sequence users already know.
+ * The module list follows `MODULES`, which is kept in alphabetical order.
  *
  * On Android the gutter is applied per-child rather than to the scroll
  * content: list items run edge to edge while the solar card above them stays

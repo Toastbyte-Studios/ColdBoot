@@ -121,7 +121,7 @@ function buildHelpGroups(): HelpGroup[] {
           icon: 'compass-outline',
           // Screen-to-screen swiping is iOS only: on Android the edge drag
           // belongs to the system back gesture (see AppShell).
-          content: `Pick a module on the home screen — Core, Navigation, Reference, Comms, Prepper or Earth — then tap a tool to open it. Tap the ColdBoot logo to return home, or use the search button in the header to find any tool or reference. ${
+          content: `Pick a module on the home screen — Comms, Core, Earth, Navigation, Prepper or Reference — then tap a tool to open it. Tap the ColdBoot logo to return home, or use the search button in the header to find any tool or reference. ${
             isAndroid
               ? "Use your phone's back gesture or button to return to the previous screen."
               : 'Swipe left or right to navigate between screens.'
