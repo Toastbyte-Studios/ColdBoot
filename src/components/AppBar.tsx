@@ -6,6 +6,7 @@ import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useTheme } from '../hooks/useTheme';
 import { SCREEN_GUTTER } from '../theme';
 import { withAlpha } from '../theme/colorUtils';
+import ConnectionDot from './ConnectionDot';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
 
@@ -69,12 +70,15 @@ export default function AppBar({
         <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
           ColdBoot
         </Text>
-        <Text
-          style={[styles.date, { color: COLORS.MUTED }]}
-          accessibilityLabel={`Current date: ${currentDate}`}
-        >
-          {currentDate} · Offline ready
-        </Text>
+        <View style={styles.dateRow}>
+          <Text
+            style={[styles.date, { color: COLORS.MUTED }]}
+            accessibilityLabel={`Current date: ${currentDate}`}
+          >
+            {currentDate}
+          </Text>
+          <ConnectionDot size={7} />
+        </View>
       </View>
 
       <Pressable
@@ -115,10 +119,15 @@ const styles = StyleSheet.create({
     fontFamily: 'Bitter-Bold',
     letterSpacing: -0.2,
   },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 1,
+  },
   date: {
     fontSize: 11.5,
     fontWeight: '500',
-    marginTop: 1,
   },
   navButton: {
     width: NAV_BUTTON,
