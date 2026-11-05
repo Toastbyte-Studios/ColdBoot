@@ -1,5 +1,8 @@
 import {
   accuracyTone,
+  batteryEstimate,
+  batteryTone,
+  formatMinutes,
   fixAgeTone,
   formatAge,
   formatCoordinates,
@@ -47,5 +50,41 @@ describe('location formatters', () => {
     const now = 1_000_000_000_000;
     expect(fixAgeTone(now - 60_000, now)).toBe('good');
     expect(fixAgeTone(now - STALE_FIX_MS - 1, now)).toBe('poor');
+  });
+});
+
+describe('battery formatters', () => {
+  it('bands the level, and treats charging as fine', () => {
+    expect(batteryTone(0.8, false)).toBe('good');
+    expect(batteryTone(0.35, false)).toBe('fair');
+    expect(batteryTone(0.12, false)).toBe('poor');
+    expect(batteryTone(0.12, true)).toBe('good');
+    expect(batteryTone(null, null)).toBe('neutral');
+  });
+
+  it('formats minutes as hours and minutes', () => {
+    expect(formatMinutes(45)).toBe('45 min');
+    expect(formatMinutes(120)).toBe('2 hr');
+    expect(formatMinutes(310.4)).toBe('5 hr 10 min');
+    expect(formatMinutes(-3)).toBe('0 min');
+  });
+
+  it('labels the estimate by charge state', () => {
+    expect(batteryEstimate(310, false, 0.6)).toEqual({
+      label: 'Time left',
+      value: 'About 5 hr 10 min',
+    });
+    expect(batteryEstimate(50, true, 0.6)).toEqual({
+      label: 'Time to full',
+      value: 'About 50 min',
+    });
+    expect(batteryEstimate(480, true, 1)).toEqual({
+      label: 'Charging',
+      value: 'Full',
+    });
+    expect(batteryEstimate(null, false, 0.6)).toEqual({
+      label: 'Time left',
+      value: 'Calculating…',
+    });
   });
 });

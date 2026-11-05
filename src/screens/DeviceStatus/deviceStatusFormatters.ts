@@ -74,3 +74,54 @@ export const STALE_FIX_MS = 5 * 60 * 1000;
 export function fixAgeTone(timestamp: number, now: number = Date.now()) {
   return now - timestamp > STALE_FIX_MS ? 'poor' : 'good';
 }
+
+/**
+ * Battery level as a band. Under 20% is where phones start throttling and
+ * where a day out turns into rationing; under 50% is worth knowing about
+ * before heading somewhere with no way to charge.
+ */
+export function batteryTone(
+  level: number | null,
+  charging: boolean | null,
+): StatusTone {
+  if (level == null) return 'neutral';
+  if (charging) return 'good';
+  if (level < 0.2) return 'poor';
+  if (level < 0.5) return 'fair';
+  return 'good';
+}
+
+/** "5 hr 10 min", "45 min", "2 hr". */
+export function formatMinutes(minutes: number): string {
+  const total = Math.max(0, Math.round(minutes));
+  const hrs = Math.floor(total / 60);
+  const mins = total % 60;
+  if (hrs === 0) return `${mins} min`;
+  if (mins === 0) return `${hrs} hr`;
+  return `${hrs} hr ${mins} min`;
+}
+
+/**
+ * The battery estimate for its row: time left on battery, or time to full when
+ * charging. The store's figure is a rough baseline until a few samples have
+ * shown the real drain rate, hence "About".
+ */
+export function batteryEstimate(
+  minutes: number | null,
+  charging: boolean | null,
+  level: number | null,
+): { label: string; value: string } {
+  if (charging) {
+    if (level != null && level >= 0.99)
+      return { label: 'Charging', value: 'Full' };
+    return {
+      label: 'Time to full',
+      value:
+        minutes == null ? 'Calculating…' : `About ${formatMinutes(minutes)}`,
+    };
+  }
+  return {
+    label: 'Time left',
+    value: minutes == null ? 'Calculating…' : `About ${formatMinutes(minutes)}`,
+  };
+}

@@ -25,6 +25,8 @@ export class CoreStore {
   // Battery state
   batteryLevel: number | null = null;
   isCharging: boolean | null = null;
+  /** iOS Low Power Mode / Android Battery Saver; null until first sampled. */
+  lowPowerMode: boolean | null = null;
   batteryEstimateMinutes: number | null = null;
   private lastBatterySample: { level: number; at: number } | null = null;
   private batteryQuickIv: ReturnType<typeof setInterval> | null = null;
@@ -87,6 +89,8 @@ export class CoreStore {
       runInAction(() => {
         this.batteryLevel = level;
         this.isCharging = charging;
+        this.lowPowerMode =
+          typeof power.lowPowerMode === 'boolean' ? power.lowPowerMode : null;
       });
 
       if (this.lastBatterySample) {
