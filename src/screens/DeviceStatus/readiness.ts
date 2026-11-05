@@ -37,24 +37,24 @@ const plural = (count: number, one: string, many = `${one}s`) =>
   `${count} ${count === 1 ? one : many}`;
 
 function locationItem(input: ReadinessInput): ReadinessItem {
-  const base = { id: 'location' as const, title: 'Location access' };
+  // Always opens system settings: that is where the permission is changed,
+  // and where it can be reviewed when it is already allowed.
+  const base = {
+    id: 'location' as const,
+    title: 'Location access',
+    action: 'system-settings' as const,
+  };
   if (input.locationDenied) {
     return {
       ...base,
       status: 'missing',
       detail: 'Turned off. GPS tools need it',
-      action: 'system-settings',
     };
   }
   if (input.fix) {
-    return { ...base, status: 'ready', detail: 'Allowed', action: null };
+    return { ...base, status: 'ready', detail: 'Allowed' };
   }
-  return {
-    ...base,
-    status: 'unknown',
-    detail: 'Waiting for a first fix',
-    action: null,
-  };
+  return { ...base, status: 'unknown', detail: 'Waiting for a first fix' };
 }
 
 /**
