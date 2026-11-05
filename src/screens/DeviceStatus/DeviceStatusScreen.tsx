@@ -1,12 +1,10 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import StackScreen from '../../components/StackScreen';
-import { useDeviceStatus } from '../../hooks/useDeviceStatus';
 import BatterySection from './components/BatterySection';
 import ConnectivitySection from './components/ConnectivitySection';
 import LocationSection from './components/LocationSection';
-import StatusRow from './components/StatusRow';
-import StatusSection from './components/StatusSection';
+import StorageSection from './components/StorageSection';
 
 /**
  * DeviceStatusScreen
@@ -22,8 +20,6 @@ import StatusSection from './components/StatusSection';
  * @returns A React element containing the Device Status screen UI.
  */
 function DeviceStatusScreen() {
-  const { storageText } = useDeviceStatus();
-
   return (
     <StackScreen title="Device Status">
       <LocationSection />
@@ -32,9 +28,7 @@ function DeviceStatusScreen() {
 
       <ConnectivitySection />
 
-      <StatusSection title="Storage">
-        <StatusRow label="Used" value={storageText} isLast />
-      </StatusSection>
+      <StorageSection />
     </StackScreen>
   );
 }
