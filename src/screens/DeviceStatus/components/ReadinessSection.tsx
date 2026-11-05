@@ -55,16 +55,26 @@ const ReadinessSection = observer(() => {
   const items = readinessItems({
     fix: fix ? { latitude: fix.latitude, longitude: fix.longitude } : null,
     locationDenied: core.locationError === LOCATION_PERMISSION_DENIED,
-    mapsLoaded: maps.hasLoaded,
-    packs: maps.packs.map((pack) => ({
-      name: maps.displayName(pack),
-      region: getValidRegionMetadata(pack),
-    })),
+    mapsLoaded: maps.hasLoaded && !maps.loadFailed,
+    mapsLoadFailed: maps.loadFailed,
+    packs: maps.packs
+      .filter((pack) => pack.status?.state === 'complete')
+      .map((pack) => ({
+        name: maps.displayName(pack),
+        region: getValidRegionMetadata(pack),
+      })),
     lastBackupAt: settings.lastBackupAt,
     plan: {
       contacts: plan.contacts.length,
       rallyPoints: plan.rallyPoints.length,
-      hasCommsPlan: plan.communicationPlan.updatedAt > 0,
+      hasCommsPlan:
+        plan.communicationPlan.updatedAt > 0 &&
+        [
+          plan.communicationPlan.whoCallsWhom,
+          plan.communicationPlan.ifPhonesDown,
+          plan.communicationPlan.outOfAreaContact,
+          plan.communicationPlan.checkInSchedule,
+        ].some((value) => value.trim().length > 0),
     },
   });
   const readyCount = items.filter((item) => item.status === 'ready').length;

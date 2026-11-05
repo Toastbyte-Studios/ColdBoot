@@ -16,6 +16,7 @@ import { requestForegroundLocationPermission } from '../utils/locationPermission
 
 /** `locationError` when the user has not granted location access. */
 export const LOCATION_PERMISSION_DENIED = 'Location permission not granted';
+const LOCATION_PERMISSION_DENIED_CODE = 1;
 
 export class CoreStore {
   constructor() {
@@ -268,7 +269,10 @@ export class CoreStore {
       },
       (err) => {
         runInAction(() => {
-          this.locationError = err.message;
+          this.locationError =
+            err.code === LOCATION_PERMISSION_DENIED_CODE
+              ? LOCATION_PERMISSION_DENIED
+              : err.message;
         });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },

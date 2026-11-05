@@ -96,6 +96,9 @@ describe('connectionSummary', () => {
       status: 'Checking…',
       tone: 'neutral',
     });
+    expect(
+      connectionSummary({ type: 'wifi', isConnected: null }),
+    ).toMatchObject({ status: 'Checking…', tone: 'neutral' });
   });
 
   it('describes Wi-Fi with signal strength', () => {

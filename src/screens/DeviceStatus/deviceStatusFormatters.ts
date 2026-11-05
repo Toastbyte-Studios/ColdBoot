@@ -169,7 +169,7 @@ export type ConnectionSummary = {
  * Connected but cannot reach anything, which is the case worth spelling out.
  */
 export function connectionSummary(net: NetSnapshot | null): ConnectionSummary {
-  if (!net) {
+  if (!net || net.isConnected == null) {
     return {
       status: 'Checking…',
       tone: 'neutral',

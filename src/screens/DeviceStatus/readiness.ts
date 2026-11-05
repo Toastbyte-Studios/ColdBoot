@@ -22,6 +22,7 @@ export type ReadinessInput = {
   fix: { latitude: number; longitude: number } | null;
   locationDenied: boolean;
   mapsLoaded: boolean;
+  mapsLoadFailed: boolean;
   packs: { name: string; region: PackRegion | null }[];
   lastBackupAt: number | null;
   plan: { contacts: number; rallyPoints: number; hasCommsPlan: boolean };
@@ -69,7 +70,13 @@ function mapItem(input: ReadinessInput): ReadinessItem {
     action: 'offline-maps' as const,
   };
   if (!input.mapsLoaded) {
-    return { ...base, status: 'unknown', detail: 'Checking…' };
+    return {
+      ...base,
+      status: 'unknown',
+      detail: input.mapsLoadFailed
+        ? 'Could not check saved areas'
+        : 'Checking…',
+    };
   }
   if (input.packs.length === 0) {
     return { ...base, status: 'missing', detail: 'No areas downloaded' };

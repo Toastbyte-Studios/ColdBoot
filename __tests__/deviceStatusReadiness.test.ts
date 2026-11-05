@@ -13,6 +13,7 @@ const ready: ReadinessInput = {
   fix: LA,
   locationDenied: false,
   mapsLoaded: true,
+  mapsLoadFailed: false,
   packs: [{ name: 'Los Angeles', region: { center: LA, radiusMiles: 10 } }],
   lastBackupAt: NOW - 3 * DAY,
   plan: { contacts: 2, rallyPoints: 1, hasCommsPlan: true },
@@ -50,6 +51,12 @@ describe('readinessItems', () => {
       });
     });
 
+    it('keeps denied access visible while a previous fix is available', () => {
+      expect(item({ locationDenied: true, fix: LA }, 'location').status).toBe(
+        'missing',
+      );
+    });
+
     it('waits, rather than failing, before the first fix', () => {
       expect(item({ fix: null }, 'location').status).toBe('unknown');
     });
@@ -83,6 +90,15 @@ describe('readinessItems', () => {
 
     it('waits for the map library to load', () => {
       expect(item({ mapsLoaded: false }, 'map').detail).toBe('Checking…');
+    });
+
+    it('does not claim the library is empty when loading failed', () => {
+      expect(
+        item({ mapsLoaded: false, mapsLoadFailed: true }, 'map'),
+      ).toMatchObject({
+        status: 'unknown',
+        detail: 'Could not check saved areas',
+      });
     });
   });
 

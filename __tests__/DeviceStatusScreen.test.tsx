@@ -42,17 +42,24 @@ const mockStores = {
           centerLng: LA.longitude,
           radiusMiles: 5,
         },
-        status: { completedResourceSize: 300 * 1024 ** 2 },
+        status: { state: 'complete', completedResourceSize: 300 * 1024 ** 2 },
       },
     ],
+    loadFailed: false,
     totalBytes: 300 * 1024 ** 2,
     displayName: () => 'Downtown',
   },
   barometer: { available: false, currentPressure: null, loading: false },
   plan: {
     contacts: [{ id: 'c1' }],
-    rallyPoints: [],
-    communicationPlan: { updatedAt: 0 },
+    rallyPoints: [] as { id: string }[],
+    communicationPlan: {
+      whoCallsWhom: '',
+      ifPhonesDown: '',
+      outOfAreaContact: '',
+      checkInSchedule: '',
+      updatedAt: 0,
+    },
   },
 };
 
@@ -196,5 +203,136 @@ describe('DeviceStatusScreen', () => {
     expect(all).toContain('GPS. Waiting for fix');
     expect(all).toContain('Network. Checking…');
     expect(all).toContain('Free space. Unknown');
+  });
+
+  it('does not treat a failed map read as an empty library', async () => {
+    mockStores.maps.hasLoaded = true;
+    mockStores.maps.loadFailed = true;
+    mockStores.maps.packs = [];
+
+    const tree = await render();
+    const all = labels(tree).join('\n');
+
+    expect(all).toContain('Offline map here. Could not check saved areas');
+    expect(all).toContain('Offline maps. Unknown');
+    expect(all).toContain('Room for maps. Unknown');
+    expect(all).not.toContain('No areas downloaded');
+
+    mockStores.maps.loadFailed = false;
+    mockStores.maps.packs = [
+      {
+        id: 'p1',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'complete', completedResourceSize: 300 * 1024 ** 2 },
+      },
+    ];
+  });
+
+  it('does not count unfinished packs as offline coverage or map size samples', async () => {
+    mockStores.maps.packs = [
+      {
+        id: 'partial',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'unknown', completedResourceSize: 1 },
+      },
+    ];
+    mockStores.maps.totalBytes = 1;
+
+    const tree = await render();
+    const all = labels(tree).join('\n');
+
+    expect(all).toContain('Offline map here. No areas downloaded');
+    expect(all).toContain('Room for maps. No completed areas yet');
+
+    mockStores.maps.packs = [
+      {
+        id: 'p1',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'complete', completedResourceSize: 300 * 1024 ** 2 },
+      },
+    ];
+    mockStores.maps.totalBytes = 300 * 1024 ** 2;
+  });
+
+  it('estimates map capacity from completed packs only', async () => {
+    mockStores.core.storageFree = 40 * GB;
+    mockStores.maps.packs = [
+      {
+        id: 'complete',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'complete', completedResourceSize: 300 * 1024 ** 2 },
+      },
+      {
+        id: 'partial',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'unknown', completedResourceSize: 1 },
+      },
+    ];
+    mockStores.maps.totalBytes = 300 * 1024 ** 2 + 1;
+
+    const tree = await render();
+
+    expect(labels(tree).join('\n')).toContain(
+      'Room for maps. About 102 more areas',
+    );
+
+    mockStores.maps.packs = [
+      {
+        id: 'p1',
+        metadata: {
+          centerLat: LA.latitude,
+          centerLng: LA.longitude,
+          radiusMiles: 5,
+        },
+        status: { state: 'complete', completedResourceSize: 300 * 1024 ** 2 },
+      },
+    ];
+    mockStores.maps.totalBytes = 300 * 1024 ** 2;
+    mockStores.core.storageFree = 40 * GB;
+  });
+
+  it('requires communication-plan content, not only a saved timestamp', async () => {
+    mockStores.plan.rallyPoints = [{ id: 'r1' }];
+    mockStores.plan.communicationPlan = {
+      whoCallsWhom: '',
+      ifPhonesDown: '   ',
+      outOfAreaContact: '',
+      checkInSchedule: '',
+      updatedAt: Date.now(),
+    };
+
+    const tree = await render();
+    expect(labels(tree).join('\n')).toContain(
+      'Emergency plan. Missing comms plan',
+    );
+
+    mockStores.plan.rallyPoints = [];
+    mockStores.plan.communicationPlan = {
+      whoCallsWhom: '',
+      ifPhonesDown: '',
+      outOfAreaContact: '',
+      checkInSchedule: '',
+      updatedAt: 0,
+    };
   });
 });

@@ -44,7 +44,9 @@ const StorageSection = observer(() => {
       notes.notes
         .map((note) => note.audioUri)
         .filter((uri): uri is string => !!uri),
-    [notes.notes],
+    // MobX arrays keep their identity when a note is added.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [notes.notes, notes.notes.length],
   );
   const audioKey = audioUris.join('|');
 
@@ -71,7 +73,15 @@ const StorageSection = observer(() => {
   const free = core.storageFree;
   const total = core.storageTotal;
   const mapCount = maps.packs.length;
-  const fit = mapAreasThatFit(free, maps.totalBytes, mapCount);
+  const completedPacks = maps.packs.filter(
+    (pack) => pack.status?.state === 'complete',
+  );
+  const completedMapBytes = completedPacks.reduce(
+    (sum, pack) => sum + (pack.status?.completedResourceSize ?? 0),
+    0,
+  );
+  const mapsLoaded = maps.hasLoaded && !maps.loadFailed;
+  const fit = mapAreasThatFit(free, completedMapBytes, completedPacks.length);
 
   return (
     <StatusSection title="Storage">
@@ -83,8 +93,14 @@ const StorageSection = observer(() => {
       />
       <StatusRow
         label="Offline maps"
-        value={maps.hasLoaded ? formatBytes(maps.totalBytes) : '…'}
-        detail={maps.hasLoaded ? plural(mapCount, 'area') : undefined}
+        value={
+          mapsLoaded
+            ? formatBytes(maps.totalBytes)
+            : maps.loadFailed
+              ? 'Unknown'
+              : '…'
+        }
+        detail={mapsLoaded ? plural(mapCount, 'area') : undefined}
       />
       <StatusRow
         label="Voice logs"
@@ -99,10 +115,12 @@ const StorageSection = observer(() => {
       <StatusRow
         label="Room for maps"
         value={
-          !maps.hasLoaded
-            ? '…'
-            : mapCount === 0
-              ? 'No areas yet'
+          !mapsLoaded
+            ? maps.loadFailed
+              ? 'Unknown'
+              : '…'
+            : completedPacks.length === 0
+              ? 'No completed areas yet'
               : fit == null
                 ? 'Unknown'
                 : `About ${plural(fit, 'more area', 'more areas')}`
