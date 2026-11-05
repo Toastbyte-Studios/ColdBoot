@@ -1,8 +1,9 @@
 import { useNavigation } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
-import { Platform, ScrollView, StyleSheet } from 'react-native';
+import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { MODULES } from '../../../constants';
+import ConnectionDot from '../../components/ConnectionDot';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
@@ -11,14 +12,14 @@ import SectionEyebrow from '../../components/SectionEyebrow';
 import { useCurrentDate } from '../../hooks/useCurrentDate';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
-import { SCREEN_GUTTER, SCREEN_INSET, TEXT_GUTTER } from '../../theme';
+import { SCREEN_GUTTER, SCREEN_INSET, SPACING, TEXT_GUTTER } from '../../theme';
 import SolarCycleCard from './components/SolarCycleCard';
 import { MODULE_SUBTITLES, MODULE_TOOL_COUNTS } from './moduleSubtitles';
 
 const isAndroid = Platform.OS === 'android';
 
 /**
- * The date and offline status, on Android.
+ * The date and connection dot, on Android.
  *
  * Material's top app bar carries a title and actions and nothing else, so the
  * line iOS keeps under the wordmark lives here instead — in the content, where
@@ -29,12 +30,15 @@ function SupportingLine() {
   const currentDate = useCurrentDate();
 
   return (
-    <Text
-      style={[styles.supporting, { color: COLORS.MUTED }]}
-      accessibilityLabel={`Current date: ${currentDate}`}
-    >
-      {currentDate} · Offline ready
-    </Text>
+    <View style={styles.supporting}>
+      <Text
+        style={[styles.supportingText, { color: COLORS.MUTED }]}
+        accessibilityLabel={`Current date: ${currentDate}`}
+      >
+        {currentDate}
+      </Text>
+      <ConnectionDot />
+    </View>
   );
 }
 
@@ -109,10 +113,15 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   supporting: {
-    fontSize: 14,
-    fontWeight: '400',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
     paddingTop: 2,
     paddingHorizontal: TEXT_GUTTER,
     paddingBottom: 10,
+  },
+  supportingText: {
+    fontSize: 14,
+    fontWeight: '400',
   },
 });
