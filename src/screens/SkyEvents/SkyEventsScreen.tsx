@@ -196,7 +196,9 @@ const createStyles = (COLORS: ReturnType<typeof useTheme>) =>
       flexShrink: 1,
     },
     eventCard: {
-      width: '80%',
+      // Full width, like every other card; on Android StackScreen's content is
+      // full-bleed, so the card carries the gutter itself.
+      marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
       paddingTop: 18,
       paddingBottom: 14,
       paddingHorizontal: 14,
