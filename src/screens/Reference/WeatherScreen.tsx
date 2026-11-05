@@ -64,7 +64,6 @@ export default function WeatherScreen(): JSX.Element {
   return (
     <CategoryList
       title="Weather"
-      icon="rainy-outline"
       disclaimer={disclaimer}
       categories={weatherCategories}
     />

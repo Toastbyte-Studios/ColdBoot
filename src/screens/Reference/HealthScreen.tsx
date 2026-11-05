@@ -56,7 +56,6 @@ export default function HealthScreen(): JSX.Element {
   return (
     <CategoryList
       title="Health"
-      icon="medkit-outline"
       disclaimer={disclaimer}
       categories={healthCategories}
     />

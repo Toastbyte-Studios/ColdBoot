@@ -88,7 +88,6 @@ export default function ScenarioCardsScreen(): JSX.Element {
   return (
     <CategoryList
       title="Scenario Cards"
-      icon="albums-outline"
       disclaimer={disclaimer}
       categories={scenarioCategories}
       categoryScreen="ScenarioCategory"

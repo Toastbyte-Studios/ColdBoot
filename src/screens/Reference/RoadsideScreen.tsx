@@ -74,7 +74,6 @@ export default function RoadsideScreen(): JSX.Element {
   return (
     <CategoryList
       title="Roadside"
-      icon="car-outline"
       disclaimer={disclaimer}
       categories={roadsideCategories}
     />

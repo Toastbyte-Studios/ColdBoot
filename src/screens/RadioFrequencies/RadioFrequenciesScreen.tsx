@@ -48,7 +48,6 @@ export default function RadioFrequenciesScreen(): JSX.Element {
   return (
     <StackScreen
       title="Radio Frequencies"
-      subtitle={`${radioCategories.length} categories · all offline`}
       note={disclaimer.trim() || undefined}
     >
       <GroupContainer>

@@ -99,7 +99,7 @@ describe('InventoryAllItemsScreen', () => {
     mockInventoryStore.allItemsSorted = defaultItems;
   });
 
-  it('uses StackScreen with an item count subtitle and module rows', () => {
+  it('uses StackScreen titled, with no count subtitle, and module rows', () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     ReactTestRenderer.act(() => {
       tree = ReactTestRenderer.create(<InventoryAllItemsScreen />);
@@ -108,9 +108,10 @@ describe('InventoryAllItemsScreen', () => {
     expect(mockStackScreen).toHaveBeenLastCalledWith(
       expect.objectContaining({
         title: 'All Inventory Items',
-        subtitle: '2 items',
       }),
     );
+    // The title goes to the app bar; counts are not shown.
+    expect(mockStackScreen.mock.lastCall?.[0].subtitle).toBeUndefined();
 
     const rowLabels = Array.from(
       new Set(

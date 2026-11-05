@@ -19,6 +19,7 @@ import ScreenBody from '../../components/ScreenBody';
 import Touchable from '../../components/Touchable';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
+import { useScreenHeader } from '../../navigation/ScreenHeaderContext';
 import {
   type Checklist,
   type Note,
@@ -100,6 +101,9 @@ const WELCOME_MESSAGE: SearchMessage = {
  */
 export default observer(function SearchScreen(): JSX.Element {
   const navigation = useNavigation<SearchScreenNavigationProp>();
+  // On Android, Search is full screen and the app bar is hidden; on iOS the
+  // bar stays, titled.
+  useScreenHeader({ title: 'Search' });
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
   // Android's full-screen search view has no shortcut bar, so there is nothing to

@@ -24,6 +24,8 @@ import {
   useGestureNavigation,
 } from '../navigation/NavigationHistoryContext';
 import canGoBack, { goBack } from '../navigation/navigationRef';
+import { ScreenHeaderProvider } from '../navigation/ScreenHeaderContext';
+import { useAppBarHeader } from '../navigation/useAppBarHeader';
 import AlertsSheet from './AlertsSheet';
 import AppBar from './AppBar';
 import { HelpModal } from './HelpModal';
@@ -83,11 +85,20 @@ const FULL_SCREEN_ROUTES = new Set(['Search']);
  *
  * @param props.children - Screen content to render inside the shell.
  */
-export default function AppShell({ children }: Props) {
+export default function AppShell(props: Props) {
+  return (
+    <ScreenHeaderProvider>
+      <AppShellBody {...props} />
+    </ScreenHeaderProvider>
+  );
+}
+
+function AppShellBody({ children }: Props) {
   const navigation = useNavigation<AppShellNavigationProp>();
   const navigationHistory = useNavigationHistory();
   const { disableGestureNavigation } = useGestureNavigation();
   const activeRouteName = useActiveRouteName();
+  const appBarHeader = useAppBarHeader();
   const isDarkMode = useIsDarkMode();
   const isFullScreenRoute =
     Platform.OS === 'android' &&
@@ -262,6 +273,8 @@ export default function AppShell({ children }: Props) {
                 onHomePress={() => navigation.navigate('Home')}
                 onSearchPress={() => navigation.navigate('Search')}
                 onSettingsPress={() => setIsSettingsVisible(true)}
+                header={appBarHeader}
+                onBackPress={goBack}
               />
             )}
 

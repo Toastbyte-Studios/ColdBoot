@@ -45,10 +45,7 @@ export default observer(function RecentNotesScreen() {
   );
 
   return (
-    <StackScreen
-      title="Recent Notes"
-      subtitle={`${sortedNotes.length} note${sortedNotes.length === 1 ? '' : 's'}`}
-    >
+    <StackScreen title="Recent Notes">
       <View style={styles.sort}>
         <NoteSortSelector />
       </View>

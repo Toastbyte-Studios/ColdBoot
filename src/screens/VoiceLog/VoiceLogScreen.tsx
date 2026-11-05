@@ -323,7 +323,7 @@ export default observer(function VoiceLogScreen() {
   // Mode: Select recording or viewing
   if (mode === 'select') {
     return (
-      <StackScreen title="Voice Logs" subtitle="Stored offline on this device">
+      <StackScreen title="Voice Logs">
         <GroupContainer>
           <ModuleRow
             title="Record voice log"
@@ -398,11 +398,7 @@ export default observer(function VoiceLogScreen() {
 
   // Mode: View
   return (
-    <StackScreen
-      title="Saved Voice Logs"
-      subtitle={`${voiceLogs.length} ${voiceLogs.length === 1 ? 'log' : 'logs'}`}
-      onBack={() => setMode('select')}
-    >
+    <StackScreen title="Saved Voice Logs" onBack={() => setMode('select')}>
       <View style={styles.column}>
         {voiceLogs.length === 0 ? (
           <EmptyState

@@ -148,7 +148,6 @@ export default observer(function ManageCategoriesScreen(): React.JSX.Element {
   return (
     <StackScreen
       title="Manage Categories"
-      subtitle={`${core.categories.length} categor${core.categories.length === 1 ? 'y' : 'ies'}`}
       keyboardShouldPersistTaps="handled"
       trailing={
         <IconButton

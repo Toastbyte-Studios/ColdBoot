@@ -1,34 +1,32 @@
-import {
-  NavigationProp,
-  ParamListBase,
-  useNavigation,
-} from '@react-navigation/native';
 import React, { PropsWithChildren } from 'react';
-import { Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, ScrollView, StyleSheet } from 'react-native';
 import { useFooterClearance } from '../hooks/useFooterClearance';
 import { useTheme } from '../hooks/useTheme';
+import { useScreenHeader } from '../navigation/ScreenHeaderContext';
 import { SCREEN_GUTTER, SCREEN_INSET, SPACING, TEXT_GUTTER } from '../theme';
-import IconButton from './IconButton';
 import { Text } from './ScaledText';
 import ScreenBody from './ScreenBody';
-import SectionHeader from './SectionHeader';
+import ScreenToolbar from './ScreenToolbar';
 
 const isAndroid = Platform.OS === 'android';
 
 type Props = PropsWithChildren<{
+  /** Shown in the app bar, in place of the ColdBoot wordmark. */
   title: string;
-  /** Secondary line under the title, e.g. "4 categories · all offline". */
+  /**
+   * Shown in the app bar under the title, where Home shows the date. For a
+   * fact about this screen (a note's date and category, a live reading), not
+   * a count or a reminder that it works offline.
+   */
   subtitle?: string;
-  /** Rendered at the trailing edge of the title row — a glyph, an action. */
+  /**
+   * One or two glyph buttons for the screen (add, edit, sort), drawn at the
+   * trailing edge of the toolbar row at the top of the content.
+   */
   trailing?: React.ReactNode;
   /**
-   * Actions for the screen as a whole, laid out in their own row under the
-   * title rather than beside it.
-   *
-   * The title row has room for one or two glyphs before it starts eating the
-   * title: Notepad's four actions squeezed "Notepad" into a column. Anything
-   * past a couple of actions belongs here, where the row is full width and
-   * the title keeps its size.
+   * A longer set of actions (Notepad's four), laid out from the leading edge
+   * of the same toolbar row and wrapping if they need to.
    */
   actions?: React.ReactNode;
   /**
@@ -54,12 +52,12 @@ type Props = PropsWithChildren<{
  * The shared layout for a screen pushed below a module — a Reference topic,
  * a category, an entry.
  *
- * It is `ModuleScreen`'s frame without the tool list: the same large title
- * with a back control in the headline row, the same scroll view, and on
- * Android the same edge-to-edge bleed so list rows and their dividers reach
- * the screen edge. Screens below a module used to build their own header and
- * scroll wrapper, which is how they drifted back to the old look while the
- * module screens above them moved on.
+ * It is `ModuleScreen`'s frame without the tool list: the title, subtitle and
+ * back control go to the app bar (see `ScreenHeaderContext`), then the same
+ * scroll view and, on Android, the same edge-to-edge bleed so list rows and
+ * their dividers reach the screen edge. Screens below a module used to build
+ * their own header and scroll wrapper, which is how they drifted back to the
+ * old look while the module screens above them moved on.
  *
  * Children are laid out in the content column. On iOS that column carries the
  * screen gutter; on Android it is full-bleed, so anything that is not a list
@@ -77,7 +75,7 @@ export default function StackScreen({
 }: Props) {
   const COLORS = useTheme();
   const footerClearance = useFooterClearance();
-  const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  useScreenHeader({ title, subtitle, onBack });
 
   return (
     <ScreenBody>
@@ -89,27 +87,7 @@ export default function StackScreen({
         ]}
         keyboardShouldPersistTaps={keyboardShouldPersistTaps}
       >
-        <SectionHeader
-          containerStyle={isAndroid ? styles.headline : undefined}
-          leading={
-            onBack || navigation.canGoBack() ? (
-              <IconButton
-                name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
-                size={isAndroid ? 24 : 20}
-                color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
-                onPress={onBack ?? (() => navigation.goBack())}
-                accessibilityLabel="Go back"
-              />
-            ) : undefined
-          }
-          title={title}
-          subtitle={subtitle}
-          trailing={
-            trailing ? <View style={styles.trailing}>{trailing}</View> : null
-          }
-        />
-
-        {actions ? <View style={styles.actions}>{actions}</View> : null}
+        <ScreenToolbar actions={actions} trailing={trailing} />
 
         {note ? (
           <Text
@@ -142,32 +120,13 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
-  },
-  headline: {
-    paddingHorizontal: TEXT_GUTTER,
-    paddingTop: 4,
-    paddingBottom: 18,
-  },
-  trailing: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: SPACING.xs,
-  },
-  actions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: SPACING.xs,
-    // Pulls up under the headline, which carries its own bottom padding.
-    marginTop: -SPACING.sm,
-    marginBottom: SPACING.md,
-    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+    // The title now lives in the app bar; leave a little air under it.
+    paddingTop: SPACING.sm,
   },
   note: {
     fontSize: 13.5,
     lineHeight: 19,
     paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-    marginTop: -SPACING.sm,
     marginBottom: SPACING.lg,
   },
 });

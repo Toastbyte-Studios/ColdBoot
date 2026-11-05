@@ -172,8 +172,8 @@ describe.each([
     const all = tree.root
       .findAllByType(RNText)
       .map((node) => React.Children.toArray(node.props.children).join(''));
+    // The entry's title is drawn by the app bar, not the screen.
     for (const expected of [
-      'Hypothermia',
       'SUMMARY',
       'STEPS',
       'DO NOT',

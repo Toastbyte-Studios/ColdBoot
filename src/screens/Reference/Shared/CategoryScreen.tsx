@@ -61,10 +61,8 @@ export default function CategoryScreen(): JSX.Element {
       );
   }, [title, data]);
 
-  const subtitle = `${entries.length} topic${entries.length === 1 ? '' : 's'}`;
-
   return (
-    <StackScreen title={title} subtitle={subtitle} note={disclaimer}>
+    <StackScreen title={title} note={disclaimer}>
       {entries.length === 0 ? (
         <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
           No topics found.

@@ -38,7 +38,6 @@ export default observer(function NotepadScreen() {
   return (
     <StackScreen
       title="Notepad"
-      subtitle={`${core.categories.length} categor${core.categories.length === 1 ? 'y' : 'ies'}`}
       actions={
         <>
           <IconButton

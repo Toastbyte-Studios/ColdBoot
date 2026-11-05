@@ -99,14 +99,7 @@ export default function ScenarioBookmarksScreen(): JSX.Element {
   const sorted = items.slice().sort((a, b) => a.title.localeCompare(b.title));
 
   return (
-    <StackScreen
-      title="Bookmarked Scenarios"
-      subtitle={
-        sorted.length > 0
-          ? `${sorted.length} saved scenario${sorted.length === 1 ? '' : 's'}`
-          : undefined
-      }
-    >
+    <StackScreen title="Bookmarked Scenarios">
       {/* DEV ONLY - Clear all bookmarks */}
       {__DEV__ && (
         <Text

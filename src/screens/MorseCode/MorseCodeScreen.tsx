@@ -41,7 +41,7 @@ const morseCodeTools: ToolType[] = [
  */
 export default function MorseCodeScreen() {
   return (
-    <StackScreen title="Morse Code" subtitle="4 tools">
+    <StackScreen title="Morse Code">
       <ToolList tools={morseCodeTools} scrollable={false} />
     </StackScreen>
   );

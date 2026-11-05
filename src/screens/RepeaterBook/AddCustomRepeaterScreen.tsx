@@ -98,7 +98,6 @@ const AddCustomRepeaterScreen = observer((): JSX.Element => {
   return (
     <StackScreen
       title={isEditing ? 'Edit Repeater' : 'Add Repeater'}
-      subtitle="Saved on this device only"
       keyboardShouldPersistTaps="handled"
     >
       <FormCard testID="custom-repeater-form">

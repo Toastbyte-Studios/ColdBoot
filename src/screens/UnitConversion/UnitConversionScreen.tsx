@@ -26,10 +26,7 @@ export default function UnitConversionScreen() {
   };
 
   return (
-    <StackScreen
-      title="Unit Conversion"
-      subtitle={`${conversionCategories.length} converters · all offline`}
-    >
+    <StackScreen title="Unit Conversion">
       <GroupContainer>
         {conversionCategories.map((category, index) => (
           <ModuleRow

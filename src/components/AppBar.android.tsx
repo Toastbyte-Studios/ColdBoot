@@ -28,6 +28,9 @@ const MARK_SIZE = 32;
  *
  * The old help button is gone from here: it lives in Settings → Help, which is
  * where Material puts an action that is neither frequent nor urgent.
+ *
+ * On a nested screen the leading mark becomes Material's up arrow and the
+ * title is the screen's, with its subtitle (when it has one) beneath.
  */
 export default function AppBar({
   logoRef,
@@ -35,6 +38,8 @@ export default function AppBar({
   onHomePress,
   onSearchPress,
   onSettingsPress,
+  header,
+  onBackPress,
 }: AppBarProps) {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
@@ -48,20 +53,61 @@ export default function AppBar({
         { paddingTop: insets.top, minHeight: BAR_HEIGHT + insets.top },
       ]}
     >
-      <Pressable
-        ref={logoRef}
-        onPress={onHomePress}
-        accessibilityLabel="Go to home screen"
-        accessibilityRole="button"
-        android_ripple={{ color: rippleColor, borderless: true, radius: 24 }}
-        style={styles.mark}
-      >
-        <LogoHeader size={MARK_SIZE} />
-      </Pressable>
+      {header ? (
+        <>
+          <IconButton
+            name="arrow-back"
+            size={24}
+            color={COLORS.PRIMARY_DARK}
+            onPress={header.onBack ?? onBackPress ?? (() => {})}
+            accessibilityLabel="Go back"
+          />
+          <View style={styles.titles}>
+            <Text
+              style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
+              numberOfLines={1}
+              accessibilityRole="header"
+            >
+              {header.title}
+            </Text>
+            {header.subtitle ? (
+              <Text
+                style={[styles.subtitle, { color: COLORS.MUTED }]}
+                numberOfLines={1}
+              >
+                {header.subtitle}
+              </Text>
+            ) : null}
+          </View>
+        </>
+      ) : (
+        <>
+          <Pressable
+            ref={logoRef}
+            onPress={onHomePress}
+            accessibilityLabel="Go to home screen"
+            accessibilityRole="button"
+            android_ripple={{
+              color: rippleColor,
+              borderless: true,
+              radius: 24,
+            }}
+            style={styles.mark}
+          >
+            <LogoHeader size={MARK_SIZE} />
+          </Pressable>
 
-      <Text style={[styles.title, { color: COLORS.PRIMARY_DARK }]}>
-        ColdBoot
-      </Text>
+          <Text
+            style={[
+              styles.title,
+              styles.titleFill,
+              { color: COLORS.PRIMARY_DARK },
+            ]}
+          >
+            ColdBoot
+          </Text>
+        </>
+      )}
 
       <View ref={searchRef} collapsable={false}>
         <IconButton
@@ -95,8 +141,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     borderRadius: MARK_SIZE / 2,
   },
-  title: {
+  titles: {
     flex: 1,
+  },
+  titleFill: {
+    flex: 1,
+  },
+  subtitle: {
+    fontSize: 14,
+    marginTop: 1,
+  },
+  title: {
     fontSize: 21,
     // The design asks for Bitter-SemiBold; only Regular and Bold are bundled,
     // and fontWeight is ignored once a named family is set, so the title takes

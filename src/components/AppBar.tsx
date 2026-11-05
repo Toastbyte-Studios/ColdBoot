@@ -9,6 +9,7 @@ import { withAlpha } from '../theme/colorUtils';
 import ConnectionDot from './ConnectionDot';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
+import type { ScreenHeader } from '../navigation/ScreenHeaderContext';
 
 export type AppBarProps = {
   /** Spotlit by the tutorial. */
@@ -18,6 +19,14 @@ export type AppBarProps = {
   onHomePress: () => void;
   onSearchPress: () => void;
   onSettingsPress: () => void;
+  /**
+   * The nested screen's header. Absent on Home, which keeps the logo,
+   * wordmark and date; present everywhere else, where a back control takes
+   * the logo's place and the screen's title takes the wordmark's.
+   */
+  header?: ScreenHeader | null;
+  /** Back, when the screen has no `onBack` of its own. */
+  onBackPress?: () => void;
 };
 
 /** Edge length of the bar's circular icon buttons. */
@@ -34,6 +43,12 @@ const NAV_BUTTON = 34;
  * iOS keeps the date inside the bar, under the wordmark, the way a nav-bar
  * subtitle sits. Android overrides this file: Material puts a supporting line
  * in the content instead, where it scrolls away.
+ *
+ * On a nested screen the bar becomes that screen's navigation bar: a back
+ * control where the logo was, the screen's title where the wordmark was, and
+ * the screen's subtitle (when it has one worth showing) where the date was.
+ * The large title that used to sit under the bar is gone, so the content
+ * starts right below it.
  */
 export default function AppBar({
   logoRef,
@@ -41,6 +56,8 @@ export default function AppBar({
   onHomePress,
   onSearchPress,
   onSettingsPress,
+  header,
+  onBackPress,
 }: AppBarProps) {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
@@ -56,30 +73,69 @@ export default function AppBar({
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + 14 }]}>
-      <Pressable
-        ref={logoRef}
-        onPress={onHomePress}
-        accessibilityLabel="Go to home screen"
-        accessibilityRole="button"
-        style={({ pressed }) => (pressed ? styles.pressed : null)}
-      >
-        <LogoHeader size={NAV_BUTTON} />
-      </Pressable>
-
-      <View style={styles.titles}>
-        <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
-          ColdBoot
-        </Text>
-        <View style={styles.dateRow}>
-          <Text
-            style={[styles.date, { color: COLORS.MUTED }]}
-            accessibilityLabel={`Current date: ${currentDate}`}
+      {header ? (
+        <>
+          <Pressable
+            onPress={header.onBack ?? onBackPress}
+            accessibilityRole="button"
+            accessibilityLabel="Go back"
+            hitSlop={6}
+            style={({ pressed }) => [navButtonStyle, pressed && styles.pressed]}
           >
-            {currentDate}
-          </Text>
-          <ConnectionDot size={7} />
-        </View>
-      </View>
+            <Ionicons
+              name="chevron-back-outline"
+              size={19}
+              color={COLORS.BRAND}
+              style={styles.backGlyph}
+            />
+          </Pressable>
+
+          <View style={styles.titles}>
+            <Text
+              style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}
+              numberOfLines={1}
+              accessibilityRole="header"
+            >
+              {header.title}
+            </Text>
+            {header.subtitle ? (
+              <Text
+                style={[styles.date, styles.subtitle, { color: COLORS.MUTED }]}
+                numberOfLines={1}
+              >
+                {header.subtitle}
+              </Text>
+            ) : null}
+          </View>
+        </>
+      ) : (
+        <>
+          <Pressable
+            ref={logoRef}
+            onPress={onHomePress}
+            accessibilityLabel="Go to home screen"
+            accessibilityRole="button"
+            style={({ pressed }) => (pressed ? styles.pressed : null)}
+          >
+            <LogoHeader size={NAV_BUTTON} />
+          </Pressable>
+
+          <View style={styles.titles}>
+            <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
+              ColdBoot
+            </Text>
+            <View style={styles.dateRow}>
+              <Text
+                style={[styles.date, { color: COLORS.MUTED }]}
+                accessibilityLabel={`Current date: ${currentDate}`}
+              >
+                {currentDate}
+              </Text>
+              <ConnectionDot size={7} />
+            </View>
+          </View>
+        </>
+      )}
 
       <Pressable
         ref={searchRef}
@@ -128,6 +184,13 @@ const styles = StyleSheet.create({
   date: {
     fontSize: 11.5,
     fontWeight: '500',
+  },
+  subtitle: {
+    marginTop: 1,
+  },
+  backGlyph: {
+    // The chevron's visual centre sits right of its box; nudge it back.
+    marginLeft: -2,
   },
   navButton: {
     width: NAV_BUTTON,

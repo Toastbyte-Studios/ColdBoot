@@ -63,11 +63,7 @@ export default function ScenarioCategoryScreen(): JSX.Element {
     );
 
   return (
-    <StackScreen
-      title={title}
-      subtitle={`${sorted.length} scenario${sorted.length === 1 ? '' : 's'}`}
-      note={disclaimer}
-    >
+    <StackScreen title={title} note={disclaimer}>
       {sorted.length === 0 ? (
         <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
           No scenarios found.

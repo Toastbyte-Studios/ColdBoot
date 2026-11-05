@@ -38,7 +38,6 @@ export default observer(function PantryScreen() {
   return (
     <StackScreen
       title="Pantry"
-      subtitle={`${pantry.categories.length} categor${pantry.categories.length === 1 ? 'y' : 'ies'}`}
       actions={
         <>
           <IconButton

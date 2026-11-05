@@ -13,7 +13,7 @@ import { natoPhoneticAlphabet, natoPhoneticNumerals } from './natoPhonetic';
  */
 export default function NatoPhoneticScreen() {
   return (
-    <StackScreen title="NATO Phonetic" subtitle="26 letters, 10 numerals">
+    <StackScreen title="NATO Phonetic">
       <SectionEyebrow>Letters</SectionEyebrow>
       <ReferenceTable
         rows={natoPhoneticAlphabet.map((item) => ({

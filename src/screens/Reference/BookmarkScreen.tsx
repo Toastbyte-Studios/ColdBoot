@@ -114,14 +114,7 @@ export default function BookmarkScreen(): JSX.Element {
   );
 
   return (
-    <StackScreen
-      title="Bookmarks"
-      subtitle={
-        items.length > 0
-          ? `${items.length} saved topic${items.length === 1 ? '' : 's'}`
-          : undefined
-      }
-    >
+    <StackScreen title="Bookmarks">
       {/* DEV ONLY - Clear all bookmarks */}
       {__DEV__ && (
         <Text

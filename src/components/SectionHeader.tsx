@@ -24,7 +24,7 @@ type Props = TextProps & {
    */
   containerStyle?: StyleProp<ViewStyle>;
   title?: string;
-  /** Secondary line under the title, e.g. "Six tools · all offline". */
+  /** Secondary line under the title, e.g. a note's date and category. */
   subtitle?: string;
   /** Rendered at the trailing edge of the title row — a module glyph, an action. */
   trailing?: React.ReactNode;

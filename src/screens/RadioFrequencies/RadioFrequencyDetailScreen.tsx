@@ -103,9 +103,9 @@ export default function RadioFrequencyDetailScreen(): JSX.Element {
   return (
     <StackScreen
       title={frequencyData.title}
-      subtitle={`${frequencyData.channels.length} channels · ${
+      subtitle={
         frequencyData.requiresLicense ? 'Licence required' : 'Licence-free'
-      }`}
+      }
       trailing={
         <IconButton
           name="information-circle-outline"

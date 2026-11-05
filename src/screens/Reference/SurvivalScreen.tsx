@@ -62,7 +62,6 @@ export default function SurvivalScreen(): JSX.Element {
   return (
     <CategoryList
       title="Survival Guide"
-      icon="leaf-outline"
       disclaimer={disclaimer}
       categories={survivalCategories}
     />

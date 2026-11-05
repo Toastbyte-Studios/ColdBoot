@@ -86,7 +86,6 @@ export default observer(function RallyPointsScreen() {
   return (
     <StackScreen
       title="Rally Points"
-      subtitle={`${rallyPoints.length} location${rallyPoints.length === 1 ? '' : 's'}`}
       trailing={
         <>
           <IconButton

@@ -1,6 +1,7 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
 import { StyleSheet, View } from 'react-native';
+import { useScreenHeader } from '../../navigation/ScreenHeaderContext';
 import { useSignalingStore } from '../../stores/StoreContext';
 
 /**
@@ -17,6 +18,7 @@ import { useSignalingStore } from '../../stores/StoreContext';
  */
 const NightvisionScreenImpl = () => {
   const core = useSignalingStore();
+  useScreenHeader({ title: 'Nightvision' });
 
   return (
     <View style={styles.container}>

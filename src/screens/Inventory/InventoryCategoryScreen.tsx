@@ -78,7 +78,6 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
   return (
     <StackScreen
       title={category}
-      subtitle={`${sortedItems.length} item${sortedItems.length === 1 ? '' : 's'}`}
       trailing={
         <IconButton
           name="add-circle-outline"

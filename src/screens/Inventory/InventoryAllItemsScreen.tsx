@@ -46,10 +46,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
   };
 
   return (
-    <StackScreen
-      title="All Inventory Items"
-      subtitle={`${allItems.length} item${allItems.length === 1 ? '' : 's'}`}
-    >
+    <StackScreen title="All Inventory Items">
       {allItems.length === 0 ? (
         <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
           No inventory items yet. Add items from a category.

@@ -185,10 +185,7 @@ export default observer(
     };
 
     return (
-      <StackScreen
-        title="Expiration Tracker"
-        subtitle={`${filteredItems.length} item${filteredItems.length === 1 ? '' : 's'}`}
-      >
+      <StackScreen title="Expiration Tracker">
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}

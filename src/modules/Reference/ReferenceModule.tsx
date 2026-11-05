@@ -20,7 +20,6 @@ export default function ReferenceModule() {
   return (
     <ModuleScreen
       title="Reference"
-      icon="book-outline"
       tools={REFERENCE_TOOLS}
       trailing={
         <IconButton
