@@ -2,6 +2,7 @@ import {
   accuracyTone,
   batteryEstimate,
   batteryTone,
+  connectionSummary,
   formatMinutes,
   fixAgeTone,
   formatAge,
@@ -86,5 +87,68 @@ describe('battery formatters', () => {
       label: 'Time left',
       value: 'Calculating…',
     });
+  });
+});
+
+describe('connectionSummary', () => {
+  it('reports checking before NetInfo answers', () => {
+    expect(connectionSummary(null)).toMatchObject({
+      status: 'Checking…',
+      tone: 'neutral',
+    });
+  });
+
+  it('describes Wi-Fi with signal strength', () => {
+    expect(
+      connectionSummary({
+        type: 'wifi',
+        isConnected: true,
+        isInternetReachable: true,
+        details: { strength: 71.6, isConnectionExpensive: false },
+      }),
+    ).toEqual({
+      status: 'Online',
+      tone: 'good',
+      connection: 'Wi-Fi',
+      carrier: null,
+      signal: 72,
+      metered: false,
+    });
+  });
+
+  it('describes cellular with generation and carrier', () => {
+    expect(
+      connectionSummary({
+        type: 'cellular',
+        isConnected: true,
+        isInternetReachable: true,
+        details: {
+          cellularGeneration: '5g',
+          carrier: 'Verizon',
+          isConnectionExpensive: true,
+        },
+      }),
+    ).toMatchObject({
+      connection: 'Cellular · 5G',
+      carrier: 'Verizon',
+      signal: null,
+      metered: true,
+    });
+  });
+
+  it('calls out a connection that cannot reach the internet', () => {
+    expect(
+      connectionSummary({
+        type: 'wifi',
+        isConnected: true,
+        isInternetReachable: false,
+      }),
+    ).toMatchObject({ status: 'Connected, no internet', tone: 'fair' });
+  });
+
+  it('is offline with no connection type', () => {
+    expect(
+      connectionSummary({ type: 'none', isConnected: false, details: null }),
+    ).toMatchObject({ status: 'Offline', tone: 'poor', connection: 'None' });
   });
 });

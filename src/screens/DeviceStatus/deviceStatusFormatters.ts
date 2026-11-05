@@ -125,3 +125,90 @@ export function batteryEstimate(
     value: minutes == null ? 'Calculating…' : `About ${formatMinutes(minutes)}`,
   };
 }
+
+/**
+ * The parts of NetInfo's state the Connectivity section reads. Structural, so
+ * the formatter can be tested with plain objects.
+ */
+export type NetSnapshot = {
+  type: string;
+  isConnected: boolean | null;
+  isInternetReachable?: boolean | null;
+  details?: {
+    cellularGeneration?: string | null;
+    carrier?: string | null;
+    strength?: number | null;
+    isConnectionExpensive?: boolean;
+  } | null;
+};
+
+const CONNECTION_NAMES: Record<string, string> = {
+  wifi: 'Wi-Fi',
+  cellular: 'Cellular',
+  ethernet: 'Ethernet',
+  bluetooth: 'Bluetooth',
+  vpn: 'VPN',
+  wimax: 'WiMAX',
+  other: 'Other',
+};
+
+export type ConnectionSummary = {
+  status: string;
+  tone: StatusTone;
+  /** "Wi-Fi", "Cellular · 5G", "None". */
+  connection: string;
+  carrier: string | null;
+  /** Wi-Fi signal 0–100; Android only, null elsewhere. */
+  signal: number | null;
+  metered: boolean;
+};
+
+/**
+ * What the device is connected to. "Connected, no internet" is its own state:
+ * a phone on a trailhead's captive Wi-Fi, or with one bar of signal, says
+ * Connected but cannot reach anything, which is the case worth spelling out.
+ */
+export function connectionSummary(net: NetSnapshot | null): ConnectionSummary {
+  if (!net) {
+    return {
+      status: 'Checking…',
+      tone: 'neutral',
+      connection: 'Unknown',
+      carrier: null,
+      signal: null,
+      metered: false,
+    };
+  }
+
+  const details = net.details ?? null;
+  const isOnline = net.isConnected === true;
+  const noInternet = isOnline && net.isInternetReachable === false;
+
+  let connection = 'None';
+  if (isOnline) {
+    connection = CONNECTION_NAMES[net.type] ?? 'Unknown';
+    const generation = details?.cellularGeneration;
+    if (net.type === 'cellular' && generation) {
+      connection += ` · ${generation.toUpperCase()}`;
+    }
+  }
+
+  return {
+    status: !isOnline
+      ? 'Offline'
+      : noInternet
+        ? 'Connected, no internet'
+        : 'Online',
+    tone: !isOnline ? 'poor' : noInternet ? 'fair' : 'good',
+    connection,
+    carrier:
+      isOnline && net.type === 'cellular' && details?.carrier
+        ? details.carrier
+        : null,
+    signal:
+      isOnline && net.type === 'wifi' && typeof details?.strength === 'number'
+        ? Math.max(0, Math.min(100, Math.round(details.strength)))
+        : null,
+    metered: isOnline && details?.isConnectionExpensive === true,
+  };
+}
