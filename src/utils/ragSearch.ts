@@ -233,6 +233,45 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     related_screen_label: 'Open NATO Phonetic',
   },
   {
+    id: 'synthetic_cold_weather',
+    category: 'Core',
+    title: 'Cold Weather',
+    summary:
+      'Keep your phone working in freezing weather: keep it warm against your body, never charge it below freezing, and cut battery drain. Links to hypothermia, frostbite and winter shelter guidance.',
+    difficulty: 'basic',
+    tags: [
+      'cold',
+      'freezing',
+      'winter',
+      'snow',
+      'battery',
+      'phone',
+      'hypothermia',
+      'frostbite',
+      'warm',
+      'power',
+    ],
+    steps: [
+      'Carry the phone in an inside pocket, against your body',
+      'Warm a cold phone slowly with body heat, not a stove or fire',
+      'Do not charge a phone or power bank that is below freezing',
+      'Turn on Low Power Mode or Battery Saver',
+      'With no signal, use Airplane Mode; GPS keeps working',
+    ],
+    do_not: [
+      'Charge a frozen battery',
+      'Warm the phone on a heater, stove or fire',
+    ],
+    watch_for: [
+      'The phone switching off with charge still showing; warm it and it comes back',
+    ],
+    notes: [
+      'Phones are rated for use from 0 to 35 °C (32 to 95 °F); below that the battery sags until it warms up',
+    ],
+    related_screen: 'ColdWeather',
+    related_screen_label: 'Open Cold Weather',
+  },
+  {
     id: 'synthetic_radio_frequencies',
     category: 'Communications',
     title: 'Radio Frequency References',

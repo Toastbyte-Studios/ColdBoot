@@ -44,7 +44,9 @@
         "Wind chill dramatically speeds heat loss; prioritize wind protection even when temperatures seem mild.",
         "Insulation works best when dry and fluffy—regularly shake out lofted materials.",
         "Shelter and fire become critical if you are cold AND wet."
-      ]
+      ],
+      "related_screen": "ColdWeather",
+      "related_screen_label": "Open Cold Weather"
     },
     {
       "id": "cold_weather_frostbite",
@@ -354,7 +356,9 @@
       "notes": [
         "In freezing conditions, keep water bottles insulated or upside down to prevent freezing at the opening.",
         "Snow can be melted for water but requires heat; avoid eating snow directly, as it lowers core temperature."
-      ]
+      ],
+      "related_screen": "ColdWeather",
+      "related_screen_label": "Open Cold Weather"
     },
     {
       "id": "season_spring_thaw_hazards",

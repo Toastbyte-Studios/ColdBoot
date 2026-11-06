@@ -50,6 +50,12 @@ export const MODULES: ToolType[] = [
 
 export const CORE_TOOLS: ToolType[] = [
   {
+    name: 'Cold Weather',
+    screen: 'ColdWeather',
+    icon: 'snow-outline',
+    id: 'core_cold_weather',
+  },
+  {
     name: 'Device Status',
     screen: 'DeviceStatus',
     icon: 'speedometer-outline',
