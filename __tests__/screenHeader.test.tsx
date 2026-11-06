@@ -152,7 +152,7 @@ describe('app bar header', () => {
 
   it('keeps the last header for a route that registers none (the modal)', async () => {
     mockActiveRoute = { name: 'UnitConversion', key: 'uc' };
-    const ui = (
+    const ui = () => (
       <ScreenHeaderProvider>
         <AppBarProbe />
         <Route routeKey="uc">
@@ -160,11 +160,11 @@ describe('app bar header', () => {
         </Route>
       </ScreenHeaderProvider>
     );
-    const tree = await render(ui);
+    const tree = await render(ui());
     expect(shown?.title).toBe('Unit Conversion');
 
     mockActiveRoute = { name: 'ConversionCategory', key: 'modal' };
-    await ReactTestRenderer.act(async () => tree.update(ui));
+    await ReactTestRenderer.act(async () => tree.update(ui()));
     expect(shown?.title).toBe('Unit Conversion');
   });
 
