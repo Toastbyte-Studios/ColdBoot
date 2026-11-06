@@ -65,6 +65,7 @@ src/
 - Screens pushed below a module should use `StackScreen` for the shared page frame (note, toolbar, Android bleed, footer clearance). Its `title`, `subtitle` and `onBack` are shown in the **app bar**, not in the page: on any screen but Home the bar swaps the logo for a back control, the wordmark for the title and the date for the subtitle (`navigation/ScreenHeaderContext`)
 - A subtitle is a fact about the screen (a note's date and category, a live reading, a repeater's distance). Never a count ("12 items", "4 tools") and never a reminder that it works offline; leave it out instead
 - `trailing` / `actions` buttons render in `ScreenToolbar`, a row at the top of the content
+- Touching and holding Back opens a menu of the screens behind (nearest first, Home last; `navigation/backDestinations`), titled from what each screen registered, so give every screen a real `title`
 - Lists of tappable tools/items should use `GroupContainer` + `ModuleRow variant="tool"`
 - Card content should use `cardSurface(COLORS)` and carry its own `SCREEN_GUTTER` on Android
 - Use `SectionEyebrow` for labels inside a screen. `SectionHeader` is only used where the app bar can't be seen (the conversion modal)

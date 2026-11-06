@@ -1,8 +1,10 @@
-import React from 'react';
+import { MenuComponentRef, MenuView } from '@react-native-menu/menu';
+import React, { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
+import { DARK_COLORS } from '../theme/colors';
 import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
@@ -40,7 +42,13 @@ export default function AppBar({
   onSettingsPress,
   header,
   onBackPress,
+  backHistory = [],
+  onBackHistorySelect,
 }: AppBarProps) {
+  // The history menu is opened from the button's own long press (show() is
+  // Android only), so a tap can never open it by mistake. The menu sits
+  // behind the button just to anchor where it pops up.
+  const historyMenu = useRef<MenuComponentRef>(null);
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
   const rippleColor = useRippleColor();
@@ -55,13 +63,42 @@ export default function AppBar({
     >
       {header ? (
         <>
-          <IconButton
-            name="arrow-back"
-            size={24}
-            color={COLORS.PRIMARY_DARK}
-            onPress={header.onBack ?? onBackPress ?? (() => {})}
-            accessibilityLabel="Go back"
-          />
+          <View>
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <MenuView
+                ref={historyMenu}
+                style={StyleSheet.absoluteFill}
+                actions={backHistory.map((destination) => ({
+                  id: destination.id,
+                  title: destination.title,
+                }))}
+                onPressAction={({ nativeEvent }) => {
+                  const picked = backHistory.find(
+                    (destination) => destination.id === nativeEvent.event,
+                  );
+                  if (picked) onBackHistorySelect?.(picked);
+                }}
+                themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
+              />
+            </View>
+            <IconButton
+              name="arrow-back"
+              size={24}
+              color={COLORS.PRIMARY_DARK}
+              onPress={header.onBack ?? onBackPress ?? (() => {})}
+              onLongPress={
+                backHistory.length > 0
+                  ? () => historyMenu.current?.show()
+                  : undefined
+              }
+              accessibilityLabel="Go back"
+              accessibilityHint={
+                backHistory.length > 1
+                  ? 'Long press to jump to an earlier screen'
+                  : undefined
+              }
+            />
+          </View>
           <View style={styles.titles}>
             <Text
               style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
