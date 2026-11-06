@@ -1,15 +1,14 @@
 import React from 'react';
-import { Text as RNText } from 'react-native';
+import * as ReactNative from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import {
   STAYING_WARM_ENTRY_IDS,
   stayingWarmEntries,
 } from '../src/screens/ColdWeather/coldWeatherContent';
-import ColdWeatherScreen, {
-  batterySummary,
-} from '../src/screens/ColdWeather/ColdWeatherScreen';
 
 const mockNavigate = jest.fn();
+const mockSendIntent = jest.fn();
+const mockOpenSettings = jest.fn();
 const mockCore = {
   batteryLevel: 0.42 as number | null,
   isCharging: false as boolean | null,
@@ -39,6 +38,31 @@ jest.mock('../src/components/StackScreen', () => {
   );
 });
 
+function loadScreen(os: 'android' | 'ios') {
+  jest.resetModules();
+  jest.doMock('react', () => React);
+  jest.doMock(
+    'react-native',
+    () =>
+      new Proxy(ReactNative, {
+        get(target, property) {
+          if (property === 'Linking') {
+            return {
+              ...Reflect.get(target, property, target),
+              openSettings: mockOpenSettings,
+              sendIntent: mockSendIntent,
+            };
+          }
+          if (property === 'Platform') {
+            return { ...Reflect.get(target, property, target), OS: os };
+          }
+          return Reflect.get(target, property, target);
+        },
+      }),
+  );
+  return require('../src/screens/ColdWeather/ColdWeatherScreen');
+}
+
 describe('stayingWarmEntries', () => {
   it('finds every linked Reference entry', () => {
     const entries = stayingWarmEntries();
@@ -50,6 +74,8 @@ describe('stayingWarmEntries', () => {
 });
 
 describe('batterySummary', () => {
+  const { batterySummary } = loadScreen('android');
+
   it('reads level and time left', () => {
     expect(batterySummary(0.42, false, 190)).toBe(
       '42% · about 3 hr 10 min left',
@@ -69,7 +95,8 @@ describe('batterySummary', () => {
 });
 
 describe('ColdWeatherScreen', () => {
-  async function render() {
+  async function render(os: 'android' | 'ios' = 'android') {
+    const { default: ColdWeatherScreen } = loadScreen(os);
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(<ColdWeatherScreen />);
@@ -77,10 +104,14 @@ describe('ColdWeatherScreen', () => {
     return tree;
   }
 
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('shows the battery, both advice lists and the staying-warm links', async () => {
     const tree = await render();
     const all = tree.root
-      .findAllByType(RNText)
+      .findAllByType(ReactNative.Text)
       .map((node) => React.Children.toArray(node.props.children).join(''));
 
     expect(all).toContain('42% · about 3 hr 10 min left');
@@ -106,5 +137,55 @@ describe('ColdWeatherScreen', () => {
         entry: expect.objectContaining({ id: 'cold_weather_frostbite' }),
       }),
     );
+  });
+
+  it('opens Android Battery Saver settings', async () => {
+    mockSendIntent.mockResolvedValueOnce(undefined);
+    const tree = await render('android');
+    const row = tree.root.find(
+      (node) =>
+        node.props.accessibilityRole === 'button' &&
+        node.props.accessibilityLabel === 'Open Battery Saver settings' &&
+        typeof node.props.onPress === 'function',
+    );
+
+    await ReactTestRenderer.act(async () => row.props.onPress());
+
+    expect(mockSendIntent).toHaveBeenCalledWith(
+      'android.settings.BATTERY_SAVER_SETTINGS',
+    );
+    expect(mockOpenSettings).not.toHaveBeenCalled();
+  });
+
+  it('falls back to Settings when the Android Battery Saver intent fails', async () => {
+    mockSendIntent.mockRejectedValueOnce(new Error('Unavailable'));
+    const tree = await render('android');
+    const row = tree.root.find(
+      (node) =>
+        node.props.accessibilityRole === 'button' &&
+        node.props.accessibilityLabel === 'Open Battery Saver settings' &&
+        typeof node.props.onPress === 'function',
+    );
+
+    await ReactTestRenderer.act(async () => {
+      row.props.onPress();
+      await Promise.resolve();
+    });
+
+    expect(mockSendIntent).toHaveBeenCalledWith(
+      'android.settings.BATTERY_SAVER_SETTINGS',
+    );
+    expect(mockOpenSettings).toHaveBeenCalled();
+  });
+
+  it('does not show the Battery Saver row on iOS', async () => {
+    const tree = await render('ios');
+
+    expect(
+      tree.root.findAll(
+        (node) =>
+          node.props.accessibilityLabel === 'Open Battery Saver settings',
+      ),
+    ).toHaveLength(0);
   });
 });
