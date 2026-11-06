@@ -3,9 +3,13 @@ import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import { Text } from '../../../components/ScaledText';
 import { useTheme } from '../../../hooks/useTheme';
-import { useCoreStore } from '../../../stores/StoreContext';
+import { useCoreStore, useSettingsStore } from '../../../stores/StoreContext';
 import { RADIUS, SPACING, TEXT_GUTTER } from '../../../theme';
 import { withAlpha } from '../../../theme/colorUtils';
+import {
+  batteryTemperatureStatus,
+  formatTemperature,
+} from '../../../utils/batteryTemperature';
 import { batteryEstimate, batteryTone } from '../deviceStatusFormatters';
 import StatusRow, { toneColor } from './StatusRow';
 import StatusSection from './StatusSection';
@@ -25,6 +29,10 @@ const SAVER_HINT_LEVEL = 0.3;
 const BatterySection = observer(() => {
   const COLORS = useTheme();
   const core = useCoreStore();
+  const settings = useSettingsStore();
+  const temperatureC = core.batteryTemperatureC;
+  const temperature =
+    temperatureC == null ? null : batteryTemperatureStatus(temperatureC);
   const level = core.batteryLevel;
   const charging = core.isCharging;
   const tone = batteryTone(level, charging);
@@ -108,8 +116,18 @@ const BatterySection = observer(() => {
             : undefined
         }
         tone={suggestSaver ? 'fair' : undefined}
-        isLast
+        isLast={temperature === null}
       />
+      {temperatureC != null && temperature ? (
+        // Android only: iOS doesn't expose the battery's temperature.
+        <StatusRow
+          label="Temperature"
+          value={formatTemperature(temperatureC, settings.measurementSystem)}
+          detail={temperature.label}
+          tone={temperature.tone}
+          isLast
+        />
+      ) : null}
     </StatusSection>
   );
 });

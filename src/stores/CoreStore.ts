@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
+import { readBatteryTemperature } from '../utils/batteryTemperature';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
 
 /** GPS poll interval normally, and in Cold mode. */
@@ -35,6 +36,8 @@ export class CoreStore {
   isCharging: boolean | null = null;
   /** iOS Low Power Mode / Android Battery Saver; null until first sampled. */
   lowPowerMode: boolean | null = null;
+  /** Battery temperature in °C; Android only, null on iOS or until sampled. */
+  batteryTemperatureC: number | null = null;
   batteryEstimateMinutes: number | null = null;
   private lastBatterySample: { level: number; at: number } | null = null;
   private batteryQuickIv: ReturnType<typeof setInterval> | null = null;
@@ -89,6 +92,13 @@ export class CoreStore {
    * @returns {Promise<void>} Resolves when the sampling is complete.
    */
   private sampleBattery = async (): Promise<void> => {
+    // Read on its own, so a failure reading the level or power state below
+    // doesn't lose it. Never throws; null on iOS.
+    const temperature = await readBatteryTemperature();
+    runInAction(() => {
+      this.batteryTemperatureC = temperature;
+    });
+
     try {
       const level = await DeviceInfo.getBatteryLevel();
       const power = await DeviceInfo.getPowerState();

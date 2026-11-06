@@ -18,6 +18,10 @@ import { useCoreStore, useSettingsStore } from '../../stores/StoreContext';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
+  batteryTemperatureStatus,
+  formatTemperature,
+} from '../../utils/batteryTemperature';
+import {
   KEEP_PHONE_WARM,
   MAKE_BATTERY_LAST,
   stayingWarmEntries,
@@ -81,6 +85,23 @@ const ColdWeatherScreen = observer(() => {
   const settings = useSettingsStore();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const entries = useMemo(() => stayingWarmEntries(), []);
+  // Android only: iOS doesn't expose the battery's temperature.
+  const temperature =
+    core.batteryTemperatureC == null
+      ? null
+      : {
+          text: formatTemperature(
+            core.batteryTemperatureC,
+            settings.measurementSystem,
+          ),
+          status: batteryTemperatureStatus(core.batteryTemperatureC),
+        };
+  const toneColor = (tone: 'good' | 'fair' | 'poor') =>
+    tone === 'poor'
+      ? COLORS.ERROR
+      : tone === 'fair'
+        ? COLORS.ACCENT
+        : COLORS.SUCCESS;
 
   return (
     <StackScreen title="Cold Weather">
@@ -125,6 +146,31 @@ const ColdWeatherScreen = observer(() => {
             In the cold this can fall faster than it says, then recover once the
             phone warms up.
           </Text>
+          {temperature ? (
+            <View
+              style={styles.temperature}
+              accessible
+              accessibilityLabel={`Battery temperature ${temperature.text}. ${
+                temperature.status.label
+              }.${
+                temperature.status.advice ? ` ${temperature.status.advice}` : ''
+              }`}
+            >
+              <Text
+                style={[
+                  styles.temperatureLine,
+                  { color: toneColor(temperature.status.tone) },
+                ]}
+              >
+                {`${temperature.text} · ${temperature.status.label}`}
+              </Text>
+              {temperature.status.advice ? (
+                <Text style={[styles.batteryNote, { color: COLORS.MUTED }]}>
+                  {temperature.status.advice}
+                </Text>
+              ) : null}
+            </View>
+          ) : null}
         </EntrySection>
 
         <EntrySection title="Keep your phone warm">
@@ -173,6 +219,13 @@ const styles = StyleSheet.create({
   battery: {
     fontSize: 22,
     fontFamily: 'Bitter-Bold',
+  },
+  temperature: {
+    marginTop: SPACING.md,
+  },
+  temperatureLine: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   batteryNote: {
     fontSize: 13.5,
