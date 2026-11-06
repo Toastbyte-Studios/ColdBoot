@@ -20,7 +20,12 @@ const setupRootStoreModule = async ({
   const mockBarometerStoreInstances: Array<{
     start: jest.Mock<Promise<void>, [Record<string, unknown>]>;
     stop: jest.Mock<void, []>;
+    setPaused: jest.Mock<void, [boolean]>;
   }> = [];
+  const mockCoreStoreInstances: Array<{
+    setGpsIntervalMs: jest.Mock<void, [number]>;
+  }> = [];
+  const mockSettingsStoreInstances: Array<{ coldMode: boolean }> = [];
 
   const makeDisposableStore = () =>
     class {
@@ -46,6 +51,7 @@ const setupRootStoreModule = async ({
     BarometerStore: class {
       start = jest.fn(async () => undefined);
       stop = jest.fn();
+      setPaused = jest.fn();
 
       constructor() {
         mockBarometerStoreInstances.push(
@@ -62,9 +68,18 @@ const setupRootStoreModule = async ({
     },
   }));
   jest.doMock('../src/stores/CoreStore', () => ({
+    GPS_INTERVAL_MS: 60_000,
+    COLD_MODE_GPS_INTERVAL_MS: 600_000,
     CoreStore: class {
       startDeviceStatusMonitoring = jest.fn();
+      setGpsIntervalMs = jest.fn();
       dispose = jest.fn();
+
+      constructor() {
+        mockCoreStoreInstances.push(
+          this as unknown as (typeof mockCoreStoreInstances)[number],
+        );
+      }
     },
   }));
   jest.doMock('../src/stores/DevToolsStore', () => ({
@@ -109,6 +124,11 @@ const setupRootStoreModule = async ({
   jest.doMock('../src/stores/SettingsStore', () => ({
     SettingsStore: class {
       loadSettings = jest.fn(async () => undefined);
+      coldMode = mockSettingsStoreInstances.length > 0;
+
+      constructor() {
+        mockSettingsStoreInstances.push(this);
+      }
     },
   }));
   jest.doMock('../src/stores/SignalingStore', () => ({
@@ -151,6 +171,7 @@ const setupRootStoreModule = async ({
   return {
     RootStore,
     mockBarometerStoreInstances,
+    mockCoreStoreInstances,
     mockWeatherOutlookStoreInstances,
   };
 };
@@ -181,5 +202,35 @@ describe('RootStore reset lifecycle', () => {
 
     expect(resetWeatherOutlookStore.start).not.toHaveBeenCalled();
     expect(resetBarometerStore.start).not.toHaveBeenCalled();
+  });
+
+  test('applies Cold mode to the fresh stores after a reset', async () => {
+    // The first SettingsStore has Cold mode off; the one reset creates has
+    // it on (see the SettingsStore mock).
+    const { RootStore, mockBarometerStoreInstances, mockCoreStoreInstances } =
+      await setupRootStoreModule({
+        notesDbSequence: [{ name: 'initial-db' }, { name: 'reset-db' }],
+      });
+
+    const rootStore = new RootStore();
+    await rootStore.startupPromise;
+
+    expect(mockCoreStoreInstances[0].setGpsIntervalMs).toHaveBeenLastCalledWith(
+      60_000,
+    );
+    expect(mockBarometerStoreInstances[0].setPaused).toHaveBeenLastCalledWith(
+      false,
+    );
+
+    rootStore.reset();
+    await rootStore.startupPromise;
+    await flushPromises();
+
+    const core = mockCoreStoreInstances[mockCoreStoreInstances.length - 1];
+    const barometer =
+      mockBarometerStoreInstances[mockBarometerStoreInstances.length - 1];
+    expect(core).not.toBe(mockCoreStoreInstances[0]);
+    expect(core.setGpsIntervalMs).toHaveBeenLastCalledWith(600_000);
+    expect(barometer.setPaused).toHaveBeenLastCalledWith(true);
   });
 });

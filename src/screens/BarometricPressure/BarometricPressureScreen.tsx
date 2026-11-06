@@ -52,7 +52,7 @@ const TREND_ICON: Record<PressureTrend, string> = {
 function BarometricPressureScreen() {
   const COLORS = useTheme();
   const settingsStore = useSettingsStore();
-  const { pressure, available, loading, history, error } =
+  const { pressure, available, paused, loading, history, error } =
     useBarometricPressure();
   const [windowHours, setWindowHours] = useState<WindowHours>(3);
 
@@ -116,6 +116,11 @@ function BarometricPressureScreen() {
         pressure !== null
           ? `${pressureValueStr} ${pressureUnitStr}`
           : 'Device sensor'
+      }
+      note={
+        paused
+          ? 'Paused while Cold mode is on, to save battery. Turn Cold mode off on the Cold Weather screen to resume readings.'
+          : undefined
       }
     >
       {loading && (

@@ -289,6 +289,36 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('setColdMode', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('is off by default', () => {
+      expect(settingsStore.coldMode).toBe(false);
+    });
+
+    it('turns on and saves the choice', async () => {
+      await settingsStore.setColdMode(true);
+
+      expect(settingsStore.coldMode).toBe(true);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('coldMode', ?)",
+        ['true'],
+      );
+    });
+
+    it('stays on across launches until turned off', async () => {
+      await settingsStore.setColdMode(true);
+
+      const relaunched = new SettingsStore();
+      await relaunched.initSettingsDb(mockDb);
+      await relaunched.loadSettings(mockDb);
+
+      expect(relaunched.coldMode).toBe(true);
+    });
+  });
+
   describe('shortcuts', () => {
     beforeEach(async () => {
       await settingsStore.initSettingsDb(mockDb);

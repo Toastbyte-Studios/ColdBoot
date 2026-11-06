@@ -50,7 +50,7 @@ const LocationSection = observer(() => {
         label="Last fix"
         value={formatAge(fix.timestamp, now)}
         detail={formatDateTime(new Date(fix.timestamp))}
-        tone={fixAgeTone(fix.timestamp, now)}
+        tone={fixAgeTone(fix.timestamp, now, core.gpsIntervalMs)}
       />
       <StatusRow
         label="Accuracy"

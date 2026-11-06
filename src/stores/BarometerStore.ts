@@ -33,6 +33,8 @@ export class BarometerStore {
   available: boolean = true;
   loading: boolean = true;
   error: string | null = null;
+  /** True while Cold mode has the sensor switched off to save battery. */
+  paused: boolean = false;
 
   private db: SQLiteDatabase | null = null;
   private subscription: { unsubscribe: () => void } | null = null;
@@ -46,7 +48,30 @@ export class BarometerStore {
     this.db = db;
     await this.initTable();
     await this.loadHistory();
-    this.subscribe();
+    if (this.paused) {
+      // No reading is coming; don't leave the screen waiting for one.
+      runInAction(() => {
+        this.loading = false;
+      });
+    } else {
+      this.subscribe();
+    }
+  }
+
+  /**
+   * Switches the sensor off (Cold mode) or back on. Readings already saved
+   * stay; while paused, none are added.
+   */
+  setPaused(paused: boolean): void {
+    if (paused === this.paused) return;
+    this.paused = paused;
+    if (paused) {
+      this.stop();
+      this.loading = false;
+    } else if (this.db && !this.subscription) {
+      this.loading = this.currentPressure === null;
+      this.subscribe();
+    }
   }
 
   stop(): void {
