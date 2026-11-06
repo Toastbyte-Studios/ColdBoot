@@ -53,7 +53,7 @@ export class BarometerStore {
       runInAction(() => {
         this.loading = false;
       });
-    } else {
+    } else if (!this.subscription) {
       this.subscribe();
     }
   }
