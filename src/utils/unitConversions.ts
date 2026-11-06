@@ -429,60 +429,13 @@ const lightConversions: ConversionUnit[] = [
   },
 ];
 
+// Alphabetical by name: the order the Unit Conversion list shows them.
 export const conversionCategories: ConversionCategory[] = [
-  {
-    id: 'length',
-    name: 'Length / Distance',
-    icon: 'resize-outline',
-    units: lengthConversions,
-  },
-  {
-    id: 'weight',
-    name: 'Weight / Mass',
-    icon: 'barbell-outline',
-    units: weightConversions,
-  },
-  {
-    id: 'volume',
-    name: 'Volume (Liquid)',
-    icon: 'water-outline',
-    units: volumeConversions,
-  },
-  {
-    id: 'temperature',
-    name: 'Temperature',
-    icon: 'thermometer-outline',
-    units: temperatureConversions,
-  },
   {
     id: 'area',
     name: 'Area',
     icon: 'square-outline',
     units: areaConversions,
-  },
-  {
-    id: 'speed',
-    name: 'Speed',
-    icon: 'speedometer-outline',
-    units: speedConversions,
-  },
-  {
-    id: 'pressure',
-    name: 'Pressure',
-    icon: 'fitness-outline',
-    units: pressureConversions,
-  },
-  {
-    id: 'energy',
-    name: 'Energy / Power',
-    icon: 'flash-outline',
-    units: energyConversions,
-  },
-  {
-    id: 'time',
-    name: 'Time',
-    icon: 'time-outline',
-    units: timeConversions,
   },
   {
     id: 'angles',
@@ -491,16 +444,64 @@ export const conversionCategories: ConversionCategory[] = [
     units: angleConversions,
   },
   {
+    id: 'energy',
+    name: 'Energy / Power',
+    icon: 'flash-outline',
+    units: energyConversions,
+  },
+  {
     id: 'fuel',
     name: 'Fuel & Efficiency',
     icon: 'car-outline',
     units: fuelConversions,
   },
   {
+    id: 'length',
+    name: 'Length / Distance',
+    icon: 'resize-outline',
+    units: lengthConversions,
+  },
+  {
     id: 'light',
     name: 'Light',
     icon: 'sunny-outline',
     units: lightConversions,
+  },
+  {
+    id: 'pressure',
+    name: 'Pressure',
+    icon: 'fitness-outline',
+    units: pressureConversions,
+  },
+  {
+    id: 'speed',
+    name: 'Speed',
+    icon: 'speedometer-outline',
+    units: speedConversions,
+  },
+  {
+    id: 'temperature',
+    name: 'Temperature',
+    icon: 'thermometer-outline',
+    units: temperatureConversions,
+  },
+  {
+    id: 'time',
+    name: 'Time',
+    icon: 'time-outline',
+    units: timeConversions,
+  },
+  {
+    id: 'volume',
+    name: 'Volume (Liquid)',
+    icon: 'water-outline',
+    units: volumeConversions,
+  },
+  {
+    id: 'weight',
+    name: 'Weight / Mass',
+    icon: 'barbell-outline',
+    units: weightConversions,
   },
 ];
 

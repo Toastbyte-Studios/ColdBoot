@@ -14,6 +14,10 @@ import DeviceInfo from 'react-native-device-info';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
 
+/** `locationError` when the user has not granted location access. */
+export const LOCATION_PERMISSION_DENIED = 'Location permission not granted';
+const LOCATION_PERMISSION_DENIED_CODE = 1;
+
 export class CoreStore {
   constructor() {
     makeAutoObservable(this, {}, { autoBind: true });
@@ -25,6 +29,8 @@ export class CoreStore {
   // Battery state
   batteryLevel: number | null = null;
   isCharging: boolean | null = null;
+  /** iOS Low Power Mode / Android Battery Saver; null until first sampled. */
+  lowPowerMode: boolean | null = null;
   batteryEstimateMinutes: number | null = null;
   private lastBatterySample: { level: number; at: number } | null = null;
   private batteryQuickIv: ReturnType<typeof setInterval> | null = null;
@@ -87,6 +93,8 @@ export class CoreStore {
       runInAction(() => {
         this.batteryLevel = level;
         this.isCharging = charging;
+        this.lowPowerMode =
+          typeof power.lowPowerMode === 'boolean' ? power.lowPowerMode : null;
       });
 
       if (this.lastBatterySample) {
@@ -261,7 +269,10 @@ export class CoreStore {
       },
       (err) => {
         runInAction(() => {
-          this.locationError = err.message;
+          this.locationError =
+            err.code === LOCATION_PERMISSION_DENIED_CODE
+              ? LOCATION_PERMISSION_DENIED
+              : err.message;
         });
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },
@@ -307,7 +318,7 @@ export class CoreStore {
       this.gpsIv = setInterval(() => this.gpsGetFix(), 60000);
     } else {
       runInAction(() => {
-        this.locationError = 'Location permission not granted';
+        this.locationError = LOCATION_PERMISSION_DENIED;
       });
     }
   }

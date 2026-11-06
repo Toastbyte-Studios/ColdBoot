@@ -92,6 +92,8 @@ covers it:
 | A note composer                   | `screens/Notepad/Shared/NoteEditor`                         |
 | Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                  |
 | Title a screen with its own frame | `navigation/ScreenHeaderContext` (`useScreenHeader`)        |
+| Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)      |
+| A row that shows a status colour  | `ModuleRow` with `iconColor`                                |
 
 ```tsx
 import { observer } from 'mobx-react-lite';

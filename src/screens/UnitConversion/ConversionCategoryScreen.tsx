@@ -16,7 +16,13 @@ import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
-import { RADIUS, SPACING, TEXT_GUTTER } from '../../theme';
+import {
+  RADIUS,
+  SCREEN_GUTTER,
+  SCREEN_INSET,
+  SPACING,
+  TEXT_GUTTER,
+} from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
   conversionCategories,
@@ -201,7 +207,11 @@ export default function ConversionCategoryScreen() {
 
         {/* Unit Selection */}
         <View style={styles.unitSelectorContainer}>
-          <ScrollView horizontal style={styles.unitSelector}>
+          <ScrollView
+            horizontal
+            style={styles.unitSelector}
+            contentContainerStyle={styles.unitSelectorContent}
+          >
             {category.units.map((unit, index) => (
               <Touchable
                 key={unit.id}
@@ -503,6 +513,15 @@ export default function ConversionCategoryScreen() {
   );
 }
 
+/**
+ * The modal opens outside the app frame that gives every other screen its
+ * side inset, so on iOS the headline supplies it: the frame's inset plus
+ * StackScreen's gutter, which puts the title where it sits everywhere else.
+ * Without it the large serif title ran into the sheet's rounded corner and
+ * its first letter was clipped.
+ */
+const IOS_EDGE = SCREEN_INSET + SCREEN_GUTTER;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -514,8 +533,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
   },
   headline: {
-    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-    paddingTop: SPACING.xs,
+    paddingHorizontal: isAndroid ? TEXT_GUTTER : IOS_EDGE,
+    paddingTop: isAndroid ? SPACING.xs : SPACING.lg,
     paddingBottom: SPACING.sm,
   },
   unitSelectorContainer: {
@@ -524,6 +543,11 @@ const styles = StyleSheet.create({
   unitSelector: {
     width: '100%',
     maxHeight: 50,
+  },
+  unitSelectorContent: {
+    // Lines the first chip up with the title; each chip adds its own
+    // SPACING.xs margin.
+    paddingHorizontal: (isAndroid ? TEXT_GUTTER : IOS_EDGE) - SPACING.xs,
   },
   unitButton: {
     minHeight: 44,

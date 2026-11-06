@@ -72,6 +72,7 @@ describe('OfflineMapLibraryStore', () => {
     await store.load();
 
     expect(store.hasLoaded).toBe(true);
+    expect(store.loadFailed).toBe(false);
     expect(store.loading).toBe(false);
     expect(store.packs).toHaveLength(2);
     expect(store.totalBytes).toBe(80 * MB);
@@ -86,6 +87,7 @@ describe('OfflineMapLibraryStore', () => {
 
     await expect(store.load()).rejects.toThrow('native failure');
     expect(store.hasLoaded).toBe(true);
+    expect(store.loadFailed).toBe(true);
     expect(store.loading).toBe(false);
   });
 

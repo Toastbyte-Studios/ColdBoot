@@ -52,6 +52,11 @@ export type ModuleRowProps = {
   variant?: keyof typeof TILE;
   /** Draws the divider below this row. Pass `false` for the last row in a group. */
   showSeparator?: boolean;
+  /**
+   * Colours the icon and its tile for a row that carries a status (a
+   * readiness check). Omit for ordinary rows, which use the brand colour.
+   */
+  iconColor?: string;
 };
 
 /**
@@ -82,6 +87,7 @@ export default function ModuleRow({
   onPress,
   variant = 'module',
   showSeparator = true,
+  iconColor,
 }: ModuleRowProps) {
   const COLORS = useTheme();
   const rippleColor = useRippleColor();
@@ -113,16 +119,21 @@ export default function ModuleRow({
                 width: tile.size,
                 height: tile.size,
                 borderRadius: tile.radius,
-                backgroundColor: isAndroid
-                  ? COLORS.SECONDARY_CONTAINER
-                  : withAlpha(COLORS.BRAND, 0.1),
+                backgroundColor: iconColor
+                  ? withAlpha(iconColor, 0.14)
+                  : isAndroid
+                    ? COLORS.SECONDARY_CONTAINER
+                    : withAlpha(COLORS.BRAND, 0.1),
               },
             ]}
           >
             <Ionicons
               name={icon}
               size={tile.glyph}
-              color={isAndroid ? COLORS.ON_SECONDARY_CONTAINER : COLORS.BRAND}
+              color={
+                iconColor ??
+                (isAndroid ? COLORS.ON_SECONDARY_CONTAINER : COLORS.BRAND)
+              }
             />
           </View>
 

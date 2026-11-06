@@ -31,6 +31,7 @@ import AppBar from './AppBar';
 import { HelpModal } from './HelpModal';
 import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
+import { SettingsSheetContext } from './SettingsSheetContext';
 import ShortcutBar from './ShortcutBar';
 import TutorialModal from './TutorialModal';
 import {
@@ -105,6 +106,10 @@ function AppShellBody({ children }: Props) {
     activeRouteName !== undefined &&
     FULL_SCREEN_ROUTES.has(activeRouteName);
   const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+  const settingsSheet = useMemo(
+    () => ({ openSettings: () => setIsSettingsVisible(true) }),
+    [],
+  );
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const [isAlertsVisible, setIsAlertsVisible] = useState(false);
   const [isTutorialVisible, setIsTutorialVisible] = useState(false);
@@ -278,7 +283,9 @@ function AppShellBody({ children }: Props) {
               />
             )}
 
-            <View style={styles.content}>{children}</View>
+            <SettingsSheetContext.Provider value={settingsSheet}>
+              <View style={styles.content}>{children}</View>
+            </SettingsSheetContext.Provider>
           </View>
 
           {isTutorialVisible && (
