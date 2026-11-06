@@ -19,6 +19,7 @@ const mockStores = {
     isCharging: false,
     lowPowerMode: false,
     batteryEstimateMinutes: 130,
+    batteryTemperatureC: -2 as number | null,
     storageFree: 40 * GB,
     storageTotal: 128 * GB,
     netInfo: {
@@ -154,6 +155,8 @@ describe('DeviceStatusScreen', () => {
     expect(all).toContain(
       'Low Power Mode. Off. Turn on in Settings to stretch the battery',
     );
+    // Android's battery temperature, when the platform reports one
+    expect(all).toContain('Temperature. −2 °C. Too cold to charge');
     // Connectivity
     expect(all).toContain(
       'Network. Offline. Every ColdBoot tool works without a connection',
@@ -193,6 +196,7 @@ describe('DeviceStatusScreen', () => {
       isCharging: null,
       lowPowerMode: null,
       batteryEstimateMinutes: null,
+      batteryTemperatureC: null,
       storageFree: null,
       storageTotal: null,
       netInfo: null,
@@ -203,6 +207,7 @@ describe('DeviceStatusScreen', () => {
     expect(all).toContain('GPS. Waiting for fix');
     expect(all).toContain('Network. Checking…');
     expect(all).toContain('Free space. Unknown');
+    expect(all).not.toContain('Temperature.');
   });
 
   it('does not treat a failed map read as an empty library', async () => {

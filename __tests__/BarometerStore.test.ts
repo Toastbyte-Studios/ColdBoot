@@ -73,6 +73,31 @@ describe('BarometerStore', () => {
 
       expect(barometer.subscribe).toHaveBeenCalledTimes(1);
     });
+
+    test('does not replace a subscription started while startup is pending', async () => {
+      let resolveCreateTable!: () => void;
+      const createTable = new Promise<void>((resolve) => {
+        resolveCreateTable = resolve;
+      });
+      const db = makeDb();
+      db.executeSql.mockImplementationOnce(
+        () => createTable as unknown as ReturnType<typeof db.executeSql>,
+      );
+      const unsubscribe = jest.fn();
+      (barometer.subscribe as jest.Mock).mockReturnValueOnce({ unsubscribe });
+      const store = new BarometerStore();
+      store.setPaused(true);
+
+      const startup = store.start(db as SQLiteDatabase);
+      store.setPaused(false);
+      resolveCreateTable();
+      await startup;
+
+      expect(barometer.subscribe).toHaveBeenCalledTimes(1);
+
+      store.setPaused(true);
+      expect(unsubscribe).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('stop()', () => {
