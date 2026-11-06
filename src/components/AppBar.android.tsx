@@ -1,8 +1,11 @@
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
+import { SPACING } from '../theme';
+import ConnectionDot from './ConnectionDot';
 import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
@@ -42,6 +45,7 @@ export default function AppBar({
   onBackPress,
 }: AppBarProps) {
   const COLORS = useTheme();
+  const currentDate = useCurrentDate();
   const insets = useSafeAreaInsets();
   const rippleColor = useRippleColor();
 
@@ -77,7 +81,20 @@ export default function AppBar({
               >
                 {header.subtitle}
               </Text>
-            ) : null}
+            ) : (
+              // No subtitle of its own: the date and connection dot, as on
+              // Home's supporting line, so there is always a second line.
+              <View style={styles.dateRow}>
+                <Text
+                  style={[styles.subtitle, { color: COLORS.MUTED }]}
+                  accessibilityLabel={`Current date: ${currentDate}`}
+                  numberOfLines={1}
+                >
+                  {currentDate}
+                </Text>
+                <ConnectionDot />
+              </View>
+            )}
           </View>
         </>
       ) : (
@@ -150,6 +167,11 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     marginTop: 1,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   title: {
     fontSize: 21,

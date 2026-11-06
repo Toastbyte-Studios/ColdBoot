@@ -62,7 +62,7 @@ src/
 - Each screen lives at `src/screens/<Feature>/<FeatureScreen>.tsx`
 - Screens are always wrapped with `observer()` from `mobx-react-lite`
 - Screens access state via store hooks, not raw context
-- Screens pushed below a module should use `StackScreen` for the shared page frame (note, toolbar, Android bleed, footer clearance). Its `title`, `subtitle` and `onBack` are shown in the **app bar**, not in the page: on any screen but Home the bar swaps the logo for a back control, the wordmark for the title and the date for the subtitle (`navigation/ScreenHeaderContext`)
+- Screens pushed below a module should use `StackScreen` for the shared page frame (note, toolbar, Android bleed, footer clearance). Its `title`, `subtitle` and `onBack` are shown in the **app bar**, not in the page: on any screen but Home the bar swaps the logo for a back control and the wordmark for the title; the subtitle takes the date's line, and a screen without one keeps the date and connection dot there (`navigation/ScreenHeaderContext`)
 - A subtitle is a fact about the screen (a note's date and category, a live reading, a repeater's distance). Never a count ("12 items", "4 tools") and never a reminder that it works offline; leave it out instead
 - `trailing` / `actions` buttons render in `ScreenToolbar`, a row at the top of the content
 - Lists of tappable tools/items should use `GroupContainer` + `ModuleRow variant="tool"`

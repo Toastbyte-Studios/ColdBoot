@@ -105,7 +105,11 @@ export default function AppBar({
               >
                 {header.subtitle}
               </Text>
-            ) : null}
+            ) : (
+              // No subtitle of its own: keep the line, with Home's date and
+              // connection dot, so the bar is the same height everywhere.
+              <DateLine date={currentDate} color={COLORS.MUTED} />
+            )}
           </View>
         </>
       ) : (
@@ -124,15 +128,7 @@ export default function AppBar({
             <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
               ColdBoot
             </Text>
-            <View style={styles.dateRow}>
-              <Text
-                style={[styles.date, { color: COLORS.MUTED }]}
-                accessibilityLabel={`Current date: ${currentDate}`}
-              >
-                {currentDate}
-              </Text>
-              <ConnectionDot size={7} />
-            </View>
+            <DateLine date={currentDate} color={COLORS.MUTED} />
           </View>
         </>
       )}
@@ -155,6 +151,22 @@ export default function AppBar({
       >
         <Ionicons name="settings-outline" size={17} color={COLORS.BRAND} />
       </Pressable>
+    </View>
+  );
+}
+
+/** The date and the connection dot, under the wordmark or a bare title. */
+function DateLine({ date, color }: { date: string; color: string }) {
+  return (
+    <View style={styles.dateRow}>
+      <Text
+        style={[styles.date, { color }]}
+        accessibilityLabel={`Current date: ${date}`}
+        numberOfLines={1}
+      >
+        {date}
+      </Text>
+      <ConnectionDot size={7} />
     </View>
   );
 }
