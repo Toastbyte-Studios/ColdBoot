@@ -9,7 +9,6 @@ import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
   AIR_ACKNOWLEDGEMENT,
-  GROUND_TO_AIR_SIGNALS,
   GroundSignal,
   ICAO_GROUND_SIGNALS,
   OLDER_GROUND_SIGNALS,
@@ -38,7 +37,6 @@ export default function GroundToAirSignalsScreen() {
   return (
     <StackScreen
       title="Ground-to-Air Signals"
-      subtitle={`${GROUND_TO_AIR_SIGNALS.length} symbols`}
       note="Lay these symbols on open ground using rocks, logs, or any high-contrast material. Make each at least 2.5 m (8 ft) long, and bigger if you can. Choose a clearing with maximum sky visibility."
     >
       <SectionEyebrow>International code (ICAO)</SectionEyebrow>

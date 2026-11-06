@@ -195,7 +195,6 @@ export default function ConversionCategoryScreen() {
         <SectionHeader
           containerStyle={styles.headline}
           title={category.name}
-          subtitle="Offline conversion"
           trailing={
             <IconButton
               name="close-outline"

@@ -71,7 +71,6 @@ export default function EmergencyScreen(): JSX.Element {
   return (
     <CategoryList
       title="Emergency"
-      icon="warning-outline"
       disclaimer={disclaimer}
       categories={emergencyCategories}
     />

@@ -62,18 +62,23 @@ src/
 - Each screen lives at `src/screens/<Feature>/<FeatureScreen>.tsx`
 - Screens are always wrapped with `observer()` from `mobx-react-lite`
 - Screens access state via store hooks, not raw context
-- Screens pushed below a module should use `StackScreen` for the shared page frame (back control, large title, subtitle/note, Android bleed, footer clearance)
+- Screens pushed below a module should use `StackScreen` for the shared page frame (note, toolbar, Android bleed, footer clearance). Its `title`, `subtitle` and `onBack` are shown in the **app bar**, not in the page: on any screen but Home the bar swaps the logo for a back control, the wordmark for the title and the date for the subtitle (`navigation/ScreenHeaderContext`)
+- A subtitle is a fact about the screen (a note's date and category, a live reading, a repeater's distance). Never a count ("12 items", "4 tools") and never a reminder that it works offline; leave it out instead
+- `trailing` / `actions` buttons render in `ScreenToolbar`, a row at the top of the content
 - Lists of tappable tools/items should use `GroupContainer` + `ModuleRow variant="tool"`
 - Card content should use `cardSurface(COLORS)` and carry its own `SCREEN_GUTTER` on Android
-- Use `SectionEyebrow` for labels inside a screen; `SectionHeader` is the page title owned by `StackScreen`
+- Use `SectionEyebrow` for labels inside a screen. `SectionHeader` is only used where the app bar can't be seen (the conversion modal)
 - A screen with steps of its own (Voice Log's record and playback modes) passes
   `StackScreen`'s `onBack` so its back control returns to its own starting
   point rather than popping the screen
 - Two screens deliberately keep their own frame, each explained in a comment on
   the file: `Map/MapScreen` and `UnitConversion/ConversionCategoryScreen`. Both
   fill the remaining height with something that must not scroll (a map, a
-  keypad), so they take the headline row alone. A modal like
-  `ConversionCategoryScreen` gets a close button there, not a back chevron.
+  keypad). The Map calls `useScreenHeader` itself so the app bar is titled. The
+  conversion modal is presented over the app bar, so it keeps its own
+  `SectionHeader` row with a close button, not a back chevron.
+- Any other screen without `StackScreen` / `ModuleScreen` (Search, Nightvision)
+  calls `useScreenHeader({ title })` so the app bar has a title
 
 Before building a screen part from scratch, check whether one of these already
 covers it:
@@ -86,6 +91,7 @@ covers it:
 | A lookup table (morse, NATO)      | `components/ReferenceTable`                                 |
 | A note composer                   | `screens/Notepad/Shared/NoteEditor`                         |
 | Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                  |
+| Title a screen with its own frame | `navigation/ScreenHeaderContext` (`useScreenHeader`)        |
 | Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)      |
 | A row that shows a status colour  | `ModuleRow` with `iconColor`                                |
 
@@ -99,7 +105,7 @@ import { useCoreStore } from '../../stores/StoreContext';
 const MyScreen = observer(() => {
   const core = useCoreStore();
   return (
-    <StackScreen title="My Feature" subtitle={`${core.tools.length} tools`}>
+    <StackScreen title="My Feature">
       <GroupContainer>
         <ModuleRow
           title="Example tool"

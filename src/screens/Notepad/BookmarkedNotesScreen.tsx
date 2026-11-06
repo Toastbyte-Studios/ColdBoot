@@ -54,10 +54,7 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
   );
 
   return (
-    <StackScreen
-      title="Bookmarked Notes"
-      subtitle={`${sortedNotes.length} note${sortedNotes.length === 1 ? '' : 's'}`}
-    >
+    <StackScreen title="Bookmarked Notes">
       <View style={styles.sort}>
         <NoteSortSelector />
       </View>

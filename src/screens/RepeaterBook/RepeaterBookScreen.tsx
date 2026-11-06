@@ -109,7 +109,6 @@ const RepeaterBookScreen = observer((): JSX.Element => {
   return (
     <StackScreen
       title="Local Repeaters"
-      subtitle={`${store.filteredRepeaters.length} nearby`}
       trailing={
         <>
           <IconButton

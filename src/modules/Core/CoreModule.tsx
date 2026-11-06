@@ -24,14 +24,7 @@ const CoreModule = observer(() => {
     values.core_notepad = String(notes.notes.length);
   }
 
-  return (
-    <ModuleScreen
-      title="Core"
-      icon="pulse-outline"
-      tools={CORE_TOOLS}
-      values={values}
-    />
-  );
+  return <ModuleScreen title="Core" tools={CORE_TOOLS} values={values} />;
 });
 
 export default CoreModule;

@@ -47,7 +47,6 @@ export default function ToolsAndKnotsScreen(): JSX.Element {
   return (
     <CategoryList
       title="Tools and Knots"
-      icon="hammer-outline"
       disclaimer={disclaimer}
       categories={toolsAndKnotsCategories}
     />

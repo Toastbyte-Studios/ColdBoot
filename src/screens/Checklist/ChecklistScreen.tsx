@@ -39,7 +39,6 @@ export default observer(function ChecklistScreen() {
   return (
     <StackScreen
       title="Checklists"
-      subtitle={`${checklistStore.checklists.length} list${checklistStore.checklists.length === 1 ? '' : 's'}`}
       trailing={
         <>
           <IconButton

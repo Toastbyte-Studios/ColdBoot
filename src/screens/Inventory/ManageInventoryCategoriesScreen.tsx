@@ -144,7 +144,6 @@ export default observer(
     return (
       <StackScreen
         title="Manage Inventory Categories"
-        subtitle={`${inventory.categories.length} categor${inventory.categories.length === 1 ? 'y' : 'ies'}`}
         keyboardShouldPersistTaps="handled"
         trailing={
           <IconButton

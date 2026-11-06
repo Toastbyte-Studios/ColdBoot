@@ -144,7 +144,6 @@ export default observer(
     return (
       <StackScreen
         title="Manage Pantry Categories"
-        subtitle={`${pantry.categories.length} categor${pantry.categories.length === 1 ? 'y' : 'ies'}`}
         keyboardShouldPersistTaps="handled"
         trailing={
           <IconButton

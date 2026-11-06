@@ -32,7 +32,6 @@ export default observer(function EmergencyContactsScreen() {
   return (
     <StackScreen
       title="Emergency Contacts"
-      subtitle={`${contacts.length} contact${contacts.length === 1 ? '' : 's'}`}
       trailing={
         <IconButton
           name="add-circle-outline"

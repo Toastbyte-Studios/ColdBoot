@@ -4,8 +4,6 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import React, { JSX, useMemo } from 'react';
-import Ionicons from 'react-native-vector-icons/Ionicons';
-import { useTheme } from '../hooks/useTheme';
 import { CategoryType } from '../types/common-types';
 import GroupContainer from './GroupContainer';
 import ModuleRow from './ModuleRow';
@@ -14,8 +12,6 @@ import StackScreen from './StackScreen';
 type CategoryListProps = {
   /** Screen title, e.g. "Health". */
   title: string;
-  /** Ionicons glyph for the topic, shown at the trailing edge of the title. */
-  icon: string;
   categories: CategoryType<unknown>[];
   disclaimer?: string;
   /** Screen to open for a category. @default 'Category' */
@@ -53,13 +49,11 @@ function countEntries(category: CategoryType<unknown>): number {
  */
 export default function CategoryList({
   title,
-  icon,
   categories,
   disclaimer = '',
   categoryScreen = 'Category',
   actions,
 }: CategoryListProps): JSX.Element {
-  const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
 
   // Sort categories alphabetically by title
@@ -68,21 +62,11 @@ export default function CategoryList({
     [categories],
   );
 
-  const subtitle = `${categories.length} categor${
-    categories.length === 1 ? 'y' : 'ies'
-  } · all offline`;
-
   return (
     <StackScreen
       title={title}
-      subtitle={subtitle}
       note={disclaimer.trim() || undefined}
-      trailing={
-        <>
-          {actions}
-          <Ionicons name={icon} size={30} color={COLORS.BRAND} />
-        </>
-      }
+      trailing={actions}
     >
       <GroupContainer>
         {sortedCategories.map((category, index) => {

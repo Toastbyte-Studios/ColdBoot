@@ -135,16 +135,7 @@ function SkyEventsScreen() {
   const hasLocation = !!core.lastFix;
 
   return (
-    <StackScreen
-      title="Sky Events"
-      subtitle={
-        upcomingEvents.length === 0
-          ? 'Next 12 months'
-          : `${upcomingEvents.length} event${
-              upcomingEvents.length === 1 ? '' : 's'
-            } in the next 12 months`
-      }
-    >
+    <StackScreen title="Sky Events">
       {!hasLocation && (
         <View style={[styles.locationBanner, cardSurface(COLORS)]}>
           <View style={styles.locationBannerRow}>

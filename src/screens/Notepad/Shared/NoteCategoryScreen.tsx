@@ -66,10 +66,7 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
   );
 
   return (
-    <StackScreen
-      title={category}
-      subtitle={`${sortedNotes.length} note${sortedNotes.length === 1 ? '' : 's'}`}
-    >
+    <StackScreen title={category}>
       <View style={styles.sort}>
         <NoteSortSelector />
       </View>

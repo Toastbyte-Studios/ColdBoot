@@ -6,11 +6,5 @@ import ModuleScreen from '../../components/ModuleScreen';
  * The Communications module: ways to be heard or understood without a network.
  */
 export default function CommunicationsModule() {
-  return (
-    <ModuleScreen
-      title="Comms"
-      icon="chatbubbles-outline"
-      tools={COMMUNICATION_TOOLS}
-    />
-  );
+  return <ModuleScreen title="Comms" tools={COMMUNICATION_TOOLS} />;
 }

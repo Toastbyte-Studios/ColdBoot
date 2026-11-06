@@ -44,12 +44,12 @@ import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
 import Icon from 'react-native-vector-icons/Ionicons';
 import IconButton from '../../components/IconButton';
 import ScreenBody from '../../components/ScreenBody';
-import SectionHeader from '../../components/SectionHeader';
 import Touchable from '../../components/Touchable';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useGestureNavigation } from '../../navigation/NavigationHistoryContext';
 import { navigationRef } from '../../navigation/navigationRef';
+import { useScreenHeader } from '../../navigation/ScreenHeaderContext';
 import { boundsFromRadius } from '../../navigation/utils/boundsFromRadius';
 import {
   useTrackStore,
@@ -224,6 +224,7 @@ type MapScreenRouteParams = {
 export default observer(function MapScreen() {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
+  useScreenHeader({ title: 'Map' });
   const route =
     useRoute<RouteProp<Record<string, MapScreenRouteParams>, string>>();
   const footerClearance = useFooterClearance();
@@ -923,25 +924,9 @@ export default observer(function MapScreen() {
     <ScreenBody>
       {/* This screen keeps its own frame rather than using `StackScreen`: the
           map and the compass below it divide whatever height is left, and a
-          scroll view would let the map slide out from under the thumb. It
-          takes the headline row on its own, back control included, so the
-          screen is still escapable without the system gesture. */}
-      <SectionHeader
-        containerStyle={styles.headline}
-        leading={
-          navigation.canGoBack() ? (
-            <IconButton
-              name={isAndroid ? 'arrow-back' : 'chevron-back-outline'}
-              size={isAndroid ? 24 : 20}
-              color={isAndroid ? COLORS.PRIMARY_DARK : COLORS.BRAND}
-              onPress={() => navigation.goBack()}
-              accessibilityLabel="Go back"
-            />
-          ) : undefined
-        }
-        title="Map"
-        subtitle="Offline tiles and compass"
-      />
+          scroll view would let the map slide out from under the thumb. Its
+          title and back control are in the app bar like every other screen's;
+          it registers them itself with useScreenHeader. */}
 
       {/* Every map control lives here rather than floating over the tiles:
           the map is the point of the screen, so nothing sits on top of it.
@@ -1132,14 +1117,12 @@ export default observer(function MapScreen() {
 
 function makeStyles(colors: ReturnType<typeof useTheme>) {
   return StyleSheet.create({
-    headline: {
-      paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-    },
     mapActions: {
       flexDirection: 'row',
       alignItems: 'center',
       gap: SPACING.xs,
       paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
+      paddingTop: SPACING.sm,
       paddingBottom: SPACING.sm,
     },
     recordAction: {

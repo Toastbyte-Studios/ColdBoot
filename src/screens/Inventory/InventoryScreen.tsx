@@ -36,7 +36,6 @@ export default observer(function InventoryScreen() {
   return (
     <StackScreen
       title="Inventory"
-      subtitle={`${inventory.categories.length} categor${inventory.categories.length === 1 ? 'y' : 'ies'}`}
       trailing={
         <>
           <IconButton

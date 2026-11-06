@@ -46,10 +46,7 @@ export default observer(function PantryAllItemsScreen(): React.JSX.Element {
   };
 
   return (
-    <StackScreen
-      title="All Pantry Items"
-      subtitle={`${allItems.length} item${allItems.length === 1 ? '' : 's'}`}
-    >
+    <StackScreen title="All Pantry Items">
       {allItems.length === 0 ? (
         <Text style={[styles.helperText, { color: groundInk(COLORS) }]}>
           No pantry items yet. Add items from a category.

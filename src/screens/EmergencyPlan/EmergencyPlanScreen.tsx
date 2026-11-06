@@ -46,7 +46,7 @@ export default observer(function EmergencyPlanScreen() {
   ];
 
   return (
-    <StackScreen title="Emergency Planner" subtitle="Stored offline">
+    <StackScreen title="Emergency Planner">
       <GroupContainer>
         {sections.map((section, index) => (
           <ModuleRow
