@@ -7,7 +7,12 @@ const HIDDEN_KEYS_STORAGE_KEY = '@notifications/hidden_keys';
  * Unified notification type that aggregates all in-app alert sources
  * (solar events, weather, astronomy, pantry expiration) into a single model.
  */
-export type AppNotificationType = 'solar' | 'weather' | 'astronomy' | 'pantry';
+export type AppNotificationType =
+  | 'solar'
+  | 'weather'
+  | 'astronomy'
+  | 'pantry'
+  | 'device';
 
 export interface AppNotification {
   /** Stable key used to persist hidden state across sessions. */

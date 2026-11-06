@@ -57,6 +57,13 @@ function useToneFor(notification: AppNotification): {
         ink: COLORS.PRIMARY_DARK,
         glyph: COLORS.MUTED,
       };
+    case 'device':
+      // Something wrong with the phone itself (a frozen battery): error role.
+      return {
+        fill: COLORS.ERROR_LIGHT,
+        ink: COLORS.PRIMARY_DARK,
+        glyph: COLORS.ERROR,
+      };
   }
 }
 

@@ -11,6 +11,7 @@ const mockSendIntent = jest.fn();
 const mockOpenSettings = jest.fn();
 const mockSettings = {
   coldMode: false,
+  measurementSystem: 'metric',
   setColdMode: jest.fn(async (on: boolean) => {
     mockSettings.coldMode = on;
   }),
@@ -19,6 +20,7 @@ const mockCore = {
   batteryLevel: 0.42 as number | null,
   isCharging: false as boolean | null,
   batteryEstimateMinutes: 190 as number | null,
+  batteryTemperatureC: null as number | null,
 };
 
 jest.mock('@react-navigation/native', () => ({
@@ -207,5 +209,26 @@ describe('ColdWeatherScreen', () => {
 
     await ReactTestRenderer.act(async () => toggle.props.onValueChange(true));
     expect(mockSettings.setColdMode).toHaveBeenCalledWith(true);
+  });
+
+  it('shows the battery temperature and a freezing warning on Android', async () => {
+    mockCore.batteryTemperatureC = -4;
+    const tree = await render();
+    const all = tree.root
+      .findAllByType(ReactNative.Text)
+      .map((node) => React.Children.toArray(node.props.children).join(''));
+
+    expect(all).toContain('−4 °C · Too cold to charge');
+    expect(all.join('\n')).toMatch(/Don't plug it in until it warms up/);
+    mockCore.batteryTemperatureC = null;
+  });
+
+  it('leaves the temperature out where there is no reading (iOS)', async () => {
+    const tree = await render();
+    const all = tree.root
+      .findAllByType(ReactNative.Text)
+      .map((node) => React.Children.toArray(node.props.children).join(''));
+
+    expect(all.join('\n')).not.toMatch(/°[CF] · /);
   });
 });
