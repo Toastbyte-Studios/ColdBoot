@@ -14,6 +14,7 @@ import BarterEstimatorScreen from '../screens/BarterEstimator/BarterEstimatorScr
 import ChecklistEntryScreen from '../screens/Checklist/ChecklistEntryScreen';
 import ChecklistScreen from '../screens/Checklist/ChecklistScreen';
 import NewChecklistScreen from '../screens/Checklist/NewChecklistScreen';
+import ColdWeatherScreen from '../screens/ColdWeather/ColdWeatherScreen';
 import SearchScreen from '../screens/Common/SearchScreen';
 import DecibelMeterScreen from '../screens/DecibelMeter/DecibelMeterScreen';
 import DepletionCalculatorScreen from '../screens/DepletionCalculator/DepletionCalculatorScreen';
@@ -204,6 +205,7 @@ function NavigatorContent(): JSX.Element {
             component={GroundToAirSignalsScreen}
           />
           {/* Core Module */}
+          <Stack.Screen name="ColdWeather" component={ColdWeatherScreen} />
           <Stack.Screen name="DeviceStatus" component={DeviceStatusScreen} />
           <Stack.Screen name="Flashlight" component={FlashlightScreen} />
           <Stack.Screen
