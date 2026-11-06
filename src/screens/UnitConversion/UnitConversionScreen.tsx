@@ -13,8 +13,8 @@ import { conversionCategories } from '../../utils/unitConversions';
  * UnitConversionScreen displays all available unit conversion categories.
  *
  * Users can select a category to navigate to the conversion screen for that category.
- * Categories include Length, Weight, Volume, Temperature, Area, Speed, Pressure,
- * Energy, Time, Compass/Angles, Fuel, and Light.
+ * Categories are listed alphabetically: Area, Compass/Angles, Energy, Fuel,
+ * Length, Light, Pressure, Speed, Temperature, Time, Volume and Weight.
  *
  * @returns A React element rendering the unit conversion categories as a grouped list.
  */
