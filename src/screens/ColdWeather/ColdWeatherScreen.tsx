@@ -98,7 +98,7 @@ const ColdWeatherScreen = observer(() => {
         };
   const toneColor = (tone: 'good' | 'fair' | 'poor') =>
     tone === 'poor'
-      ? COLORS.ERROR
+      ? COLORS.PRIMARY_DARK
       : tone === 'fair'
         ? COLORS.ACCENT
         : COLORS.SUCCESS;
