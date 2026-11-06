@@ -71,8 +71,18 @@ export function formatAge(timestamp: number, now: number = Date.now()): string {
  */
 export const STALE_FIX_MS = 5 * 60 * 1000;
 
-export function fixAgeTone(timestamp: number, now: number = Date.now()) {
-  return now - timestamp > STALE_FIX_MS ? 'poor' : 'good';
+/**
+ * Red once the fix is older than a few missed polls. `pollIntervalMs` is the
+ * store's current GPS interval: in Cold mode fixes come every 10 minutes, so
+ * a 7-minute-old fix is on schedule, not stale.
+ */
+export function fixAgeTone(
+  timestamp: number,
+  now: number = Date.now(),
+  pollIntervalMs: number = 60 * 1000,
+) {
+  const staleAfter = Math.max(STALE_FIX_MS, pollIntervalMs * 2.5);
+  return now - timestamp > staleAfter ? 'poor' : 'good';
 }
 
 /**

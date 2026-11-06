@@ -6,7 +6,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { FlashlightModes } from '../../constants';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
-import { useSignalingStore } from '../stores/StoreContext';
+import { useSettingsStore, useSignalingStore } from '../stores/StoreContext';
 import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
 import { onColor } from '../theme/colorUtils';
 import { formatElapsed } from '../utils/sunTimes';
@@ -83,7 +83,10 @@ function resolveActiveTool(core: {
  * the thing a survival app should not be vague about, so the card names the
  * tool and counts the battery it is costing.
  *
- * Renders nothing when no tool is active.
+ * Cold mode shows here too, as a second card: it is also something running
+ * in the background that the user should be able to see and switch off.
+ *
+ * Renders nothing when no tool is active and Cold mode is off.
  *
  * Android paints it in the amber container rather than on the neutral card
  * surface. Material has a role for "something is happening that you should
@@ -92,8 +95,7 @@ function resolveActiveTool(core: {
  */
 const ActiveToolCard = observer(() => {
   const core = useSignalingStore();
-  const COLORS = useTheme();
-  const rippleColor = useRippleColor();
+  const settings = useSettingsStore();
   const navigation = useNavigation<{ navigate: (route: string) => void }>();
   const activeTool = resolveActiveTool(core);
   const activeToolKind = activeTool?.kind;
@@ -109,21 +111,72 @@ const ActiveToolCard = observer(() => {
     return () => clearInterval(interval);
   }, [activeToolKind]);
 
-  if (!activeTool) {
+  if (!activeTool && !settings.coldMode) {
     return null;
   }
 
-  const activeSince = core.getActiveSince(activeTool.kind);
+  const activeSince = activeTool ? core.getActiveSince(activeTool.kind) : null;
   const elapsed = activeSince ? formatElapsed(now - activeSince) : null;
   const status = elapsed ? `Running · ${elapsed}` : 'Running';
 
   const stop = () => {
-    if (activeTool.kind === 'decibel') {
+    if (activeTool?.kind === 'decibel') {
       core.setDecibelMeterActive(false);
     } else {
       core.setFlashlightMode(FlashlightModes.OFF);
     }
   };
+
+  return (
+    <>
+      {activeTool ? (
+        <ActiveCard
+          icon={activeTool.icon}
+          label={activeTool.label}
+          status={status}
+          onPress={() =>
+            activeTool.screen && navigation.navigate(activeTool.screen)
+          }
+          onStop={stop}
+          stopLabel={`Stop ${activeTool.label}`}
+        />
+      ) : null}
+      {settings.coldMode ? (
+        <ActiveCard
+          icon="snow-outline"
+          label="Cold mode"
+          status="Saving battery · GPS every 10 min"
+          onPress={() => navigation.navigate('ColdWeather')}
+          onStop={() => settings.setColdMode(false)}
+          stopLabel="Turn off Cold mode"
+        />
+      ) : null}
+    </>
+  );
+});
+
+export default ActiveToolCard;
+
+type ActiveCardProps = {
+  icon: string;
+  label: string;
+  status: string;
+  onPress: () => void;
+  onStop: () => void;
+  stopLabel: string;
+};
+
+/** One "running" card: what it is, its status, and a switch to stop it. */
+function ActiveCard({
+  icon,
+  label,
+  status,
+  onPress,
+  onStop,
+  stopLabel,
+}: ActiveCardProps) {
+  const COLORS = useTheme();
+  const rippleColor = useRippleColor();
 
   return (
     <View
@@ -141,11 +194,9 @@ const ActiveToolCard = observer(() => {
       ]}
     >
       <Pressable
-        onPress={() =>
-          activeTool.screen && navigation.navigate(activeTool.screen)
-        }
+        onPress={onPress}
         accessibilityRole="button"
-        accessibilityLabel={`${activeTool.label}. ${status}. Opens the tool.`}
+        accessibilityLabel={`${label}. ${status}. Opens the tool.`}
         android_ripple={{ color: rippleColor }}
         style={({ pressed }) => [
           styles.cardButton,
@@ -157,7 +208,7 @@ const ActiveToolCard = observer(() => {
           accessible={false}
         >
           <Ionicons
-            name={activeTool.icon}
+            name={icon}
             size={isAndroid ? 22 : 20}
             color={onColor(COLORS.ACCENT)}
           />
@@ -174,7 +225,7 @@ const ActiveToolCard = observer(() => {
               },
             ]}
           >
-            {activeTool.label}
+            {label}
           </Text>
           <Text
             style={[
@@ -191,15 +242,13 @@ const ActiveToolCard = observer(() => {
 
       <AppSwitch
         value
-        onValueChange={stop}
+        onValueChange={onStop}
         tint={COLORS.ACCENT}
-        accessibilityLabel={`Stop ${activeTool.label}`}
+        accessibilityLabel={stopLabel}
       />
     </View>
   );
-});
-
-export default ActiveToolCard;
+}
 
 const styles = StyleSheet.create({
   card: {

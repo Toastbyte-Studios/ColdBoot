@@ -6,6 +6,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import React, { useMemo } from 'react';
 import { Linking, Platform, StyleSheet, View } from 'react-native';
+import AppSwitch from '../../components/AppSwitch';
 import { EntryItemList, EntrySection } from '../../components/EntrySection';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
@@ -13,8 +14,9 @@ import { Text } from '../../components/ScaledText';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { useCoreStore } from '../../stores/StoreContext';
+import { useCoreStore, useSettingsStore } from '../../stores/StoreContext';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
+import { cardSurface } from '../../theme/cardSurface';
 import {
   KEEP_PHONE_WARM,
   MAKE_BATTERY_LAST,
@@ -22,6 +24,10 @@ import {
 } from './coldWeatherContent';
 
 const isAndroid = Platform.OS === 'android';
+
+/** What the switch does, in the words shown under it. */
+export const COLD_MODE_DESCRIPTION =
+  'Saves battery: ColdBoot checks your location every 10 minutes instead of every minute and pauses the barometer. Stays on until you turn it off.';
 
 /** "5 hr 10 min", "45 min". */
 function formatMinutes(minutes: number): string {
@@ -65,10 +71,14 @@ function openBatterySaver() {
  * fix is keeping the phone warm and the drain low, so the screen leads with
  * the battery and those two lists, then links to the Reference entries on
  * hypothermia, frostbite and shelter.
+ *
+ * Cold mode sits first: one switch that makes ColdBoot itself use less
+ * battery (see RootStore.watchColdMode), for when the phone has to last.
  */
 const ColdWeatherScreen = observer(() => {
   const COLORS = useTheme();
   const core = useCoreStore();
+  const settings = useSettingsStore();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const entries = useMemo(() => stayingWarmEntries(), []);
 
@@ -76,6 +86,25 @@ const ColdWeatherScreen = observer(() => {
     <StackScreen title="Cold Weather">
       {/* Android content is full-bleed (see StackScreen); cards carry the
           gutter, lists reach the edge. */}
+      <View style={[styles.coldMode, cardSurface(COLORS)]}>
+        <View style={styles.coldModeText}>
+          <Text style={[styles.coldModeTitle, { color: COLORS.PRIMARY_DARK }]}>
+            Cold mode
+          </Text>
+          <Text style={[styles.coldModeBody, { color: COLORS.MUTED }]}>
+            {COLD_MODE_DESCRIPTION}
+          </Text>
+        </View>
+        <AppSwitch
+          value={settings.coldMode}
+          onValueChange={(on: boolean) => settings.setColdMode(on)}
+          tint={COLORS.ACCENT}
+          offTint={COLORS.SECONDARY_ACCENT}
+          thumbColor={settings.coldMode ? COLORS.PRIMARY_LIGHT : COLORS.BRAND}
+          accessibilityLabel="Cold mode"
+        />
+      </View>
+
       <View style={styles.column}>
         <EntrySection title="Battery">
           <Text
@@ -146,6 +175,27 @@ const styles = StyleSheet.create({
     fontFamily: 'Bitter-Bold',
   },
   batteryNote: {
+    fontSize: 13.5,
+    lineHeight: 19,
+    marginTop: SPACING.xs,
+  },
+  coldMode: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    marginBottom: SPACING.md,
+    padding: SPACING.lg,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.md,
+  },
+  coldModeText: {
+    flex: 1,
+  },
+  coldModeTitle: {
+    fontSize: 17,
+    fontWeight: '600',
+  },
+  coldModeBody: {
     fontSize: 13.5,
     lineHeight: 19,
     marginTop: SPACING.xs,

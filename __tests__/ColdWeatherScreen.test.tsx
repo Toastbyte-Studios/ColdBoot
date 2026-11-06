@@ -9,6 +9,12 @@ import {
 const mockNavigate = jest.fn();
 const mockSendIntent = jest.fn();
 const mockOpenSettings = jest.fn();
+const mockSettings = {
+  coldMode: false,
+  setColdMode: jest.fn(async (on: boolean) => {
+    mockSettings.coldMode = on;
+  }),
+};
 const mockCore = {
   batteryLevel: 0.42 as number | null,
   isCharging: false as boolean | null,
@@ -20,6 +26,7 @@ jest.mock('@react-navigation/native', () => ({
 }));
 jest.mock('../src/stores/StoreContext', () => ({
   useCoreStore: () => mockCore,
+  useSettingsStore: () => mockSettings,
 }));
 jest.mock('../src/hooks/useTheme', () => ({
   useTheme: () => require('../src/theme/colors').LIGHT_COLORS,
@@ -187,5 +194,18 @@ describe('ColdWeatherScreen', () => {
           node.props.accessibilityLabel === 'Open Battery Saver settings',
       ),
     ).toHaveLength(0);
+  });
+
+  it('turns Cold mode on from its switch', async () => {
+    const tree = await render();
+    const toggle = tree.root.find(
+      (node) =>
+        node.props.accessibilityLabel === 'Cold mode' &&
+        typeof node.props.onValueChange === 'function',
+    );
+    expect(toggle.props.value).toBe(false);
+
+    await ReactTestRenderer.act(async () => toggle.props.onValueChange(true));
+    expect(mockSettings.setColdMode).toHaveBeenCalledWith(true);
   });
 });

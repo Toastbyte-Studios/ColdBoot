@@ -47,6 +47,13 @@ describe('location formatters', () => {
     expect(formatAge(now + 5_000, now)).toBe('Just now');
   });
 
+  it('allows for the longer Cold mode poll before calling a fix stale', () => {
+    const now = 1_000_000_000_000;
+    const tenMinutes = 10 * 60_000;
+    expect(fixAgeTone(now - 7 * 60_000, now, tenMinutes)).toBe('good');
+    expect(fixAgeTone(now - 26 * 60_000, now, tenMinutes)).toBe('poor');
+  });
+
   it('flags a fix as stale past five minutes', () => {
     const now = 1_000_000_000_000;
     expect(fixAgeTone(now - 60_000, now)).toBe('good');
