@@ -1,5 +1,6 @@
 import * as Menu from '@react-native-menu/menu';
 import React from 'react';
+import { StyleSheet } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AppBarIOS from '../src/components/AppBar';
 import AppBarAndroid from '../src/components/AppBar.android';
@@ -166,6 +167,16 @@ describe('platform specifics', () => {
       title: 'Home',
       image: 'house',
     });
+  });
+
+  it('gives the iOS history menu a 44pt trigger', async () => {
+    const tree = await render(
+      <AppBarIOS {...baseProps} backHistory={history} />,
+    );
+    const menu = menuOf(tree);
+    const targetStyle = StyleSheet.flatten(menu.props.children.props.style);
+
+    expect(targetStyle).toMatchObject({ width: 44, height: 44 });
   });
 
   it('Android opens the menu from the long press only', async () => {

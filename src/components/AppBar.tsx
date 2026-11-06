@@ -104,28 +104,30 @@ export default function AppBar({
             // Follows the in-app theme setting rather than the OS.
             themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
           >
-            <Pressable
-              onPress={header.onBack ?? onBackPress}
-              accessibilityRole="button"
-              accessibilityLabel="Go back"
-              accessibilityHint={
-                backHistory.length > 1
-                  ? 'Touch and hold to jump to an earlier screen'
-                  : undefined
-              }
-              hitSlop={6}
-              style={({ pressed }) => [
-                navButtonStyle,
-                pressed && styles.pressed,
-              ]}
-            >
-              <Ionicons
-                name="chevron-back-outline"
-                size={19}
-                color={COLORS.BRAND}
-                style={styles.backGlyph}
-              />
-            </Pressable>
+            <View style={styles.backMenuTarget}>
+              <Pressable
+                onPress={header.onBack ?? onBackPress}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                accessibilityHint={
+                  backHistory.length > 1
+                    ? 'Touch and hold to jump to an earlier screen'
+                    : undefined
+                }
+                hitSlop={6}
+                style={({ pressed }) => [
+                  navButtonStyle,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons
+                  name="chevron-back-outline"
+                  size={19}
+                  color={COLORS.BRAND}
+                  style={styles.backGlyph}
+                />
+              </Pressable>
+            </View>
           </MenuView>
 
           <View style={styles.titles}>
@@ -229,6 +231,12 @@ const styles = StyleSheet.create({
   backGlyph: {
     // The chevron's visual centre sits right of its box; nudge it back.
     marginLeft: -2,
+  },
+  backMenuTarget: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navButton: {
     width: NAV_BUTTON,
