@@ -37,6 +37,7 @@ export class BarometerStore {
   paused: boolean = false;
 
   private db: SQLiteDatabase | null = null;
+  private initialized: boolean = false;
   private subscription: { unsubscribe: () => void } | null = null;
   private writesSinceLastPrune: number = 0;
 
@@ -45,9 +46,13 @@ export class BarometerStore {
   }
 
   async start(db: SQLiteDatabase): Promise<void> {
+    this.initialized = false;
     this.db = db;
     await this.initTable();
     await this.loadHistory();
+    runInAction(() => {
+      this.initialized = true;
+    });
     if (this.paused) {
       // No reading is coming; don't leave the screen waiting for one.
       runInAction(() => {
@@ -68,7 +73,7 @@ export class BarometerStore {
     if (paused) {
       this.stop();
       this.loading = false;
-    } else if (this.db && !this.subscription) {
+    } else if (this.initialized && !this.subscription) {
       this.loading = this.currentPressure === null;
       this.subscribe();
     }

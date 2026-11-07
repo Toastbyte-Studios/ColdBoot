@@ -74,30 +74,67 @@ describe('BarometerStore', () => {
       expect(barometer.subscribe).toHaveBeenCalledTimes(1);
     });
 
-    test('does not replace a subscription started while startup is pending', async () => {
-      let resolveCreateTable!: () => void;
-      const createTable = new Promise<void>((resolve) => {
-        resolveCreateTable = resolve;
-      });
-      const db = makeDb();
-      db.executeSql.mockImplementationOnce(
-        () => createTable as unknown as ReturnType<typeof db.executeSql>,
-      );
-      const unsubscribe = jest.fn();
-      (barometer.subscribe as jest.Mock).mockReturnValueOnce({ unsubscribe });
-      const store = new BarometerStore();
-      store.setPaused(true);
+    test.each(['CREATE TABLE', 'SELECT'])(
+      'defers resumption and live readings while %s is pending',
+      async (pendingQuery) => {
+        let resolveQuery!: () => void;
+        const pending = new Promise<void>((resolve) => {
+          resolveQuery = resolve;
+        });
+        let queryStarted!: () => void;
+        const started = new Promise<void>((resolve) => {
+          queryStarted = resolve;
+        });
+        const saved = { pressure: 1012.5, timestamp: Date.now() - 60_000 };
+        const result = [{ rows: { length: 1, item: () => saved } }];
+        const db = makeDb([saved]);
+        db.executeSql.mockImplementation(async (sql: string) => {
+          if (sql.startsWith(pendingQuery)) {
+            queryStarted();
+            await pending;
+          }
+          return result;
+        });
+        const listeners = new Set<(data: { pressure: number }) => void>();
+        const emitReading = (pressure: number) =>
+          listeners.forEach((next) => next({ pressure }));
+        const unsubscribe = jest.fn(() => listeners.clear());
+        (barometer.subscribe as jest.Mock).mockImplementationOnce(
+          (next: (data: { pressure: number }) => void) => {
+            listeners.add(next);
+            return { unsubscribe };
+          },
+        );
+        const store = new BarometerStore();
+        store.setPaused(true);
 
-      const startup = store.start(db as SQLiteDatabase);
-      store.setPaused(false);
-      resolveCreateTable();
-      await startup;
+        const startup = store.start(db as SQLiteDatabase);
+        await started;
+        store.setPaused(false);
+        emitReading(1015.3);
 
-      expect(barometer.subscribe).toHaveBeenCalledTimes(1);
+        const subscriptionsBeforeInitialization = (
+          barometer.subscribe as jest.Mock
+        ).mock.calls.length;
+        resolveQuery();
+        await startup;
 
-      store.setPaused(true);
-      expect(unsubscribe).toHaveBeenCalledTimes(1);
-    });
+        expect(subscriptionsBeforeInitialization).toBe(0);
+        expect(barometer.subscribe).toHaveBeenCalledTimes(1);
+        expect(store.history).toEqual([saved]);
+        expect(store.currentPressure).toBe(saved.pressure);
+
+        emitReading(1016.4);
+        expect(store.currentPressure).toBe(1016.4);
+        expect(store.history.map((sample) => sample.pressure)).toEqual([
+          saved.pressure,
+          1016.4,
+        ]);
+
+        store.setPaused(true);
+        expect(unsubscribe).toHaveBeenCalledTimes(1);
+      },
+    );
   });
 
   describe('stop()', () => {
