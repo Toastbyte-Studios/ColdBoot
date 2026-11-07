@@ -7,6 +7,8 @@ export interface UseBarometricPressureResult {
   pressure: number | null;
   /** Whether the sensor is available on this device */
   available: boolean;
+  /** True while Cold mode has the sensor switched off */
+  paused: boolean;
   /** Whether a first reading is still being acquired */
   loading: boolean;
   /** Historical samples (up to 24 h) persisted across app sessions */
@@ -27,6 +29,7 @@ export function useBarometricPressure(): UseBarometricPressureResult {
   return {
     pressure: store.currentPressure,
     available: store.available,
+    paused: store.paused,
     loading: store.loading,
     history: store.history,
     error: store.error,

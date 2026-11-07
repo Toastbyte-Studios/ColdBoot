@@ -91,6 +91,12 @@ export class SettingsStore {
    * nothing about what's downloaded and works in every offline area.
    */
   showTrails: boolean = true;
+  /**
+   * Cold mode: ColdBoot cuts its own battery use (GPS fixes every 10 minutes
+   * instead of every minute, barometer paused) until the user turns it off.
+   * RootStore applies it to CoreStore and BarometerStore.
+   */
+  coldMode: boolean = false;
   private settingsDb: SQLiteDatabase | null = null;
 
   constructor() {
@@ -200,6 +206,13 @@ export class SettingsStore {
   async setLastBackupAt(timestamp: number) {
     runInAction(() => {
       this.lastBackupAt = timestamp;
+    });
+    await this.persistSettings();
+  }
+
+  async setColdMode(on: boolean) {
+    runInAction(() => {
+      this.coldMode = on;
     });
     await this.persistSettings();
   }
@@ -380,6 +393,16 @@ export class SettingsStore {
         });
       }
 
+      const coldModeRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'coldMode'",
+      );
+      if (coldModeRes[0].rows.length > 0) {
+        const value = coldModeRes[0].rows.item(0).value;
+        runInAction(() => {
+          this.coldMode = value === 'true';
+        });
+      }
+
       // Load last backup timestamp
       const lastBackupRes = await this.settingsDb.executeSql(
         "SELECT value FROM settings WHERE key = 'lastBackupAt'",
@@ -447,6 +470,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('showTrails', ?)",
         [this.showTrails ? 'true' : 'false'],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('coldMode', ?)",
+        [this.coldMode ? 'true' : 'false'],
       );
       if (this.lastBackupAt !== null) {
         await this.settingsDb.executeSql(

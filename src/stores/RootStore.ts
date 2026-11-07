@@ -1,8 +1,12 @@
-import { makeAutoObservable } from 'mobx';
+import { IReactionDisposer, makeAutoObservable, reaction } from 'mobx';
 import { AstronomyEventStore } from './AstronomyEventStore';
 import { BarometerStore } from './BarometerStore';
 import { ChecklistStore } from './ChecklistStore';
-import { CoreStore } from './CoreStore';
+import {
+  COLD_MODE_GPS_INTERVAL_MS,
+  CoreStore,
+  GPS_INTERVAL_MS,
+} from './CoreStore';
 import { DevToolsStore } from './DevToolsStore';
 import { EmergencyPlanStore } from './EmergencyPlanStore';
 import { InventoryStore } from './InventoryStore';
@@ -46,8 +50,12 @@ export class RootStore {
   offlineMapLibraryStore: OfflineMapLibraryStore;
   devToolsStore: DevToolsStore;
 
+  private coldModeReaction: IReactionDisposer | null = null;
+
   constructor() {
-    makeAutoObservable(this);
+    makeAutoObservable<RootStore, 'coldModeReaction'>(this, {
+      coldModeReaction: false,
+    });
     this.coreStore = new CoreStore();
     this.notesStore = new NotesStore();
     this.checklistStore = new ChecklistStore();
@@ -70,6 +78,34 @@ export class RootStore {
     this.offlineMapLibraryStore = new OfflineMapLibraryStore();
     this.devToolsStore = new DevToolsStore();
     this.startupPromise = this.initializeSettings();
+    this.watchColdMode();
+  }
+
+  /**
+   * Applies Cold mode to the stores that use the battery in the background:
+   * GPS polls every 10 minutes instead of every minute, and the barometer
+   * stops. It reacts to the setting, so the value loaded from the database
+   * after startup takes effect too.
+   *
+   * The store fields here are not observable (they are assigned after
+   * makeAutoObservable runs), so the reaction can't see `reset()` swap them;
+   * `reset()` calls this again to bind it to the fresh stores.
+   */
+  private watchColdMode() {
+    this.coldModeReaction?.();
+    const settings = this.settingsStore;
+    const core = this.coreStore;
+    const barometer = this.barometerStore;
+    this.coldModeReaction = reaction(
+      () => settings.coldMode,
+      (coldMode) => {
+        core.setGpsIntervalMs(
+          coldMode ? COLD_MODE_GPS_INTERVAL_MS : GPS_INTERVAL_MS,
+        );
+        barometer.setPaused(coldMode);
+      },
+      { fireImmediately: true },
+    );
   }
 
   /**
@@ -156,6 +192,7 @@ export class RootStore {
     this.offlineDownloadStore = new OfflineDownloadStore();
     this.offlineMapLibraryStore = new OfflineMapLibraryStore();
     this.devToolsStore = new DevToolsStore();
+    this.watchColdMode();
     this.coreStore.startDeviceStatusMonitoring();
     this.astronomyEventStore.start(this.coreStore);
     this.solarCycleNotificationStore.start(this.coreStore);

@@ -2,11 +2,17 @@ import { AppNotification } from '../stores/NotificationsStore';
 import { SolarEventType } from '../stores/SolarCycleNotificationStore';
 import {
   useAstronomyEventStore,
+  useCoreStore,
   useNotificationsStore,
   usePantryStore,
+  useSettingsStore,
   useSolarCycleNotificationStore,
   useWeatherOutlookStore,
 } from '../stores/StoreContext';
+import {
+  formatTemperature,
+  NO_CHARGE_BELOW_C,
+} from '../utils/batteryTemperature';
 import { formatDaysUntil } from '../utils/formatDaysUntil';
 import { useTheme } from './useTheme';
 
@@ -38,8 +44,29 @@ export function useAllNotifications(): AppNotification[] {
   const weatherOutlook = useWeatherOutlookStore();
   const pantry = usePantryStore();
   const astronomyStore = useAstronomyEventStore();
+  const core = useCoreStore();
+  const settings = useSettingsStore();
 
   const notifications: AppNotification[] = [];
+
+  // ── Frozen battery (Android only) ─────────────────────────────────────────────
+  // First, because it's the one alert where acting on it wrong does lasting
+  // harm: charging a lithium-ion battery below freezing damages it for good.
+  // Keyed by day, so dismissing it hides today's warning, not every future one.
+  const temperatureC = core.batteryTemperatureC;
+  if (temperatureC != null && temperatureC <= NO_CHARGE_BELOW_C) {
+    notifications.push({
+      key: `battery-freezing-${new Date().toDateString()}`,
+      type: 'device',
+      icon: 'thermometer-outline',
+      iconColor: COLORS.ERROR,
+      message: `Battery is below freezing (${formatTemperature(
+        temperatureC,
+        settings.measurementSystem,
+      )}). Don't charge it until it warms up.`,
+      dismissible: true,
+    });
+  }
 
   // ── Solar events ─────────────────────────────────────────────────────────────
   const iconMap: Record<SolarEventType, string> = {

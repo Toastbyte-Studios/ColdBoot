@@ -12,7 +12,12 @@ import {
 } from 'react-native';
 import DeviceInfo from 'react-native-device-info';
 import Geolocation, { GeoPosition } from 'react-native-geolocation-service';
+import { readBatteryTemperature } from '../utils/batteryTemperature';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
+
+/** GPS poll interval normally, and in Cold mode. */
+export const GPS_INTERVAL_MS = 60 * 1000;
+export const COLD_MODE_GPS_INTERVAL_MS = 10 * 60 * 1000;
 
 /** `locationError` when the user has not granted location access. */
 export const LOCATION_PERMISSION_DENIED = 'Location permission not granted';
@@ -31,6 +36,8 @@ export class CoreStore {
   isCharging: boolean | null = null;
   /** iOS Low Power Mode / Android Battery Saver; null until first sampled. */
   lowPowerMode: boolean | null = null;
+  /** Battery temperature in °C; Android only, null on iOS or until sampled. */
+  batteryTemperatureC: number | null = null;
   batteryEstimateMinutes: number | null = null;
   private lastBatterySample: { level: number; at: number } | null = null;
   private batteryQuickIv: ReturnType<typeof setInterval> | null = null;
@@ -52,6 +59,8 @@ export class CoreStore {
   lastFix: GeoPosition | null = null;
   locationError: string | null = null;
   private gpsIv: ReturnType<typeof setInterval> | null = null;
+  /** How often GPS is polled; Cold mode lengthens it. */
+  gpsIntervalMs: number = GPS_INTERVAL_MS;
 
   /**
    * Sets a fallback battery estimate for charging devices.
@@ -83,6 +92,13 @@ export class CoreStore {
    * @returns {Promise<void>} Resolves when the sampling is complete.
    */
   private sampleBattery = async (): Promise<void> => {
+    // Read on its own, so a failure reading the level or power state below
+    // doesn't lose it. Never throws; null on iOS.
+    const temperature = await readBatteryTemperature();
+    runInAction(() => {
+      this.batteryTemperatureC = temperature;
+    });
+
     try {
       const level = await DeviceInfo.getBatteryLevel();
       const power = await DeviceInfo.getPowerState();
@@ -315,12 +331,27 @@ export class CoreStore {
       });
       this.gpsGetFix();
       if (this.gpsIv) clearInterval(this.gpsIv);
-      this.gpsIv = setInterval(() => this.gpsGetFix(), 60000);
+      this.gpsIv = setInterval(() => this.gpsGetFix(), this.gpsIntervalMs);
     } else {
       runInAction(() => {
         this.locationError = LOCATION_PERMISSION_DENIED;
       });
     }
+  }
+
+  /**
+   * Changes how often GPS is polled, re-timing a running poll. Going faster
+   * also takes a fix straight away, so leaving Cold mode doesn't leave the
+   * position up to ten minutes old.
+   */
+  setGpsIntervalMs(ms: number) {
+    if (ms === this.gpsIntervalMs) return;
+    const faster = ms < this.gpsIntervalMs;
+    this.gpsIntervalMs = ms;
+    if (!this.gpsIv) return;
+    clearInterval(this.gpsIv);
+    this.gpsIv = setInterval(() => this.gpsGetFix(), ms);
+    if (faster) this.gpsGetFix();
   }
 
   /**
