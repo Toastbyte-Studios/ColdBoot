@@ -17,6 +17,25 @@ function monthLabel(item: PantryItem): string {
   ).toLocaleDateString([], { month: 'short', year: 'numeric' });
 }
 
+function expirationTimestamp(item: PantryItem): number | null {
+  if (!item.expirationMonth || !item.expirationYear) return null;
+  const timestamp = new Date(
+    item.expirationYear,
+    item.expirationMonth,
+    0,
+    23,
+    59,
+    59,
+    999,
+  ).getTime();
+  return Number.isFinite(timestamp) ? timestamp : null;
+}
+
+function isExpired(item: PantryItem, now: Date): boolean {
+  const expiresAt = expirationTimestamp(item);
+  return expiresAt !== null && expiresAt < now.getTime();
+}
+
 /**
  * The pantry item that runs out first, given the store's own day count
  * (dates are kept to the month, so an item lasts to the end of its month).
@@ -24,6 +43,7 @@ function monthLabel(item: PantryItem): string {
 export function expiryHeadline(
   sortedByExpiration: readonly PantryItem[],
   daysRemaining: (item: PantryItem) => number | null,
+  now: Date = new Date(),
 ): ExpiryHeadline {
   const next = sortedByExpiration[0];
   const days = next ? daysRemaining(next) : null;
@@ -34,9 +54,9 @@ export function expiryHeadline(
       tone: 'muted',
     };
   }
-  if (days <= 0) {
-    const expired = sortedByExpiration.filter(
-      (item) => (daysRemaining(item) ?? 1) <= 0,
+  if (isExpired(next, now)) {
+    const expired = sortedByExpiration.filter((item) =>
+      isExpired(item, now),
     ).length;
     return {
       headline: next.name,
@@ -58,13 +78,14 @@ export function expiryHeadline(
 export function expiryCounts(
   items: readonly PantryItem[],
   daysRemaining: (item: PantryItem) => number | null,
+  now: Date = new Date(),
 ): { expired: number; soon: number } {
   let expired = 0;
   let soon = 0;
   for (const item of items) {
     const days = daysRemaining(item);
     if (days === null) continue;
-    if (days <= 0) expired += 1;
+    if (isExpired(item, now)) expired += 1;
     else if (days <= 30) soon += 1;
   }
   return { expired, soon };

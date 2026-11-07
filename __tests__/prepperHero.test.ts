@@ -55,15 +55,52 @@ describe('expiryHeadline', () => {
       tone: 'muted',
     });
   });
+
+  it('does not mark an item expired until the end of its expiry month', () => {
+    const cannedFood = item('Canned food', 10, 2026);
+    const daysRemaining = days({ 'Canned food': 0 });
+    const beforeMonthEnd = new Date(2026, 9, 31, 23, 59, 59, 998);
+    const afterMonthEnd = new Date(2026, 10, 1);
+
+    expect(
+      expiryHeadline([cannedFood], daysRemaining, beforeMonthEnd).detail,
+    ).toMatch(/^Use by end of Oct 2026 · 0 days left$/);
+    expect(
+      expiryHeadline([cannedFood], daysRemaining, afterMonthEnd).detail,
+    ).toBe('Expired Oct 2026');
+  });
 });
 
 describe('expiryCounts', () => {
   it('counts expired and within-30-days separately, skipping undated', () => {
     expect(
       expiryCounts(
-        [item('A'), item('B'), item('C'), item('D')],
+        [
+          item('A', 9, 2026),
+          item('B', 10, 2026),
+          item('C', 11, 2026),
+          item('D', 12, 2026),
+          item('Undated'),
+        ],
         days({ A: -3, B: 10, C: 30, D: 31 }),
+        new Date(2026, 9, 1),
       ),
     ).toEqual({ expired: 1, soon: 2 });
+  });
+
+  it('uses the exact expiry instant instead of rounded days', () => {
+    const cannedFood = item('Canned food', 10, 2026);
+    const daysRemaining = days({ 'Canned food': 0 });
+
+    expect(
+      expiryCounts(
+        [cannedFood],
+        daysRemaining,
+        new Date(2026, 9, 31, 23, 59, 59, 998),
+      ),
+    ).toEqual({ expired: 0, soon: 1 });
+    expect(
+      expiryCounts([cannedFood], daysRemaining, new Date(2026, 10, 1)),
+    ).toEqual({ expired: 1, soon: 0 });
   });
 });

@@ -2,9 +2,11 @@ import {
   NavigationProp,
   ParamListBase,
   useNavigation,
+  useFocusEffect,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
+import { AppState } from 'react-native';
 import ModuleHero from '../../components/ModuleHero';
 import { useReadinessItems } from '../../screens/DeviceStatus/useReadinessItems';
 import { usePantryStore } from '../../stores/StoreContext';
@@ -23,15 +25,49 @@ import type { PantryItem } from '../../stores/PantryStore';
 const PrepperHero = observer(() => {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const pantry = usePantryStore();
+  const [now, setNow] = useState(() => new Date());
   const plan = useReadinessItems().find((item) => item.id === 'plan');
+
+  useFocusEffect(
+    useCallback(() => {
+      setNow(new Date());
+    }, []),
+  );
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const scheduleMidnightRefresh = () => {
+      const current = new Date();
+      const midnight = new Date(
+        current.getFullYear(),
+        current.getMonth(),
+        current.getDate() + 1,
+      );
+      timeout = setTimeout(() => {
+        setNow(new Date());
+        scheduleMidnightRefresh();
+      }, midnight.getTime() - current.getTime());
+    };
+    scheduleMidnightRefresh();
+
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setNow(new Date());
+    });
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.remove();
+    };
+  }, []);
 
   const daysRemaining = (item: PantryItem) =>
     pantry.getExpirationDaysRemaining(item);
   const headline = expiryHeadline(
     pantry.itemsSortedByExpiration(),
     daysRemaining,
+    now,
   );
-  const counts = expiryCounts(pantry.items, daysRemaining);
+  const counts = expiryCounts(pantry.items, daysRemaining, now);
 
   return (
     <ModuleHero
