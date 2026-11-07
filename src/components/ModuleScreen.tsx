@@ -20,6 +20,8 @@ type Props = {
   values?: Record<string, string>;
   /** Screen actions, e.g. Reference's bookmarks button. */
   trailing?: React.ReactNode;
+  /** The module's hero card (see ModuleHero), shown above the tools. */
+  hero?: React.ReactNode;
 };
 
 /**
@@ -38,6 +40,7 @@ export default function ModuleScreen({
   tools,
   values,
   trailing,
+  hero,
 }: Props) {
   const footerClearance = useFooterClearance();
   useScreenHeader({ title });
@@ -52,6 +55,8 @@ export default function ModuleScreen({
         ]}
       >
         <ScreenToolbar trailing={trailing} />
+
+        {hero}
 
         <ActiveToolCard />
 
