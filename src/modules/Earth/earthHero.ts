@@ -6,7 +6,6 @@ import {
   MIN_WINDOW_COVERAGE,
 } from '../../utils/barometricPressure';
 import { formatDaysUntil } from '../../utils/formatDaysUntil';
-import { getSolarSnapshot } from '../../utils/sunTimes';
 import { displayPressure } from '../../utils/unitConversions';
 import type { HeroTone } from '../../components/ModuleHero';
 import type { MeasurementSystem } from '../../stores/SettingsStore';
@@ -107,15 +106,30 @@ export function dayLengthText(
   longitude: number,
   now: Date = new Date(),
 ): string | null {
-  const today = getSolarSnapshot(latitude, longitude, now);
-  const yesterday = getSolarSnapshot(
-    latitude,
-    longitude,
-    new Date(now.getTime() - DAY_MS),
-  );
-  if (!today || !yesterday) return null;
-  const length = today.sunset.getTime() - today.sunrise.getTime();
-  const before = yesterday.sunset.getTime() - yesterday.sunrise.getTime();
+  if (
+    !Number.isFinite(latitude) ||
+    !Number.isFinite(longitude) ||
+    latitude < -90 ||
+    latitude > 90 ||
+    longitude < -180 ||
+    longitude > 180
+  ) {
+    return null;
+  }
+  const yesterday = new Date(now);
+  yesterday.setDate(yesterday.getDate() - 1);
+  const todayTimes = SunCalc.getTimes(now, latitude, longitude);
+  const yesterdayTimes = SunCalc.getTimes(yesterday, latitude, longitude);
+  const timestamps = [
+    todayTimes.sunrise,
+    todayTimes.sunset,
+    yesterdayTimes.sunrise,
+    yesterdayTimes.sunset,
+  ];
+  if (!timestamps.every((time) => Number.isFinite(time.getTime()))) return null;
+  const length = todayTimes.sunset.getTime() - todayTimes.sunrise.getTime();
+  const before =
+    yesterdayTimes.sunset.getTime() - yesterdayTimes.sunrise.getTime();
   if (!Number.isFinite(length) || !Number.isFinite(before)) return null;
   const change = Math.round((length - before) / 60000);
   const sign = change > 0 ? '+' : change < 0 ? '−' : '±';

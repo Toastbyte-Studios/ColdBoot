@@ -87,6 +87,12 @@ describe('dayLengthText', () => {
   it('is null with no sunrise or sunset (polar night)', () => {
     expect(dayLengthText(80, 15, new Date(Date.UTC(2026, 11, 21)))).toBeNull();
   });
+
+  it('uses sunrise and sunset when civil twilight is unavailable', () => {
+    expect(dayLengthText(65.5, 0, new Date(Date.UTC(2026, 5, 21, 12)))).toMatch(
+      /^\d+ h \d+ m · [−+±]\d+ min$/,
+    );
+  });
 });
 
 describe('nextFullMoonText', () => {
