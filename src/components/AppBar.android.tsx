@@ -165,6 +165,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subtitle: {
+    flexShrink: 1,
     fontSize: 14,
     marginTop: 1,
   },

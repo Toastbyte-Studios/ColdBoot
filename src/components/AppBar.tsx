@@ -194,6 +194,7 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   date: {
+    flexShrink: 1,
     fontSize: 11.5,
     fontWeight: '500',
   },
