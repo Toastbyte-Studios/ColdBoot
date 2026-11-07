@@ -1,3 +1,4 @@
+import { MenuView } from '@react-native-menu/menu';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -5,10 +6,12 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useTheme } from '../hooks/useTheme';
 import { SCREEN_GUTTER } from '../theme';
+import { DARK_COLORS } from '../theme/colors';
 import { withAlpha } from '../theme/colorUtils';
 import ConnectionDot from './ConnectionDot';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
+import type { BackDestination } from '../navigation/backDestinations';
 import type { ScreenHeader } from '../navigation/ScreenHeaderContext';
 
 export type AppBarProps = {
@@ -27,6 +30,12 @@ export type AppBarProps = {
   header?: ScreenHeader | null;
   /** Back, when the screen has no `onBack` of its own. */
   onBackPress?: () => void;
+  /**
+   * The screens behind this one, nearest first. A long press on Back lists
+   * them, so a deep screen is one gesture from Home rather than several taps.
+   */
+  backHistory?: BackDestination[];
+  onBackHistorySelect?: (destination: BackDestination) => void;
 };
 
 /** Edge length of the bar's circular icon buttons. */
@@ -58,6 +67,8 @@ export default function AppBar({
   onSettingsPress,
   header,
   onBackPress,
+  backHistory = [],
+  onBackHistorySelect,
 }: AppBarProps) {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
@@ -75,20 +86,49 @@ export default function AppBar({
     <View style={[styles.bar, { paddingTop: insets.top + 14 }]}>
       {header ? (
         <>
-          <Pressable
-            onPress={header.onBack ?? onBackPress}
-            accessibilityRole="button"
-            accessibilityLabel="Go back"
-            hitSlop={6}
-            style={({ pressed }) => [navButtonStyle, pressed && styles.pressed]}
+          {/* Touch and hold opens the history menu, like the system back
+              button; a tap still goes back one screen. */}
+          <MenuView
+            shouldOpenOnLongPress
+            actions={backHistory.map((destination) => ({
+              id: destination.id,
+              title: destination.title,
+              image: destination.isHome ? 'house' : undefined,
+            }))}
+            onPressAction={({ nativeEvent }) => {
+              const picked = backHistory.find(
+                (destination) => destination.id === nativeEvent.event,
+              );
+              if (picked) onBackHistorySelect?.(picked);
+            }}
+            // Follows the in-app theme setting rather than the OS.
+            themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
           >
-            <Ionicons
-              name="chevron-back-outline"
-              size={19}
-              color={COLORS.BRAND}
-              style={styles.backGlyph}
-            />
-          </Pressable>
+            <View style={styles.backMenuTarget}>
+              <Pressable
+                onPress={header.onBack ?? onBackPress}
+                accessibilityRole="button"
+                accessibilityLabel="Go back"
+                accessibilityHint={
+                  backHistory.length > 1
+                    ? 'Touch and hold to jump to an earlier screen'
+                    : undefined
+                }
+                hitSlop={6}
+                style={({ pressed }) => [
+                  navButtonStyle,
+                  pressed && styles.pressed,
+                ]}
+              >
+                <Ionicons
+                  name="chevron-back-outline"
+                  size={19}
+                  color={COLORS.BRAND}
+                  style={styles.backGlyph}
+                />
+              </Pressable>
+            </View>
+          </MenuView>
 
           <View style={styles.titles}>
             <Text
@@ -191,6 +231,12 @@ const styles = StyleSheet.create({
   backGlyph: {
     // The chevron's visual centre sits right of its box; nudge it back.
     marginLeft: -2,
+  },
+  backMenuTarget: {
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navButton: {
     width: NAV_BUTTON,
