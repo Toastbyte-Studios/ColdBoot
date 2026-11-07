@@ -95,6 +95,9 @@ covers it:
 | Title a screen with its own frame | `navigation/ScreenHeaderContext` (`useScreenHeader`)        |
 | Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)      |
 | A row that shows a status colour  | `ModuleRow` with `iconColor`                                |
+| A module's at-a-glance card       | `components/ModuleHero`, passed as `ModuleScreen`'s `hero`  |
+| Readiness checks (maps, plan…)    | `screens/DeviceStatus/useReadinessItems`                    |
+| A reference entry by id           | `utils/referenceEntries` (`findReferenceEntry`)             |
 
 ```tsx
 import { observer } from 'mobx-react-lite';

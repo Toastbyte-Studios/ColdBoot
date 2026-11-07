@@ -9,12 +9,6 @@ import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
-import emergencyData from '../../data/emergency.json';
-import healthData from '../../data/health.json';
-import roadsideData from '../../data/roadside.json';
-import survivalData from '../../data/survival.json';
-import toolsData from '../../data/tools.json';
-import weatherData from '../../data/weather.json';
 import { useTheme } from '../../hooks/useTheme';
 import {
   getBookmarks,
@@ -23,7 +17,10 @@ import {
 } from '../../stores/BookmarksStore';
 import { SPACING, TEXT_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
-import ReferenceEntryType from '../../types/data-type';
+import {
+  ALL_REFERENCE_ENTRIES,
+  referenceEntryMap,
+} from '../../utils/referenceEntries';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -47,32 +44,17 @@ export default function BookmarkScreen(): JSX.Element {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const [items, setItems] = useState<BookmarkItem[]>([]);
 
-  // Create a Map for O(1) lookup performance instead of O(n) for each find operation
-  // Using useMemo to lazily initialize only when component mounts
   const entryMap = useMemo(() => {
-    const allEntries = [
-      ...emergencyData.entries,
-      ...healthData.entries,
-      ...roadsideData.entries,
-      ...survivalData.entries,
-      ...toolsData.entries,
-      ...weatherData.entries,
-    ];
-
     // Development-time check for duplicate IDs
     if (__DEV__) {
-      const ids = allEntries.map((entry) => entry.id);
-      const uniqueIds = new Set(ids);
-      if (ids.length !== uniqueIds.size) {
+      const ids = ALL_REFERENCE_ENTRIES.map((entry) => entry.id);
+      if (ids.length !== new Set(ids).size) {
         console.error(
           'Duplicate entry IDs detected across data sources. This may cause entries to be overwritten.',
         );
       }
     }
-
-    return new Map<string, ReferenceEntryType>(
-      allEntries.map((entry) => [entry.id, entry]),
-    );
+    return referenceEntryMap();
   }, []);
 
   const load = useCallback(async () => {
