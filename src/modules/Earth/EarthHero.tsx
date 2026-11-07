@@ -46,13 +46,21 @@ const EarthHero = observer(() => {
     return () => clearInterval(id);
   }, []);
 
-  const pressure = pressureHeadline(
-    barometer.history,
-    barometer.currentPressure,
-    barometer.paused,
-    settings.measurementSystem,
-    now.getTime(),
-  );
+  const pressure =
+    !barometer.available && !barometer.loading && !barometer.paused
+      ? {
+          headline: 'Barometer unavailable',
+          detail:
+            barometer.error ?? 'This device cannot provide pressure readings.',
+          tone: 'muted' as const,
+        }
+      : pressureHeadline(
+          barometer.history,
+          barometer.currentPressure,
+          barometer.paused,
+          settings.measurementSystem,
+          now.getTime(),
+        );
   const fix = core.lastFix?.coords;
   const dayLength = fix
     ? dayLengthText(fix.latitude, fix.longitude, now)
