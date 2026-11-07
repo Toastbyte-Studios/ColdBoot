@@ -44,20 +44,24 @@ type RepeaterLike = {
   lng: number;
   distance: number;
   operationalStatus: string;
+  isCustom?: boolean;
 };
 
 /**
- * The closest repeater, preferring ones listed as on the air. Distance is
- * measured from the current fix when there is one; otherwise the cached
- * distance from where the list was fetched.
+ * The closest geocoded repeater, preferring ones listed as on the air.
+ * Distance is measured from the current fix when there is one; otherwise
+ * the cached distance from where the list was fetched.
  */
 export function nearestRepeater<T extends RepeaterLike>(
   repeaters: readonly T[],
   from: { latitude: number; longitude: number } | null,
 ): { repeater: T; miles: number } | null {
-  const pool = repeaters.some((r) => r.operationalStatus === 'On-air')
-    ? repeaters.filter((r) => r.operationalStatus === 'On-air')
-    : repeaters;
+  const located = repeaters.filter(
+    (r) => !(r.isCustom && r.lat === 0 && r.lng === 0),
+  );
+  const pool = located.some((r) => r.operationalStatus === 'On-air')
+    ? located.filter((r) => r.operationalStatus === 'On-air')
+    : located;
   let best: { repeater: T; miles: number } | null = null;
   for (const repeater of pool) {
     const miles =
