@@ -1,10 +1,17 @@
+import { observable, runInAction } from 'mobx';
 import React from 'react';
+import { AccessibilityInfo } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import SunTimeScreen from '../src/screens/SunTime/SunTimeScreen';
+import { getSolarSnapshot } from '../src/utils/sunTimes';
 
-const mockCore = {
-  lastFix: { coords: { latitude: 34.0522, longitude: -118.2437 } },
-};
+const LA = { latitude: 34.0522, longitude: -118.2437 };
+const NEW_YORK = { latitude: 40.7128, longitude: -74.006 };
+
+const mockCore = observable({
+  lastFix: { coords: LA },
+});
+const renderedTrees: ReactTestRenderer.ReactTestRenderer[] = [];
 
 jest.mock('../src/stores/StoreContext', () => ({
   useCoreStore: () => mockCore,
@@ -32,15 +39,19 @@ jest.mock('../src/components/GroupContainer', () => {
   );
 });
 
-const mounted: ReactTestRenderer.ReactTestRenderer[] = [];
-
 async function render() {
   let tree!: ReactTestRenderer.ReactTestRenderer;
   await ReactTestRenderer.act(async () => {
     tree = ReactTestRenderer.create(<SunTimeScreen />);
-    mounted.push(tree);
+    renderedTrees.push(tree);
   });
   return tree;
+}
+
+async function unmountRenderedTrees() {
+  await ReactTestRenderer.act(async () => {
+    renderedTrees.splice(0).forEach((tree) => tree.unmount());
+  });
 }
 
 /** The chart's container: the only element with an onLayout handler. */
@@ -54,9 +65,7 @@ const svgWidth = (tree: ReactTestRenderer.ReactTestRenderer) =>
 
 describe('SunTimeScreen daylight chart', () => {
   afterEach(async () => {
-    await ReactTestRenderer.act(async () => {
-      mounted.splice(0).forEach((tree) => tree.unmount());
-    });
+    await unmountRenderedTrees();
     jest.useRealTimers();
   });
 
@@ -81,5 +90,103 @@ describe('SunTimeScreen daylight chart', () => {
 
     await layout(0);
     expect(svgWidth(tree)).toBe(300);
+  });
+});
+
+describe('SunTimeScreen sun rise animation', () => {
+  // 10 AM in Los Angeles: the sun is part-way up its arc.
+  const NOW = new Date('2026-11-05T18:00:00Z');
+  const WIDTH = 300;
+  const snapshot = getSolarSnapshot(LA.latitude, LA.longitude, NOW);
+  if (!snapshot) throw new Error('Los Angeles always has a sunrise');
+  const expectedX = snapshot.progress * WIDTH;
+
+  /** x position of the sun's core (the r=7 circle). */
+  const sunX = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    tree.root.find((node) => node.props.r === 7 && node.props.cx !== undefined)
+      .props.cx as number;
+
+  async function renderMeasured() {
+    const tree = await render();
+    await ReactTestRenderer.act(async () => {
+      chartOf(tree).props.onLayout({
+        nativeEvent: { layout: { x: 0, y: 0, width: WIDTH, height: 132 } },
+      });
+    });
+    return tree;
+  }
+
+  const advance = (ms: number) =>
+    ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(ms);
+    });
+
+  beforeEach(() => {
+    jest.useFakeTimers({ now: NOW });
+    runInAction(() => {
+      mockCore.lastFix = { coords: LA };
+    });
+  });
+
+  afterEach(async () => {
+    await unmountRenderedTrees();
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  it('climbs from the horizon to the current position', async () => {
+    jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(false);
+    const tree = await renderMeasured();
+
+    expect(expectedX).toBeGreaterThan(0);
+    expect(sunX(tree)).toBe(0);
+
+    await advance(500);
+    expect(sunX(tree)).toBeGreaterThan(0);
+    expect(sunX(tree)).toBeLessThan(expectedX);
+
+    await advance(2000);
+    expect(sunX(tree)).toBeCloseTo(expectedX, 1);
+  });
+
+  it('places the sun without animating when Reduce Motion is on', async () => {
+    jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(true);
+    const tree = await renderMeasured();
+
+    expect(sunX(tree)).toBeCloseTo(expectedX, 1);
+  });
+
+  it('does not restart when a new fix arrives mid-climb', async () => {
+    jest
+      .spyOn(AccessibilityInfo, 'isReduceMotionEnabled')
+      .mockResolvedValue(false);
+    const tree = await renderMeasured();
+
+    await advance(700);
+    const midway = sunX(tree);
+    expect(midway).toBeGreaterThan(0);
+
+    const updatedSnapshot = getSolarSnapshot(
+      NEW_YORK.latitude,
+      NEW_YORK.longitude,
+      NOW,
+    );
+    if (!updatedSnapshot) throw new Error('New York always has a sunrise');
+    await ReactTestRenderer.act(() => {
+      runInAction(() => {
+        mockCore.lastFix = { coords: NEW_YORK };
+      });
+    });
+    expect(sunX(tree)).toBeGreaterThanOrEqual(midway);
+
+    await advance(100);
+    expect(sunX(tree)).toBeGreaterThan(midway);
+
+    await advance(1900);
+    expect(sunX(tree)).toBeCloseTo(updatedSnapshot.progress * WIDTH, 1);
   });
 });

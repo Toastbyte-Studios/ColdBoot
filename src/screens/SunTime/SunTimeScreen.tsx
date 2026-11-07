@@ -1,7 +1,10 @@
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  AccessibilityInfo,
   ActivityIndicator,
+  Animated,
+  Easing,
   LayoutChangeEvent,
   Platform,
   StyleSheet,
@@ -42,6 +45,9 @@ const CHART_HEIGHT = 132;
 /** Vertical room left below the arc for the horizon rule and its labels. */
 const CHART_BASELINE = 104;
 const CHART_PEAK = 18;
+
+/** How long the sun takes to climb from the horizon to where it is now. */
+const SUN_RISE_DURATION_MS = 1400;
 
 /**
  * Horizontal space around the chart, used to estimate its width for the first
@@ -154,6 +160,7 @@ const SunTimeScreen = observer(() => {
   const snapshot = fix
     ? getSolarSnapshot(fix.coords.latitude, fix.coords.longitude, now)
     : null;
+  const sunProgress = useSunRise(snapshot?.progress ?? null);
 
   const handleChartLayout = (event: LayoutChangeEvent) => {
     const width = Math.round(event.nativeEvent.layout.width);
@@ -277,20 +284,20 @@ const SunTimeScreen = observer(() => {
                   />
                   {/* Now. */}
                   <Path
-                    d={`M${arcPoint(snapshot.progress).x} ${CHART_PEAK - 10} V${CHART_BASELINE}`}
+                    d={`M${arcPoint(sunProgress).x} ${CHART_PEAK - 10} V${CHART_BASELINE}`}
                     stroke={COLORS.MUTED}
                     strokeWidth={1}
                     strokeDasharray="3 3"
                   />
                   <Circle
-                    cx={arcPoint(snapshot.progress).x}
-                    cy={arcPoint(snapshot.progress).y}
+                    cx={arcPoint(sunProgress).x}
+                    cy={arcPoint(sunProgress).y}
                     r={13}
                     fill={withAlpha(COLORS.ACCENT, 0.2)}
                   />
                   <Circle
-                    cx={arcPoint(snapshot.progress).x}
-                    cy={arcPoint(snapshot.progress).y}
+                    cx={arcPoint(sunProgress).x}
+                    cy={arcPoint(sunProgress).y}
                     r={7}
                     fill={COLORS.ACCENT}
                   />
@@ -359,6 +366,64 @@ const SunTimeScreen = observer(() => {
     </StackScreen>
   );
 });
+
+/**
+ * The sun's position on the arc for drawing, animated on first show: it starts
+ * on the horizon at the sunrise point and climbs along the arc to `target`.
+ *
+ * Plays once per visit. `target` moves while the screen is open (the
+ * per-minute tick, each new GPS fix), so the animation keys on the chart
+ * becoming drawable rather than on the value, and only follows `target`
+ * directly once the climb has finished. With Reduce Motion on, the sun is
+ * simply placed.
+ */
+function useSunRise(target: number | null): number {
+  const ready = target != null;
+  const targetRef = useRef(target ?? 0);
+  targetRef.current = target ?? 0;
+  const [rising, setRising] = useState(true);
+  const [shown, setShown] = useState(0);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    let cancelled = false;
+    let animation: Animated.CompositeAnimation | null = null;
+    const value = new Animated.Value(0);
+    const listener = value.addListener(({ value: v }) => setShown(v));
+    const finish = () => {
+      if (!cancelled) setRising(false);
+    };
+
+    setRising(true);
+    setShown(0);
+    AccessibilityInfo.isReduceMotionEnabled()
+      .catch(() => false)
+      .then((reduceMotion) => {
+        if (cancelled) return;
+        if (reduceMotion || targetRef.current <= 0) {
+          finish();
+          return;
+        }
+        animation = Animated.timing(value, {
+          toValue: targetRef.current,
+          duration: SUN_RISE_DURATION_MS,
+          easing: Easing.out(Easing.cubic),
+          // Drives SVG coordinates through state; the native driver can't.
+          useNativeDriver: false,
+        });
+        animation.start(finish);
+      });
+
+    return () => {
+      cancelled = true;
+      animation?.stop();
+      value.removeListener(listener);
+    };
+  }, [ready]);
+
+  return rising ? shown : targetRef.current;
+}
 
 /** One cell of the three-up row beneath the chart. */
 function Milestone({ label, value }: { label: string; value: string }) {
