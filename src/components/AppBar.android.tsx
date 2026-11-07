@@ -2,9 +2,12 @@ import { MenuComponentRef, MenuView } from '@react-native-menu/menu';
 import React, { useRef } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
+import { SPACING } from '../theme';
 import { DARK_COLORS } from '../theme/colors';
+import ConnectionDot from './ConnectionDot';
 import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
@@ -17,13 +20,10 @@ const MARK_SIZE = 32;
 /**
  * The Material 3 small top app bar.
  *
- * Two differences from the iOS bar, both of them Material's rules rather than
- * preferences:
+ * The Android bar follows Material's rules rather than the iOS bar:
  *
- * - **No date.** A top app bar carries a title and actions, nothing else. The
- *   supporting line moves into the content — see `HomeSupportingLine` — where
- *   it scrolls away with everything else instead of pinning a fact that stops
- *   being interesting after the first glance.
+ * - **Home's date stays in content.** Nested screens without their own
+ *   subtitle show the date and connection status beneath the title.
  * - **48dp borderless targets.** The iOS bar draws its icon buttons as tinted
  *   circles; Material's are unfilled glyphs with a borderless ripple, sized to
  *   the 48dp target rather than to the glyph.
@@ -50,6 +50,7 @@ export default function AppBar({
   // behind the button just to anchor where it pops up.
   const historyMenu = useRef<MenuComponentRef>(null);
   const COLORS = useTheme();
+  const currentDate = useCurrentDate();
   const insets = useSafeAreaInsets();
   const rippleColor = useRippleColor();
 
@@ -114,7 +115,20 @@ export default function AppBar({
               >
                 {header.subtitle}
               </Text>
-            ) : null}
+            ) : (
+              // No subtitle of its own: the date and connection dot, as on
+              // Home's supporting line, so there is always a second line.
+              <View style={styles.dateRow}>
+                <Text
+                  style={[styles.subtitle, { color: COLORS.MUTED }]}
+                  accessibilityLabel={`Current date: ${currentDate}`}
+                  numberOfLines={1}
+                >
+                  {currentDate}
+                </Text>
+                <ConnectionDot />
+              </View>
+            )}
           </View>
         </>
       ) : (
@@ -185,8 +199,14 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   subtitle: {
+    flexShrink: 1,
     fontSize: 14,
     marginTop: 1,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: SPACING.sm,
   },
   title: {
     fontSize: 21,
