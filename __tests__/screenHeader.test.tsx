@@ -3,6 +3,7 @@ import React from 'react';
 import { Text as RNText } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AppBar from '../src/components/AppBar';
+import AppBarAndroid from '../src/components/AppBar.android';
 import StackScreen from '../src/components/StackScreen';
 import {
   ScreenHeader,
@@ -24,6 +25,9 @@ jest.mock('../src/hooks/useActiveRoute', () => ({
 }));
 jest.mock('../src/hooks/useTheme', () => ({
   useTheme: () => require('../src/theme/colors').LIGHT_COLORS,
+}));
+jest.mock('../src/hooks/useRippleColor', () => ({
+  useRippleColor: () => 'rgba(0,0,0,0.1)',
 }));
 jest.mock('../src/hooks/useFooterClearance', () => ({
   useFooterClearance: () => 0,
@@ -234,6 +238,33 @@ describe('AppBar', () => {
 
     backButton(tree).props.onPress();
     expect(onBackPress).toHaveBeenCalled();
+  });
+
+  it('fills a missing subtitle with the date, as Home does', async () => {
+    const tree = await render(
+      <AppBar {...baseProps} header={{ title: 'Unit Conversion' }} />,
+    );
+    expect(texts(tree)).toEqual(
+      expect.arrayContaining(['Unit Conversion', 'Thursday, November 5']),
+    );
+  });
+
+  it('does the same on Android, and prefers a real subtitle on both', async () => {
+    const bare = await render(
+      <AppBarAndroid {...baseProps} header={{ title: 'Unit Conversion' }} />,
+    );
+    expect(texts(bare)).toEqual(
+      expect.arrayContaining(['Unit Conversion', 'Thursday, November 5']),
+    );
+
+    const withSubtitle = await render(
+      <AppBarAndroid
+        {...baseProps}
+        header={{ title: 'Sun Times', subtitle: '34.05° N' }}
+      />,
+    );
+    expect(texts(withSubtitle)).toContain('34.05° N');
+    expect(texts(withSubtitle)).not.toContain('Thursday, November 5');
   });
 
   it("uses the screen's own onBack when it has one", async () => {
