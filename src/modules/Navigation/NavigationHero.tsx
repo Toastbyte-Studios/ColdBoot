@@ -116,7 +116,10 @@ const NavigationHero = observer(() => {
           ? {
               label: nearest.label,
               value: nearest.value,
-              onPress: () => navigation.navigate('MapScreen'),
+              onPress: () =>
+                navigation.navigate(
+                  nearest.label === 'Rally point' ? 'RallyPoints' : 'MapScreen',
+                ),
             }
           : {
               label: 'Rally point',
