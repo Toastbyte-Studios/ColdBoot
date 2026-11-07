@@ -123,7 +123,10 @@ const CoreHero = observer(() => {
           ? {
               label: 'Latest note',
               value: noteText(note, now),
-              onPress: () => navigation.navigate('NoteEntry', { note }),
+              onPress: () =>
+                note.type === 'voice'
+                  ? navigation.navigate('VoiceLog')
+                  : navigation.navigate('NoteEntry', { note }),
             }
           : {
               label: 'Latest note',
