@@ -85,19 +85,24 @@ const NavigationHero = observer(() => {
   ];
   const nearest = nearestSafePoint(here, safePoints, system);
 
-  const areas = maps.packs.map((pack) => ({
-    name: maps.displayName(pack),
-    region: getValidRegionMetadata(pack),
-  }));
-  const coverage = !maps.hasLoaded
-    ? { value: '…', tone: 'muted' as const }
-    : areas.length === 0
-      ? { value: 'No areas', tone: 'poor' as const }
-      : !here
-        ? { value: 'Needs GPS', tone: 'muted' as const }
-        : findCoveringArea(here, areas)
-          ? { value: 'Covered', tone: 'good' as const }
-          : { value: 'Not covered', tone: 'fair' as const };
+  // Same rule as Device Status' readiness: only finished downloads count.
+  const areas = maps.packs
+    .filter((pack) => pack.status?.state === 'complete')
+    .map((pack) => ({
+      name: maps.displayName(pack),
+      region: getValidRegionMetadata(pack),
+    }));
+  const coverage = maps.loadFailed
+    ? { value: "Couldn't check", tone: 'muted' as const }
+    : !maps.hasLoaded
+      ? { value: '…', tone: 'muted' as const }
+      : areas.length === 0
+        ? { value: 'No areas', tone: 'poor' as const }
+        : !here
+          ? { value: 'Needs GPS', tone: 'muted' as const }
+          : findCoveringArea(here, areas)
+            ? { value: 'Covered', tone: 'good' as const }
+            : { value: 'Not covered', tone: 'fair' as const };
 
   return (
     <ModuleHero
