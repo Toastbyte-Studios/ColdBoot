@@ -97,7 +97,7 @@ const ColdWeatherScreen = observer(() => {
           status: batteryTemperatureStatus(core.batteryTemperatureC),
         };
   const toneColor = (tone: 'good' | 'fair' | 'poor') =>
-    tone === 'poor'
+    tone === 'poor' || isAndroid
       ? COLORS.PRIMARY_DARK
       : tone === 'fair'
         ? COLORS.ACCENT
