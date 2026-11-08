@@ -2,6 +2,7 @@ import React from 'react';
 import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import RecordingControls from '../src/screens/VoiceLog/components/RecordingControls';
+import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
 import VoiceLogScreen from '../src/screens/VoiceLog/VoiceLogScreen';
 
 /** The latest arguments Voice Log passed to usePreventRemove. */
@@ -9,6 +10,20 @@ let mockPrevent: { active: boolean; onBack: () => void } | null = null;
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
+const mockNotes = [
+  {
+    id: 'log-1',
+    category: 'Voice Logs',
+    createdAt: 0,
+    audioUri: 'log.m4a',
+  },
+];
+const mockLoads: ((error?: Error) => void)[] = [];
+const mockSounds: {
+  play: jest.Mock;
+  stop: jest.Mock;
+  release: jest.Mock;
+}[] = [];
 
 jest.mock('@react-navigation/native', () => ({
   usePreventRemove: (active: boolean, onBack: () => void) => {
@@ -21,10 +36,21 @@ jest.mock('react-native-nitro-sound', () => ({
     stopRecorder: mockStopRecorder,
   }),
 }));
-jest.mock('react-native-sound', () => jest.fn());
+jest.mock('react-native-sound', () =>
+  jest.fn((_uri: string, _base: string, onLoad: (error?: Error) => void) => {
+    const sound = {
+      play: jest.fn(),
+      stop: jest.fn(),
+      release: jest.fn(),
+    };
+    mockLoads.push(onLoad);
+    mockSounds.push(sound);
+    return sound;
+  }),
+);
 jest.mock('../src/stores', () => ({
   useNotesStore: () => ({
-    notes: [],
+    notes: mockNotes,
     deleteNote: jest.fn(),
     createVoiceLog: mockCreateVoiceLog,
   }),
@@ -64,6 +90,8 @@ describe('Voice Log back', () => {
 
   beforeEach(async () => {
     mockPrevent = null;
+    mockLoads.length = 0;
+    mockSounds.length = 0;
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockCreateVoiceLog.mockReset().mockResolvedValue(undefined);
@@ -106,6 +134,97 @@ describe('Voice Log back', () => {
     await ReactTestRenderer.act(async () => mockPrevent?.onBack());
     expect(title()).toBe('Voice Logs');
     expect(mockPrevent?.active).toBe(false);
+  });
+
+  it.each(['system', 'app bar'])(
+    'cancels a pending load when leaving via %s Back',
+    async (back) => {
+      await openRow('View voice logs');
+      ReactTestRenderer.act(() =>
+        tree.root.findByType(VoiceLogCard).props.onPlay(),
+      );
+      expect(mockSounds).toHaveLength(1);
+      await ReactTestRenderer.act(async () => {
+        if (back === 'system') mockPrevent?.onBack();
+        else tree.root.findByProps({ testID: 'screen-title' }).props.onPress();
+      });
+      expect(title()).toBe('Voice Logs');
+      await openRow('View voice logs');
+      ReactTestRenderer.act(() => mockLoads[0]());
+      expect(mockSounds[0].play).not.toHaveBeenCalled();
+      expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+      expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(false);
+    },
+  );
+
+  it('does not let canceled loads or stop callbacks affect newer playback', async () => {
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() => {
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+    });
+    ReactTestRenderer.act(() => {
+      mockLoads[0](new Error('canceled'));
+      mockLoads[1]();
+    });
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+    expect(mockSounds[1].play).toHaveBeenCalledTimes(1);
+
+    ReactTestRenderer.act(() => {
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      mockLoads[2]();
+    });
+    const finishStop = mockSounds[1].stop.mock.calls[0][0];
+    const finishPlay = mockSounds[1].play.mock.calls[0][0];
+    ReactTestRenderer.act(() => {
+      finishPlay(false);
+      finishStop();
+    });
+    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(mockSounds[1].release).toHaveBeenCalledTimes(1);
+    expect(mockSounds[2].release).not.toHaveBeenCalled();
+    expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(true);
+  });
+
+  it('stops active playback on Back and releases it after stopping', async () => {
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() => {
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      mockLoads[0]();
+      mockPrevent?.onBack();
+    });
+    expect(mockSounds[0].stop).toHaveBeenCalledTimes(1);
+    await ReactTestRenderer.act(async () => {
+      mockSounds[0].stop.mock.calls[0][0]();
+    });
+    expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+    expect(title()).toBe('Voice Logs');
+  });
+
+  it('clears the playing state after normal playback', async () => {
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() => {
+      tree.root.findByType(VoiceLogCard).props.onPlay();
+      mockLoads[0]();
+    });
+    expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(true);
+    ReactTestRenderer.act(() => mockSounds[0].play.mock.calls[0][0](true));
+    expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+    expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(false);
+  });
+
+  it('releases a pending load after unmount without playing it', async () => {
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() =>
+      tree.root.findByType(VoiceLogCard).props.onPlay(),
+    );
+    ReactTestRenderer.act(() => tree.unmount());
+    ReactTestRenderer.act(() => mockLoads[0]());
+    expect(mockSounds[0].play).not.toHaveBeenCalled();
+    expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
   });
 
   it('waits for stop and save before returning and ignores repeated Back', async () => {

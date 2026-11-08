@@ -66,6 +66,8 @@ export default observer(function VoiceLogScreen() {
   const [micLevel, setMicLevel] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const soundRef = useRef<Sound | null>(null);
+  const playingIdRef = useRef<string | null>(null);
+  const playbackVersionRef = useRef(0);
   const stopRecorderRef = useRef<(() => Promise<string | undefined>) | null>(
     null,
   );
@@ -178,6 +180,16 @@ export default observer(function VoiceLogScreen() {
     stopRecorderRef.current = stopRecorder;
   }, [stopRecorder]);
 
+  const stopPlayback = useCallback(() => {
+    playbackVersionRef.current += 1;
+    playingIdRef.current = null;
+    const sound = soundRef.current;
+    soundRef.current = null;
+    if (sound) {
+      sound.stop(() => sound.release());
+    }
+  }, []);
+
   // Cleanup on unmount only (empty dependency array)
   useEffect(() => {
     return () => {
@@ -192,15 +204,9 @@ export default observer(function VoiceLogScreen() {
         });
       }
 
-      // Stop playback when unmounting
-      if (soundRef.current) {
-        soundRef.current.stop(() => {
-          soundRef.current?.release();
-          soundRef.current = null;
-        });
-      }
+      stopPlayback();
     };
-  }, []); // Empty dependency array for unmount-only cleanup
+  }, [stopPlayback]);
 
   // Record and Saved Voice Logs are steps inside this screen, not screens of
   // their own, so going back (the swipe, Android's system Back, iOS's edge
@@ -210,15 +216,10 @@ export default observer(function VoiceLogScreen() {
   const handleBack = async () => {
     if (goingBackRef.current) return;
     goingBackRef.current = true;
+    stopPlayback();
+    setPlayingId(null);
     await startingRef.current;
     await handleStopRecordingRef.current?.();
-    if (soundRef.current) {
-      soundRef.current.stop(() => {
-        soundRef.current?.release();
-        soundRef.current = null;
-      });
-      setPlayingId(null);
-    }
     setMode('select');
     goingBackRef.current = false;
   };
@@ -300,32 +301,40 @@ export default observer(function VoiceLogScreen() {
   const voiceLogs = core.notes.filter((note) => note.category === 'Voice Logs');
 
   const handlePlayVoiceLog = (noteId: string, audioUri: string) => {
+    if (goingBackRef.current) return;
     try {
       // Stop any currently playing sound
-      if (soundRef.current) {
-        soundRef.current.stop(() => {
-          soundRef.current?.release();
-          soundRef.current = null;
-        });
+      if (playingIdRef.current) {
+        stopPlayback();
         setPlayingId(null);
         return;
       }
 
       // Start playing new sound
+      const version = ++playbackVersionRef.current;
+      playingIdRef.current = noteId;
       setPlayingId(noteId);
 
       // Load audio file
       const sound = new Sound(audioUri, '', (error) => {
+        if (playbackVersionRef.current !== version) {
+          sound.release();
+          return;
+        }
         if (error) {
           console.error('Failed to load sound:', error);
           Alert.alert('Error', 'Failed to load audio file.');
           sound.release();
+          playingIdRef.current = null;
           setPlayingId(null);
           return;
         }
 
         // Play the sound
+        soundRef.current = sound;
         sound.play((success) => {
+          if (playbackVersionRef.current !== version) return;
+          playingIdRef.current = null;
           if (success) {
             setPlayingId(null);
           } else {
@@ -340,12 +349,11 @@ export default observer(function VoiceLogScreen() {
             soundRef.current = null;
           }
         });
-
-        soundRef.current = sound;
       });
     } catch (error) {
       console.error('Error playing voice log:', error);
       Alert.alert('Error', 'Failed to play voice log.');
+      playingIdRef.current = null;
       setPlayingId(null);
     }
   };
@@ -361,11 +369,8 @@ export default observer(function VoiceLogScreen() {
           style: 'destructive',
           onPress: () => {
             // Stop playing if this is the currently playing log
-            if (playingId === noteId && soundRef.current) {
-              soundRef.current.stop(() => {
-                soundRef.current?.release();
-                soundRef.current = null;
-              });
+            if (playingIdRef.current === noteId) {
+              stopPlayback();
               setPlayingId(null);
             }
             core.deleteNote(noteId);
@@ -454,7 +459,7 @@ export default observer(function VoiceLogScreen() {
 
   // Mode: View
   return (
-    <StackScreen title="Saved Voice Logs" onBack={() => setMode('select')}>
+    <StackScreen title="Saved Voice Logs" onBack={handleBack}>
       <View style={styles.column}>
         {voiceLogs.length === 0 ? (
           <EmptyState
