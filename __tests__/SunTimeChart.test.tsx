@@ -2,7 +2,9 @@ import { observable, runInAction } from 'mobx';
 import React from 'react';
 import { AccessibilityInfo } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
-import SunTimeScreen from '../src/screens/SunTime/SunTimeScreen';
+import SunTimeScreen, {
+  SUN_RISE_DURATION_MS,
+} from '../src/screens/SunTime/SunTimeScreen';
 import { getSolarSnapshot } from '../src/utils/sunTimes';
 
 const LA = { latitude: 34.0522, longitude: -118.2437 };
@@ -143,11 +145,11 @@ describe('SunTimeScreen sun rise animation', () => {
     expect(expectedX).toBeGreaterThan(0);
     expect(sunX(tree)).toBe(0);
 
-    await advance(500);
+    await advance(SUN_RISE_DURATION_MS / 3);
     expect(sunX(tree)).toBeGreaterThan(0);
     expect(sunX(tree)).toBeLessThan(expectedX);
 
-    await advance(2000);
+    await advance(SUN_RISE_DURATION_MS);
     expect(sunX(tree)).toBeCloseTo(expectedX, 1);
   });
 
@@ -166,7 +168,7 @@ describe('SunTimeScreen sun rise animation', () => {
       .mockResolvedValue(false);
     const tree = await renderMeasured();
 
-    await advance(700);
+    await advance(SUN_RISE_DURATION_MS / 2);
     const midway = sunX(tree);
     expect(midway).toBeGreaterThan(0);
 
@@ -183,10 +185,10 @@ describe('SunTimeScreen sun rise animation', () => {
     });
     expect(sunX(tree)).toBeGreaterThanOrEqual(midway);
 
-    await advance(100);
+    await advance(SUN_RISE_DURATION_MS / 14);
     expect(sunX(tree)).toBeGreaterThan(midway);
 
-    await advance(1900);
+    await advance(SUN_RISE_DURATION_MS * 1.5);
     expect(sunX(tree)).toBeCloseTo(updatedSnapshot.progress * WIDTH, 1);
   });
 });

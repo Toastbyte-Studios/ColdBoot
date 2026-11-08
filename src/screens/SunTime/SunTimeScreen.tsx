@@ -47,7 +47,7 @@ const CHART_BASELINE = 104;
 const CHART_PEAK = 18;
 
 /** How long the sun takes to climb from the horizon to where it is now. */
-const SUN_RISE_DURATION_MS = 1400;
+export const SUN_RISE_DURATION_MS = 2800;
 
 /**
  * Horizontal space around the chart, used to estimate its width for the first
