@@ -9,6 +9,8 @@ const mockSetFlashlightMode = jest.fn();
 
 let mockNotificationCount = 3;
 let mockCurrentRouteName = 'Home';
+let mockCanGoBack = false;
+const mockGoBack = jest.fn();
 
 const mockSettingsStore = {
   shortcuts: ['core_flashlight', 'nav_map', 'core_voice_log'],
@@ -52,6 +54,8 @@ jest.mock('../src/navigation/navigationRef', () => ({
   navigationRef: {
     isReady: () => true,
     getCurrentRoute: () => ({ name: mockCurrentRouteName }),
+    canGoBack: () => mockCanGoBack,
+    goBack: () => mockGoBack(),
     addListener: () => jest.fn(),
   },
 }));
@@ -61,6 +65,7 @@ describe('ShortcutBar', () => {
     jest.clearAllMocks();
     mockNotificationCount = 3;
     mockCurrentRouteName = 'Home';
+    mockCanGoBack = false;
     mockSettingsStore.shortcuts = [
       'core_flashlight',
       'nav_map',
@@ -171,5 +176,40 @@ describe('ShortcutBar', () => {
       tree.root.findByProps({ accessibilityLabel: 'Map' }).props
         .accessibilityState,
     ).toEqual({ selected: false });
+  });
+
+  describe('Back', () => {
+    const back = (tree: ReactTestRenderer.ReactTestRenderer) =>
+      tree.root.find(
+        (node) =>
+          node.props.accessibilityLabel === 'Go back' &&
+          typeof node.props.onPress === 'function',
+      );
+
+    it('is there but disabled on Home, so the tabs never shift', () => {
+      const tree = render();
+      expect(back(tree).props.disabled).toBe(true);
+      expect(back(tree).props.accessibilityState).toEqual({ disabled: true });
+    });
+
+    it('goes back one screen elsewhere', () => {
+      mockCurrentRouteName = 'MapScreen';
+      mockCanGoBack = true;
+      const tree = render();
+      expect(back(tree).props.disabled).toBe(false);
+
+      ReactTestRenderer.act(() => back(tree).props.onPress());
+      expect(mockGoBack).toHaveBeenCalledTimes(1);
+      expect(mockOnAlertsClose).not.toHaveBeenCalled();
+    });
+
+    it('closes the Alerts sheet first when it is open', () => {
+      const tree = renderWithProps(true);
+      expect(back(tree).props.disabled).toBe(false);
+
+      ReactTestRenderer.act(() => back(tree).props.onPress());
+      expect(mockOnAlertsClose).toHaveBeenCalledTimes(1);
+      expect(mockGoBack).not.toHaveBeenCalled();
+    });
   });
 });
