@@ -1,3 +1,4 @@
+import { usePreventRemove } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
   useState,
@@ -60,83 +61,93 @@ export default observer(function VoiceLogScreen() {
   const core = useNotesStore();
   const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
   const [isRecording, setIsRecording] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioPath, setAudioPath] = useState<string | null>(null);
   const [micLevel, setMicLevel] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const soundRef = useRef<Sound | null>(null);
+  const playingIdRef = useRef<string | null>(null);
+  const playbackVersionRef = useRef(0);
   const stopRecorderRef = useRef<(() => Promise<string | undefined>) | null>(
     null,
   );
   const isRecordingRef = useRef(false);
+  const audioPathRef = useRef<string | null>(null);
+  const recordingTimeRef = useRef(0);
+  const startingRef = useRef<Promise<void> | null>(null);
+  const stoppingRef = useRef<Promise<void> | null>(null);
+  const goingBackRef = useRef(false);
   const handleStopRecordingRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Update ref when recording state changes
-  useEffect(() => {
-    isRecordingRef.current = isRecording;
-  }, [isRecording]);
-
   // Stabilize handleStopRecording function reference using useCallback
-  const handleStopRecording = useCallback(async () => {
-    if (!isRecordingRef.current) return;
+  const handleStopRecording = useCallback((): Promise<void> => {
+    if (stoppingRef.current) return stoppingRef.current;
+    if (!isRecordingRef.current) return Promise.resolve();
 
-    try {
-      // Stop recording first - wrap in try/catch in case recorder isn't active
-      let result: string | undefined;
+    setIsBusy(true);
+    const stopping = (async () => {
       try {
-        result = await stopRecorderRef.current?.();
+        // Stop recording first - wrap in try/catch in case recorder isn't active
+        let result: string | undefined;
+        try {
+          result = await stopRecorderRef.current?.();
+        } catch (error) {
+          console.warn('Error stopping recorder:', error);
+          result = audioPathRef.current || undefined;
+        }
+
+        const duration = recordingTimeRef.current;
+        const audioUri = result || audioPathRef.current;
+
+        // Validate audio path before changing state
+        if (!audioUri) {
+          Alert.alert('Error', 'Failed to record audio. Please try again.');
+          isRecordingRef.current = false;
+          setIsRecording(false);
+          setRecordingTime(0);
+          audioPathRef.current = null;
+          setMicLevel(0);
+          return;
+        }
+
+        // Update state after successful recording stop
+        isRecordingRef.current = false;
+        setIsRecording(false);
+
+        // Haptic feedback
+        Vibration.vibrate(200);
+
+        // Save voice log
+        await core.createVoiceLog({
+          audioUri: audioUri,
+          duration: duration,
+          transcription: undefined, // Transcription not implemented yet
+        });
+
+        // Back to the Voice Logs menu, not out of the tool: the three views
+        // here are local state, so goBack() used to leave for the Core module.
+        setRecordingTime(0);
+        audioPathRef.current = null;
+        setMicLevel(0);
+        setMode('select');
+        Alert.alert('Saved', 'Voice log saved successfully');
       } catch (error) {
-        console.warn('Error stopping recorder:', error);
-        result = audioPath || undefined;
-      }
-
-      const duration = recordingTime;
-      const audioUri = result || audioPath;
-
-      // Validate audio path before changing state
-      if (!audioUri) {
-        Alert.alert('Error', 'Failed to record audio. Please try again.');
+        console.error('Failed to save voice log:', error);
+        Alert.alert('Error', 'Failed to save voice log. Please try again.');
+        // Ensure recording state is reset even when saving fails
+        isRecordingRef.current = false;
         setIsRecording(false);
         setRecordingTime(0);
-        setAudioPath(null);
+        audioPathRef.current = null;
         setMicLevel(0);
-        return;
+      } finally {
+        stoppingRef.current = null;
+        setIsBusy(false);
       }
-
-      // Update state after successful recording stop
-      setIsRecording(false);
-
-      // Haptic feedback
-      Vibration.vibrate(200);
-
-      // Save voice log
-      await core.createVoiceLog({
-        audioUri: audioUri,
-        duration: duration,
-        transcription: undefined, // Transcription not implemented yet
-      });
-
-      // Back to the Voice Logs menu, not out of the tool: the three views
-      // here are local state, so goBack() used to leave for the Core module.
-      Alert.alert('Saved', 'Voice log saved successfully', [
-        {
-          text: 'OK',
-          onPress: () => setMode('select'),
-        },
-      ]);
-
-      setRecordingTime(0);
-      setAudioPath(null);
-      setMicLevel(0);
-    } catch (error) {
-      console.error('Failed to save voice log:', error);
-      Alert.alert('Error', 'Failed to save voice log. Please try again.');
-      // Ensure recording state is reset even when saving fails
-      setRecordingTime(0);
-      setAudioPath(null);
-      setMicLevel(0);
-    }
-  }, [audioPath, recordingTime, core]);
+    })();
+    stoppingRef.current = stopping;
+    return stopping;
+  }, [core]);
 
   // Store handleStopRecording in ref for use in callback
   useEffect(() => {
@@ -146,7 +157,9 @@ export default observer(function VoiceLogScreen() {
   // Initialize sound recorder
   const { startRecorder, stopRecorder } = useSoundRecorder({
     onRecord: (e) => {
+      if (!isRecordingRef.current || stoppingRef.current) return;
       const currentTime = Math.floor(e.currentPosition / 1000);
+      recordingTimeRef.current = currentTime;
       setRecordingTime(currentTime);
       setMicLevel((previous) =>
         smoothLevel(previous, normalizeMeteringLevel(e.currentMetering)),
@@ -167,25 +180,51 @@ export default observer(function VoiceLogScreen() {
     stopRecorderRef.current = stopRecorder;
   }, [stopRecorder]);
 
+  const stopPlayback = useCallback(() => {
+    playbackVersionRef.current += 1;
+    playingIdRef.current = null;
+    const sound = soundRef.current;
+    soundRef.current = null;
+    if (sound) {
+      sound.stop(() => sound.release());
+    }
+  }, []);
+
   // Cleanup on unmount only (empty dependency array)
   useEffect(() => {
     return () => {
       // Stop active recording if component unmounts
-      if (isRecordingRef.current && stopRecorderRef.current) {
+      if (
+        isRecordingRef.current &&
+        !stoppingRef.current &&
+        stopRecorderRef.current
+      ) {
         stopRecorderRef.current().catch((err) => {
           console.warn('Error stopping recorder on unmount:', err);
         });
       }
 
-      // Stop playback when unmounting
-      if (soundRef.current) {
-        soundRef.current.stop(() => {
-          soundRef.current?.release();
-          soundRef.current = null;
-        });
-      }
+      stopPlayback();
     };
-  }, []); // Empty dependency array for unmount-only cleanup
+  }, [stopPlayback]);
+
+  // Record and Saved Voice Logs are steps inside this screen, not screens of
+  // their own, so going back (the swipe, Android's system Back, iOS's edge
+  // swipe) returns to the Voice Log menu instead of leaving the tool. A
+  // recording in progress is stopped and saved, as the stop button would;
+  // playback stops.
+  const handleBack = async () => {
+    if (goingBackRef.current) return;
+    goingBackRef.current = true;
+    stopPlayback();
+    setPlayingId(null);
+    await startingRef.current;
+    await handleStopRecordingRef.current?.();
+    setMode('select');
+    goingBackRef.current = false;
+  };
+
+  usePreventRemove(mode !== 'select', handleBack);
 
   const requestAudioPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'ios') {
@@ -211,32 +250,49 @@ export default observer(function VoiceLogScreen() {
     }
   };
 
-  const handleStartRecording = async () => {
-    try {
-      // Request permission on Android
-      const hasPermission = await requestAudioPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          'Permission Required',
-          'Microphone permission is required to record audio.',
-        );
-        return;
+  const handleStartRecording = () => {
+    if (
+      startingRef.current ||
+      stoppingRef.current ||
+      goingBackRef.current ||
+      isRecordingRef.current
+    )
+      return;
+
+    setIsBusy(true);
+    const starting = (async () => {
+      try {
+        // Request permission on Android
+        const hasPermission = await requestAudioPermission();
+        if (!hasPermission) {
+          Alert.alert(
+            'Permission Required',
+            'Microphone permission is required to record audio.',
+          );
+          return;
+        }
+
+        setRecordingTime(0);
+        recordingTimeRef.current = 0;
+        setMicLevel(0);
+
+        // Start recording - library uses default writable cache directory
+        // Third argument enables metering, which feeds the level meter.
+        const path = await startRecorder(undefined, undefined, true);
+
+        audioPathRef.current = path;
+        isRecordingRef.current = true;
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Failed to start recording:', error);
+        Alert.alert('Error', 'Failed to start recording. Please try again.');
+        setIsRecording(false);
+      } finally {
+        startingRef.current = null;
+        setIsBusy(false);
       }
-
-      setIsRecording(true);
-      setRecordingTime(0);
-      setMicLevel(0);
-
-      // Start recording - library uses default writable cache directory
-      // Third argument enables metering, which feeds the level meter.
-      const path = await startRecorder(undefined, undefined, true);
-
-      setAudioPath(path);
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-      setIsRecording(false);
-    }
+    })();
+    startingRef.current = starting;
   };
 
   const progress = recordingTime / MAX_DURATION_SECONDS;
@@ -245,32 +301,40 @@ export default observer(function VoiceLogScreen() {
   const voiceLogs = core.notes.filter((note) => note.category === 'Voice Logs');
 
   const handlePlayVoiceLog = (noteId: string, audioUri: string) => {
+    if (goingBackRef.current) return;
     try {
       // Stop any currently playing sound
-      if (soundRef.current) {
-        soundRef.current.stop(() => {
-          soundRef.current?.release();
-          soundRef.current = null;
-        });
+      if (playingIdRef.current) {
+        stopPlayback();
         setPlayingId(null);
         return;
       }
 
       // Start playing new sound
+      const version = ++playbackVersionRef.current;
+      playingIdRef.current = noteId;
       setPlayingId(noteId);
 
       // Load audio file
       const sound = new Sound(audioUri, '', (error) => {
+        if (playbackVersionRef.current !== version) {
+          sound.release();
+          return;
+        }
         if (error) {
           console.error('Failed to load sound:', error);
           Alert.alert('Error', 'Failed to load audio file.');
           sound.release();
+          playingIdRef.current = null;
           setPlayingId(null);
           return;
         }
 
         // Play the sound
+        soundRef.current = sound;
         sound.play((success) => {
+          if (playbackVersionRef.current !== version) return;
+          playingIdRef.current = null;
           if (success) {
             setPlayingId(null);
           } else {
@@ -285,12 +349,11 @@ export default observer(function VoiceLogScreen() {
             soundRef.current = null;
           }
         });
-
-        soundRef.current = sound;
       });
     } catch (error) {
       console.error('Error playing voice log:', error);
       Alert.alert('Error', 'Failed to play voice log.');
+      playingIdRef.current = null;
       setPlayingId(null);
     }
   };
@@ -306,11 +369,8 @@ export default observer(function VoiceLogScreen() {
           style: 'destructive',
           onPress: () => {
             // Stop playing if this is the currently playing log
-            if (playingId === noteId && soundRef.current) {
-              soundRef.current.stop(() => {
-                soundRef.current?.release();
-                soundRef.current = null;
-              });
+            if (playingIdRef.current === noteId) {
+              stopPlayback();
               setPlayingId(null);
             }
             core.deleteNote(noteId);
@@ -333,7 +393,7 @@ export default observer(function VoiceLogScreen() {
             onPress={() => {
               setMode('record');
               setRecordingTime(0);
-              setAudioPath(null);
+              audioPathRef.current = null;
             }}
           />
           <ModuleRow
@@ -363,6 +423,7 @@ export default observer(function VoiceLogScreen() {
             progress={progress}
             maxDuration={MAX_DURATION_SECONDS}
             level={micLevel}
+            disabled={isBusy}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
           />

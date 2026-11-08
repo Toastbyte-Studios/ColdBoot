@@ -142,6 +142,7 @@ export default MyScreen;
 - All routes are defined in `src/navigation/AppNavigator.tsx` (native stack, headers hidden by default)
 - Route names use PascalCase matching their screen filename (e.g., `"DepletionCalculator"`)
 - Navigate via `useNavigation()` hook inside components
+- A screen with steps held in local state (Voice Log's record and saved-logs views) uses `usePreventRemove` so going back returns to its first step instead of leaving the screen
 - Register new routes in `AppNavigator.tsx` and add the tool entry to the relevant `*_TOOLS` constant in `constants.ts`
 
 ### New Features / Tools
