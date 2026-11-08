@@ -57,7 +57,13 @@ jest.mock('../src/stores', () => ({
 }));
 jest.mock('../src/components/StackScreen', () => {
   const { Text, View } = require('react-native');
-  return ({ title, children }: { title: string; children: React.ReactNode }) => (
+  return ({
+    title,
+    children,
+  }: {
+    title: string;
+    children: React.ReactNode;
+  }) => (
     <View>
       <Text testID="screen-title">{title}</Text>
       {children}
@@ -127,20 +133,20 @@ describe('Voice Log back', () => {
   });
 
   it('cancels a pending load when leaving via navigation Back', async () => {
-      await openRow('View voice logs');
-      ReactTestRenderer.act(() =>
-        tree.root.findByType(VoiceLogCard).props.onPlay(),
-      );
-      expect(mockSounds).toHaveLength(1);
-      await ReactTestRenderer.act(async () => {
-        mockPrevent?.onBack();
-      });
-      expect(title()).toBe('Voice Logs');
-      await openRow('View voice logs');
-      ReactTestRenderer.act(() => mockLoads[0]());
-      expect(mockSounds[0].play).not.toHaveBeenCalled();
-      expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
-      expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(false);
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() =>
+      tree.root.findByType(VoiceLogCard).props.onPlay(),
+    );
+    expect(mockSounds).toHaveLength(1);
+    await ReactTestRenderer.act(async () => {
+      mockPrevent?.onBack();
+    });
+    expect(title()).toBe('Voice Logs');
+    await openRow('View voice logs');
+    ReactTestRenderer.act(() => mockLoads[0]());
+    expect(mockSounds[0].play).not.toHaveBeenCalled();
+    expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+    expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(false);
   });
 
   it('does not let canceled loads or stop callbacks affect newer playback', async () => {
