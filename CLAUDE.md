@@ -98,6 +98,7 @@ covers it:
 | A module's at-a-glance card       | `components/ModuleHero`, passed as `ModuleScreen`'s `hero`  |
 | Readiness checks (maps, plan…)    | `screens/DeviceStatus/useReadinessItems`                    |
 | A reference entry by id           | `utils/referenceEntries` (`findReferenceEntry`)             |
+| A fixed top over a scrolling list | `components/PinnedHeaderScreen` (Home, `ModuleScreen`)      |
 
 ```tsx
 import { observer } from 'mobx-react-lite';
