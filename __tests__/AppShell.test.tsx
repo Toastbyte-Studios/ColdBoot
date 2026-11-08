@@ -3,11 +3,20 @@ import { Platform, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 const originalPlatform = Platform.OS;
 
-jest.mock('@react-navigation/native', () => ({
-  useNavigation: () => ({
-    navigate: jest.fn(),
-  }),
-}));
+jest.mock('@react-navigation/native', () => {
+  const navigation = {
+    dispatch: jest.fn(),
+  };
+  const StackActions = {
+    popToTop: jest.fn(() => ({ type: 'POP_TO_TOP' })),
+  };
+
+  return {
+    StackActions,
+    navigation,
+    useNavigation: () => navigation,
+  };
+});
 
 jest.mock('@react-native-async-storage/async-storage', () => ({
   getItem: jest.fn().mockResolvedValue('true'),
@@ -39,10 +48,24 @@ jest.mock('../src/navigation/navigationRef', () => ({
 }));
 
 jest.mock('../src/components/AlertsSheet', () => () => null);
-jest.mock('../src/components/AppBar', () => () => {
-  const { View: MockView } = require('react-native');
-  return <MockView accessibilityLabel="App bar" />;
-});
+jest.mock(
+  '../src/components/AppBar',
+  () =>
+    ({ onHomePress }: { onHomePress: () => void }) => {
+      const {
+        Pressable: MockPressable,
+        View: MockView,
+      } = require('react-native');
+      return (
+        <MockView accessibilityLabel="App bar">
+          <MockPressable
+            accessibilityLabel="Home action"
+            onPress={onHomePress}
+          />
+        </MockView>
+      );
+    },
+);
 jest.mock('../src/components/HelpModal', () => ({
   HelpModal: () => null,
 }));
@@ -123,6 +146,28 @@ test('AppShell renders its children without a translate transform', () => {
   expect(tree.root.findByProps({ accessibilityLabel: 'App bar' })).toBeTruthy();
   expect(tree.root.findByProps({ children: 'Screen content' })).toBeTruthy();
   expect(hasTransformStyle(tree.toJSON())).toBe(false);
+});
+
+test('AppShell pops to the root when the Home logo is pressed', () => {
+  let tree!: ReactTestRenderer.ReactTestRenderer;
+  const { navigation, StackActions } = require('@react-navigation/native');
+
+  ReactTestRenderer.act(() => {
+    tree = ReactTestRenderer.create(
+      <AppShell>
+        <Text>Screen content</Text>
+      </AppShell>,
+    );
+  });
+
+  ReactTestRenderer.act(() => {
+    tree.root
+      .findByProps({ accessibilityLabel: 'Home action' })
+      .props.onPress();
+  });
+
+  expect(StackActions.popToTop).toHaveBeenCalled();
+  expect(navigation.dispatch).toHaveBeenCalledWith({ type: 'POP_TO_TOP' });
 });
 
 test('AppShell keeps full-screen Android routes unshifted', () => {

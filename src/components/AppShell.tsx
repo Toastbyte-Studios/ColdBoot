@@ -1,5 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { StackActions, useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, {
   PropsWithChildren,
@@ -275,7 +275,7 @@ function AppShellBody({ children }: Props) {
               <AppBar
                 logoRef={logoRef}
                 searchRef={navSearchRef}
-                onHomePress={() => navigation.navigate('Home')}
+                onHomePress={() => navigation.dispatch(StackActions.popToTop())}
                 onSearchPress={() => navigation.navigate('Search')}
                 onSettingsPress={() => setIsSettingsVisible(true)}
                 header={appBarHeader}
