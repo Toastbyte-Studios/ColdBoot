@@ -57,19 +57,9 @@ jest.mock('../src/stores', () => ({
 }));
 jest.mock('../src/components/StackScreen', () => {
   const { Text, View } = require('react-native');
-  return ({
-    title,
-    children,
-    onBack,
-  }: {
-    title: string;
-    children: React.ReactNode;
-    onBack?: () => void;
-  }) => (
+  return ({ title, children }: { title: string; children: React.ReactNode }) => (
     <View>
-      <Text testID="screen-title" onPress={onBack}>
-        {title}
-      </Text>
+      <Text testID="screen-title">{title}</Text>
       {children}
     </View>
   );
@@ -136,17 +126,14 @@ describe('Voice Log back', () => {
     expect(mockPrevent?.active).toBe(false);
   });
 
-  it.each(['system', 'app bar'])(
-    'cancels a pending load when leaving via %s Back',
-    async (back) => {
+  it('cancels a pending load when leaving via navigation Back', async () => {
       await openRow('View voice logs');
       ReactTestRenderer.act(() =>
         tree.root.findByType(VoiceLogCard).props.onPlay(),
       );
       expect(mockSounds).toHaveLength(1);
       await ReactTestRenderer.act(async () => {
-        if (back === 'system') mockPrevent?.onBack();
-        else tree.root.findByProps({ testID: 'screen-title' }).props.onPress();
+        mockPrevent?.onBack();
       });
       expect(title()).toBe('Voice Logs');
       await openRow('View voice logs');
@@ -154,8 +141,7 @@ describe('Voice Log back', () => {
       expect(mockSounds[0].play).not.toHaveBeenCalled();
       expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
       expect(tree.root.findByType(VoiceLogCard).props.isPlaying).toBe(false);
-    },
-  );
+  });
 
   it('does not let canceled loads or stop callbacks affect newer playback', async () => {
     await openRow('View voice logs');
@@ -248,7 +234,6 @@ describe('Voice Log back', () => {
     ReactTestRenderer.act(() => {
       mockPrevent?.onBack();
       mockPrevent?.onBack();
-      tree.root.findByProps({ testID: 'screen-title' }).props.onPress();
     });
     await ReactTestRenderer.act(async () => {});
     expect(title()).toBe('Record Voice Log');

@@ -11,13 +11,15 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useAllNotifications } from '../hooks/useAllNotifications';
+import { useFooterClearance } from '../hooks/useFooterClearance';
 import { useTheme } from '../hooks/useTheme';
 import { AppNotification } from '../stores/NotificationsStore';
 import { useNotificationsStore } from '../stores/StoreContext';
-import { RADIUS, SCREEN_GUTTER, SPACING } from '../theme';
+import { RADIUS, SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
 import AppButton from './AppButton';
 import IconButton from './IconButton';
 import { Text } from './ScaledText';
+import ShortcutBar from './ShortcutBar';
 import Touchable from './Touchable';
 
 const isAndroid = Platform.OS === 'android';
@@ -89,6 +91,7 @@ type Props = {
 const AlertsSheet = observer(({ visible, onClose }: Props) => {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
+  const footerClearance = useFooterClearance();
   const notificationsStore = useNotificationsStore();
   const allNotifications = useAllNotifications();
 
@@ -112,7 +115,12 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
       animationType="slide"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View
+        style={[
+          styles.overlay,
+          !isAndroid && { paddingBottom: footerClearance },
+        ]}
+      >
         <Pressable
           style={StyleSheet.absoluteFill}
           onPress={onClose}
@@ -128,7 +136,7 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
                 ? COLORS.SURFACE_CONTAINER
                 : COLORS.SURFACE,
               borderTopColor: COLORS.BORDER,
-              paddingBottom: insets.bottom + SPACING.lg,
+              paddingBottom: (isAndroid ? insets.bottom : 0) + SPACING.lg,
             },
           ]}
         >
@@ -197,6 +205,15 @@ const AlertsSheet = observer(({ visible, onClose }: Props) => {
             )}
           </ScrollView>
         </View>
+        {!isAndroid && visible && (
+          <View style={styles.shortcutBar}>
+            <ShortcutBar
+              onAlertsPress={() => undefined}
+              onAlertsClose={onClose}
+              alertsActive
+            />
+          </View>
+        )}
       </View>
     </Modal>
   );
@@ -268,6 +285,12 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'flex-end',
     backgroundColor: 'rgba(29,31,32,0.28)',
+  },
+  shortcutBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: SCREEN_INSET,
+    right: SCREEN_INSET,
   },
   sheet: {
     maxHeight: '78%',

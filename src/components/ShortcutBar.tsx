@@ -10,7 +10,7 @@ import { useTheme } from '../hooks/useTheme';
 import { navigationRef } from '../navigation/navigationRef';
 import { useSettingsStore, useSignalingStore } from '../stores';
 import { DEFAULT_SHORTCUTS, resolveShortcutIds } from '../stores/SettingsStore';
-import { FOOTER_HEIGHT } from '../theme';
+import { FOOTER_HEIGHT, SPACING } from '../theme';
 import { onColor, withAlpha } from '../theme/colorUtils';
 import { getToolById } from '../utils/tools';
 import { Text } from './ScaledText';
@@ -24,6 +24,11 @@ type ShortcutDefinition = {
   route?: string;
   toolId?: string;
 };
+
+/** The back slot: a 44pt touch target, narrower than a tab. */
+const BACK_WIDTH = 44;
+/** About the height of a tab's icon and label. */
+const DIVIDER_HEIGHT = 32;
 
 const SHORTCUT_KEYS: Array<Exclude<ShortcutKey, 'alerts'>> = [
   'shortcut-0',
@@ -50,14 +55,17 @@ const ShortcutBar = observer(
         ? navigationRef.getCurrentRoute()?.name
         : undefined,
     );
+    const [canGoBack, setCanGoBack] = useState(
+      () => navigationRef.isReady() && navigationRef.canGoBack(),
+    );
 
     useEffect(() => {
       const syncCurrentRoute = () => {
+        const ready = navigationRef.isReady();
         setCurrentRoute(
-          navigationRef.isReady()
-            ? navigationRef.getCurrentRoute()?.name
-            : undefined,
+          ready ? navigationRef.getCurrentRoute()?.name : undefined,
         );
+        setCanGoBack(ready && navigationRef.canGoBack());
       };
 
       syncCurrentRoute();
@@ -110,6 +118,20 @@ const ShortcutBar = observer(
       );
     };
 
+    // Back closes the Alerts sheet when it's open, as the swipe would;
+    // otherwise it goes back one screen. Going back dispatches the same
+    // action as the swipe, so a screen that keeps steps of its own (Voice
+    // Log) can still catch it.
+    const handleBack = () => {
+      if (alertsActive) {
+        onAlertsClose();
+        return;
+      }
+      if (navigationRef.isReady() && navigationRef.canGoBack()) {
+        navigationRef.goBack();
+      }
+    };
+
     const handlePress = (item: ShortcutDefinition) => {
       if (item.key === 'alerts') {
         onAlertsPress();
@@ -134,6 +156,13 @@ const ShortcutBar = observer(
           },
         ]}
       >
+        {/* Always present, faded on Home, so the tabs never shift. */}
+        <BackButton
+          enabled={canGoBack || alertsActive}
+          color={COLORS.MUTED}
+          dividerColor={withAlpha(COLORS.BRAND, 0.2)}
+          onPress={handleBack}
+        />
         {items.map((item) => {
           const isFlashlight = item.toolId === 'core_flashlight';
           const isAlerts = item.key === 'alerts';
@@ -164,6 +193,43 @@ const ShortcutBar = observer(
     );
   },
 );
+
+/**
+ * Back, at the bar's leading edge (iOS only: Android has system Back). A
+ * narrow, label-less slot behind a divider, so it reads as a control of its
+ * own rather than a fifth shortcut. The app bar's logo stays the way Home.
+ */
+function BackButton({
+  enabled,
+  color,
+  dividerColor,
+  onPress,
+}: {
+  enabled: boolean;
+  color: string;
+  dividerColor: string;
+  onPress: () => void;
+}) {
+  return (
+    <>
+      <Pressable
+        onPress={onPress}
+        disabled={!enabled}
+        accessibilityRole="button"
+        accessibilityLabel="Go back"
+        accessibilityState={{ disabled: !enabled }}
+        style={({ pressed }) => [
+          styles.back,
+          !enabled && styles.backDisabled,
+          pressed && styles.pressed,
+        ]}
+      >
+        <Ionicons name="chevron-back-outline" size={24} color={color} />
+      </Pressable>
+      <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+    </>
+  );
+}
 
 function ShortcutButton({
   label,
@@ -278,6 +344,20 @@ const styles = StyleSheet.create({
     gap: 3,
     justifyContent: 'flex-start',
     minWidth: 0,
+  },
+  back: {
+    width: BACK_WIDTH,
+    alignItems: 'center',
+    // Centres the chevron on the tabs' icon-and-label block.
+    paddingTop: SPACING.sm,
+  },
+  backDisabled: {
+    opacity: 0.3,
+  },
+  divider: {
+    width: StyleSheet.hairlineWidth,
+    height: DIVIDER_HEIGHT,
+    marginTop: SPACING.xs,
   },
   pressed: {
     opacity: 0.6,

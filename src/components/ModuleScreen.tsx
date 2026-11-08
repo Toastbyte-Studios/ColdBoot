@@ -1,16 +1,11 @@
 import React from 'react';
-import { Platform, ScrollView, StyleSheet } from 'react-native';
-import { useFooterClearance } from '../hooks/useFooterClearance';
 import { useScreenHeader } from '../navigation/ScreenHeaderContext';
-import { SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
 import { ToolType } from '../types/common-types';
 import ActiveToolCard from './ActiveToolCard';
-import ScreenBody from './ScreenBody';
+import PinnedHeaderScreen from './PinnedHeaderScreen';
 import ScreenToolbar from './ScreenToolbar';
 import SectionEyebrow from './SectionEyebrow';
 import ToolList from './ToolList';
-
-const isAndroid = Platform.OS === 'android';
 
 type Props = {
   /** Module name, e.g. "Core". Shown in the app bar. */
@@ -34,6 +29,9 @@ type Props = {
  * The module's name and the back control live in the app bar (see
  * `ScreenHeaderContext`), so the screen opens straight onto its tools. There
  * is no subtitle: a tool count told the user nothing they couldn't see.
+ *
+ * The toolbar, hero, running-tool card and the "Tools" label stay put; only
+ * the tool list scrolls.
  */
 export default function ModuleScreen({
   title,
@@ -42,45 +40,20 @@ export default function ModuleScreen({
   trailing,
   hero,
 }: Props) {
-  const footerClearance = useFooterClearance();
   useScreenHeader({ title });
 
   return (
-    <ScreenBody>
-      <ScrollView
-        style={[styles.scroll, isAndroid && styles.bleed]}
-        contentContainerStyle={[
-          styles.content,
-          { paddingBottom: footerClearance },
-        ]}
-      >
-        <ScreenToolbar trailing={trailing} />
-
-        {hero}
-
-        <ActiveToolCard />
-
-        <SectionEyebrow>Tools</SectionEyebrow>
-        <ToolList tools={tools} values={values} scrollable={false} />
-      </ScrollView>
-    </ScreenBody>
+    <PinnedHeaderScreen
+      header={
+        <>
+          <ScreenToolbar trailing={trailing} />
+          {hero}
+          <ActiveToolCard />
+          <SectionEyebrow>Tools</SectionEyebrow>
+        </>
+      }
+    >
+      <ToolList tools={tools} values={values} scrollable={false} />
+    </PinnedHeaderScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  scroll: {
-    flex: 1,
-    width: '100%',
-    alignSelf: 'stretch',
-  },
-  bleed: {
-    // See HomeScreen: `width: 'auto'` is what turns the negative margins into
-    // extra width rather than a sideways shift.
-    width: 'auto',
-    marginHorizontal: -SCREEN_INSET,
-  },
-  content: {
-    paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
-    paddingTop: SPACING.sm,
-  },
-});

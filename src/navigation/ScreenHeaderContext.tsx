@@ -5,8 +5,6 @@ import React, {
   useCallback,
   useContext,
   useLayoutEffect,
-  useMemo,
-  useRef,
   useState,
 } from 'react';
 
@@ -15,8 +13,6 @@ export type ScreenHeader = {
   title: string;
   /** A fact about this screen (a note's date, a reading), never a count. */
   subtitle?: string;
-  /** Replaces popping the screen, for screens with steps of their own. */
-  onBack?: () => void;
 };
 
 type Registry = Readonly<Record<string, ScreenHeader>>;
@@ -53,8 +49,7 @@ export function ScreenHeaderProvider({ children }: PropsWithChildren) {
       if (
         current &&
         current.title === header.title &&
-        current.subtitle === header.subtitle &&
-        current.onBack === header.onBack
+        current.subtitle === header.subtitle
       ) {
         return prev;
       }
@@ -86,25 +81,15 @@ const NoRouteContext = createContext<{ key: string } | undefined>(undefined);
  * Call it from the screen's frame (`StackScreen`, `ModuleScreen`) or from a
  * screen that keeps its own frame. Outside a navigator it does nothing.
  */
-export function useScreenHeader({ title, subtitle, onBack }: ScreenHeader) {
+export function useScreenHeader({ title, subtitle }: ScreenHeader) {
   const register = useContext(RegisterContext);
   const route = useContext(NavigationRouteContext ?? NoRouteContext);
   const routeKey = route?.key;
 
-  // onBack is usually an inline arrow, new on every render. Register a stable
-  // wrapper so the registry only changes when the title or subtitle does.
-  const onBackRef = useRef(onBack);
-  onBackRef.current = onBack;
-  const hasOnBack = onBack !== undefined;
-  const stableOnBack = useMemo(
-    () => (hasOnBack ? () => onBackRef.current?.() : undefined),
-    [hasOnBack],
-  );
-
   useLayoutEffect(() => {
     if (!routeKey) return;
-    register(routeKey, { title, subtitle, onBack: stableOnBack });
-  }, [register, routeKey, title, subtitle, stableOnBack]);
+    register(routeKey, { title, subtitle });
+  }, [register, routeKey, title, subtitle]);
 
   useLayoutEffect(() => {
     if (!routeKey) return;
