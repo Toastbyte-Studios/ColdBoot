@@ -15,6 +15,7 @@ type RecordingControlsProps = {
   maxDuration: number;
   /** Live microphone level, 0-100. Only meaningful while recording. */
   level: number;
+  disabled?: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
@@ -25,6 +26,7 @@ export default function RecordingControls({
   progress,
   maxDuration,
   level,
+  disabled,
   onStartRecording,
   onStopRecording,
 }: RecordingControlsProps) {
@@ -64,6 +66,7 @@ export default function RecordingControls({
         style={[styles.recordButton, isRecording && styles.recordButtonActive]}
         rippleColor={glyphColor}
         onPress={isRecording ? onStopRecording : onStartRecording}
+        disabled={disabled}
         accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Recording'}
         accessibilityRole="button"
       >

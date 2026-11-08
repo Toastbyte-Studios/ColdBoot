@@ -61,8 +61,8 @@ export default observer(function VoiceLogScreen() {
   const core = useNotesStore();
   const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
   const [isRecording, setIsRecording] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
   const [recordingTime, setRecordingTime] = useState(0);
-  const [audioPath, setAudioPath] = useState<string | null>(null);
   const [micLevel, setMicLevel] = useState(0);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const soundRef = useRef<Sound | null>(null);
@@ -70,74 +70,82 @@ export default observer(function VoiceLogScreen() {
     null,
   );
   const isRecordingRef = useRef(false);
+  const audioPathRef = useRef<string | null>(null);
+  const recordingTimeRef = useRef(0);
+  const startingRef = useRef<Promise<void> | null>(null);
+  const stoppingRef = useRef<Promise<void> | null>(null);
+  const goingBackRef = useRef(false);
   const handleStopRecordingRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Update ref when recording state changes
-  useEffect(() => {
-    isRecordingRef.current = isRecording;
-  }, [isRecording]);
-
   // Stabilize handleStopRecording function reference using useCallback
-  const handleStopRecording = useCallback(async () => {
-    if (!isRecordingRef.current) return;
+  const handleStopRecording = useCallback((): Promise<void> => {
+    if (stoppingRef.current) return stoppingRef.current;
+    if (!isRecordingRef.current) return Promise.resolve();
 
-    try {
-      // Stop recording first - wrap in try/catch in case recorder isn't active
-      let result: string | undefined;
+    setIsBusy(true);
+    const stopping = (async () => {
       try {
-        result = await stopRecorderRef.current?.();
+        // Stop recording first - wrap in try/catch in case recorder isn't active
+        let result: string | undefined;
+        try {
+          result = await stopRecorderRef.current?.();
+        } catch (error) {
+          console.warn('Error stopping recorder:', error);
+          result = audioPathRef.current || undefined;
+        }
+
+        const duration = recordingTimeRef.current;
+        const audioUri = result || audioPathRef.current;
+
+        // Validate audio path before changing state
+        if (!audioUri) {
+          Alert.alert('Error', 'Failed to record audio. Please try again.');
+          isRecordingRef.current = false;
+          setIsRecording(false);
+          setRecordingTime(0);
+          audioPathRef.current = null;
+          setMicLevel(0);
+          return;
+        }
+
+        // Update state after successful recording stop
+        isRecordingRef.current = false;
+        setIsRecording(false);
+
+        // Haptic feedback
+        Vibration.vibrate(200);
+
+        // Save voice log
+        await core.createVoiceLog({
+          audioUri: audioUri,
+          duration: duration,
+          transcription: undefined, // Transcription not implemented yet
+        });
+
+        // Back to the Voice Logs menu, not out of the tool: the three views
+        // here are local state, so goBack() used to leave for the Core module.
+        setRecordingTime(0);
+        audioPathRef.current = null;
+        setMicLevel(0);
+        setMode('select');
+        Alert.alert('Saved', 'Voice log saved successfully');
       } catch (error) {
-        console.warn('Error stopping recorder:', error);
-        result = audioPath || undefined;
-      }
-
-      const duration = recordingTime;
-      const audioUri = result || audioPath;
-
-      // Validate audio path before changing state
-      if (!audioUri) {
-        Alert.alert('Error', 'Failed to record audio. Please try again.');
+        console.error('Failed to save voice log:', error);
+        Alert.alert('Error', 'Failed to save voice log. Please try again.');
+        // Ensure recording state is reset even when saving fails
+        isRecordingRef.current = false;
         setIsRecording(false);
         setRecordingTime(0);
-        setAudioPath(null);
+        audioPathRef.current = null;
         setMicLevel(0);
-        return;
+      } finally {
+        stoppingRef.current = null;
+        setIsBusy(false);
       }
-
-      // Update state after successful recording stop
-      setIsRecording(false);
-
-      // Haptic feedback
-      Vibration.vibrate(200);
-
-      // Save voice log
-      await core.createVoiceLog({
-        audioUri: audioUri,
-        duration: duration,
-        transcription: undefined, // Transcription not implemented yet
-      });
-
-      // Back to the Voice Logs menu, not out of the tool: the three views
-      // here are local state, so goBack() used to leave for the Core module.
-      Alert.alert('Saved', 'Voice log saved successfully', [
-        {
-          text: 'OK',
-          onPress: () => setMode('select'),
-        },
-      ]);
-
-      setRecordingTime(0);
-      setAudioPath(null);
-      setMicLevel(0);
-    } catch (error) {
-      console.error('Failed to save voice log:', error);
-      Alert.alert('Error', 'Failed to save voice log. Please try again.');
-      // Ensure recording state is reset even when saving fails
-      setRecordingTime(0);
-      setAudioPath(null);
-      setMicLevel(0);
-    }
-  }, [audioPath, recordingTime, core]);
+    })();
+    stoppingRef.current = stopping;
+    return stopping;
+  }, [core]);
 
   // Store handleStopRecording in ref for use in callback
   useEffect(() => {
@@ -147,7 +155,9 @@ export default observer(function VoiceLogScreen() {
   // Initialize sound recorder
   const { startRecorder, stopRecorder } = useSoundRecorder({
     onRecord: (e) => {
+      if (!isRecordingRef.current || stoppingRef.current) return;
       const currentTime = Math.floor(e.currentPosition / 1000);
+      recordingTimeRef.current = currentTime;
       setRecordingTime(currentTime);
       setMicLevel((previous) =>
         smoothLevel(previous, normalizeMeteringLevel(e.currentMetering)),
@@ -172,7 +182,11 @@ export default observer(function VoiceLogScreen() {
   useEffect(() => {
     return () => {
       // Stop active recording if component unmounts
-      if (isRecordingRef.current && stopRecorderRef.current) {
+      if (
+        isRecordingRef.current &&
+        !stoppingRef.current &&
+        stopRecorderRef.current
+      ) {
         stopRecorderRef.current().catch((err) => {
           console.warn('Error stopping recorder on unmount:', err);
         });
@@ -193,10 +207,11 @@ export default observer(function VoiceLogScreen() {
   // swipe) returns to the Voice Log menu instead of leaving the tool. A
   // recording in progress is stopped and saved, as the stop button would;
   // playback stops.
-  usePreventRemove(mode !== 'select', () => {
-    if (isRecordingRef.current) {
-      handleStopRecordingRef.current?.();
-    }
+  const handleBack = async () => {
+    if (goingBackRef.current) return;
+    goingBackRef.current = true;
+    await startingRef.current;
+    await handleStopRecordingRef.current?.();
     if (soundRef.current) {
       soundRef.current.stop(() => {
         soundRef.current?.release();
@@ -205,7 +220,10 @@ export default observer(function VoiceLogScreen() {
       setPlayingId(null);
     }
     setMode('select');
-  });
+    goingBackRef.current = false;
+  };
+
+  usePreventRemove(mode !== 'select', handleBack);
 
   const requestAudioPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'ios') {
@@ -231,32 +249,49 @@ export default observer(function VoiceLogScreen() {
     }
   };
 
-  const handleStartRecording = async () => {
-    try {
-      // Request permission on Android
-      const hasPermission = await requestAudioPermission();
-      if (!hasPermission) {
-        Alert.alert(
-          'Permission Required',
-          'Microphone permission is required to record audio.',
-        );
-        return;
+  const handleStartRecording = () => {
+    if (
+      startingRef.current ||
+      stoppingRef.current ||
+      goingBackRef.current ||
+      isRecordingRef.current
+    )
+      return;
+
+    setIsBusy(true);
+    const starting = (async () => {
+      try {
+        // Request permission on Android
+        const hasPermission = await requestAudioPermission();
+        if (!hasPermission) {
+          Alert.alert(
+            'Permission Required',
+            'Microphone permission is required to record audio.',
+          );
+          return;
+        }
+
+        setRecordingTime(0);
+        recordingTimeRef.current = 0;
+        setMicLevel(0);
+
+        // Start recording - library uses default writable cache directory
+        // Third argument enables metering, which feeds the level meter.
+        const path = await startRecorder(undefined, undefined, true);
+
+        audioPathRef.current = path;
+        isRecordingRef.current = true;
+        setIsRecording(true);
+      } catch (error) {
+        console.error('Failed to start recording:', error);
+        Alert.alert('Error', 'Failed to start recording. Please try again.');
+        setIsRecording(false);
+      } finally {
+        startingRef.current = null;
+        setIsBusy(false);
       }
-
-      setIsRecording(true);
-      setRecordingTime(0);
-      setMicLevel(0);
-
-      // Start recording - library uses default writable cache directory
-      // Third argument enables metering, which feeds the level meter.
-      const path = await startRecorder(undefined, undefined, true);
-
-      setAudioPath(path);
-    } catch (error) {
-      console.error('Failed to start recording:', error);
-      Alert.alert('Error', 'Failed to start recording. Please try again.');
-      setIsRecording(false);
-    }
+    })();
+    startingRef.current = starting;
   };
 
   const progress = recordingTime / MAX_DURATION_SECONDS;
@@ -353,7 +388,7 @@ export default observer(function VoiceLogScreen() {
             onPress={() => {
               setMode('record');
               setRecordingTime(0);
-              setAudioPath(null);
+              audioPathRef.current = null;
             }}
           />
           <ModuleRow
@@ -375,7 +410,7 @@ export default observer(function VoiceLogScreen() {
       <StackScreen
         title="Record Voice Log"
         note={`Tap to record a voice note. Maximum duration: ${MAX_DURATION_SECONDS} seconds.`}
-        onBack={() => setMode('select')}
+        onBack={handleBack}
       >
         <View style={styles.column}>
           <RecordingControls
@@ -384,6 +419,7 @@ export default observer(function VoiceLogScreen() {
             progress={progress}
             maxDuration={MAX_DURATION_SECONDS}
             level={micLevel}
+            disabled={isBusy}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
           />
