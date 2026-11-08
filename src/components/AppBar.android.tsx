@@ -64,6 +64,7 @@ export default function AppBar({
           borderless: true,
           radius: 24,
         }}
+        hitSlop={8}
         style={styles.mark}
       >
         <LogoHeader size={MARK_SIZE} />
