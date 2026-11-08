@@ -1,7 +1,6 @@
 import {
   createNavigationContainerRef,
   type ParamListBase,
-  StackActions,
 } from '@react-navigation/native';
 
 export const navigationRef = createNavigationContainerRef<ParamListBase>();
@@ -28,13 +27,4 @@ export function goBack(): void {
   if (canGoBack()) {
     navigationRef.goBack();
   }
-}
-
-/**
- * Pops `count` screens off the stack at once: the long-press menu on Back
- * uses it to jump several levels up, or all the way Home.
- */
-export function popBack(count: number): void {
-  if (count <= 0 || !navigationRef.isReady()) return;
-  navigationRef.dispatch(StackActions.pop(count));
 }

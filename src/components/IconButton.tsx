@@ -30,8 +30,6 @@ export interface IconButtonProps {
    * call `stopPropagation()`.
    */
   onPress: (event: GestureResponderEvent) => void;
-  /** Optional secondary action on a long press (Back's history menu). */
-  onLongPress?: (event: GestureResponderEvent) => void;
   /** Glyph size in points. The touch target stays at 44/48 regardless. @default 24 */
   size?: number;
   /** Glyph color. Defaults to the theme foreground. */
@@ -68,7 +66,6 @@ export default function IconButton({
   name,
   accessibilityLabel,
   onPress,
-  onLongPress,
   size = 24,
   color,
   disabledColor,
@@ -88,7 +85,6 @@ export default function IconButton({
     <Pressable
       testID={testID}
       onPress={onPress}
-      onLongPress={onLongPress}
       disabled={disabled}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}

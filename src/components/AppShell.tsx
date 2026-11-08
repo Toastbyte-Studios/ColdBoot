@@ -19,12 +19,11 @@ import {
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { useActiveRouteName } from '../hooks/useActiveRouteName';
 import { useIsDarkMode } from '../hooks/useIsDarkMode';
-import { useBackDestinations } from '../navigation/backDestinations';
 import {
   useNavigationHistory,
   useGestureNavigation,
 } from '../navigation/NavigationHistoryContext';
-import canGoBack, { goBack, popBack } from '../navigation/navigationRef';
+import canGoBack, { goBack } from '../navigation/navigationRef';
 import { ScreenHeaderProvider } from '../navigation/ScreenHeaderContext';
 import { useAppBarHeader } from '../navigation/useAppBarHeader';
 import AlertsSheet from './AlertsSheet';
@@ -101,7 +100,6 @@ function AppShellBody({ children }: Props) {
   const { disableGestureNavigation } = useGestureNavigation();
   const activeRouteName = useActiveRouteName();
   const appBarHeader = useAppBarHeader();
-  const backHistory = useBackDestinations();
   const isDarkMode = useIsDarkMode();
   const isFullScreenRoute =
     Platform.OS === 'android' &&
@@ -281,11 +279,6 @@ function AppShellBody({ children }: Props) {
                 onSearchPress={() => navigation.navigate('Search')}
                 onSettingsPress={() => setIsSettingsVisible(true)}
                 header={appBarHeader}
-                onBackPress={goBack}
-                backHistory={backHistory}
-                onBackHistorySelect={(destination) =>
-                  popBack(destination.popCount)
-                }
               />
             )}
 

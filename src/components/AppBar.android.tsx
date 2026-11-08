@@ -1,12 +1,10 @@
-import { MenuComponentRef, MenuView } from '@react-native-menu/menu';
-import React, { useRef } from 'react';
+import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
 import { SPACING } from '../theme';
-import { DARK_COLORS } from '../theme/colors';
 import ConnectionDot from './ConnectionDot';
 import IconButton from './IconButton';
 import LogoHeader from './LogoHeader';
@@ -31,8 +29,9 @@ const MARK_SIZE = 32;
  * The old help button is gone from here: it lives in Settings → Help, which is
  * where Material puts an action that is neither frequent nor urgent.
  *
- * On a nested screen the leading mark becomes Material's up arrow and the
- * title is the screen's, with its subtitle (when it has one) beneath.
+ * On a nested screen the title is the screen's, with its subtitle (when it
+ * has one) beneath. The leading logo stays on every screen and always goes
+ * Home; system Back and the swipe go back.
  */
 export default function AppBar({
   logoRef,
@@ -41,14 +40,7 @@ export default function AppBar({
   onSearchPress,
   onSettingsPress,
   header,
-  onBackPress,
-  backHistory = [],
-  onBackHistorySelect,
 }: AppBarProps) {
-  // The history menu is opened from the button's own long press (show() is
-  // Android only), so a tap can never open it by mistake. The menu sits
-  // behind the button just to anchor where it pops up.
-  const historyMenu = useRef<MenuComponentRef>(null);
   const COLORS = useTheme();
   const currentDate = useCurrentDate();
   const insets = useSafeAreaInsets();
@@ -62,102 +54,62 @@ export default function AppBar({
         { paddingTop: insets.top, minHeight: BAR_HEIGHT + insets.top },
       ]}
     >
+      <Pressable
+        ref={logoRef}
+        onPress={onHomePress}
+        accessibilityLabel="Go to home screen"
+        accessibilityRole="button"
+        android_ripple={{
+          color: rippleColor,
+          borderless: true,
+          radius: 24,
+        }}
+        style={styles.mark}
+      >
+        <LogoHeader size={MARK_SIZE} />
+      </Pressable>
+
       {header ? (
-        <>
-          <View>
-            <View style={StyleSheet.absoluteFill} pointerEvents="none">
-              <MenuView
-                ref={historyMenu}
-                style={StyleSheet.absoluteFill}
-                actions={backHistory.map((destination) => ({
-                  id: destination.id,
-                  title: destination.title,
-                }))}
-                onPressAction={({ nativeEvent }) => {
-                  const picked = backHistory.find(
-                    (destination) => destination.id === nativeEvent.event,
-                  );
-                  if (picked) onBackHistorySelect?.(picked);
-                }}
-                themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
-              />
-            </View>
-            <IconButton
-              name="arrow-back"
-              size={24}
-              color={COLORS.PRIMARY_DARK}
-              onPress={header.onBack ?? onBackPress ?? (() => {})}
-              onLongPress={
-                backHistory.length > 0
-                  ? () => historyMenu.current?.show()
-                  : undefined
-              }
-              accessibilityLabel="Go back"
-              accessibilityHint={
-                backHistory.length > 1
-                  ? 'Long press to jump to an earlier screen'
-                  : undefined
-              }
-            />
-          </View>
-          <View style={styles.titles}>
+        <View style={styles.titles}>
+          <Text
+            style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
+            numberOfLines={1}
+            accessibilityRole="header"
+          >
+            {header.title}
+          </Text>
+          {header.subtitle ? (
             <Text
-              style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
+              style={[styles.subtitle, { color: COLORS.MUTED }]}
               numberOfLines={1}
-              accessibilityRole="header"
             >
-              {header.title}
+              {header.subtitle}
             </Text>
-            {header.subtitle ? (
+          ) : (
+            // No subtitle of its own: the date and connection dot, as on
+            // Home's supporting line, so there is always a second line.
+            <View style={styles.dateRow}>
               <Text
                 style={[styles.subtitle, { color: COLORS.MUTED }]}
+                accessibilityLabel={`Current date: ${currentDate}`}
                 numberOfLines={1}
               >
-                {header.subtitle}
+                {currentDate}
               </Text>
-            ) : (
-              // No subtitle of its own: the date and connection dot, as on
-              // Home's supporting line, so there is always a second line.
-              <View style={styles.dateRow}>
-                <Text
-                  style={[styles.subtitle, { color: COLORS.MUTED }]}
-                  accessibilityLabel={`Current date: ${currentDate}`}
-                  numberOfLines={1}
-                >
-                  {currentDate}
-                </Text>
-                <ConnectionDot />
-              </View>
-            )}
-          </View>
-        </>
+              <ConnectionDot />
+            </View>
+          )}
+        </View>
       ) : (
-        <>
-          <Pressable
-            ref={logoRef}
-            onPress={onHomePress}
-            accessibilityLabel="Go to home screen"
-            accessibilityRole="button"
-            android_ripple={{
-              color: rippleColor,
-              borderless: true,
-              radius: 24,
-            }}
-            style={styles.mark}
-          >
-            <LogoHeader size={MARK_SIZE} />
-          </Pressable>
-
-          <Text
-            style={[
-              styles.title,
-              styles.titleFill,
-              { color: COLORS.PRIMARY_DARK },
-            ]}
-          >
-            ColdBoot
-          </Text>
-        </>
+        <Text
+          style={[
+            styles.title,
+            styles.titleFill,
+            { color: COLORS.PRIMARY_DARK },
+          ]}
+        >
+          ColdBoot
+        </Text>
       )}
 
       <View ref={searchRef} collapsable={false}>
