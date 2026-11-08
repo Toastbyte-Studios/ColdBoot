@@ -46,7 +46,9 @@ export default function PinnedHeaderScreen({
   const [frameHeight, setFrameHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
   const pinned =
-    frameHeight === 0 || headerHeight <= frameHeight * MAX_PINNED_SHARE;
+    frameHeight === 0 ||
+    headerHeight <=
+      Math.max(0, frameHeight - footerClearance) * MAX_PINNED_SHARE;
 
   const headerBlock = (
     <View
