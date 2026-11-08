@@ -177,6 +177,7 @@ When adding a new tool:
 - Define styles with `StyleSheet.create()` at the bottom of each file
 - Don't share StyleSheet objects across files; co-locate styles with their component
 - At no point should the content ever bleed into the bottom tab bar (`TabBar`, height `FOOTER_HEIGHT`). Wrap screen content in `ScreenBody` for consistent layout, but do not assume it automatically applies tab-bar-height bottom padding; add the required bottom spacing explicitly on screens that render above the tab bar.
+- On iOS the shortcut bar (`components/ShortcutBar`) starts with a narrow Back slot behind a divider. It's always there (faded on Home) so the tabs never shift, and it dispatches the same go-back action as the swipe. Android has no slot: system Back does that job
 
 ---
 
