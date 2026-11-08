@@ -1,4 +1,4 @@
-import React, { PropsWithChildren, useState } from 'react';
+import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useFooterClearance } from '../hooks/useFooterClearance';
 import { SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
@@ -35,7 +35,8 @@ type Props = PropsWithChildren<{
  * parts share the screen gutter.
  *
  * If the header would take more than `MAX_PINNED_SHARE` of the screen, it
- * moves into the scroll view and the whole page scrolls, as before.
+ * scrolls with the whole page, as before. Both scroll views stay mounted so
+ * changing modes preserves the header's loaded state.
  */
 export default function PinnedHeaderScreen({
   header,
@@ -45,19 +46,17 @@ export default function PinnedHeaderScreen({
   const footerClearance = useFooterClearance();
   const [frameHeight, setFrameHeight] = useState(0);
   const [headerHeight, setHeaderHeight] = useState(0);
+  const pageScroll = useRef<ScrollView>(null);
+  const listScroll = useRef<ScrollView>(null);
   const pinned =
     frameHeight === 0 ||
     headerHeight <=
       Math.max(0, frameHeight - footerClearance) * MAX_PINNED_SHARE;
 
-  const headerBlock = (
-    <View
-      style={[styles.gutter, { paddingTop: topInset }]}
-      onLayout={(event) => setHeaderHeight(event.nativeEvent.layout.height)}
-    >
-      {header}
-    </View>
-  );
+  useEffect(() => {
+    pageScroll.current?.scrollTo({ y: 0, animated: false });
+    listScroll.current?.scrollTo({ y: 0, animated: false });
+  }, [pinned]);
 
   return (
     <ScreenBody>
@@ -65,13 +64,32 @@ export default function PinnedHeaderScreen({
         style={[styles.frame, isAndroid && styles.bleed]}
         onLayout={(event) => setFrameHeight(event.nativeEvent.layout.height)}
       >
-        {pinned ? headerBlock : null}
         <ScrollView
+          ref={pageScroll}
           style={styles.scroll}
-          contentContainerStyle={{ paddingBottom: footerClearance }}
+          contentContainerStyle={pinned && styles.pinnedContent}
+          scrollEnabled={!pinned}
+          scrollsToTop={!pinned}
+          bounces={!pinned}
         >
-          {pinned ? null : headerBlock}
-          <View style={styles.gutter}>{children}</View>
+          <View
+            style={[styles.gutter, { paddingTop: topInset }]}
+            onLayout={(event) =>
+              setHeaderHeight(event.nativeEvent.layout.height)
+            }
+          >
+            {header}
+          </View>
+          <ScrollView
+            ref={listScroll}
+            style={pinned ? styles.scroll : styles.expandedList}
+            contentContainerStyle={{ paddingBottom: footerClearance }}
+            scrollEnabled={pinned}
+            scrollsToTop={pinned}
+            bounces={pinned}
+          >
+            <View style={styles.gutter}>{children}</View>
+          </ScrollView>
         </ScrollView>
       </View>
     </ScreenBody>
@@ -95,5 +113,12 @@ const styles = StyleSheet.create({
   },
   scroll: {
     flex: 1,
+  },
+  pinnedContent: {
+    flex: 1,
+  },
+  expandedList: {
+    flexGrow: 0,
+    flexShrink: 0,
   },
 });
