@@ -1,3 +1,4 @@
+import { usePreventRemove } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React, {
   useState,
@@ -186,6 +187,25 @@ export default observer(function VoiceLogScreen() {
       }
     };
   }, []); // Empty dependency array for unmount-only cleanup
+
+  // Record and Saved Voice Logs are steps inside this screen, not screens of
+  // their own, so going back (the swipe, Android's system Back, iOS's edge
+  // swipe) returns to the Voice Log menu instead of leaving the tool. A
+  // recording in progress is stopped and saved, as the stop button would;
+  // playback stops.
+  usePreventRemove(mode !== 'select', () => {
+    if (isRecordingRef.current) {
+      handleStopRecordingRef.current?.();
+    }
+    if (soundRef.current) {
+      soundRef.current.stop(() => {
+        soundRef.current?.release();
+        soundRef.current = null;
+      });
+      setPlayingId(null);
+    }
+    setMode('select');
+  });
 
   const requestAudioPermission = async (): Promise<boolean> => {
     if (Platform.OS === 'ios') {
