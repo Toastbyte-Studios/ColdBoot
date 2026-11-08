@@ -1,4 +1,3 @@
-import { MenuView } from '@react-native-menu/menu';
 import React from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -6,12 +5,10 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { useCurrentDate } from '../hooks/useCurrentDate';
 import { useTheme } from '../hooks/useTheme';
 import { SCREEN_GUTTER } from '../theme';
-import { DARK_COLORS } from '../theme/colors';
 import { withAlpha } from '../theme/colorUtils';
 import ConnectionDot from './ConnectionDot';
 import LogoHeader from './LogoHeader';
 import { Text } from './ScaledText';
-import type { BackDestination } from '../navigation/backDestinations';
 import type { ScreenHeader } from '../navigation/ScreenHeaderContext';
 
 export type AppBarProps = {
@@ -23,19 +20,12 @@ export type AppBarProps = {
   onSearchPress: () => void;
   onSettingsPress: () => void;
   /**
-   * The nested screen's header. Absent on Home, which keeps the logo,
-   * wordmark and date; present everywhere else, where a back control takes
-   * the logo's place and the screen's title takes the wordmark's.
+   * The nested screen's header. Absent on Home, which shows the wordmark and
+   * date; present everywhere else, where the screen's title takes the
+   * wordmark's place. The logo stays either way and always goes Home; going
+   * back is the swipe.
    */
   header?: ScreenHeader | null;
-  /** Back, when the screen has no `onBack` of its own. */
-  onBackPress?: () => void;
-  /**
-   * The screens behind this one, nearest first. A long press on Back lists
-   * them, so a deep screen is one gesture from Home rather than several taps.
-   */
-  backHistory?: BackDestination[];
-  onBackHistorySelect?: (destination: BackDestination) => void;
 };
 
 /** Edge length of the bar's circular icon buttons. */
@@ -53,11 +43,10 @@ const NAV_BUTTON = 34;
  * subtitle sits. Android overrides this file: Material puts a supporting line
  * in the content instead, where it scrolls away.
  *
- * On a nested screen the bar becomes that screen's navigation bar: a back
- * control where the logo was, the screen's title where the wordmark was, and
- * the screen's subtitle (when it has one worth showing) where the date was.
- * The large title that used to sit under the bar is gone, so the content
- * starts right below it.
+ * On a nested screen the screen's title takes the wordmark's place and its
+ * subtitle (when it has one worth showing) the date's. The logo stays put on
+ * every screen as the way Home; there is no back button, because the swipe
+ * already goes back.
  */
 export default function AppBar({
   logoRef,
@@ -66,9 +55,6 @@ export default function AppBar({
   onSearchPress,
   onSettingsPress,
   header,
-  onBackPress,
-  backHistory = [],
-  onBackHistorySelect,
 }: AppBarProps) {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
@@ -84,53 +70,20 @@ export default function AppBar({
 
   return (
     <View style={[styles.bar, { paddingTop: insets.top + 14 }]}>
-      {header ? (
-        <>
-          {/* Touch and hold opens the history menu, like the system back
-              button; a tap still goes back one screen. */}
-          <MenuView
-            shouldOpenOnLongPress
-            actions={backHistory.map((destination) => ({
-              id: destination.id,
-              title: destination.title,
-              image: destination.isHome ? 'house' : undefined,
-            }))}
-            onPressAction={({ nativeEvent }) => {
-              const picked = backHistory.find(
-                (destination) => destination.id === nativeEvent.event,
-              );
-              if (picked) onBackHistorySelect?.(picked);
-            }}
-            // Follows the in-app theme setting rather than the OS.
-            themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
-          >
-            <View style={styles.backMenuTarget}>
-              <Pressable
-                onPress={header.onBack ?? onBackPress}
-                accessibilityRole="button"
-                accessibilityLabel="Go back"
-                accessibilityHint={
-                  backHistory.length > 1
-                    ? 'Touch and hold to jump to an earlier screen'
-                    : undefined
-                }
-                hitSlop={6}
-                style={({ pressed }) => [
-                  navButtonStyle,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Ionicons
-                  name="chevron-back-outline"
-                  size={19}
-                  color={COLORS.BRAND}
-                  style={styles.backGlyph}
-                />
-              </Pressable>
-            </View>
-          </MenuView>
+      <Pressable
+        ref={logoRef}
+        onPress={onHomePress}
+        accessibilityLabel="Go to home screen"
+        accessibilityRole="button"
+        hitSlop={6}
+        style={({ pressed }) => (pressed ? styles.pressed : null)}
+      >
+        <LogoHeader size={NAV_BUTTON} />
+      </Pressable>
 
-          <View style={styles.titles}>
+      <View style={styles.titles}>
+        {header ? (
+          <>
             <Text
               style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}
               numberOfLines={1}
@@ -150,28 +103,16 @@ export default function AppBar({
               // connection dot, so the bar is the same height everywhere.
               <DateLine date={currentDate} color={COLORS.MUTED} />
             )}
-          </View>
-        </>
-      ) : (
-        <>
-          <Pressable
-            ref={logoRef}
-            onPress={onHomePress}
-            accessibilityLabel="Go to home screen"
-            accessibilityRole="button"
-            style={({ pressed }) => (pressed ? styles.pressed : null)}
-          >
-            <LogoHeader size={NAV_BUTTON} />
-          </Pressable>
-
-          <View style={styles.titles}>
+          </>
+        ) : (
+          <>
             <Text style={[styles.wordmark, { color: COLORS.PRIMARY_DARK }]}>
               ColdBoot
             </Text>
             <DateLine date={currentDate} color={COLORS.MUTED} />
-          </View>
-        </>
-      )}
+          </>
+        )}
+      </View>
 
       <Pressable
         ref={searchRef}
@@ -240,16 +181,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     marginTop: 1,
-  },
-  backGlyph: {
-    // The chevron's visual centre sits right of its box; nudge it back.
-    marginLeft: -2,
-  },
-  backMenuTarget: {
-    width: 44,
-    height: 44,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   navButton: {
     width: NAV_BUTTON,

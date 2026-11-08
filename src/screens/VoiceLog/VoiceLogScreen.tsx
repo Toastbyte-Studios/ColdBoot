@@ -355,7 +355,6 @@ export default observer(function VoiceLogScreen() {
       <StackScreen
         title="Record Voice Log"
         note={`Tap to record a voice note. Maximum duration: ${MAX_DURATION_SECONDS} seconds.`}
-        onBack={() => setMode('select')}
       >
         <View style={styles.column}>
           <RecordingControls
@@ -398,7 +397,7 @@ export default observer(function VoiceLogScreen() {
 
   // Mode: View
   return (
-    <StackScreen title="Saved Voice Logs" onBack={() => setMode('select')}>
+    <StackScreen title="Saved Voice Logs">
       <View style={styles.column}>
         {voiceLogs.length === 0 ? (
           <EmptyState

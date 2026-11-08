@@ -171,29 +171,6 @@ describe('app bar header', () => {
     await ReactTestRenderer.act(async () => tree.update(ui()));
     expect(shown?.title).toBe('Unit Conversion');
   });
-
-  it("calls the screen's latest onBack through a stable wrapper", async () => {
-    mockActiveRoute = { name: 'VoiceLog', key: 'vl' };
-    const first = jest.fn();
-    const second = jest.fn();
-    const ui = (onBack: () => void) => (
-      <ScreenHeaderProvider>
-        <AppBarProbe />
-        <Route routeKey="vl">
-          <Header title="Voice Logs" onBack={onBack} />
-        </Route>
-      </ScreenHeaderProvider>
-    );
-    const tree = await render(ui(first));
-    const wrapper = shown?.onBack;
-
-    await ReactTestRenderer.act(async () => tree.update(ui(second)));
-    expect(shown?.onBack).toBe(wrapper);
-
-    shown?.onBack?.();
-    expect(second).toHaveBeenCalled();
-    expect(first).not.toHaveBeenCalled();
-  });
 });
 
 describe('AppBar', () => {
@@ -205,39 +182,43 @@ describe('AppBar', () => {
     onSettingsPress: jest.fn(),
   };
 
-  const backButton = (tree: ReactTestRenderer.ReactTestRenderer) =>
+  const homeButton = (tree: ReactTestRenderer.ReactTestRenderer) =>
     tree.root.find(
       (node) =>
-        node.props.accessibilityLabel === 'Go back' &&
+        node.props.accessibilityLabel === 'Go to home screen' &&
         typeof node.props.onPress === 'function',
     );
+
+  const noBackButton = (tree: ReactTestRenderer.ReactTestRenderer) =>
+    expect(
+      tree.root.findAll((n) => n.props.accessibilityLabel === 'Go back'),
+    ).toHaveLength(0);
 
   it('shows ColdBoot and the date on Home', async () => {
     const tree = await render(<AppBar {...baseProps} header={null} />);
     expect(texts(tree)).toEqual(
       expect.arrayContaining(['ColdBoot', 'Thursday, November 5']),
     );
-    expect(
-      tree.root.findAll((n) => n.props.accessibilityLabel === 'Go back'),
-    ).toHaveLength(0);
+    noBackButton(tree);
   });
 
-  it('shows back, title and subtitle on a nested screen', async () => {
-    const onBackPress = jest.fn();
+  it('keeps the logo as Home on a nested screen, beside its title', async () => {
+    const onHomePress = jest.fn();
     const tree = await render(
       <AppBar
         {...baseProps}
+        onHomePress={onHomePress}
         header={{ title: 'Sun Times', subtitle: '34.05° N' }}
-        onBackPress={onBackPress}
       />,
     );
     const all = texts(tree);
     expect(all).toEqual(expect.arrayContaining(['Sun Times', '34.05° N']));
     expect(all).not.toContain('ColdBoot');
     expect(all).not.toContain('Thursday, November 5');
+    noBackButton(tree);
 
-    backButton(tree).props.onPress();
-    expect(onBackPress).toHaveBeenCalled();
+    homeButton(tree).props.onPress();
+    expect(onHomePress).toHaveBeenCalled();
   });
 
   it('fills a missing subtitle with the date, as Home does', async () => {
@@ -267,18 +248,17 @@ describe('AppBar', () => {
     expect(texts(withSubtitle)).not.toContain('Thursday, November 5');
   });
 
-  it("uses the screen's own onBack when it has one", async () => {
-    const onBack = jest.fn();
-    const onBackPress = jest.fn();
+  it('keeps the logo as Home on Android too', async () => {
+    const onHomePress = jest.fn();
     const tree = await render(
-      <AppBar
+      <AppBarAndroid
         {...baseProps}
-        header={{ title: 'Voice Logs', onBack }}
-        onBackPress={onBackPress}
+        onHomePress={onHomePress}
+        header={{ title: 'Sun Times' }}
       />,
     );
-    backButton(tree).props.onPress();
-    expect(onBack).toHaveBeenCalled();
-    expect(onBackPress).not.toHaveBeenCalled();
+    noBackButton(tree);
+    homeButton(tree).props.onPress();
+    expect(onHomePress).toHaveBeenCalled();
   });
 });
