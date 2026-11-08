@@ -1,4 +1,4 @@
-import { distanceMiles } from '../../utils/distanceMiles';
+import { findCoveringArea } from '../../utils/offlineCoverage';
 import { PackRegion } from '../../utils/offlinePacks';
 
 export type ReadinessStatus = 'ready' | 'attention' | 'missing' | 'unknown';
@@ -88,17 +88,7 @@ function mapItem(input: ReadinessInput): ReadinessItem {
       detail: `${plural(input.packs.length, 'area')} saved; needs a GPS fix to check`,
     };
   }
-  const { latitude, longitude } = input.fix;
-  const covering = input.packs.find(
-    (pack) =>
-      pack.region &&
-      distanceMiles(
-        latitude,
-        longitude,
-        pack.region.center.latitude,
-        pack.region.center.longitude,
-      ) <= pack.region.radiusMiles,
-  );
+  const covering = findCoveringArea(input.fix, input.packs);
   if (covering) {
     return { ...base, status: 'ready', detail: `Covered by ${covering.name}` };
   }

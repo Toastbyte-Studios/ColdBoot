@@ -29,6 +29,7 @@ import { RADIUS, SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../../theme';
 import { ColorScheme } from '../../../theme/colors';
 import { PAPER } from '../../../theme/fixedSurfaces';
 import ReferenceEntryType from '../../../types/data-type';
+import { recordLastRead } from '../../../utils/lastReadEntry';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -69,6 +70,11 @@ export default function EntryScreen(): JSX.Element {
       if (entryId) setBookmarked(await isBookmarked(entryId));
     };
     check();
+  }, [entry?.id]);
+
+  // Remembered for the Reference hero's "Continue" stat.
+  useEffect(() => {
+    if (entry?.id) recordLastRead(entry.id);
   }, [entry?.id]);
 
   /**
