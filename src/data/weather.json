@@ -60,7 +60,7 @@
         "Check exposed skin frequently, especially fingers, toes, nose, cheeks, and ears.",
         "Look for pale, waxy, numb, or hard skin—these are signs of frostbite.",
         "Move to shelter or block wind with a jacket, pack, or terrain feature.",
-        "Warm affected areas gradually using body heat (armpits, against warm skin, spare dry mittens).",
+        "Once you're sure the area won't refreeze, rewarm it in warm water, 37–39 °C (99–102 °F), that feels comfortable on unhurt skin. If you can't, warm it against body heat (armpits, belly, a companion's skin).",
         "Replace wet gloves or socks with dry materials if available.",
         "If rewarming begins, keep the area warm; repeated freezing after thawing causes severe damage.",
         "Avoid walking on frostbitten feet unless absolutely necessary; pressure can worsen injury."
@@ -109,8 +109,8 @@
       ],
       "watch_for": [
         "Headache, dizziness, weakness, rapid heartbeat.",
-        "Hot, flushed, dry skin (a sign of dangerous heatstroke).",
-        "Mental confusion, stumbling, or lack of sweating in extreme cases."
+        "Confusion, slurred speech, stumbling or collapse with hot skin, which may be dry or sweaty. This is heat stroke: call for help and cool the person immediately, ideally in cold water.",
+        "Seizures or loss of consciousness in extreme cases."
       ],
       "notes": [
         "Evaporation cools the body; wet a cloth and fan yourself when breeze is limited.",
@@ -127,7 +127,7 @@
       "steps": [
         "Cover skin with clothing, hats, or improvised shades (bandanas, wraps, cloth layers).",
         "Use natural shade whenever possible, such as trees, cliffs, or your shelter.",
-        "Moisten clothing in extreme heat to cool the skin while still blocking UV.",
+        "Moisten clothing in extreme heat to cool the skin, but stay in shade where you can; wet fabric lets through more UV.",
         "If burned, keep skin covered and out of direct sun.",
         "Cool the area with clean water or damp cloths to relieve heat and soothe pain.",
         "Drink extra water; sunburn increases dehydration."
@@ -241,6 +241,7 @@
       "difficulty": "advanced",
       "tags": ["lightning", "storm", "weather", "electrical", "high ground"],
       "steps": [
+        "There is no safe place outside in a thunderstorm. When you hear thunder, get into a substantial building or a hard-topped vehicle if one is within reach, and stay until 30 minutes after the last thunder. Tents and open shelters give no protection; use the steps below only if you can't reach shelter.",
         "Move off ridges, peaks, and exposed high ground immediately.",
         "Avoid isolated tall trees; instead, shelter near shorter, uniform tree clusters if forested.",
         "Keep at least 50–100 feet (15–30 m) away from tall objects like cliffs, towers, or solitary trees.",
@@ -273,7 +274,7 @@
       "steps": [
         "Identify slopes between 30–45 degrees—these are the most avalanche-prone.",
         "Look for signs of unstable snow: recent slides, cracking snow, hollow 'whump' sounds, or rapid warming.",
-        "Travel along ridgelines or low-angle terrain whenever possible.",
+        "Travel on low-angle terrain that has no steeper slopes above it, or on wind-scoured ridges, keeping well back from cornice edges. Don't travel or stop under steep slopes.",
         "Cross suspect slopes one at a time to minimize risk.",
         "Have an escape plan before entering any avalanche terrain—note safe runouts or islands of safety."
       ],
@@ -316,7 +317,7 @@
       "do_not": [
         "Do not create a completely sealed shelter; ventilation is essential.",
         "Do not build in unstable snow where collapse risk is high.",
-        "Do not use candles or stoves inside unless the shelter is large and adequately vented."
+        "Do not run a stove inside a snow shelter; cook outside or at the entrance. A candle needs an open vent that you check often, since vents ice over."
       ],
       "watch_for": [
         "Roof sagging or cracking—add reinforcement or exit immediately.",
@@ -412,7 +413,7 @@
         "Do not ration water too early; dehydration impairs judgment quickly."
       ],
       "watch_for": [
-        "Rapid breathing, confusion, or lack of sweating—potential heatstroke.",
+        "Confusion, rapid breathing or collapse with hot skin, sweaty or dry—potential heatstroke. Cool the person immediately.",
         "Sunburn increasing heat absorption and dehydration.",
         "Dry, cracked lips or dark urine indicating dehydration."
       ],
@@ -565,19 +566,19 @@
         "wind indicators"
       ],
       "steps": [
-        "Force 0 (Calm): Smoke rises vertically; no wind movement.",
-        "Force 1 (Light Air): Smoke drifts slightly; leaves barely move.",
-        "Force 2 (Light Breeze): Leaves rustle; small twigs move.",
-        "Force 3 (Gentle Breeze): Flags extend slightly; leaves and small branches move.",
-        "Force 4 (Moderate Breeze): Dust and loose paper lift; small branches sway.",
-        "Force 5 (Fresh Breeze): Small trees begin to sway; waves form on lakes.",
-        "Force 6 (Strong Breeze): Large branches move; umbrellas difficult to use.",
-        "Force 7 (Near Gale): Whole trees move; walking becomes challenging.",
-        "Force 8 (Gale): Twigs break off trees; progress on foot is difficult.",
-        "Force 9 (Severe Gale): Slight structural damage possible; visibility reduced.",
-        "Force 10 (Storm): Trees uprooted in places; heavy structural effects.",
-        "Force 11 (Violent Storm): Widespread structural damage; extremely dangerous.",
-        "Force 12 (Hurricane): Devastation; complete loss of structural integrity in many areas."
+        "Force 0 (Calm, under 1 km/h / under 1 mph): Smoke rises vertically.",
+        "Force 1 (Light Air, 1–5 km/h / 1–3 mph): Smoke drifts with the wind; leaves barely move.",
+        "Force 2 (Light Breeze, 6–11 km/h / 4–7 mph): Wind felt on face; leaves rustle.",
+        "Force 3 (Gentle Breeze, 12–19 km/h / 8–12 mph): Leaves and small twigs in constant motion; light flags extend.",
+        "Force 4 (Moderate Breeze, 20–28 km/h / 13–18 mph): Dust and loose paper lift; small branches move.",
+        "Force 5 (Fresh Breeze, 29–38 km/h / 19–24 mph): Small trees in leaf begin to sway; crested wavelets on lakes.",
+        "Force 6 (Strong Breeze, 39–49 km/h / 25–31 mph): Large branches move; umbrellas difficult to use.",
+        "Force 7 (Near Gale, 50–61 km/h / 32–38 mph): Whole trees move; walking against the wind is difficult.",
+        "Force 8 (Gale, 62–74 km/h / 39–46 mph): Twigs break off trees; progress on foot is hard.",
+        "Force 9 (Severe Gale, 75–88 km/h / 47–54 mph): Slight structural damage, such as shingles blown off.",
+        "Force 10 (Storm, 89–102 km/h / 55–63 mph): Trees uprooted; considerable structural damage.",
+        "Force 11 (Violent Storm, 103–117 km/h / 64–72 mph): Widespread damage; extremely dangerous.",
+        "Force 12 (Hurricane, 118 km/h / 73 mph or more): Devastation."
       ],
       "do_not": [
         "Do not travel on exposed ridges or open water above Force 6 conditions.",
@@ -586,8 +587,8 @@
       ],
       "watch_for": [
         "Tree movement—one of the easiest ways to estimate wind strength.",
-        "Whitecaps forming on lakes (typically start at Force 4–5).",
-        "Loose debris lifting from the ground, which signals dangerous wind speeds."
+        "Whitecaps on open water (scattered from Force 3, frequent by Force 4).",
+        "Branches and larger debris flying through the air, which signals dangerous wind (Force 8 and above)."
       ],
       "notes": [
         "You can estimate wind speed visually without instruments, critical when planning shelter placement and travel.",
@@ -650,7 +651,7 @@
         "flooding"
       ],
       "steps": [
-        "Know your evacuation zone and route before storm season, and leave when officials order it. Storm surge, not wind, causes most hurricane deaths.",
+        "Know your evacuation zone and route before storm season, and leave when officials order it. Water, not wind, causes most hurricane deaths: storm surge on the coast and flooding from rain far inland.",
         "When a storm is forecast, gather at least several days of water (about 4 L, or 1 gallon, per person per day), food, medicine, cash, batteries and fuel.",
         "Fill your vehicle's tank, charge phones and power banks, and download offline maps.",
         "Bring in or tie down outdoor furniture and other objects that wind can throw. Cover windows with shutters or plywood.",

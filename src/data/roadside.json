@@ -133,7 +133,7 @@
       ],
       "watch_for": [
         "The tire pressure warning light: a horseshoe shape with an exclamation mark.",
-        "Pressure falls roughly 1 psi for every 10 °F (about 0.1 bar for every 5–6 °C) drop in temperature, which is why the warning light often comes on during the first cold mornings.",
+        "Pressure falls roughly 1 psi for every 10 °F (about 0.07 bar for every 5–6 °C) drop in temperature, which is why the warning light often comes on during the first cold mornings.",
         "Uneven wear: worn edges suggest underinflation; a worn center suggests overinflation.",
         "One tire that keeps losing air faster than the others, which usually means a slow puncture."
       ],
@@ -163,8 +163,8 @@
         "Do this with the tire on the ground and the parking brake set, so the wheel cannot spin.",
         "Seat the wrench fully on the nut with the handle roughly horizontal. Hold the car for balance and press down on the handle with your foot, using your body weight in a steady push.",
         "If that fails, add leverage: slide a length of sturdy pipe over the wrench handle to lengthen it.",
-        "For rusted nuts, spray penetrating oil where the nut meets the stud, wait 10–15 minutes, and try again.",
-        "If the wheel stays stuck to the hub after the nuts are off, thread two nuts back on a few turns so the wheel cannot fall off, then kick the tire's sidewall firmly, working around it. Or strike the tire (not the rim) with a block of wood and a hammer.",
+        "For rusted nuts, spray penetrating oil where the nut meets the stud, wait 10–15 minutes, and try again. Wipe the oil off the studs and nuts before you refit them.",
+        "If the wheel stays stuck to the hub after the nuts are off, thread all the nuts back on, then back each off two turns. Lower the car so the tire is on the ground, and roll it slowly a few feet forward and back, or kick the tire's sidewall, to break it free. Then raise the car again and remove the nuts. Never kick or hammer a wheel while the car is on the jack.",
         "Once the wheel breaks free, remove the nuts you threaded back on and pull the wheel off."
       ],
       "do_not": [
@@ -533,7 +533,7 @@
         "Do not routinely drive on a near-empty tank; the fuel helps cool the in-tank pump."
       ],
       "watch_for": [
-        "Deciding whether to walk or wait. The Vehicle Breakdown scenario card covers staying with the vehicle in remote areas."
+        "Deciding whether to walk or wait. The Vehicle Breakdown in Remote Area scenario card covers staying with the vehicle in remote areas."
       ],
       "notes": [
         "Refill at a quarter tank, especially in remote areas or in winter. A full tank also gives you hours of heat if you're stranded in the cold."
@@ -653,7 +653,7 @@
         "Set the parking brake and leave the hazards on. At night or in poor visibility, keep the parking lights on as well.",
         "Get out on the side away from traffic. If there is a safe place well away from the road, such as behind a guardrail or up a bank, wait there, not between the car and traffic or directly behind it.",
         "If there is no safe place to stand, for example a narrow freeway shoulder, stay in the car with your seatbelt fastened and the hazards on.",
-        "Set out warning triangles behind the car at increasing distances: roughly 10 ft (3 m), 100 ft (30 m), and on fast roads or before a curve or hill, 300 ft (100 m) or more. Walk along the shoulder facing traffic and carry each triangle in front of you.",
+        "If the shoulder is wide enough to walk safely, set out warning triangles behind the car at increasing distances: roughly 10 ft (3 m), 100 ft (30 m), and before a curve or hill, 300 ft (90 m). Walk facing traffic and carry each triangle in front of you. On a freeway or a fast road with a narrow shoulder, skip the triangles and stay behind the barrier or in the car.",
         "Raise the hood or tie a bright cloth to the antenna or driver's door to show you need help.",
         "When you call for help, give the road, direction of travel and nearest exit or mile marker. If you're unsure where you are, the Map shows your GPS position."
       ],
@@ -715,7 +715,7 @@
       ],
       "notes": [
         "A winter kit belongs in the car from late fall: blankets, hats and gloves, a shovel, an ice scraper, food, water, a flashlight and hand warmers.",
-        "The Vehicle Breakdown scenario card covers deciding whether to stay or go."
+        "The Vehicle Breakdown in Remote Area scenario card covers deciding whether to stay or go."
       ],
       "related_screen": "ScenarioCards",
       "related_screen_label": "Open Scenario Cards"
@@ -1017,7 +1017,7 @@
         "Ease off the gas slowly and let the car slow down on its own.",
         "Once the car is under control and has slowed well down, brake gently.",
         "Signal and steer smoothly onto the shoulder or a safe area well away from traffic.",
-        "Turn on the hazards and follow Pulling Over Safely before changing the tire."
+        "Turn on the hazards and follow Pulling Over Safely and Warning Other Drivers before changing the tire."
       ],
       "do_not": [
         "Do not slam on the brakes.",

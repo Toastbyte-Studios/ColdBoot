@@ -22,11 +22,10 @@
         "Place a clean cloth, bandage, or any clean absorbent material directly over the wound.",
         "Apply firm, steady pressure with your hand or hands directly on the wound.",
         "If blood soaks through the cloth, place additional cloth or pads on top and continue pressing. Do not remove the original cloth.",
-        "If the wound is on a limb and there is no suspected fracture, gently raise the limb above the level of the heart while maintaining pressure.",
-        "Continue direct pressure for at least 10–15 minutes without checking too often; lifting the cloth can restart bleeding.",
-        "If bleeding remains heavy and life-threatening despite firm direct pressure, apply a tourniquet if you have one and know how to use it.",
+        "If pressure is controlling the bleeding, keep it on for at least 10–15 minutes without lifting to check; lifting the cloth can restart bleeding.",
+        "If an arm or leg is bleeding heavily (spurting, pooling or soaking through) and firm pressure isn't stopping it, apply a tourniquet right away. Don't wait out the 10–15 minutes.",
         "Place the tourniquet 5–7 cm (2–3 inches) above the wound, between the wound and the heart, and never directly over a joint.",
-        "Tighten the tourniquet until the bleeding stops or significantly slows. It will usually be painful when effective.",
+        "Tighten the tourniquet until the bleeding stops completely. It will be painful; that is expected. If bleeding continues, tighten it more or add a second tourniquet just above the first.",
         "Secure the tourniquet so it cannot loosen and note the time it was applied.",
         "After bleeding is controlled, cover the person with a blanket or clothing to keep them warm and monitor for signs of shock such as pale skin, rapid pulse, or confusion.",
         "Seek professional medical care as soon as it becomes available, even if the bleeding appears controlled."
@@ -40,7 +39,7 @@
       "watch_for": [
         "Continued heavy bleeding despite direct pressure.",
         "Signs of shock: pale or clammy skin, rapid breathing, weakness, confusion, or loss of consciousness.",
-        "Loss of feeling or movement below the tourniquet site."
+        "Bleeding that starts again below the tourniquet, which means it needs tightening or a second tourniquet above it. Numbness below a tourniquet is expected; don't loosen it."
       ],
       "notes": [
         "In a survival situation, a tourniquet can be made from a wide band of cloth and a rigid object used as a windlass to twist and tighten.",
@@ -63,6 +62,7 @@
       "steps": [
         "Ensure the area is safe for you and the person.",
         "Check responsiveness by speaking loudly and gently shaking their shoulder.",
+        "If there is no response, shout for help. Call emergency services (use speakerphone), or have someone call and send them for an AED.",
         "If there is no response, place the person on their back on a firm surface.",
         "Open the airway by tilting the head back slightly and lifting the chin.",
         "Look for normal breathing for no more than 10 seconds: watch the chest, listen for breath sounds, feel for air on your cheek.",
@@ -75,7 +75,7 @@
         "Give a second breath, then immediately resume chest compressions for another 30 compressions.",
         "If you are not trained or do not wish to give rescue breaths, continue hands-only CPR with continuous chest compressions.",
         "Continue CPR until the person shows clear signs of life (such as normal breathing or movement), you are physically unable to continue, or trained help becomes available.",
-        "If an automated external defibrillator (AED) becomes available, follow its voice prompts while continuing CPR as instructed."
+        "As soon as an automated external defibrillator (AED) arrives, turn it on, attach the pads and follow its voice prompts, keeping pauses in compressions as short as possible."
       ],
       "do_not": [
         "Do not spend more than 10 seconds checking for breathing or pulse if you are not trained.",
@@ -144,6 +144,7 @@
         "Place the needle end against the outer thigh, halfway between the hip and knee. The injection can be given through clothing if necessary.",
         "Press the injector firmly into the thigh until you hear or feel a click, and hold it there for the recommended time (usually several seconds) to deliver the medication.",
         "Remove the injector and massage the injection site for about 10 seconds.",
+        "Call emergency services right away, even if the person starts to feel better.",
         "Have the person lie down or sit in a comfortable position. If breathing is easier when sitting upright, support them in that position.",
         "Loosen tight clothing, especially around the neck and chest.",
         "Monitor breathing and level of consciousness continuously.",
@@ -210,15 +211,14 @@
         "If you suspect a stroke, help the person sit or lie in a comfortable position with their head slightly raised.",
         "Reassure the person and keep them as calm and still as possible.",
         "Loosen tight clothing, especially around the neck and chest.",
-        "If the person is alert and able to swallow, you may offer small sips of water, but only if there is no difficulty swallowing.",
-        "If there are swallowing problems, do not give any food or drink to avoid choking.",
+        "Do not give anything to eat or drink, even water; a stroke can affect swallowing without obvious signs.",
         "If the person becomes drowsy or unresponsive, place them in the recovery position on their side with the mouth angled downward to allow fluids to drain.",
         "Monitor breathing and responsiveness closely.",
         "Record the time that symptoms first began if known, as this information will be important for medical personnel later.",
-        "Seek professional medical care as soon as it becomes available."
+        "Call emergency services right away. Stroke treatment works best within the first few hours, so don't wait to see if symptoms pass."
       ],
       "do_not": [
-        "Do not give the person anything to eat or drink if they have trouble swallowing.",
+        "Do not give the person anything to eat or drink, including water or medicine.",
         "Do not let the person walk around; they could fall or worsen their condition.",
         "Do not ignore mild or temporary symptoms; strokes can progress rapidly."
       ],
@@ -477,7 +477,7 @@
         "Recognize signs of heat stroke: very high body temperature, confusion, agitation, hot skin that may be dry or still sweating, rapid pulse, or loss of consciousness.",
         "Move the person immediately to the coolest available place, out of direct sun.",
         "Remove excess clothing to allow maximum skin exposure to cooling.",
-        "Cool the person rapidly using any available methods: wet the skin with cool water, apply wet cloths, or immerse in cool (not ice-cold) water if safe and feasible.",
+        "Cool the person as fast as possible. Best is immersing the body up to the neck in cold or ice water, supporting the head. If you can't, soak the skin with the coldest water available and fan hard, or use ice packs and cold wet towels.",
         "Apply cold packs or wet cloths to the neck, armpits, and groin, which are areas of high blood flow.",
         "Fan the person continuously to increase evaporation and heat loss.",
         "If the person is awake and able to swallow safely, give small sips of cool water but do not delay cooling efforts.",
@@ -799,7 +799,7 @@
         "If the safety of water is uncertain, boil it at a rolling boil for at least 1 minute (3 minutes at high altitude) before drinking.",
         "Cool boiled water before storing it in clean, covered containers.",
         "Avoid letting stored water sit uncovered where insects or debris can enter.",
-        "Cook food thoroughly, especially meat and eggs, until there is no visible pink or raw center.",
+        "Cook food thoroughly, especially meat, poultry and eggs. Use a food thermometer if you have one; color alone doesn't show that meat is safe.",
         "Keep raw and cooked foods separate to avoid cross-contamination.",
         "Wash or peel fruits and vegetables when possible.",
         "Discard foods that smell bad, look moldy, or have unusual texture or color.",

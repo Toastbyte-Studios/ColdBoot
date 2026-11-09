@@ -31,7 +31,7 @@
       ],
       "steps": [
         "Choose a safe fire site on bare soil or rock, away from overhanging branches, dry grass, or tents.",
-        "Clear a circle at least 1–2 meters (3–6 feet) wide down to mineral soil; remove leaves, sticks, and duff.",
+        "Clear an area at least 3 meters (10 feet) across down to mineral soil, and keep the fire at least 4.5 meters (15 feet) from tents, brush and low branches.",
         "If possible, build a small fire ring or use existing fire rings to contain your fire.",
         "Gather three types of fuel before lighting: tinder (very fine, dry material), kindling (small sticks about pencil thickness), and fuel wood (larger sticks and branches).",
         "Select tinder such as dry grass, shredded bark, wood shavings, cotton pads, or birch bark. Keep it as dry and fluffy as possible.",
@@ -115,7 +115,7 @@
         "Scatter cold ashes and unused sticks away from vegetation if appropriate, leaving the site as natural as possible."
       ],
       "do_not": [
-        "Do not leave a fire unattended or go to sleep with a large active fire.",
+        "Do not leave a fire unattended or go to sleep with it burning; put it out cold first.",
         "Do not bury hot coals under a thin layer of soil; they can remain hot and start fires later.",
         "Do not build fires in strong winds where embers can travel far.",
         "Do not use stones that may contain moisture from rivers or lakes directly in the fire; they can crack or explode."
@@ -127,7 +127,7 @@
       ],
       "notes": [
         "A well-managed fire is a tool; a poorly managed fire becomes a hazard to you and others.",
-        "Cold, wet hands inside the ashes are an effective way to confirm a fire is truly out if you can do so safely.",
+        "To check that a fire is out, hold the back of your hand just above the drowned, stirred ashes. If you feel any heat, add more water and stir again.",
         "In very dry conditions, consider using a stove or going without fire entirely."
       ]
     },
@@ -150,11 +150,11 @@
         "Avoid sources near obvious contamination such as animal carcasses, heavy human traffic, industrial sites, or downstream of camps and livestock.",
         "Collect water from as clear a part of the source as possible, using a container, cup, or improvised scoop.",
         "If water is visibly dirty, let it settle or pour it through cloth to remove large particles before disinfecting.",
-        "Boiling method: bring water to a rolling boil for at least 1 minute; at high elevations, boil for at least 3 minutes.",
+        "Boiling method: bring water to a rolling boil for at least 1 minute; above 2,000 m (6,500 ft), boil for at least 3 minutes.",
         "Allow boiled water to cool naturally with a cover over the container to prevent re-contamination.",
         "If you have chemical tablets, follow the instructions exactly, allowing the full contact time before drinking.",
         "If you have a portable filter, use it according to its directions and protect it from freezing.",
-        "Improvised filter: layer cloth, sand, charcoal, and small gravel in a container; pour water through repeatedly, then disinfect by boiling or chemicals if possible.",
+        "Improvised filter: in a container, layer cloth at the bottom, then charcoal, sand and gravel on top; pour water through. This only clears sediment and does not make water safe, so always boil or chemically treat it afterward.",
         "Store treated water in clean containers with lids or covers and remember which containers hold safe water."
       ],
       "do_not": [
@@ -254,7 +254,7 @@
         "Lay out a ridgepole (a strong main branch or pole) roughly as long as your body plus extra space for gear.",
         "Support one end of the ridgepole on a stump, rock, forked branches, or a low tree branch; the other end rests on the ground.",
         "Lean smaller branches along both sides of the ridgepole to create a framework, leaving a small entry point at one end.",
-        "Cover the framework thickly with leaves, grass, evergreen boughs, or other debris, aiming for at least the thickness of your arm.",
+        "Cover the framework with leaves, grass, evergreen boughs or other debris at least 60 cm (2 ft) thick, more if rain is likely.",
         "Add more debris until the roof and sides are well sealed, then place another layer of branches on top to help hold material in place.",
         "Create an insulated bed inside using leaves, needles, or dry grass thick enough to lift your body off the cold ground.",
         "Narrow the interior so it is just large enough for you to lie in; smaller spaces are easier to warm with body heat.",
@@ -334,7 +334,7 @@
       ],
       "watch_for": [
         "Increasing fatigue, headache, or dizziness, especially during midday.",
-        "Hot, dry skin and reduced sweating, which may signal heat stroke.",
+        "Confusion, odd behavior or collapse with hot skin, sweaty or dry, which signals heat stroke. Cool the person immediately.",
         "Dehydration markers such as dark urine and strong thirst."
       ],
       "notes": [
@@ -347,16 +347,15 @@
       "id": "edible_plants",
       "category": "Food & Foraging",
       "title": "Edible Plants",
-      "summary": "Follow strict safety rules when foraging and learn a few commonly recognized edible plants.",
+      "summary": "Follow strict safety rules when foraging, and eat only plants you can identify with certainty.",
       "difficulty": "advanced",
       "tags": ["edible plants", "foraging", "wild food", "safety", "plants"],
       "steps": [
         "Adopt the rule: if you are not absolutely sure a plant is safe, do not eat it.",
         "Learn and prioritize a few well-known, easy-to-identify plants for your region; depth of knowledge is safer than guessing with many species.",
-        "Avoid plants with milky or colored sap, strong bitter or almond-like smell, or fine hair-covered pods and leaves unless you know the species.",
+        "Avoid plants with milky or colored sap, a bitter or almond-like smell, beans or seeds in pods, three-leaf patterns, fine hairs or spines, grain heads with dark spurs, or leaves like dill, carrot, parsnip or parsley (the hemlock family, which can kill).",
         "Avoid plants growing in polluted areas such as roadsides, industrial sites, or downstream from obvious contamination.",
-        "Test only one new plant at a time if you must experiment: touch a small portion to your inner forearm, then lips, then tongue, and finally chew a tiny piece and hold it in your mouth before swallowing a small amount.",
-        "Wait several hours after swallowing a small test portion to check for nausea, cramps, dizziness, or other adverse effects before eating more.",
+        "Do not taste-test plants you can't identify. A single bite of some plants, such as water hemlock, can kill. If you can't identify a plant with certainty, don't eat it; look for insects, fish or known foods instead.",
         "Cook plants when possible to reduce some bitter compounds and potential irritants.",
         "Focus on high-yield, safer options like nuts, seeds, and starchy roots of known species rather than many unknown leaves.",
         "Combine wild plants with other food sources such as fish or stored food rather than relying entirely on unknown foraging."
@@ -523,7 +522,7 @@
         "Choose camp locations away from animal trails, water crossings, and obvious feeding areas such as berry patches.",
         "Store food securely, using bear-resistant containers or hanging food from a tree branch when necessary and possible.",
         "Keep sleeping areas separate from cooking and food storage sites.",
-        "Dispose of food scraps and waste well away from camp, burying when appropriate and allowed by local practices.",
+        "Pack out food scraps and trash, stored with your food. Don't bury or burn leftovers; animals dig them up.",
         "Make your presence known during travel in areas with large predators by talking, clapping, or making moderate noise, especially in dense vegetation or near loud streams.",
         "If you see fresh large-animal sign (fresh scat, strong odor, recent tracks), consider changing your route or moving camp.",
         "Keep pets under control if present; they can trigger unwanted animal encounters if they roam freely.",
@@ -532,7 +531,7 @@
       "do_not": [
         "Do not store food inside your sleeping shelter if large predators are a possibility.",
         "Do not approach young animals or their suspected parents; protective behavior can be aggressive.",
-        "Do not run blindly if you encounter large wildlife; sudden movements can trigger chase responses."
+        "Do not run from a bear or large cat; it can trigger a chase and they are faster than you. Stand your ground, stay calm, and back away slowly. Keep bear spray within reach where bears live."
       ],
       "watch_for": [
         "Frequent animal tracks or scat near your camp, indicating a high-traffic area.",
@@ -563,7 +562,7 @@
       "steps": [
         "Find the declination for your area, printed in the margin of most topographic maps. It's the angle between true north (map north) and magnetic north (where the needle points).",
         "Set the declination on your compass if it's adjustable. If not, add or subtract it yourself: when converting a map bearing to a magnetic bearing, add west declination and subtract east declination.",
-        "Orient the map: lay the compass on it, turn the dial to north, and rotate the map and compass together until the needle sits in the orienting arrow. The map now matches the ground.",
+        "Orient the map: with declination set, turn the dial to north and lay the compass edge along a north-south line on the map, travel arrow toward the top. Rotate map and compass together until the needle sits in the orienting arrow. The map now matches the ground.",
         "To take a bearing from the map, lay the compass edge from where you are to where you want to go, with the direction-of-travel arrow pointing toward the destination.",
         "Turn the dial until its north-south lines match the map's north-south grid lines, with north on the dial toward the top of the map. Read the bearing at the index line.",
         "To follow it, hold the compass flat in front of you and turn your body until the needle sits in the orienting arrow (\"red in the shed\"). The travel arrow now points your way.",
@@ -607,14 +606,14 @@
         "Shadow stick: push a straight stick upright into level ground in sunlight and mark the tip of its shadow with a stone.",
         "Wait 15 to 30 minutes and mark the shadow tip again. A line from the first mark to the second runs roughly west to east.",
         "Stand with the first mark on your left and the second on your right: you are facing roughly north.",
-        "Sun position: the sun rises in the general east and sets in the general west. In the Northern Hemisphere it's due south at local midday; in the Southern Hemisphere it's due north.",
+        "Sun position: the sun rises in the general east and sets in the general west. Outside the tropics, it's due south at local midday in the Northern Hemisphere and due north in the Southern. In the tropics it can be overhead or on either side, so use the shadow stick there.",
         "North Star (Northern Hemisphere): find the Big Dipper and follow the two stars at the end of its bowl upward about five times their spacing to Polaris. Polaris sits within about 1 degree of true north.",
         "Southern Cross (Southern Hemisphere): extend the long axis of the cross about four and a half times its length toward the horizon; the point below is roughly due south.",
         "Once you have a direction, mark it on the ground or pick a distant landmark, so you keep it after the sun moves or clouds roll in."
       ],
       "do_not": [
         "Do not trust moss, tree rings or anthill folklore; they depend on local conditions and are unreliable.",
-        "Do not assume the sun rises due east; in summer it rises well north of east and in winter well south of east, more so at high latitudes."
+        "Do not assume the sun rises due east; around June it rises well north of east and around December well south of east, everywhere on Earth, more so at high latitudes."
       ],
       "watch_for": [
         "Midday drift: near local noon the shadow moves slowly, so wait longer between marks.",

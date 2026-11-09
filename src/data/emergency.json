@@ -137,7 +137,7 @@
         "Face the aircraft/search area and hold the mirror near your eye so you can aim precisely.",
         "Make a 'sighting' reference: align the mirror so the reflected bright spot (glint) hits the target area. If you have a mirror with a sighting hole, look through it.",
         "Sweep slowly across the aircraft’s path and horizon to create repeated flashes; flashes are easier to notice than a constant glint.",
-        "If the aircraft circles: keep flashing in bursts and maintain position in an open area where you are visible.",
+        "If the aircraft circles or rocks its wings, it has seen you. Stop aiming at the cockpit so you don't dazzle the pilot, and flash only briefly if they seem to lose sight of you. Stay in the open where you are visible.",
         "If no sun: switch to other signals (smoke, ground symbols, whistle)."
       ],
       "do_not": [
@@ -241,8 +241,8 @@
       "difficulty": "basic",
       "tags": ["911", "satellite", "radio", "message", "coordinates"],
       "steps": [
+        "Give location first: GPS coordinates if possible, plus descriptive landmarks (trail name, nearest junction, elevation, mile marker).",
         "State the emergency clearly: injury/illness/exposure/lost/vehicle issue.",
-        "Give location: GPS coordinates if possible, plus descriptive landmarks (trail name, nearest junction, elevation, mile marker).",
         "Give party info: number of people, ages, condition of each, supplies available, shelter status.",
         "Describe hazards: weather, terrain, water crossings, wildlife risk, avalanche/flash flood concerns.",
         "Give plan: whether you are staying put or moving, and your intended route/destination if moving.",
@@ -296,7 +296,7 @@
       "steps": [
         "Secure loose items: hats, tarps, lightweight gear can become dangerous projectiles.",
         "Stay low and stable; protect your eyes from dust/debris.",
-        "Approach only if clearly signaled by crew. If instructed to approach, approach from the front or as directed; never from the rear.",
+        "Approach only if clearly signaled by crew. Crouch and come in from the front or front-side where the pilot can see you, never from the rear. On a slope, approach and leave on the downhill side; the rotor is closer to the ground uphill. Carry nothing above shoulder height.",
         "Keep hands visible and avoid sudden movements; follow instructions exactly.",
         "Keep others (especially children/pets) close and controlled."
       ],
@@ -503,7 +503,7 @@
     },
     {
       "id": "immediate_action_signal_panels_and_flags",
-      "category": "Immediate Action",
+      "category": "Signaling",
       "title": "Improvised Signal Panels and Flags",
       "summary": "Build highly visible signals using what you have and what you can gather.",
       "difficulty": "basic",
@@ -625,7 +625,7 @@
         "Reach: lie down or brace yourself on shore and reach with a pole, branch, paddle, towel or clothing.",
         "Throw: throw something that floats, or a rope or throw bag. Aim beyond and slightly downstream of the person so the line falls across them.",
         "Tell them to hold the rope on their chest and lie on their back with feet downstream. Brace yourself and let the current swing them toward shore.",
-        "Row: if you have a boat and the skill, approach and have them grab the stern or a paddle rather than pulling them over the side.",
+        "Row: if you have a boat and the skill, approach slowly and shut off the motor before you reach them. Hold out a paddle or something that floats, and bring them aboard only once the engine is off.",
         "Go: swim out only if you're trained in water rescue, carrying something buoyant to hand them.",
         "Once they're out, check breathing, start CPR if needed, and treat for cold."
       ],
@@ -753,12 +753,12 @@
       ],
       "watch_for": [
         "Smoke inhalation: coughing, hoarseness, trouble breathing or soot around the nose and mouth. Get medical care.",
-        "Burns; cool them with cool running water for at least 10 minutes."
+        "Burns; cool them with cool running water for at least 20 minutes. See the Burns (Thermal) entry."
       ],
       "notes": [
         "Plan two ways out of every room, pick a meeting spot, and practice with your household twice a year.",
         "Fire extinguisher use is PASS: Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep side to side.",
-        "Test smoke alarms monthly and keep one on every level and outside each sleeping area."
+        "Test smoke alarms monthly and keep one inside every bedroom, outside each sleeping area and on every level."
       ]
     },
     {
@@ -891,7 +891,7 @@
         "Make sure the scene is safe and call for help, reporting how many people are hurt.",
         "Call out: \"If you can walk, come to me.\" Those who walk are lower priority (minor) and can help.",
         "Go to each remaining person in turn, spending no more than about 30 seconds each.",
-        "Not breathing: open the airway once. If they still don't breathe, they are beyond help in this situation; move on.",
+        "Not breathing: open the airway once. If they start breathing, they are immediate priority; keep the airway open. If they still don't breathe, they are beyond help in this situation; move on.",
         "Breathing faster than about 30 breaths a minute, no wrist pulse or slow color return after pressing a fingernail (more than 2 seconds), or unable to follow simple commands: immediate priority.",
         "Breathing, with a wrist pulse and able to follow commands, but unable to walk: delayed priority.",
         "While triaging, do only quick life-saving actions: control severe bleeding with pressure or a tourniquet, and put unresponsive breathing people in the recovery position.",

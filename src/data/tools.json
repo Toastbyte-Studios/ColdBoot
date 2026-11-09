@@ -118,8 +118,8 @@
         "Inspect the hatchet: ensure the head is firmly attached to the handle and the edge is free of large chips.",
         "Choose a stable chopping surface such as a chopping block or large log; avoid bare ground and rocks.",
         "Place the wood to be split upright on the chopping surface, away from your feet.",
-        "Stand with feet shoulder-width apart, slightly offset to the side of the swing so a miss will not hit your legs.",
-        "Grip the hatchet with both hands for most cuts, guiding with the top hand and powering with the rear hand.",
+        "With a hatchet, kneel on both knees in front of the block with the wood within arm's reach, so a miss lands in the block and not your legs. With a longer axe, stand with feet apart and the block in front, not between your feet.",
+        "Hold a hatchet in one hand near the end of the handle; use two hands only on a full-length axe.",
         "Make controlled, moderate swings rather than full-power swings, especially with small pieces.",
         "For small or awkward pieces, use a \"batoning\" method: place the hatchet edge on the wood and strike the back of the head with another piece of wood to drive it through.",
         "Stop and re-position the work piece if it becomes unstable or begins to fall.",
@@ -277,7 +277,7 @@
       "tags": ["bushcraft", "tripod", "cooking", "fire", "hanger"],
       "steps": [
         "Cut three sturdy poles of similar length (about your height) from green wood for the tripod legs.",
-        "Lay the three poles side by side and tie them together about 20–30 cm (8–12 inches) from one end using a clove hitch followed by several tight wraps and fraps, forming a lashing.",
+        "Lay the three poles side by side and tie a tripod lashing about 20–30 cm (8–12 inches) from one end: a clove hitch, then fairly loose figure-eight wraps and light fraps (see Tripod Lashing).",
         "Stand the poles upright and spread the bottoms out evenly to form a stable tripod over your fire area.",
         "Select a shorter green branch with a natural fork or carve a notch near one end to hang a pot or kettle.",
         "Carve a series of small notches along the hanger so you can adjust the pot height by moving where it rests on the tripod lashing or crossbar.",
@@ -488,7 +488,7 @@
       "difficulty": "intermediate",
       "tags": ["knot", "bowline", "loop", "fixed", "rope"],
       "steps": [
-        "Form a small loop in the standing part of the rope, with the standing part crossing over the top of the loop.",
+        "Form a small loop in the standing part, with the working-end side of the rope crossing over the top of the standing part (an overhand loop).",
         "Pass the working end up through this loop from below.",
         "Wrap the working end around the back of the standing part of the rope.",
         "Bring the working end back down and pass it through the original loop, this time from above.",
@@ -512,15 +512,15 @@
       "id": "knots_round_turn_two_half_hitches",
       "category": "Knots",
       "title": "Round Turn and Two Half Hitches",
-      "summary": "Secure a rope to a post, tree, or ring with a stable, easily adjustable knot.",
+      "summary": "Secure a rope to a post, tree or ring with a knot that holds under load and unties easily.",
       "difficulty": "basic",
       "tags": ["knot", "hitch", "post", "anchor", "rope"],
       "steps": [
         "Pass the rope around the post or object twice, creating a full round turn plus another wrap if desired for friction.",
-        "Cross the working end over the standing part and wrap it around the post, forming a half hitch, then tighten.",
-        "Wrap the working end around the post again in the same direction, forming a second half hitch stacked next to the first.",
+        "Bring the working end over the standing part, around it and back through, to form a half hitch around the standing part.",
+        "Make a second half hitch around the standing part the same way, next to the first.",
         "Pull on the standing part to snug the round turn and both half hitches against the post.",
-        "Adjust the tension by sliding the knot along the post if necessary before fully tightening."
+        "Slide the half hitches up against the round turn and pull tight."
       ],
       "do_not": [
         "Do not use only one half hitch; it is more likely to slip.",
@@ -575,7 +575,7 @@
         "Wrap the rope around a stake or anchor and bring the working end back toward the standing part.",
         "Wrap the working end around the standing part inside the loop, making one full turn and pulling it snug.",
         "Make a second wrap in the same direction around the standing part, again inside the loop, close to the first wrap.",
-        "Then wrap the working end once around the standing part on the outside of the loop, closer to the stake, and tuck it through to form a half hitch.",
+        "Then bring the working end across the two wraps and tie a half hitch around the standing part outside the loop, on the side away from the stake.",
         "Dress the knot so both inner wraps and the outer half hitch are neat and tight.",
         "Slide the knot along the standing part to tighten or loosen the line; tension should hold the knot in place."
       ],
@@ -829,7 +829,7 @@
         "Do not tie it over a smooth, rigid object like a metal pipe and expect it to grip as well as on a soft bundle."
       ],
       "watch_for": [
-        "An end that passes under only the first wrap and not the crossing; that's a clove hitch, which slips."
+        "An end that passes under the crossing but not the first wrap; that's a clove hitch, which slips."
       ],
       "notes": [
         "To make it easier to undo, tuck a bight instead of the end (slipped constrictor).",
@@ -918,7 +918,7 @@
         "camp craft"
       ],
       "steps": [
-        "Lay three poles side by side with their tops even. Reverse the middle pole so its top points the opposite way.",
+        "Lay three poles side by side with their butt ends even.",
         "Tie a clove hitch around one outside pole.",
         "Weave the rope over and under the poles in a figure-eight pattern, six to eight times. Keep the wraps fairly loose.",
         "Make two frapping turns between each pair of poles, around the wraps, without pulling them as tight as you would on a square lashing.",
