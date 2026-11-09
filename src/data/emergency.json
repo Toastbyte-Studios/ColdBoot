@@ -877,7 +877,7 @@
       "id": "immediate_action_triage",
       "category": "Immediate Action",
       "title": "Triage: Several Injured People",
-      "summary": "Sort several casualties quickly so the ones who can be saved get help first.",
+      "summary": "When there are more injured people than rescuers, sort them quickly so the ones who can be saved get help first. Children are triaged differently.",
       "difficulty": "advanced",
       "tags": [
         "triage",
@@ -888,12 +888,14 @@
         "priorities"
       ],
       "steps": [
-        "Make sure the scene is safe and call for help, reporting how many people are hurt.",
+        "Use this only when there are more injured people than rescuers can treat at once. Make sure the scene is safe and call for help, reporting how many people are hurt.",
         "Call out: \"If you can walk, come to me.\" Those who walk are lower priority (minor) and can help.",
-        "Go to each remaining person in turn, spending no more than about 30 seconds each.",
-        "Not breathing: open the airway once. If they start breathing, they are immediate priority; keep the airway open. If they still don't breathe, they are beyond help in this situation; move on.",
-        "Breathing faster than about 30 breaths a minute, no wrist pulse or slow color return after pressing a fingernail (more than 2 seconds), or unable to follow simple commands: immediate priority.",
-        "Breathing, with a wrist pulse and able to follow commands, but unable to walk: delayed priority.",
+        "Go to each remaining person in turn, spending no more than about 30 seconds each. The checks below are for adults; for anyone who looks like a child, use the child steps that follow.",
+        "Adult not breathing: open the airway once. If they start breathing, they are immediate priority; keep the airway open. If they still don't breathe, they are beyond help in this situation; move on.",
+        "Adult breathing faster than about 30 breaths a minute, or with no wrist pulse or slow color return after pressing a fingernail (more than 2 seconds), or unable to follow simple commands: immediate priority.",
+        "Adult breathing, with a wrist pulse and able to follow commands, but unable to walk: delayed priority.",
+        "Child not breathing: open the airway. If they still don't breathe, check for a pulse. With a pulse, give 5 rescue breaths; if they start breathing, they are immediate priority. Only a child with no pulse, or who stays not breathing after the 5 breaths, is beyond help.",
+        "Child breathing slower than 15 or faster than 45 breaths a minute, or with no pulse you can feel, or unresponsive or reacting abnormally to pain (such as stiffening): immediate priority. Otherwise, a child who can't walk is delayed priority. Assess infants and toddlers who can't walk yet with these steps, not the walking call.",
         "While triaging, do only quick life-saving actions: control severe bleeding with pressure or a tourniquet, and put unresponsive breathing people in the recovery position.",
         "Mark each person's priority with tape, a pen or colored cloth, then return to care for the immediate group first."
       ],
@@ -906,7 +908,7 @@
         "Walking wounded who are more hurt than they seem, such as with internal bleeding or head injuries."
       ],
       "notes": [
-        "This is based on the START triage system used by many emergency services.",
+        "The adult steps follow the START triage system and the child steps follow JumpSTART, its version for children up to about age 8, which gives rescue breaths because children usually stop breathing before their heart stops.",
         "Triage decisions are hard. Doing the most good for the most people is the goal."
       ]
     },
