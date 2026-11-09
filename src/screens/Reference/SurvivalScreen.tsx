@@ -9,9 +9,11 @@ const categoryMap: Record<string, string> = {
   Shelter: 'Shelter',
   FoodAndForaging: 'Food & Foraging',
   TrackingAndAwareness: 'Tracking & Awareness',
+  Navigation: 'Navigation',
 };
 
-const survivalCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const survivalCategories: CategoryType[] = [
   {
     title: 'Firecraft',
     icon: 'flame-outline',
@@ -47,11 +49,18 @@ const survivalCategories: CategoryType[] = [
     category: categoryMap.TrackingAndAwareness,
     data: data.entries,
   },
+  {
+    title: 'Navigation',
+    icon: 'compass-outline',
+    id: 'survival_navigation',
+    category: categoryMap.Navigation,
+    data: data.entries,
+  },
 ];
 
 /**
  * Renders the Survival Guide screen, providing quick access to essential survival topics.
- * Displays a header, section title, and a list of categories (Fire, Water, Shelter, Food & Foraging, Tracking & Awareness).
+ * Displays a header, section title, and a list of categories (Fire, Water, Shelter, Food & Foraging, Tracking & Awareness, Navigation).
  * Each row navigates to a detailed category screen with relevant data when pressed.
  *
  * @returns {JSX.Element} The rendered Survival Guide screen component.

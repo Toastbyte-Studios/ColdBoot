@@ -1,15 +1,16 @@
 {
   "metadata": {
     "name": "Survival Guide",
-    "version": "1.1.0",
-    "last_updated": "2025-12-14",
+    "version": "1.2.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information is general survival guidance and is not a substitute for professional training. Always use your judgment and prioritize safety in real-world situations.",
     "categories": [
       "Firecraft",
       "Water",
       "Shelter",
       "Food & Foraging",
-      "Tracking & Awareness"
+      "Tracking & Awareness",
+      "Navigation"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -542,6 +543,365 @@
         "Preventing encounters is usually easier and safer than reacting once an animal is close.",
         "Clean camps and careful food handling significantly reduce wildlife interest in your location.",
         "If specific regional guidance exists (such as for bears or large cats), follow it as your primary reference."
+      ]
+    },
+    {
+      "id": "navigation_map_compass_basics",
+      "category": "Navigation",
+      "title": "Map and Compass Basics",
+      "summary": "Orient a map, take and follow a bearing, and correct for declination so you can navigate without a signal.",
+      "difficulty": "intermediate",
+      "tags": [
+        "compass",
+        "map",
+        "bearing",
+        "declination",
+        "orienteering",
+        "navigation",
+        "topographic map"
+      ],
+      "steps": [
+        "Find the declination for your area, printed in the margin of most topographic maps. It's the angle between true north (map north) and magnetic north (where the needle points).",
+        "Set the declination on your compass if it's adjustable. If not, add or subtract it yourself: when converting a map bearing to a magnetic bearing, add west declination and subtract east declination.",
+        "Orient the map: lay the compass on it, turn the dial to north, and rotate the map and compass together until the needle sits in the orienting arrow. The map now matches the ground.",
+        "To take a bearing from the map, lay the compass edge from where you are to where you want to go, with the direction-of-travel arrow pointing toward the destination.",
+        "Turn the dial until its north-south lines match the map's north-south grid lines, with north on the dial toward the top of the map. Read the bearing at the index line.",
+        "To follow it, hold the compass flat in front of you and turn your body until the needle sits in the orienting arrow (\"red in the shed\"). The travel arrow now points your way.",
+        "Pick a landmark on that line, such as a distinctive tree or rock, walk to it, then sight the next one. Repeat rather than staring at the compass while walking.",
+        "Check your position often against terrain features: streams, ridges, saddles and trail junctions."
+      ],
+      "do_not": [
+        "Do not read a compass near steel, vehicles, power lines, phones or magnets; they pull the needle.",
+        "Do not ignore declination; in parts of North America it exceeds 15 degrees, putting you about 260 m (850 ft) off course for every kilometer walked.",
+        "Do not rely on a phone alone; carry a paper map and compass as a backup that doesn't need batteries."
+      ],
+      "watch_for": [
+        "Terrain that doesn't match what the map says should be there. Stop and work out where you are before going further.",
+        "Obstacles that force you off your bearing. Box around them at right angles, counting paces, to get back on line."
+      ],
+      "notes": [
+        "Aim off deliberately: when heading for a point on a trail or stream, aim a little to one side so you know which way to turn when you reach it.",
+        "Use handrails (long features such as a stream or ridge that run along your route) and catching features (something you can't miss beyond your destination).",
+        "Declination changes slowly over the years; an old map's value may be a few degrees off."
+      ],
+      "related_screen": "MapScreen",
+      "related_screen_label": "Open Map"
+    },
+    {
+      "id": "navigation_without_compass",
+      "category": "Navigation",
+      "title": "Finding Direction Without a Compass",
+      "summary": "Find north and south from the sun, a shadow stick and the stars, and know which folk methods to ignore.",
+      "difficulty": "intermediate",
+      "tags": [
+        "natural navigation",
+        "shadow stick",
+        "north star",
+        "polaris",
+        "sun",
+        "southern cross",
+        "direction",
+        "no compass"
+      ],
+      "steps": [
+        "Shadow stick: push a straight stick upright into level ground in sunlight and mark the tip of its shadow with a stone.",
+        "Wait 15 to 30 minutes and mark the shadow tip again. A line from the first mark to the second runs roughly west to east.",
+        "Stand with the first mark on your left and the second on your right: you are facing roughly north.",
+        "Sun position: the sun rises in the general east and sets in the general west. In the Northern Hemisphere it's due south at local midday; in the Southern Hemisphere it's due north.",
+        "North Star (Northern Hemisphere): find the Big Dipper and follow the two stars at the end of its bowl upward about five times their spacing to Polaris. Polaris sits within about 1 degree of true north.",
+        "Southern Cross (Southern Hemisphere): extend the long axis of the cross about four and a half times its length toward the horizon; the point below is roughly due south.",
+        "Once you have a direction, mark it on the ground or pick a distant landmark, so you keep it after the sun moves or clouds roll in."
+      ],
+      "do_not": [
+        "Do not trust moss, tree rings or anthill folklore; they depend on local conditions and are unreliable.",
+        "Do not assume the sun rises due east; in summer it rises well north of east and in winter well south of east, more so at high latitudes."
+      ],
+      "watch_for": [
+        "Midday drift: near local noon the shadow moves slowly, so wait longer between marks.",
+        "Daylight saving time and your position within a time zone, which shift local noon away from 12:00 on the clock."
+      ],
+      "notes": [
+        "The shadow stick works best within a few hours of midday and gets less accurate at high latitudes and near sunrise and sunset.",
+        "Star Map can show where Polaris and other navigation stars are right now from your position."
+      ],
+      "related_screen": "StarMap",
+      "related_screen_label": "Open Star Map"
+    },
+    {
+      "id": "navigation_pacing_dead_reckoning",
+      "category": "Navigation",
+      "title": "Pacing, Timing and Dead Reckoning",
+      "summary": "Track how far you've gone by counting paces and keeping time, so you know where you are between landmarks.",
+      "difficulty": "intermediate",
+      "tags": [
+        "pace count",
+        "dead reckoning",
+        "distance",
+        "naismith",
+        "pacing",
+        "navigation",
+        "time estimate"
+      ],
+      "steps": [
+        "Learn your pace count: walk a known 100 m (or 100 yd) on flat ground, counting every time the same foot (say, the left) touches down. Most adults count 60 to 70 per 100 m.",
+        "Repeat on uphill, downhill and rough ground; your count goes up on slopes, in brush and with a heavy pack.",
+        "On the trail, count paces and track each 100 m by moving a bead, tying a knot in a cord or moving a pebble from one pocket to another.",
+        "Note the time you leave each known point and your bearing, and write them down.",
+        "Estimate walking time with Naismith's rule: about 5 km/h (3 mph) on easy ground, plus 1 hour for every 600 m (2,000 ft) of ascent. Adjust for your group, load and terrain.",
+        "Dead reckoning: combine bearing and distance from your last known point to plot where you should be on the map.",
+        "Confirm your estimate whenever you reach a feature you can identify, and start counting again from there."
+      ],
+      "do_not": [
+        "Do not use a pace count measured on flat ground for steep or snowy terrain without adjusting.",
+        "Do not walk past your expected distance hoping the landmark is just ahead. If you overshoot by more than about a fifth, stop and reassess."
+      ],
+      "watch_for": [
+        "Fatigue and darkness, which shorten your stride and slow your speed.",
+        "A group that spreads out; the slowest person sets the pace and the timing."
+      ],
+      "notes": [
+        "A pace count also helps measure features like a lake shore or a field when you're making your own map.",
+        "Record bearings and times in Notepad or on paper as you go; memory is unreliable when you're tired or stressed."
+      ]
+    },
+    {
+      "id": "navigation_route_finding_terrain",
+      "category": "Navigation",
+      "title": "Route Finding and Reading Terrain",
+      "summary": "Read contour lines, match the map to the land, and choose routes that avoid cliffs, dead ends and exhaustion.",
+      "difficulty": "advanced",
+      "tags": [
+        "route finding",
+        "contour lines",
+        "terrain",
+        "topographic map",
+        "ridge",
+        "valley",
+        "drainage",
+        "turnaround time"
+      ],
+      "steps": [
+        "Read contour lines: each line joins points of equal height. Close lines mean steep ground; widely spaced lines mean gentle ground.",
+        "Spot features: V-shaped contours pointing uphill are valleys and drainages; V or U shapes pointing downhill are ridges and spurs; an hourglass between two high points is a saddle.",
+        "Plan a route that follows ridges, trails or open valleys and avoids crossing many contour lines at once.",
+        "Break the route into legs between features you can confirm on the ground, and note a bearing and distance for each.",
+        "Set a turnaround time before you start, and keep it even if your destination seems close.",
+        "As you travel, look back often so you'll recognize the way if you need to retrace your steps.",
+        "If the terrain stops matching the map, stop and go back to your last known point rather than pushing on."
+      ],
+      "do_not": [
+        "Do not follow a drainage downhill blindly when lost; streams often drop over cliffs or waterfalls and run into thick brush.",
+        "Do not descend steep ground you couldn't climb back up.",
+        "Do not cut across switchbacks or unknown slopes to save time."
+      ],
+      "watch_for": [
+        "Gullies that narrow and steepen, scree and loose rock, and snow slopes above runouts.",
+        "Weather that hides landmarks; fix your position before fog or darkness arrives.",
+        "Signs of fatigue in the group that make accidents more likely late in the day."
+      ],
+      "notes": [
+        "The contour interval, printed on the map margin, tells you how much height each line represents.",
+        "Download offline maps for your area before you go, so Map can show your position and the terrain without a signal."
+      ],
+      "related_screen": "MapScreen",
+      "related_screen_label": "Open Map"
+    },
+    {
+      "id": "water_collecting_rain_snow_dew",
+      "category": "Water",
+      "title": "Collecting Rain, Snow and Dew",
+      "summary": "Gather drinkable water from rain, snow, ice and dew, and use your fuel and energy wisely doing it.",
+      "difficulty": "basic",
+      "tags": [
+        "rainwater",
+        "snow",
+        "melting snow",
+        "dew",
+        "ice",
+        "water collection",
+        "tarp",
+        "transpiration bag"
+      ],
+      "steps": [
+        "Rain: rig a tarp, poncho or plastic sheet at an angle so water runs to a low corner, and set a clean container underneath.",
+        "Let the first few minutes of rain rinse the collecting surface before you start keeping the water.",
+        "Snow and ice: melt them in a pot rather than eating them. Ice gives far more water than the same pot of snow.",
+        "Start with a little water in the pot before adding snow, so the pot doesn't scorch, and keep adding snow as it melts.",
+        "Dew: before sunrise, tie absorbent cloth around your ankles and walk through wet grass, or wipe dew off surfaces, then wring the cloth into a container.",
+        "Transpiration bag: tie a clear plastic bag over a leafy branch of a non-toxic tree in sunlight; condensed water collects in the low corner over a few hours.",
+        "Treat collected water before drinking unless it fell straight from the sky into a clean container."
+      ],
+      "do_not": [
+        "Do not eat snow or ice to stay hydrated; it lowers your body temperature and costs energy to melt.",
+        "Do not collect from roofs or surfaces treated with chemicals or coated with bird droppings without treating the water.",
+        "Do not use a transpiration bag on plants you can't identify; some are poisonous."
+      ],
+      "watch_for": [
+        "Fuel use: melting snow takes a lot of fuel, so plan for it in winter.",
+        "Discolored or old snow, and snow near roads, animals or camps."
+      ],
+      "notes": [
+        "Fresh snow is mostly air; a full pot often melts down to a tenth or less of its volume in water.",
+        "Solar stills dug in the ground rarely produce more water than you sweat building them. Use them only when nothing else is available."
+      ]
+    },
+    {
+      "id": "food_field_dressing_preserving",
+      "category": "Food & Foraging",
+      "title": "Field Dressing and Preserving Game and Fish",
+      "summary": "Clean game and fish safely, cook them thoroughly and preserve extra meat when you can't refrigerate it.",
+      "difficulty": "advanced",
+      "tags": [
+        "field dressing",
+        "gutting",
+        "game",
+        "fish",
+        "preserving meat",
+        "jerky",
+        "smoking",
+        "drying",
+        "meat safety"
+      ],
+      "steps": [
+        "Wear gloves if you have them, and keep cuts on your hands covered; some diseases pass from animals through broken skin.",
+        "Bleed and gut the animal as soon as possible to cool the meat and keep gut bacteria out of it.",
+        "Make a shallow cut through the belly skin from the pelvis toward the ribs, lifting the skin with two fingers so you don't puncture the intestines or bladder.",
+        "Remove the organs, cut free the windpipe and the end of the gut, and drain blood from the body cavity.",
+        "Cool the meat quickly: prop the cavity open, hang it in shade, or put it in cold water in a sealed bag.",
+        "Fish: gut and clean them soon after catching, and keep them cold or cook them within a few hours.",
+        "Cook all wild game and fish thoroughly. Bear and wild pig need to be cooked to well done because of parasites.",
+        "To preserve extra meat, cut it into thin strips 6 mm (1/4 in) or less, cook or heat it first, then dry it in sun, wind or smoke until it is dry and cracks when bent."
+      ],
+      "do_not": [
+        "Do not eat an animal that looked sick, acted strangely or was found dead.",
+        "Do not eat meat if the liver has white spots or the organs look abnormal.",
+        "Do not leave guts near your camp; they attract predators. Dispose of them well away and downwind."
+      ],
+      "watch_for": [
+        "Rabbits and hares, which can carry tularemia; handle them with gloves and cook them thoroughly.",
+        "Spoilage: slimy texture, sour smell or discoloration. When in doubt, throw it out.",
+        "Hunting and fishing laws, which apply except in true survival emergencies."
+      ],
+      "notes": [
+        "Food is a lower priority than shelter and water. People can survive weeks without food but only days without water.",
+        "Smoke from green hardwood both dries meat and keeps insects away."
+      ]
+    },
+    {
+      "id": "food_foraging_myths",
+      "category": "Food & Foraging",
+      "title": "Foraging Myths and Safe Rules",
+      "summary": "Avoid the foraging mistakes that poison people, and stick to food you can identify with certainty.",
+      "difficulty": "intermediate",
+      "tags": [
+        "foraging",
+        "edibility test",
+        "mushrooms",
+        "wild plants",
+        "poisonous plants",
+        "insects",
+        "myths"
+      ],
+      "steps": [
+        "Eat only plants you can identify with complete certainty, ideally confirmed with a reliable regional field guide or someone experienced.",
+        "Learn the deadly look-alikes in your region before learning edibles, such as water hemlock and poison hemlock, which resemble wild carrot and parsnip.",
+        "Start with a small amount of a new food even when you're sure of it, since individual reactions vary.",
+        "Insects are a safer protein source than unknown plants: grasshoppers, crickets, ants, termites and grubs are widely eaten. Cook them to kill parasites.",
+        "Prioritize foods that are easy to identify and gather, such as cattail shoots, acorns (leached in water to remove tannins), berries you know, and fish.",
+        "Remember the survival priorities: shelter, water and getting found usually matter far more than food."
+      ],
+      "do_not": [
+        "Do not rely on the \"universal edibility test\"; a small taste of some plants, such as water hemlock, can be fatal.",
+        "Do not eat wild mushrooms unless an expert has identified them. Deadly species look like edible ones, and symptoms can be delayed until damage is done.",
+        "Do not assume a plant is safe because animals or birds eat it.",
+        "Do not eat brightly colored, hairy or foul-smelling insects, or insects found on carrion."
+      ],
+      "watch_for": [
+        "Nausea, vomiting, cramps, a burning mouth or numbness after eating a wild plant. Stop eating it, and keep a sample for identification.",
+        "Plants growing near roads, farms or contaminated water, which can carry chemicals."
+      ],
+      "notes": [
+        "Cooking does not destroy all plant toxins.",
+        "Milky sap, bitterness or almond smell can be warning signs, but the absence of them doesn't make a plant safe."
+      ]
+    },
+    {
+      "id": "fire_friction_bow_drill",
+      "category": "Firecraft",
+      "title": "Friction Fire (Bow Drill)",
+      "summary": "Make fire without matches or a lighter using a bow drill, the most reliable friction method.",
+      "difficulty": "advanced",
+      "tags": [
+        "bow drill",
+        "friction fire",
+        "primitive fire",
+        "fire board",
+        "spindle",
+        "ember",
+        "no matches"
+      ],
+      "steps": [
+        "Gather dry, dead, non-resinous softwood such as cedar, willow, cottonwood, basswood, poplar or yucca for the spindle and fireboard.",
+        "Spindle: a straight piece about 20 cm (8 in) long and thumb thick, rounded at the bottom and pointed at the top.",
+        "Fireboard: a flat piece about 2 cm (3/4 in) thick and a bit wider than the spindle.",
+        "Bearing block: a hand-sized piece of hardwood, stone or bone with a small hollow to hold the spindle's top. Grease from your skin or a leaf helps reduce friction there.",
+        "Bow: a stiff, slightly curved stick about as long as your arm, with cord tied at both ends so it's slightly loose.",
+        "Cut a small dent near the edge of the fireboard, twist the spindle into the cord, and drill slowly until the dent becomes a blackened socket.",
+        "Cut a V-shaped notch from the board's edge into the center of the socket, about one-eighth of the circle, like a slice of pie.",
+        "Put a leaf or bark under the notch, kneel with your foot on the board, brace the bearing-block wrist against your shin, and bow with long, steady strokes.",
+        "Speed up when smoke appears, and keep going until heavy smoke rises and the dark powder in the notch keeps smoking on its own.",
+        "Lift the ember on the leaf, drop it into a nest of fine, dry tinder, fold the tinder around it and blow gently until it bursts into flame."
+      ],
+      "do_not": [
+        "Do not use green, damp or resinous wood such as most pine for the set.",
+        "Do not wait until you're cold, wet and exhausted to try this for the first time; it takes practice."
+      ],
+      "watch_for": [
+        "Shiny, glazed wood in the socket, which won't create dust. Roughen it or add a pinch of sand.",
+        "A spindle that keeps popping out; make the socket deeper or press down more steadily."
+      ],
+      "notes": [
+        "Carry modern ignition such as a lighter and ferro rod. Friction fire is a backup skill, not a plan.",
+        "Paracord or a boot lace works for the bow cord."
+      ]
+    },
+    {
+      "id": "shelter_campsite_sleeping_warm",
+      "category": "Shelter",
+      "title": "Campsite Selection and Sleeping Warm",
+      "summary": "Choose a safe place to camp and get through a cold night warm, with or without full gear.",
+      "difficulty": "basic",
+      "tags": [
+        "campsite",
+        "site selection",
+        "sleeping warm",
+        "insulation",
+        "sleeping pad",
+        "widowmaker",
+        "cold night"
+      ],
+      "steps": [
+        "Look up: avoid camping under dead trees or dead branches (widowmakers), which can fall in wind or snow.",
+        "Avoid dry streambeds, gullies and flood plains that can flood in a storm, and avoid valley floors where cold air pools at night.",
+        "Avoid exposed ridges and lone tall trees in storm season.",
+        "Choose flat, well-drained ground sheltered from the wind, at least 60 m (200 ft) from water.",
+        "Insulate under yourself first: the ground drains heat faster than air. Use a sleeping pad, or a thick layer of dry leaves, grass or evergreen boughs at least 15 to 20 cm (6 to 8 in) thick after compressing.",
+        "Change into dry clothes for sleeping, wear a hat, and keep tomorrow's damp clothes in the bag at your feet to dry them.",
+        "Eat a fatty, high-calorie snack and drink before bed, and urinate before getting in. A full bladder costs body heat.",
+        "Fill a sealed bottle with hot water and put it in the sleeping bag, against your core or between your thighs."
+      ],
+      "do_not": [
+        "Do not breathe inside your sleeping bag; the moisture reduces insulation.",
+        "Do not sleep in clothes that are damp with sweat if you have dry ones.",
+        "Do not use a fuel-burning heater inside a tent."
+      ],
+      "watch_for": [
+        "Shivering that won't stop, or confusion, in anyone in your group. See the Hypothermia entry.",
+        "Ants, animal trails and signs of rockfall near your site."
+      ],
+      "notes": [
+        "Sleeping pads are rated by R-value; higher means warmer. Stack two pads in winter.",
+        "Sharing body heat with a companion is an effective emergency measure."
       ]
     }
   ]

@@ -7,9 +7,11 @@ const categoryMap: Record<string, string> = {
   ToolsHome: 'Tools (Home)',
   ToolsWilderness: 'Tools (Wilderness)',
   Knots: 'Knots',
+  Lashings: 'Lashings',
 };
 
-const toolsAndKnotsCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const toolsAndKnotsCategories: CategoryType[] = [
   {
     title: 'Tools (Home)',
     icon: 'hammer-outline',
@@ -29,6 +31,13 @@ const toolsAndKnotsCategories: CategoryType[] = [
     icon: 'git-branch-outline',
     id: 'knots',
     category: categoryMap.Knots,
+    data: data.entries,
+  },
+  {
+    title: 'Lashings',
+    icon: 'link-outline',
+    id: 'lashings',
+    category: categoryMap.Lashings,
     data: data.entries,
   },
 ];

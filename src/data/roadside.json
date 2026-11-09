@@ -1,8 +1,8 @@
 {
   "metadata": {
     "name": "Roadside Service Reference",
-    "version": "1.0.0",
-    "last_updated": "2026-10-16",
+    "version": "1.1.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information is general roadside guidance and is not a substitute for your vehicle's owner's manual or professional roadside assistance. Vehicles differ; follow the manufacturer's instructions where they disagree with this guide. Your safety comes before the car: if a repair means working near moving traffic, get clear and call for help if you can.",
     "categories": [
       "Tires & Wheels",
@@ -10,7 +10,8 @@
       "Engine & Fluids",
       "Stuck & Recovery",
       "Roadside Safety",
-      "Vehicle Kit"
+      "Vehicle Kit",
+      "Driving Emergencies"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -844,6 +845,271 @@
       ],
       "related_screen": "Checklist",
       "related_screen_label": "Open Checklists"
+    },
+    {
+      "id": "roadside_sinking_vehicle",
+      "category": "Driving Emergencies",
+      "title": "Escaping a Sinking Car",
+      "summary": "Get out of a car in water within the first minute, through the window, before it sinks.",
+      "difficulty": "basic",
+      "tags": [
+        "car in water",
+        "sinking car",
+        "submerged vehicle",
+        "window breaker",
+        "flood",
+        "escape"
+      ],
+      "steps": [
+        "Act immediately. You typically have about a minute while the car floats, and that's your best chance to get out.",
+        "Seatbelts: unbuckle yours.",
+        "Windows: open your side window right away, while the electrics still work. If it won't open, break it with a window-breaking tool, aiming at a lower corner.",
+        "Children: unbuckle them and push them out the window first, oldest first, so they can help the younger ones.",
+        "Out: climb out the window right after them and swim to shore or climb onto the roof to wait for help.",
+        "Call emergency services once you're out of the car."
+      ],
+      "do_not": [
+        "Do not call for help before you get out; it uses up your time.",
+        "Do not wait for the car to fill so the pressure equalizes to open a door; it rarely works in time.",
+        "Do not try to break the windshield; it's laminated and won't shatter."
+      ],
+      "watch_for": [
+        "Side windows that are laminated on some newer cars and won't break with a tool. Know which windows yours has, and open them instead.",
+        "Strong current pulling you downstream once you're out; swim across it, not against it."
+      ],
+      "notes": [
+        "Keep a window-breaking and seatbelt-cutting tool where the driver can reach it while buckled, not in the glovebox or trunk.",
+        "Remember the order: Seatbelts, Windows, Children, Out."
+      ]
+    },
+    {
+      "id": "roadside_flooded_roads",
+      "category": "Driving Emergencies",
+      "title": "Flooded Roads",
+      "summary": "Recognize how little water it takes to sweep a vehicle away, and what to do if water rises around your car.",
+      "difficulty": "basic",
+      "tags": [
+        "flooded road",
+        "turn around don't drown",
+        "flood",
+        "water crossing",
+        "flash flood",
+        "driving"
+      ],
+      "steps": [
+        "If you see water over the road, turn around and find another route. You can't tell how deep it is or whether the road beneath has washed out.",
+        "At night, slow down near low spots, dips and bridges where water collects.",
+        "If your car stalls in rising water and the water isn't moving fast, get out and move to higher ground.",
+        "If water is moving fast around the car, stay inside, unbuckle, and get onto the roof if the car starts to float or fill.",
+        "If the car is swept into deep water, follow Escaping a Sinking Car: seatbelts, windows, children, out.",
+        "After driving through any water, test your brakes gently at low speed to dry them."
+      ],
+      "do_not": [
+        "Do not drive through flooded roads or around barricades.",
+        "Do not trust a high-clearance truck or SUV; about 60 cm (2 ft) of moving water can carry away most vehicles, including SUVs and pickups.",
+        "Do not walk through moving water; 15 cm (6 in) can knock an adult down."
+      ],
+      "watch_for": [
+        "About 30 cm (1 ft) of water, which can float many cars.",
+        "Debris, downed power lines and open manholes hidden under the water.",
+        "Flash floods from storms far upstream, even under clear sky."
+      ],
+      "notes": [
+        "Turn Around, Don't Drown. More than half of US flood deaths involve vehicles.",
+        "The Flash Flood scenario card covers what to do in the first minutes and hours."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "roadside_brake_failure_stuck_accelerator",
+      "category": "Driving Emergencies",
+      "title": "Brake Failure and a Stuck Accelerator",
+      "summary": "Bring a car under control when the brakes fail or the throttle sticks.",
+      "difficulty": "intermediate",
+      "tags": [
+        "brake failure",
+        "no brakes",
+        "stuck accelerator",
+        "throttle stuck",
+        "parking brake",
+        "runaway car"
+      ],
+      "steps": [
+        "Stuck accelerator: brake firmly and steadily with both feet if needed, and shift into neutral. The engine will rev but the car will slow.",
+        "Steer to a safe place off the road, stop, and only then turn off the engine.",
+        "Brake failure: take your foot off the gas, turn on the hazards and sound the horn to warn others.",
+        "Pump the brake pedal hard and fast a few times; it can sometimes rebuild pressure.",
+        "Shift into lower gears one at a time to use engine braking.",
+        "Apply the parking brake gradually. On cars with an electronic parking brake, hold the switch up; most will brake the car to a stop.",
+        "Steer toward a safe area: an uphill road, a runaway truck ramp, a field or brush. As a last resort, scrape along a guardrail to slow down."
+      ],
+      "do_not": [
+        "Do not turn off the engine while moving fast; you lose power steering and brake assist, and the steering may lock.",
+        "Do not yank the parking brake on hard at speed; the rear wheels can lock and spin the car.",
+        "Do not reach down for a jammed floor mat while driving; stop first."
+      ],
+      "watch_for": [
+        "A soft or sinking brake pedal, a grinding noise or a brake warning light; get the car checked before it fails.",
+        "A floor mat sliding under the pedals; secure it with its clips."
+      ],
+      "notes": [
+        "In a push-button-start car, holding the start button for about three seconds usually shuts off the engine while moving. Use this only once you're slow and steering safely.",
+        "On long descents, use a lower gear so the brakes don't overheat and fade."
+      ]
+    },
+    {
+      "id": "roadside_skids_hydroplaning",
+      "category": "Driving Emergencies",
+      "title": "Skids, Hydroplaning and Driving on Ice",
+      "summary": "Recover from a skid or hydroplane, brake correctly with or without ABS, and drive to avoid losing grip.",
+      "difficulty": "intermediate",
+      "tags": [
+        "skid",
+        "hydroplaning",
+        "aquaplaning",
+        "ice",
+        "black ice",
+        "ABS",
+        "winter driving",
+        "traction"
+      ],
+      "steps": [
+        "Hydroplaning: ease off the gas gently, hold the steering wheel straight and wait for the tires to regain grip. Don't brake hard.",
+        "Skid: look and steer where you want the car to go. As it recovers, straighten the wheel smoothly to avoid swinging the other way.",
+        "With ABS (most modern cars), press the brake firmly and hold it. Pulsing and grinding under your foot are normal; don't pump.",
+        "Without ABS, brake firmly just short of locking the wheels; if they lock, ease off slightly and reapply.",
+        "On ice and snow, drive slowly, accelerate and brake gently, and leave 8 to 10 seconds of following distance.",
+        "Slow down before bridges, overpasses and shaded areas, which freeze first."
+      ],
+      "do_not": [
+        "Do not slam the brakes or jerk the wheel when you lose grip.",
+        "Do not use cruise control on wet, icy or snowy roads.",
+        "Do not trust all-wheel drive to help you stop; it only helps you get going."
+      ],
+      "watch_for": [
+        "Black ice: road that looks wet when it's below freezing, especially in early morning.",
+        "Worn tires, which hydroplane at much lower speeds. Check tread depth regularly.",
+        "Standing water in ruts and low spots during heavy rain."
+      ],
+      "notes": [
+        "Practice skid recovery in an empty, snowy parking lot at low speed.",
+        "Winter or all-weather tires give far better grip on snow and ice than all-season tires."
+      ]
+    },
+    {
+      "id": "roadside_tire_blowout",
+      "category": "Driving Emergencies",
+      "title": "Tire Blowout at Speed",
+      "summary": "Keep a car straight and under control when a tire bursts at highway speed.",
+      "difficulty": "intermediate",
+      "tags": [
+        "blowout",
+        "tire blowout",
+        "flat tire",
+        "highway",
+        "tire burst",
+        "loss of control"
+      ],
+      "steps": [
+        "Grip the steering wheel firmly with both hands; the car will pull toward the blown tire.",
+        "Keep the car going straight. A brief, gentle press on the gas can help stabilize it.",
+        "Ease off the gas slowly and let the car slow down on its own.",
+        "Once the car is under control and has slowed well down, brake gently.",
+        "Signal and steer smoothly onto the shoulder or a safe area well away from traffic.",
+        "Turn on the hazards and follow Pulling Over Safely before changing the tire."
+      ],
+      "do_not": [
+        "Do not slam on the brakes.",
+        "Do not jerk the steering wheel to correct the pull.",
+        "Do not stop in a traffic lane if you can reach a safer spot, even on the rim."
+      ],
+      "watch_for": [
+        "Vibration, a thumping sound or the car pulling, which may mean a tire is failing.",
+        "Underinflated, overloaded or old tires, which are the most likely to blow out."
+      ],
+      "notes": [
+        "Check tire pressure monthly and before long trips; see Checking and Setting Tire Pressure.",
+        "Driving a short way slowly on a flat ruins the tire, but staying safe matters more."
+      ]
+    },
+    {
+      "id": "roadside_animal_collision",
+      "category": "Driving Emergencies",
+      "title": "Deer and Other Animals on the Road",
+      "summary": "Reduce the chance of hitting a large animal, and what to do if a collision can't be avoided.",
+      "difficulty": "basic",
+      "tags": [
+        "deer",
+        "moose",
+        "elk",
+        "animal collision",
+        "wildlife",
+        "night driving",
+        "crash"
+      ],
+      "steps": [
+        "Slow down at dawn and dusk, especially in fall, and in areas with wildlife crossing signs.",
+        "Use high beams when there's no oncoming traffic, and scan the road edges for eyes reflecting the light.",
+        "If you see one deer, expect more to follow.",
+        "If an animal is in the road, brake firmly and stay in your lane. Sound the horn with one long blast.",
+        "If a collision can't be avoided, keep braking and hold the wheel straight.",
+        "Afterward, pull off the road, turn on the hazards and check everyone for injuries.",
+        "Report the collision to police or wildlife authorities, especially if the animal is blocking the road."
+      ],
+      "do_not": [
+        "Do not swerve sharply; hitting oncoming traffic, a tree or rolling over is usually far worse than hitting a deer.",
+        "Do not approach an injured animal; it can kick or gore.",
+        "Do not rely on deer whistles."
+      ],
+      "watch_for": [
+        "Moose and elk, whose tall legs put the body at windshield height. Slow down even more where they live.",
+        "Leaking fluids, broken lights or a damaged radiator before driving on."
+      ],
+      "notes": [
+        "Note the location in Notepad or with a photo for insurance and the police report.",
+        "Animals are most active around sunrise and sunset."
+      ],
+      "related_screen": "Notepad",
+      "related_screen_label": "Open Notepad"
+    },
+    {
+      "id": "roadside_electric_vehicles",
+      "category": "Battery & Electrical",
+      "title": "Electric Vehicle Emergencies",
+      "summary": "Handle low charge in the cold, a dead 12-volt battery, towing and battery fires in an electric car.",
+      "difficulty": "intermediate",
+      "tags": [
+        "electric vehicle",
+        "EV",
+        "low battery",
+        "range",
+        "EV fire",
+        "cold weather",
+        "12 volt battery",
+        "towing"
+      ],
+      "steps": [
+        "In cold weather expect noticeably less range. Precondition the cabin and battery while plugged in, and use seat and steering wheel heaters instead of cabin heat when you can.",
+        "When charge runs low, slow down, turn off climate control except seat heaters, and head for the nearest charger rather than the planned one.",
+        "If an EV won't power on, the small 12-volt battery may be dead. Jump it like a regular car battery, following the owner's manual for where to connect.",
+        "Have an EV towed on a flatbed, or as the manual allows. Towing with the drive wheels on the ground can damage the motors.",
+        "If stranded in winter, an EV can heat the cabin without exhaust fumes. Set the temperature lower and use seat heaters to stretch the battery.",
+        "If the battery is smoking, hissing, popping or on fire, get everyone out and at least 30 m (100 ft) away, upwind, and call emergency services. Tell them it's an electric vehicle."
+      ],
+      "do_not": [
+        "Do not try to put out an EV battery fire yourself; it needs huge amounts of water and can reignite.",
+        "Do not use an EV to jump-start another car unless the manual says it's allowed.",
+        "Do not park an EV that has been in floodwater, especially saltwater, in or near a garage; it can catch fire days later."
+      ],
+      "watch_for": [
+        "Reduced-power or turtle mode at very low charge; get off the highway while you still can.",
+        "Smoke or a sweet chemical smell from under the car after a crash."
+      ],
+      "notes": [
+        "Hybrid and electric cars carry high-voltage cables, usually orange. Never cut or touch them.",
+        "Keep at least 20 percent charge in winter or in remote areas."
+      ]
     }
   ]
 }

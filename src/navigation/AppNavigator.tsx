@@ -70,6 +70,7 @@ import RadioFrequencyDetailScreen from '../screens/RadioFrequencies/RadioFrequen
 import BookmarkScreen from '../screens/Reference/BookmarkScreen';
 import EmergencyScreen from '../screens/Reference/EmergencyScreen';
 import HealthScreen from '../screens/Reference/HealthScreen';
+import HomePrepScreen from '../screens/Reference/HomePrepScreen';
 import RoadsideScreen from '../screens/Reference/RoadsideScreen';
 import CategoryScreen from '../screens/Reference/Shared/CategoryScreen';
 import EntryScreen from '../screens/Reference/Shared/EntryScreen';
@@ -324,6 +325,7 @@ function NavigatorContent(): JSX.Element {
           <Stack.Screen name="ToolsAndKnots" component={ToolsAndKnotsScreen} />
           <Stack.Screen name="Emergency" component={EmergencyScreen} />
           <Stack.Screen name="Roadside" component={RoadsideScreen} />
+          <Stack.Screen name="HomePrep" component={HomePrepScreen} />
           {/* Scenario Cards */}
           <Stack.Screen name="ScenarioCards" component={ScenarioCardsScreen} />
           <Stack.Screen
