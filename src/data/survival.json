@@ -608,7 +608,7 @@
         "Stand with the first mark on your left and the second on your right: you are facing roughly north.",
         "Sun position: the sun rises in the general east and sets in the general west. Outside the tropics, it's due south at local midday in the Northern Hemisphere and due north in the Southern. In the tropics it can be overhead or on either side, so use the shadow stick there.",
         "North Star (Northern Hemisphere): find the Big Dipper and follow the two stars at the end of its bowl upward about five times their spacing to Polaris. Polaris sits within about 1 degree of true north.",
-        "Southern Cross (Southern Hemisphere): extend the long axis of the cross about four and a half times its length toward the horizon; the point below is roughly due south.",
+        "Southern Cross (Southern Hemisphere): follow the long axis from Gacrux (the head) through Acrux (the foot), then extend it about four and a half cross-lengths beyond Acrux to estimate the south celestial pole. Drop a vertical line from that point to the horizon to find roughly due south.",
         "Once you have a direction, mark it on the ground or pick a distant landmark, so you keep it after the sun moves or clouds roll in."
       ],
       "do_not": [
