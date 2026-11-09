@@ -7,6 +7,7 @@
 import { useFocusEffect } from '@react-navigation/native';
 import React, {
   useCallback,
+  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -25,6 +26,7 @@ import {
   View,
 } from 'react-native';
 import SegmentedControl from '../../../../components/SegmentedControl';
+import { TutorialSpotlightContext } from '../../../../components/TutorialSpotlightContext';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useSettingsStore } from '../../../../stores/StoreContext';
 import { Track } from '../../../../stores/TrackStore';
@@ -138,6 +140,7 @@ export default function LibrarySheet({
   onDownloadAroundWaypoint,
 }: LibrarySheetProps) {
   const COLORS = useTheme();
+  const { activeTourId } = useContext(TutorialSpotlightContext);
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const settingsStore = useSettingsStore();
   const measurementSystem = settingsStore.measurementSystem;
@@ -212,12 +215,15 @@ export default function LibrarySheet({
       const subscription = BackHandler.addEventListener(
         'hardwareBackPress',
         () => {
+          if (activeTourId) {
+            return false;
+          }
           onClose();
           return true;
         },
       );
       return () => subscription.remove();
-    }, [isOpen, onClose]),
+    }, [activeTourId, isOpen, onClose]),
   );
 
   // Screen readers can't drag the handle; VoiceOver's escape gesture (and
