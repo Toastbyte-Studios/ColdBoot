@@ -10,9 +10,12 @@ const categoryMap: Record<string, string> = {
   SearchAndRescue: 'Search and Rescue',
   Evacuation: 'Evacuation',
   ShelterAndSurvivalPriorities: 'Shelter & Survival Priorities',
+  WaterAndIce: 'Water & Ice',
+  Disasters: 'Disasters',
 };
 
-const emergencyCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const emergencyCategories: CategoryType[] = [
   {
     title: 'Immediate Action',
     icon: 'alert-circle-outline',
@@ -53,6 +56,20 @@ const emergencyCategories: CategoryType[] = [
     icon: 'home-outline',
     id: 'shelter_priorities_survive_the_night',
     category: categoryMap.ShelterAndSurvivalPriorities,
+    data: data.entries,
+  },
+  {
+    title: 'Water & Ice',
+    icon: 'boat-outline',
+    id: 'emergency_water_ice',
+    category: categoryMap.WaterAndIce,
+    data: data.entries,
+  },
+  {
+    title: 'Disasters',
+    icon: 'pulse-outline',
+    id: 'emergency_disasters',
+    category: categoryMap.Disasters,
     data: data.entries,
   },
 ];

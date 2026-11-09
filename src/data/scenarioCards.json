@@ -349,7 +349,7 @@
       "first_5_minutes": [
         "Move to higher ground immediately",
         "Do NOT attempt to cross flowing water on foot or in vehicle",
-        "If trapped in vehicle in rising water, exit immediately and move to roof",
+        "If trapped in a vehicle in fast-moving water, stay inside; if water rises inside, get onto the roof",
         "Stay away from downed power lines"
       ],
       "first_hour": [
@@ -374,7 +374,7 @@
         "Contamination and waterborne illness after flood"
       ],
       "notes": [
-        "Just 12 inches of water can carry away most vehicles",
+        "12 inches of moving water can float many cars; 2 feet can carry away most vehicles",
         "Never drive through flooded roads - turn around, don't drown",
         "Floodwater may be contaminated with sewage",
         "Most flood deaths occur in vehicles",

@@ -1,10 +1,10 @@
 {
   "metadata": {
     "name": "Tools and Knots Reference",
-    "version": "1.2.0",
-    "last_updated": "2026-03-24",
+    "version": "1.3.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information is general guidance on outdoor tools and knots and is not a substitute for professional training or supervision. Always use appropriate caution and judgment when working with sharp tools, heavy tools, ropes under tension, and improvised bushcraft tools.",
-    "categories": ["Tools (Home)", "Tools (Wilderness)", "Knots"],
+    "categories": ["Tools (Home)", "Tools (Wilderness)", "Knots", "Lashings"],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
   "entries": [
@@ -118,8 +118,8 @@
         "Inspect the hatchet: ensure the head is firmly attached to the handle and the edge is free of large chips.",
         "Choose a stable chopping surface such as a chopping block or large log; avoid bare ground and rocks.",
         "Place the wood to be split upright on the chopping surface, away from your feet.",
-        "Stand with feet shoulder-width apart, slightly offset to the side of the swing so a miss will not hit your legs.",
-        "Grip the hatchet with both hands for most cuts, guiding with the top hand and powering with the rear hand.",
+        "With a hatchet, kneel on both knees in front of the block with the wood within arm's reach, so a miss lands in the block and not your legs. With a longer axe, stand with feet apart and the block in front, not between your feet.",
+        "Hold a hatchet in one hand near the end of the handle; use two hands only on a full-length axe.",
         "Make controlled, moderate swings rather than full-power swings, especially with small pieces.",
         "For small or awkward pieces, use a \"batoning\" method: place the hatchet edge on the wood and strike the back of the head with another piece of wood to drive it through.",
         "Stop and re-position the work piece if it becomes unstable or begins to fall.",
@@ -277,7 +277,7 @@
       "tags": ["bushcraft", "tripod", "cooking", "fire", "hanger"],
       "steps": [
         "Cut three sturdy poles of similar length (about your height) from green wood for the tripod legs.",
-        "Lay the three poles side by side and tie them together about 20–30 cm (8–12 inches) from one end using a clove hitch followed by several tight wraps and fraps, forming a lashing.",
+        "Lay the three poles side by side and tie a tripod lashing about 20–30 cm (8–12 inches) from one end: a clove hitch, then fairly loose figure-eight wraps and light fraps (see Tripod Lashing).",
         "Stand the poles upright and spread the bottoms out evenly to form a stable tripod over your fire area.",
         "Select a shorter green branch with a natural fork or carve a notch near one end to hang a pot or kettle.",
         "Carve a series of small notches along the hanger so you can adjust the pot height by moving where it rests on the tripod lashing or crossbar.",
@@ -488,7 +488,7 @@
       "difficulty": "intermediate",
       "tags": ["knot", "bowline", "loop", "fixed", "rope"],
       "steps": [
-        "Form a small loop in the standing part of the rope, with the standing part crossing over the top of the loop.",
+        "Form a small loop in the standing part, with the working-end side of the rope crossing over the top of the standing part (an overhand loop).",
         "Pass the working end up through this loop from below.",
         "Wrap the working end around the back of the standing part of the rope.",
         "Bring the working end back down and pass it through the original loop, this time from above.",
@@ -512,15 +512,15 @@
       "id": "knots_round_turn_two_half_hitches",
       "category": "Knots",
       "title": "Round Turn and Two Half Hitches",
-      "summary": "Secure a rope to a post, tree, or ring with a stable, easily adjustable knot.",
+      "summary": "Secure a rope to a post, tree or ring with a knot that holds under load and unties easily.",
       "difficulty": "basic",
       "tags": ["knot", "hitch", "post", "anchor", "rope"],
       "steps": [
         "Pass the rope around the post or object twice, creating a full round turn plus another wrap if desired for friction.",
-        "Cross the working end over the standing part and wrap it around the post, forming a half hitch, then tighten.",
-        "Wrap the working end around the post again in the same direction, forming a second half hitch stacked next to the first.",
+        "Bring the working end over the standing part, around it and back through, to form a half hitch around the standing part.",
+        "Make a second half hitch around the standing part the same way, next to the first.",
         "Pull on the standing part to snug the round turn and both half hitches against the post.",
-        "Adjust the tension by sliding the knot along the post if necessary before fully tightening."
+        "Slide the half hitches up against the round turn and pull tight."
       ],
       "do_not": [
         "Do not use only one half hitch; it is more likely to slip.",
@@ -575,7 +575,7 @@
         "Wrap the rope around a stake or anchor and bring the working end back toward the standing part.",
         "Wrap the working end around the standing part inside the loop, making one full turn and pulling it snug.",
         "Make a second wrap in the same direction around the standing part, again inside the loop, close to the first wrap.",
-        "Then wrap the working end once around the standing part on the outside of the loop, closer to the stake, and tuck it through to form a half hitch.",
+        "Then bring the working end across the two wraps and tie a half hitch around the standing part outside the loop, on the side away from the stake.",
         "Dress the knot so both inner wraps and the outer half hitch are neat and tight.",
         "Slide the knot along the standing part to tighten or loosen the line; tension should hold the knot in place."
       ],
@@ -656,6 +656,368 @@
         "Use smaller-diameter cord (often about two-thirds the diameter of the main rope) for better grip."
       ],
       "images": ["knots_prusik_friction_hitch"]
+    },
+    {
+      "id": "knots_figure_eight_family",
+      "category": "Knots",
+      "title": "Figure-Eight Stopper, Loop and Follow-Through",
+      "summary": "Tie the figure-eight as a bulky stopper, a fixed loop on a bight, or a loop threaded around an anchor.",
+      "difficulty": "intermediate",
+      "tags": [
+        "knot",
+        "figure eight",
+        "figure 8",
+        "stopper",
+        "loop",
+        "follow through",
+        "rethreaded",
+        "anchor"
+      ],
+      "steps": [
+        "Stopper: make a loop near the end, pass the end around behind the standing part, then back down through the loop from the front. Pull tight; it forms a figure 8.",
+        "Loop on a bight: double the rope to form a bight, then tie a figure-eight stopper using the doubled rope. The bight becomes a fixed loop.",
+        "Follow-through: tie a loose figure-eight stopper in the single rope, leaving a long tail.",
+        "Pass the tail around the tree, post or ring you're tying to.",
+        "Retrace the original figure eight with the tail, following it exactly in reverse so every strand runs parallel to its partner.",
+        "Dress the knot so the paired strands lie neatly side by side without crossing, then pull each of the four strands tight.",
+        "Leave a tail at least ten times the rope's diameter."
+      ],
+      "do_not": [
+        "Do not leave a figure eight loosely dressed; crossed strands weaken it and make it harder to check.",
+        "Do not trust a climbing or rescue tie-in you've learned only from text. Have a qualified instructor check your technique."
+      ],
+      "watch_for": [
+        "Strands that leave the parallel path while retracing; if it looks wrong, untie and start again.",
+        "A knot jammed tight after a heavy load; bend it back and forth to loosen it."
+      ],
+      "notes": [
+        "The figure eight is easy to inspect at a glance, which is why climbers use it.",
+        "As a stopper it's bulkier than an overhand and easier to untie."
+      ]
+    },
+    {
+      "id": "knots_timber_hitch",
+      "category": "Knots",
+      "title": "Timber Hitch",
+      "summary": "Grip a log, pole or bundle quickly for dragging, lifting or starting a lashing, and release it easily.",
+      "difficulty": "basic",
+      "tags": [
+        "knot",
+        "timber hitch",
+        "log",
+        "dragging",
+        "lashing",
+        "hitch",
+        "firewood"
+      ],
+      "steps": [
+        "Pass the rope's end around the log or pole.",
+        "Bring the end around the standing part, then back toward the log.",
+        "Wrap the end around its own part, the loop around the log, at least three times, twisting it with the lay.",
+        "Pull the standing part so the loop tightens against the log; the twists lock under tension.",
+        "For dragging a long log, add a half hitch around the log near the front end so it tracks straight."
+      ],
+      "do_not": [
+        "Do not use it where the load comes on and off repeatedly; it can loosen when slack.",
+        "Do not use it for lifting people or anything where failure would hurt someone."
+      ],
+      "watch_for": [
+        "Too few tucks, which let the hitch slip on smooth or wet bark.",
+        "The rope sliding along a tapered log toward the narrow end."
+      ],
+      "notes": [
+        "It's a common start for diagonal lashings and falls apart as soon as the tension comes off, making it quick to untie."
+      ]
+    },
+    {
+      "id": "knots_double_fishermans",
+      "category": "Knots",
+      "title": "Double Fisherman's Bend",
+      "summary": "Join two ropes or cords securely, or tie a cord into a loop for a prusik or sling.",
+      "difficulty": "intermediate",
+      "tags": [
+        "knot",
+        "double fisherman's",
+        "grapevine",
+        "bend",
+        "joining ropes",
+        "prusik loop",
+        "sling"
+      ],
+      "steps": [
+        "Lay the two rope ends side by side, pointing in opposite directions, with plenty of overlap.",
+        "With the first end, wrap twice around both ropes, working back toward its own standing part.",
+        "Pass that end back through the inside of the two wraps, and pull it snug. You've tied a double overhand around the other rope.",
+        "Repeat with the second end around the first rope, wrapping in the opposite direction.",
+        "Pull the two standing parts apart so the knots slide together and seat against each other.",
+        "Check it: on one side you should see an X, and on the other side four parallel strands.",
+        "Leave tails at least ten times the rope's diameter."
+      ],
+      "do_not": [
+        "Do not expect to untie it easily after loading; it's meant to stay tied.",
+        "Do not join ropes of very different thickness with it."
+      ],
+      "watch_for": [
+        "Knots that don't meet neatly, which means a wrap went the wrong way.",
+        "Short tails that could work loose."
+      ],
+      "notes": [
+        "To make a prusik loop, join the two ends of a single length of accessory cord with this knot.",
+        "A single fisherman's knot uses one wrap per side and is less secure."
+      ]
+    },
+    {
+      "id": "knots_alpine_butterfly",
+      "category": "Knots",
+      "title": "Alpine Butterfly Loop",
+      "summary": "Tie a secure, fixed loop in the middle of a rope that can take a load in any direction.",
+      "difficulty": "intermediate",
+      "tags": [
+        "knot",
+        "alpine butterfly",
+        "butterfly loop",
+        "midline loop",
+        "fixed loop",
+        "rope"
+      ],
+      "steps": [
+        "Take a bight in the middle of the rope.",
+        "Twist the bight half a turn (180 degrees) so the rope crosses itself, forming a small loop above the crossing.",
+        "Twist the same loop another half turn (180 degrees) in the same direction, so there are two crossings stacked one above the other.",
+        "Fold the top of the loop down in front of the twists.",
+        "Push it up through the lower opening, the one just above where the two standing parts meet.",
+        "Pull the new loop and both ends of the rope to tighten the knot.",
+        "Test it: pull the two ends of the rope apart. The loop should keep its size and the knot shouldn't slip."
+      ],
+      "do_not": [
+        "Do not use it for climbing or rescue unless you've been taught and checked by a qualified instructor.",
+        "Do not leave it loosely dressed."
+      ],
+      "watch_for": [
+        "A loop that changes size when you pull the ends apart, which means the knot is tied incorrectly.",
+        "The twists unwinding as you fold the loop down; hold them with your other hand."
+      ],
+      "notes": [
+        "Tie one around a worn or damaged section of rope to isolate it.",
+        "It's easy to untie even after a heavy load, and useful for clipping into or for a trucker's hitch loop."
+      ]
+    },
+    {
+      "id": "knots_constrictor",
+      "category": "Knots",
+      "title": "Constrictor Knot",
+      "summary": "Clamp a cord tightly around a bag neck, bundle or rope end so it won't slip.",
+      "difficulty": "intermediate",
+      "tags": [
+        "knot",
+        "constrictor",
+        "binding",
+        "whipping",
+        "bag closure",
+        "hitch",
+        "clamp"
+      ],
+      "steps": [
+        "Pass the end of the cord around the object.",
+        "Bring it across the front, diagonally over the standing part, forming an X.",
+        "Pass the end around the object a second time.",
+        "Tuck the end under the X, so it passes beneath both the crossing and the first wrap and comes out next to the standing part.",
+        "Pull both ends hard; the crossing clamps down on the tucked end."
+      ],
+      "do_not": [
+        "Do not use it on anything you'll need to untie quickly; it often has to be cut free.",
+        "Do not tie it over a smooth, rigid object like a metal pipe and expect it to grip as well as on a soft bundle."
+      ],
+      "watch_for": [
+        "An end that passes under the crossing but not the first wrap; that's a clove hitch, which slips."
+      ],
+      "notes": [
+        "To make it easier to undo, tuck a bight instead of the end (slipped constrictor).",
+        "It makes a quick temporary whipping to keep a cut rope end from fraying."
+      ]
+    },
+    {
+      "id": "lashing_square",
+      "category": "Lashings",
+      "title": "Square Lashing",
+      "summary": "Bind two poles together at right angles for shelters, racks, frames and ladders.",
+      "difficulty": "intermediate",
+      "tags": [
+        "lashing",
+        "square lashing",
+        "poles",
+        "frame",
+        "shelter",
+        "pioneering",
+        "camp craft"
+      ],
+      "steps": [
+        "Lay the crossbar over the upright at a right angle.",
+        "Tie a clove hitch around the upright just below the crossbar, and twist the short end around the long rope to tuck it away.",
+        "Wrap the rope up over the crossbar, behind the upright, down over the crossbar on the other side, and back behind the upright below the crossbar.",
+        "Make three or four of these wraps, keeping each one tight and lying neatly beside the last.",
+        "Make two or three frapping turns: wrap between the two poles, around the wraps you just made, pulling hard to cinch them tight.",
+        "Finish with a clove hitch around the crossbar, and tuck in the end."
+      ],
+      "do_not": [
+        "Do not let the wraps cross over each other; they loosen and lose grip.",
+        "Do not trust a lashed frame with your weight until you've tested it carefully."
+      ],
+      "watch_for": [
+        "Poles that are rotten, cracked or too thin.",
+        "Natural cordage that stretches or loosens as it dries; retighten it."
+      ],
+      "notes": [
+        "Square lashings are for poles that cross and touch. For poles that spring apart at the cross, use a diagonal lashing."
+      ]
+    },
+    {
+      "id": "lashing_diagonal",
+      "category": "Lashings",
+      "title": "Diagonal Lashing",
+      "summary": "Pull together and bind two poles that cross at an angle and tend to spring apart, such as cross-braces.",
+      "difficulty": "intermediate",
+      "tags": [
+        "lashing",
+        "diagonal lashing",
+        "cross brace",
+        "poles",
+        "frame",
+        "pioneering"
+      ],
+      "steps": [
+        "Tie a timber hitch diagonally around both poles where they cross, and pull it tight to draw them together.",
+        "Make three or four wraps along the same diagonal as the timber hitch, keeping them tight and side by side.",
+        "Make three or four more wraps along the other diagonal, crossing the first set.",
+        "Make two or three frapping turns between the poles, around the wraps, pulling hard.",
+        "Finish with a clove hitch on one of the poles."
+      ],
+      "do_not": [
+        "Do not skip the frapping turns; they're what pull the lashing tight.",
+        "Do not use thin, slippery cord that cuts into soft wood."
+      ],
+      "watch_for": [
+        "Poles that still move against each other after lashing; add frapping turns or start again."
+      ],
+      "notes": [
+        "Diagonal lashings stiffen frames such as shelter walls, rafts and drying racks against twisting."
+      ]
+    },
+    {
+      "id": "lashing_tripod",
+      "category": "Lashings",
+      "title": "Tripod Lashing",
+      "summary": "Lash three poles into a free-standing tripod for a pot hanger, shelter frame, cache or water filter.",
+      "difficulty": "intermediate",
+      "tags": [
+        "lashing",
+        "tripod",
+        "figure eight lashing",
+        "pot hanger",
+        "shelter frame",
+        "camp craft"
+      ],
+      "steps": [
+        "Lay three poles side by side with their butt ends even.",
+        "Tie a clove hitch around one outside pole.",
+        "Weave the rope over and under the poles in a figure-eight pattern, six to eight times. Keep the wraps fairly loose.",
+        "Make two frapping turns between each pair of poles, around the wraps, without pulling them as tight as you would on a square lashing.",
+        "Finish with a clove hitch on the other outside pole.",
+        "Stand the tripod up by spreading the legs, crossing the outer poles under the middle one."
+      ],
+      "do_not": [
+        "Do not lash it so tightly that the legs can't spread; it may crack the poles or the lashing.",
+        "Do not hang heavy loads before the legs are firmly set."
+      ],
+      "watch_for": [
+        "A leg sliding on smooth rock or ice; set the feet in shallow holes or against rocks.",
+        "Rope near a fire; keep the lashing well above the flames."
+      ],
+      "notes": [
+        "See Pot Hanger and Cooking Tripod in Tools (Wilderness) for using it over a fire."
+      ]
+    },
+    {
+      "id": "tools_sharpening_knife_axe",
+      "category": "Tools (Home)",
+      "title": "Sharpening a Knife or Axe",
+      "summary": "Bring back a working edge on a knife or axe with a stone, file or strop.",
+      "difficulty": "intermediate",
+      "tags": [
+        "sharpening",
+        "whetstone",
+        "knife",
+        "axe",
+        "hatchet",
+        "file",
+        "strop",
+        "honing",
+        "edge"
+      ],
+      "steps": [
+        "Prepare the stone: soak a water stone, or add a little water or oil if the stone calls for it. Set it on a non-slip surface.",
+        "Hold the knife at a steady angle, usually about 15 to 20 degrees per side. Matching the existing bevel is more important than the exact number.",
+        "Push the edge across the stone as if slicing a thin layer off it, working from heel to tip, with light, even pressure.",
+        "Keep going on one side until you feel a slight burr, a rough lip, along the whole length of the opposite side.",
+        "Switch sides and repeat until the burr flips over.",
+        "Move to a finer stone and use lighter, alternating strokes to remove the burr.",
+        "Finish by stropping: drag the edge backward (spine first) across leather, denim or cardboard a few times per side.",
+        "Axe: clamp or brace the head, wear gloves, and use a mill file with a guard, pushing it into the edge in strokes away from your body. Then smooth the edge with a round puck stone in small circles."
+      ],
+      "do_not": [
+        "Do not sharpen toward your body or with your fingers in front of the edge.",
+        "Do not use a high-speed grinder on a good blade; it can overheat the steel and ruin its hardness.",
+        "Do not change angles from stroke to stroke; a wobbling angle rounds the edge."
+      ],
+      "watch_for": [
+        "Chips or rolled sections, which need more work on a coarse stone first.",
+        "A dull edge that reflects light. A sharp edge shows no bright line when you look straight down at it."
+      ],
+      "notes": [
+        "Test the edge by slicing paper; a sharp edge cuts cleanly without tearing.",
+        "Touch up an edge often on a fine stone or strop instead of waiting until it's very dull.",
+        "A pocket stone, a small file and a strip of leather make a compact field sharpening kit."
+      ]
+    },
+    {
+      "id": "tools_camp_stove_safety",
+      "category": "Tools (Home)",
+      "title": "Camp Stove and Fuel Safety",
+      "summary": "Use canister, liquid-fuel and alcohol stoves safely, avoid carbon monoxide, and keep them working in the cold.",
+      "difficulty": "basic",
+      "tags": [
+        "camp stove",
+        "backpacking stove",
+        "fuel",
+        "canister",
+        "white gas",
+        "alcohol stove",
+        "carbon monoxide",
+        "cold weather"
+      ],
+      "steps": [
+        "Set the stove on firm, level ground away from tents, dry grass and overhanging branches, with a pot that sits steadily on it.",
+        "Check fittings and O-rings before lighting. Test for leaks with soapy water; bubbles mean a leak.",
+        "Light the stove before putting the pot on, keeping your face and hands away from the burner.",
+        "Liquid-fuel stoves: prime with only a small amount of fuel, and expect a brief flare. Keep the fuel bottle away from the stove while it burns.",
+        "Alcohol stoves: the flame can be invisible in daylight. Let the stove cool completely before refilling it.",
+        "In the cold, keep butane-blend canisters warm in your jacket or sleeping bag before use; they lose pressure below about freezing.",
+        "Let the stove cool before changing canisters or packing it, and store fuel upright, away from food."
+      ],
+      "do_not": [
+        "Do not cook inside a closed tent or snow shelter; carbon monoxide and fire can kill.",
+        "Do not wrap a windscreen fully around a canister stove; the canister can overheat and burst.",
+        "Do not refill disposable canisters or mix fuel types.",
+        "Do not leave a lit stove unattended."
+      ],
+      "watch_for": [
+        "Headache, dizziness or drowsiness while cooking in a vestibule. Get into fresh air at once.",
+        "Fire restrictions; stoves with a shutoff valve are often allowed when campfires aren't."
+      ],
+      "notes": [
+        "Liquid-fuel stoves keep working in deep cold where canister stoves struggle.",
+        "Pack a backup ignition source; piezo igniters often fail in cold, wet weather."
+      ]
     }
   ]
 }

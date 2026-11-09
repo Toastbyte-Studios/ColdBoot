@@ -10,7 +10,8 @@ const categoryMap: Record<string, string> = {
   Preventative: 'Preventive',
 };
 
-const healthCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const healthCategories: CategoryType[] = [
   {
     title: 'Emergency',
     icon: 'alert-outline',

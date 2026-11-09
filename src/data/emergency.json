@@ -1,8 +1,8 @@
 {
   "metadata": {
     "name": "Wilderness Emergency Procedures Reference",
-    "version": "1.0.0",
-    "last_updated": "2025-12-18",
+    "version": "1.1.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information is general wilderness emergency guidance and is not a substitute for professional training or real-time medical or rescue advice. Conditions vary widely; use judgment, prioritize safety, and seek professional help as soon as it becomes available. If you can contact emergency services, do so.",
     "categories": [
       "Immediate Action",
@@ -10,7 +10,9 @@
       "Signaling",
       "Search and Rescue",
       "Evacuation",
-      "Shelter & Survival Priorities"
+      "Shelter & Survival Priorities",
+      "Water & Ice",
+      "Disasters"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -135,7 +137,7 @@
         "Face the aircraft/search area and hold the mirror near your eye so you can aim precisely.",
         "Make a 'sighting' reference: align the mirror so the reflected bright spot (glint) hits the target area. If you have a mirror with a sighting hole, look through it.",
         "Sweep slowly across the aircraft’s path and horizon to create repeated flashes; flashes are easier to notice than a constant glint.",
-        "If the aircraft circles: keep flashing in bursts and maintain position in an open area where you are visible.",
+        "If the aircraft circles or rocks its wings, it has seen you. Stop aiming at the cockpit so you don't dazzle the pilot, and flash only briefly if they seem to lose sight of you. Stay in the open where you are visible.",
         "If no sun: switch to other signals (smoke, ground symbols, whistle)."
       ],
       "do_not": [
@@ -239,8 +241,8 @@
       "difficulty": "basic",
       "tags": ["911", "satellite", "radio", "message", "coordinates"],
       "steps": [
+        "Give location first: GPS coordinates if possible, plus descriptive landmarks (trail name, nearest junction, elevation, mile marker).",
         "State the emergency clearly: injury/illness/exposure/lost/vehicle issue.",
-        "Give location: GPS coordinates if possible, plus descriptive landmarks (trail name, nearest junction, elevation, mile marker).",
         "Give party info: number of people, ages, condition of each, supplies available, shelter status.",
         "Describe hazards: weather, terrain, water crossings, wildlife risk, avalanche/flash flood concerns.",
         "Give plan: whether you are staying put or moving, and your intended route/destination if moving.",
@@ -294,7 +296,7 @@
       "steps": [
         "Secure loose items: hats, tarps, lightweight gear can become dangerous projectiles.",
         "Stay low and stable; protect your eyes from dust/debris.",
-        "Approach only if clearly signaled by crew. If instructed to approach, approach from the front or as directed; never from the rear.",
+        "Approach only if clearly signaled by crew. Crouch and come in from the front or front-side where the pilot can see you, never from the rear. On a slope, approach and leave on the downhill side; the rotor is closer to the ground uphill. Carry nothing above shoulder height.",
         "Keep hands visible and avoid sudden movements; follow instructions exactly.",
         "Keep others (especially children/pets) close and controlled."
       ],
@@ -501,7 +503,7 @@
     },
     {
       "id": "immediate_action_signal_panels_and_flags",
-      "category": "Immediate Action",
+      "category": "Signaling",
       "title": "Improvised Signal Panels and Flags",
       "summary": "Build highly visible signals using what you have and what you can gather.",
       "difficulty": "basic",
@@ -523,6 +525,430 @@
       ],
       "notes": [
         "A visible panel plus a whistle plus a mirror is a strong combination."
+      ]
+    },
+    {
+      "id": "water_ice_falling_through_ice",
+      "category": "Water & Ice",
+      "title": "Falling Through Ice",
+      "summary": "Survive the first minutes after breaking through ice, get yourself out, and help someone else without going in.",
+      "difficulty": "intermediate",
+      "tags": [
+        "ice",
+        "fell through ice",
+        "thin ice",
+        "ice rescue",
+        "cold water",
+        "1-10-1",
+        "ice picks",
+        "frozen lake"
+      ],
+      "steps": [
+        "Expect a gasp and rapid breathing from cold shock. Keep your head above water and focus on slowing your breathing; it settles within about a minute.",
+        "Turn back toward the direction you came from; that ice held your weight.",
+        "Put your arms flat on the ice, kick your legs up behind you to get horizontal, and pull and kick yourself forward onto the ice. Ice picks worn around your neck help you grip.",
+        "Once out, don't stand. Roll or crawl away from the hole, spreading your weight, and follow your own tracks back to safe ice.",
+        "Get to shelter, out of wet clothes and into dry layers as quickly as possible. Treat for hypothermia.",
+        "If you can't get out, keep your arms on the ice and stay still to save heat. If you lose strength, your sleeves may freeze to the ice and hold your head up.",
+        "To help someone else, call for help, then reach with a pole, branch or rope, or throw something that floats. Lie flat on the ice to spread your weight."
+      ],
+      "do_not": [
+        "Do not try to swim or thrash; it wastes heat and strength fast.",
+        "Do not run out onto the ice to rescue someone; you're likely to go through too.",
+        "Do not take off winter clothing in the water; trapped air helps you float."
+      ],
+      "watch_for": [
+        "The 1-10-1 rule: about 1 minute to control your breathing, about 10 minutes of useful movement before your arms and legs fail, and about 1 hour before hypothermia makes you lose consciousness.",
+        "Weak ice near inlets, outlets, springs, pressure ridges, docks and under snow.",
+        "Ice that is cloudy, slushy, cracked or darkened, which is weaker than clear blue ice."
+      ],
+      "notes": [
+        "As a rough guide, stay off clear ice thinner than 10 cm (4 in) on foot. Snowmobiles need at least 13 to 18 cm (5 to 7 in), and cars 20 to 30 cm (8 to 12 in) or more.",
+        "Check thickness with an auger or spud bar every few steps when the ice is unknown."
+      ]
+    },
+    {
+      "id": "water_ice_cold_water_immersion",
+      "category": "Water & Ice",
+      "title": "Cold-Water Immersion and Capsizing",
+      "summary": "Survive falling into cold water from a boat or shore: control the cold shock, stay with the boat and conserve heat.",
+      "difficulty": "intermediate",
+      "tags": [
+        "cold water",
+        "capsize",
+        "overboard",
+        "cold shock",
+        "HELP position",
+        "life jacket",
+        "hypothermia",
+        "boating"
+      ],
+      "steps": [
+        "When you hit cold water, expect to gasp uncontrollably. Keep your face out of the water and focus on slowing your breathing for the first minute.",
+        "Get hold of something that floats: your boat, a cooler, a paddle or debris.",
+        "Climb onto or out of the water as much as you can, even partly; you lose heat far faster in water than in air.",
+        "Stay with a capsized boat; it's easier for rescuers to spot than a swimmer.",
+        "If you must wait in the water wearing a life jacket, hold your knees to your chest and arms tight to your sides (the HELP position) to conserve heat.",
+        "With others, huddle together with chests touching.",
+        "Swim for shore only if it's very close and you're sure you can make it. Cold makes muscles fail within minutes."
+      ],
+      "do_not": [
+        "Do not remove clothing or shoes in the water.",
+        "Do not leave the boat to swim for a distant shore.",
+        "Do not boat in cold water without wearing a life jacket; you won't have time to put one on."
+      ],
+      "watch_for": [
+        "Loss of grip and coordination in the hands after about 10 minutes.",
+        "After rescue, collapse when the person is lifted out or as they warm. Keep them horizontal and handle them gently."
+      ],
+      "notes": [
+        "Water below about 15 °C (60 °F) is dangerous; most cold-water deaths happen within minutes from cold shock and swim failure, not hypothermia.",
+        "Dress for the water temperature, not the air temperature."
+      ]
+    },
+    {
+      "id": "water_ice_reach_throw_rescue",
+      "category": "Water & Ice",
+      "title": "Water Rescue: Reach, Throw, Row, Go",
+      "summary": "Help someone in trouble in the water using the safest rescue that will work, without becoming a second victim.",
+      "difficulty": "intermediate",
+      "tags": [
+        "water rescue",
+        "reach throw row go",
+        "throw bag",
+        "drowning",
+        "river rescue",
+        "lifesaving"
+      ],
+      "steps": [
+        "Shout to the person and call for help or emergency services.",
+        "Reach: lie down or brace yourself on shore and reach with a pole, branch, paddle, towel or clothing.",
+        "Throw: throw something that floats, or a rope or throw bag. Aim beyond and slightly downstream of the person so the line falls across them.",
+        "Tell them to hold the rope on their chest and lie on their back with feet downstream. Brace yourself and let the current swing them toward shore.",
+        "Row: if you have a boat and the skill, approach slowly and shut off the motor before you reach them. Hold out a paddle or something that floats, and bring them aboard only once the engine is off.",
+        "Go: swim out only if you're trained in water rescue, carrying something buoyant to hand them.",
+        "Once they're out, check breathing, start CPR if needed, and treat for cold."
+      ],
+      "do_not": [
+        "Do not tie a rope around yourself or the person in moving water; they can be pinned underwater.",
+        "Do not let a panicking swimmer grab you. Push something floating to them instead.",
+        "Do not enter fast-moving or flood water to rescue someone without training and gear."
+      ],
+      "watch_for": [
+        "Strainers: fallen trees and debris that let water through but trap people.",
+        "Low-head dams and weirs, which recirculate water and trap swimmers below them."
+      ],
+      "notes": [
+        "Practice throwing a rope bag before you need to; most first throws fall short.",
+        "In a river, the rescuer should stay downstream of the person's path and upstream of hazards."
+      ]
+    },
+    {
+      "id": "water_ice_river_crossing",
+      "category": "Water & Ice",
+      "title": "Crossing a River or Stream",
+      "summary": "Decide whether a crossing is safe, cross with the least risk, and know what to do if you're swept off your feet.",
+      "difficulty": "advanced",
+      "tags": [
+        "river crossing",
+        "stream crossing",
+        "fording",
+        "creek",
+        "swift water",
+        "wading",
+        "snowmelt"
+      ],
+      "steps": [
+        "Scout for a wide, straight, shallow section with slow, even water and a safe runout below. Avoid bends, rapids and strainers downstream.",
+        "Wait if you can: snowmelt streams run lowest early in the morning, and flood water drops after rain stops.",
+        "Unbuckle your pack's hip belt and sternum strap so you can shed it if you fall.",
+        "Keep your shoes on for grip and protection.",
+        "Face upstream, angled slightly downstream, and use a sturdy pole or trekking poles upstream of you as extra legs.",
+        "Shuffle sideways in small steps, moving one point of contact at a time and testing each foothold.",
+        "In a group, link arms and cross in a line facing upstream with the strongest person upstream, or in a tight triangle.",
+        "If swept away, roll onto your back with feet downstream and at the surface, and back-paddle toward shore at an angle."
+      ],
+      "do_not": [
+        "Do not cross moving water above knee depth unless you have no other option; fast water at thigh depth can knock an adult down.",
+        "Do not tie into a rope while wading; it can hold you underwater.",
+        "Do not stand up in fast water if you fall; your foot can catch between rocks and pin you underwater."
+      ],
+      "watch_for": [
+        "Strainers downstream. If swept toward one, roll onto your front and swim hard over the top of it head-first.",
+        "Rising, muddy water carrying debris, which signals more water coming.",
+        "Cold water, which numbs legs and weakens grip quickly."
+      ],
+      "notes": [
+        "When in doubt, don't cross. Look for a bridge, log or better spot, or wait.",
+        "Have someone wait downstream with a rope or pole while others cross."
+      ]
+    },
+    {
+      "id": "disaster_earthquake",
+      "category": "Disasters",
+      "title": "Earthquake",
+      "summary": "Protect yourself during shaking, then check for injuries, gas leaks, aftershocks and tsunami risk.",
+      "difficulty": "basic",
+      "tags": [
+        "earthquake",
+        "drop cover hold on",
+        "aftershock",
+        "tsunami",
+        "gas leak",
+        "disaster"
+      ],
+      "steps": [
+        "Drop to your hands and knees as soon as shaking starts.",
+        "Cover your head and neck under a sturdy table or desk. If there's none nearby, crawl next to an interior wall away from windows and cover your head with your arms.",
+        "Hold on to your shelter until the shaking stops.",
+        "In bed, stay there, lie face down and cover your head with a pillow.",
+        "Outdoors, move away from buildings, trees, streetlights and power lines, then drop, cover and hold on.",
+        "Driving, pull over away from bridges, overpasses and power lines, set the parking brake and stay inside with your seatbelt on.",
+        "When it stops, check yourself and others for injuries, put on shoes, and leave damaged buildings.",
+        "If you smell gas or hear hissing, leave immediately, turn off the gas at the meter if you can do so safely, and call for help from outside."
+      ],
+      "do_not": [
+        "Do not run outside during shaking; most injuries happen when people try to move.",
+        "Do not stand in a doorway; it doesn't protect you from falling objects.",
+        "Do not use matches, lighters or switch on electrical appliances if there could be a gas leak."
+      ],
+      "watch_for": [
+        "Aftershocks; drop, cover and hold on each time.",
+        "Near the coast, strong shaking lasting 20 seconds or more, the sea pulling back, or a roar from the ocean. Go to high ground or inland immediately without waiting for an official warning.",
+        "Damaged chimneys, walls and stairs, and broken glass."
+      ],
+      "notes": [
+        "Secure tall furniture and water heaters to walls, and keep shoes and a flashlight by the bed.",
+        "Once gas is turned off at the meter, only the gas company should turn it back on."
+      ]
+    },
+    {
+      "id": "disaster_house_fire",
+      "category": "Disasters",
+      "title": "House Fire Escape",
+      "summary": "Get everyone out of a burning home fast, stay low under smoke, and know what to do if you're trapped.",
+      "difficulty": "basic",
+      "tags": [
+        "house fire",
+        "fire escape",
+        "smoke",
+        "smoke alarm",
+        "fire extinguisher",
+        "stop drop roll",
+        "disaster"
+      ],
+      "steps": [
+        "When a smoke alarm sounds, get out right away. A house fire can become deadly in just a few minutes.",
+        "Stay low under the smoke, crawling if needed; the cleanest air is near the floor.",
+        "Before opening a door, feel it and the handle with the back of your hand. If it's hot, use another way out.",
+        "Close doors behind you as you leave to slow the fire's spread.",
+        "Go to your outside meeting spot, count everyone, and call emergency services from there.",
+        "If you're trapped, close the door, seal gaps with towels or clothes, call emergency services, and signal from a window with a light or cloth.",
+        "If your clothes catch fire: stop, drop to the ground, cover your face and roll until the flames are out."
+      ],
+      "do_not": [
+        "Do not go back inside for anyone or anything. Tell firefighters who is missing.",
+        "Do not stop to gather belongings or get dressed.",
+        "Do not fight a fire unless it's small, contained, you have the right extinguisher and a clear exit behind you."
+      ],
+      "watch_for": [
+        "Smoke inhalation: coughing, hoarseness, trouble breathing or soot around the nose and mouth. Get medical care.",
+        "Burns; cool them with cool running water for at least 20 minutes. See the Burns (Thermal) entry."
+      ],
+      "notes": [
+        "Plan two ways out of every room, pick a meeting spot, and practice with your household twice a year.",
+        "Fire extinguisher use is PASS: Pull the pin, Aim at the base of the fire, Squeeze the handle, Sweep side to side.",
+        "Test smoke alarms monthly and keep one inside every bedroom, outside each sleeping area and on every level."
+      ]
+    },
+    {
+      "id": "disaster_chemical_shelter_in_place",
+      "category": "Disasters",
+      "title": "Chemical Release: Shelter in Place",
+      "summary": "Protect yourself from a chemical spill or toxic cloud by getting inside and sealing out the air, or by moving away safely.",
+      "difficulty": "intermediate",
+      "tags": [
+        "chemical spill",
+        "hazmat",
+        "shelter in place",
+        "toxic gas",
+        "train derailment",
+        "industrial accident",
+        "disaster"
+      ],
+      "steps": [
+        "If officials order shelter in place, go indoors right away and bring pets with you.",
+        "Close and lock all windows and outside doors.",
+        "Turn off heating, air conditioning and fans that bring in outside air, and close the fireplace damper.",
+        "Go to an interior room with as few windows as possible, above ground level if you can, since many chemicals are heavier than air.",
+        "If instructed, seal windows, doors and vents with plastic sheeting and duct tape, and put a wet towel along the bottom of the door.",
+        "Listen to a battery-powered or hand-crank radio for updates, and stay until officials say it's safe.",
+        "If you're outdoors and can't get inside, move upwind, uphill and upstream of the release, and cover your nose and mouth with cloth."
+      ],
+      "do_not": [
+        "Do not go outside to look or to pick up children from school; schools have their own plans.",
+        "Do not touch spilled liquids, residue or debris.",
+        "Do not stay sealed in for long periods after the danger passes; air in a sealed room runs low."
+      ],
+      "watch_for": [
+        "Eye, nose and throat irritation, coughing, headache or nausea. If exposed, remove outer clothing, bag it, and wash with soap and water.",
+        "Changing wind direction, which can move the plume toward you."
+      ],
+      "notes": [
+        "Taking off outer clothing removes most contamination from your body. Put it in a sealed bag.",
+        "Keep plastic sheeting, duct tape and scissors in your home emergency kit."
+      ]
+    },
+    {
+      "id": "disaster_radiation_emergency",
+      "category": "Disasters",
+      "title": "Radiation Emergency",
+      "summary": "Get inside, stay inside and stay tuned during a radiation release or nuclear detonation.",
+      "difficulty": "intermediate",
+      "tags": [
+        "radiation",
+        "nuclear",
+        "fallout",
+        "potassium iodide",
+        "nuclear plant",
+        "dirty bomb",
+        "shelter",
+        "disaster"
+      ],
+      "steps": [
+        "Get inside the nearest building right away, ideally brick or concrete. Every minute outside matters most in the first hour.",
+        "Go to the basement, or the middle floors and center of a large building, away from outside walls and the roof.",
+        "If you were outside, remove your outer layer of clothing, put it in a sealed bag away from people, and wash with soap and water or wipe exposed skin.",
+        "Wash hair with shampoo only, not conditioner, which can bind radioactive material to hair.",
+        "Stay inside for at least 24 hours unless officials tell you otherwise, and close windows and turn off ventilation.",
+        "Listen to a battery-powered or hand-crank radio for instructions.",
+        "Eat and drink only food and water that were sealed or indoors."
+      ],
+      "do_not": [
+        "Do not go outside to find family members; shelter where you are.",
+        "Do not take potassium iodide unless public health officials tell you to. It protects only the thyroid, and only from radioactive iodine.",
+        "Do not look at a nuclear flash or fireball."
+      ],
+      "watch_for": [
+        "Nausea, vomiting, headache or fatigue soon after exposure. Seek medical care when officials say it's safe to travel.",
+        "Official instructions to evacuate; follow them along the route given."
+      ],
+      "notes": [
+        "Radiation from fallout drops quickly: most of the danger is in the first hours, which is why staying inside saves lives.",
+        "Distance, shielding and time are the three ways to reduce exposure."
+      ]
+    },
+    {
+      "id": "disaster_active_threat",
+      "category": "Disasters",
+      "title": "Active Attacker: Run, Hide, Fight",
+      "summary": "Respond to an active attacker by escaping if you can, hiding if you can't, and fighting only as a last resort.",
+      "difficulty": "basic",
+      "tags": [
+        "active shooter",
+        "active attacker",
+        "run hide fight",
+        "violence",
+        "lockdown",
+        "public safety"
+      ],
+      "steps": [
+        "Run: if there's a safe path, get out. Leave belongings, help others if you can, and keep your hands visible.",
+        "Warn others away from the area and call emergency services once you're safe.",
+        "Hide: if you can't get out, hide out of the attacker's view, in a room you can lock or block with heavy furniture.",
+        "Turn off lights, silence your phone including vibration, and stay quiet.",
+        "Fight: only as a last resort and when your life is in immediate danger, act as aggressively as possible with improvised weapons, ideally together with others.",
+        "When police arrive, stay calm, keep your hands empty and visible, and follow their commands."
+      ],
+      "do_not": [
+        "Do not pull a fire alarm to evacuate; it can draw people into danger.",
+        "Do not run toward arriving police or grab them for help.",
+        "Do not hide in a place that traps you, such as a room with only one way out, if you have a better option."
+      ],
+      "watch_for": [
+        "Severe bleeding in the injured. Once safe, apply pressure or a tourniquet. See the Severe Bleeding entry."
+      ],
+      "notes": [
+        "In any public place, notice the two nearest exits when you arrive.",
+        "This follows US Department of Homeland Security guidance."
+      ]
+    },
+    {
+      "id": "immediate_action_triage",
+      "category": "Immediate Action",
+      "title": "Triage: Several Injured People",
+      "summary": "When there are more injured people than rescuers, sort them quickly so the ones who can be saved get help first. Children are triaged differently.",
+      "difficulty": "advanced",
+      "tags": [
+        "triage",
+        "mass casualty",
+        "multiple injured",
+        "START triage",
+        "first aid",
+        "priorities"
+      ],
+      "steps": [
+        "Use this only when there are more injured people than rescuers can treat at once. Make sure the scene is safe and call for help, reporting how many people are hurt.",
+        "Call out: \"If you can walk, come to me.\" Those who walk are lower priority (minor) and can help.",
+        "Go to each remaining person in turn, spending no more than about 30 seconds each. The checks below are for adults; for anyone who looks like a child, use the child steps that follow.",
+        "Adult not breathing: open the airway once. If they start breathing, they are immediate priority; keep the airway open. If they still don't breathe, they are beyond help in this situation; move on.",
+        "Adult breathing faster than about 30 breaths a minute, or with no wrist pulse or slow color return after pressing a fingernail (more than 2 seconds), or unable to follow simple commands: immediate priority.",
+        "Adult breathing, with a wrist pulse and able to follow commands, but unable to walk: delayed priority.",
+        "Child not breathing: open the airway. If they still don't breathe, check for a pulse. With a pulse, give 5 rescue breaths; if they start breathing, they are immediate priority. Only a child with no pulse, or who stays not breathing after the 5 breaths, is beyond help.",
+        "Child breathing slower than 15 or faster than 45 breaths a minute, or with no pulse you can feel, or unresponsive or reacting abnormally to pain (such as stiffening): immediate priority. Otherwise, a child who can't walk is delayed priority. Assess infants and toddlers who can't walk yet with these steps, not the walking call.",
+        "While triaging, do only quick life-saving actions: control severe bleeding with pressure or a tourniquet, and put unresponsive breathing people in the recovery position.",
+        "Mark each person's priority with tape, a pen or colored cloth, then return to care for the immediate group first."
+      ],
+      "do_not": [
+        "Do not stop to give full care to the first person you reach while others may be dying.",
+        "Do not start CPR on one person when many need help and few rescuers are available."
+      ],
+      "watch_for": [
+        "People whose condition changes; reassess everyone regularly.",
+        "Walking wounded who are more hurt than they seem, such as with internal bleeding or head injuries."
+      ],
+      "notes": [
+        "The adult steps follow the START triage system and the child steps follow JumpSTART, its version for children up to about age 8, which gives rescue breaths because children usually stop breathing before their heart stops.",
+        "Triage decisions are hard. Doing the most good for the most people is the goal."
+      ]
+    },
+    {
+      "id": "signaling_plb_satellite_messenger",
+      "category": "Signaling",
+      "title": "Personal Locator Beacons and Satellite SOS",
+      "summary": "Call for rescue from places with no cell signal using a PLB, satellite messenger or a phone with satellite SOS.",
+      "difficulty": "basic",
+      "tags": [
+        "PLB",
+        "personal locator beacon",
+        "satellite messenger",
+        "satellite SOS",
+        "inReach",
+        "406 MHz",
+        "emergency beacon",
+        "text 911"
+      ],
+      "steps": [
+        "Before your trip, register your PLB with your national authority (NOAA in the US), and keep the registration current.",
+        "Test satellite messengers and phone satellite features at home, and leave your trip plan with someone who'll raise the alarm if you're overdue.",
+        "Use SOS only for grave and imminent danger to life, when you can't self-rescue.",
+        "Get to open ground with a clear view of the sky, away from cliffs and dense tree cover.",
+        "Extend the antenna straight up, and activate the beacon as its instructions describe.",
+        "Leave it on and stay with it; rescuers home in on the signal. Satellite messengers let you send details of the emergency.",
+        "If you have a weak cell signal, try texting emergency services where that's supported; texts often get through when calls won't."
+      ],
+      "do_not": [
+        "Do not switch off a PLB after activation unless the rescue service tells you to, or you activated it by mistake.",
+        "Do not bury the device in a pack or lay it face down.",
+        "Do not count on a phone alone in remote areas."
+      ],
+      "watch_for": [
+        "Accidental activation. Turn it off and contact the rescue coordination center right away to cancel.",
+        "Battery life and cold; keep devices warm and charged."
+      ],
+      "notes": [
+        "A PLB sends a one-way distress signal on 406 MHz to government rescue services with no subscription. A satellite messenger offers two-way messaging but needs a paid plan.",
+        "Some newer phones can text emergency services by satellite; check whether yours can before you rely on it."
       ]
     }
   ]

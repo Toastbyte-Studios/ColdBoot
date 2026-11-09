@@ -1,8 +1,8 @@
 {
   "metadata": {
     "name": "ColdBoot First Aid Reference",
-    "version": "1.0.0",
-    "last_updated": "2025-12-07",
+    "version": "1.1.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information is general first aid guidance and is not a substitute for professional medical training or care. Always seek qualified medical help as soon as it is available.",
     "categories": ["Emergency", "Injury", "Illness", "Preventive"],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
@@ -22,11 +22,10 @@
         "Place a clean cloth, bandage, or any clean absorbent material directly over the wound.",
         "Apply firm, steady pressure with your hand or hands directly on the wound.",
         "If blood soaks through the cloth, place additional cloth or pads on top and continue pressing. Do not remove the original cloth.",
-        "If the wound is on a limb and there is no suspected fracture, gently raise the limb above the level of the heart while maintaining pressure.",
-        "Continue direct pressure for at least 10–15 minutes without checking too often; lifting the cloth can restart bleeding.",
-        "If bleeding remains heavy and life-threatening despite firm direct pressure, apply a tourniquet if you have one and know how to use it.",
+        "If pressure is controlling the bleeding, keep it on for at least 10–15 minutes without lifting to check; lifting the cloth can restart bleeding.",
+        "If an arm or leg is bleeding heavily (spurting, pooling or soaking through) and firm pressure isn't stopping it, apply a tourniquet right away. Don't wait out the 10–15 minutes.",
         "Place the tourniquet 5–7 cm (2–3 inches) above the wound, between the wound and the heart, and never directly over a joint.",
-        "Tighten the tourniquet until the bleeding stops or significantly slows. It will usually be painful when effective.",
+        "Tighten the tourniquet until the bleeding stops completely. It will be painful; that is expected. If bleeding continues, tighten it more or add a second tourniquet just above the first.",
         "Secure the tourniquet so it cannot loosen and note the time it was applied.",
         "After bleeding is controlled, cover the person with a blanket or clothing to keep them warm and monitor for signs of shock such as pale skin, rapid pulse, or confusion.",
         "Seek professional medical care as soon as it becomes available, even if the bleeding appears controlled."
@@ -40,7 +39,7 @@
       "watch_for": [
         "Continued heavy bleeding despite direct pressure.",
         "Signs of shock: pale or clammy skin, rapid breathing, weakness, confusion, or loss of consciousness.",
-        "Loss of feeling or movement below the tourniquet site."
+        "Bleeding that starts again below the tourniquet, which means it needs tightening or a second tourniquet above it. Numbness below a tourniquet is expected; don't loosen it."
       ],
       "notes": [
         "In a survival situation, a tourniquet can be made from a wide band of cloth and a rigid object used as a windlass to twist and tighten.",
@@ -63,6 +62,7 @@
       "steps": [
         "Ensure the area is safe for you and the person.",
         "Check responsiveness by speaking loudly and gently shaking their shoulder.",
+        "If there is no response, shout for help. Call emergency services (use speakerphone), or have someone call and send them for an AED.",
         "If there is no response, place the person on their back on a firm surface.",
         "Open the airway by tilting the head back slightly and lifting the chin.",
         "Look for normal breathing for no more than 10 seconds: watch the chest, listen for breath sounds, feel for air on your cheek.",
@@ -75,7 +75,7 @@
         "Give a second breath, then immediately resume chest compressions for another 30 compressions.",
         "If you are not trained or do not wish to give rescue breaths, continue hands-only CPR with continuous chest compressions.",
         "Continue CPR until the person shows clear signs of life (such as normal breathing or movement), you are physically unable to continue, or trained help becomes available.",
-        "If an automated external defibrillator (AED) becomes available, follow its voice prompts while continuing CPR as instructed."
+        "As soon as an automated external defibrillator (AED) arrives, turn it on, attach the pads and follow its voice prompts, keeping pauses in compressions as short as possible."
       ],
       "do_not": [
         "Do not spend more than 10 seconds checking for breathing or pulse if you are not trained.",
@@ -144,6 +144,7 @@
         "Place the needle end against the outer thigh, halfway between the hip and knee. The injection can be given through clothing if necessary.",
         "Press the injector firmly into the thigh until you hear or feel a click, and hold it there for the recommended time (usually several seconds) to deliver the medication.",
         "Remove the injector and massage the injection site for about 10 seconds.",
+        "Call emergency services right away, even if the person starts to feel better.",
         "Have the person lie down or sit in a comfortable position. If breathing is easier when sitting upright, support them in that position.",
         "Loosen tight clothing, especially around the neck and chest.",
         "Monitor breathing and level of consciousness continuously.",
@@ -210,15 +211,14 @@
         "If you suspect a stroke, help the person sit or lie in a comfortable position with their head slightly raised.",
         "Reassure the person and keep them as calm and still as possible.",
         "Loosen tight clothing, especially around the neck and chest.",
-        "If the person is alert and able to swallow, you may offer small sips of water, but only if there is no difficulty swallowing.",
-        "If there are swallowing problems, do not give any food or drink to avoid choking.",
+        "Do not give anything to eat or drink, even water; a stroke can affect swallowing without obvious signs.",
         "If the person becomes drowsy or unresponsive, place them in the recovery position on their side with the mouth angled downward to allow fluids to drain.",
         "Monitor breathing and responsiveness closely.",
         "Record the time that symptoms first began if known, as this information will be important for medical personnel later.",
-        "Seek professional medical care as soon as it becomes available."
+        "Call emergency services right away. Stroke treatment works best within the first few hours, so don't wait to see if symptoms pass."
       ],
       "do_not": [
-        "Do not give the person anything to eat or drink if they have trouble swallowing.",
+        "Do not give the person anything to eat or drink, including water or medicine.",
         "Do not let the person walk around; they could fall or worsen their condition.",
         "Do not ignore mild or temporary symptoms; strokes can progress rapidly."
       ],
@@ -477,7 +477,7 @@
         "Recognize signs of heat stroke: very high body temperature, confusion, agitation, hot skin that may be dry or still sweating, rapid pulse, or loss of consciousness.",
         "Move the person immediately to the coolest available place, out of direct sun.",
         "Remove excess clothing to allow maximum skin exposure to cooling.",
-        "Cool the person rapidly using any available methods: wet the skin with cool water, apply wet cloths, or immerse in cool (not ice-cold) water if safe and feasible.",
+        "Cool the person as fast as possible. Best is immersing the body up to the neck in cold or ice water, supporting the head. If you can't, soak the skin with the coldest water available and fan hard, or use ice packs and cold wet towels.",
         "Apply cold packs or wet cloths to the neck, armpits, and groin, which are areas of high blood flow.",
         "Fan the person continuously to increase evaporation and heat loss.",
         "If the person is awake and able to swallow safely, give small sips of cool water but do not delay cooling efforts.",
@@ -799,7 +799,7 @@
         "If the safety of water is uncertain, boil it at a rolling boil for at least 1 minute (3 minutes at high altitude) before drinking.",
         "Cool boiled water before storing it in clean, covered containers.",
         "Avoid letting stored water sit uncovered where insects or debris can enter.",
-        "Cook food thoroughly, especially meat and eggs, until there is no visible pink or raw center.",
+        "Cook food thoroughly, especially meat, poultry and eggs. Use a food thermometer if you have one; color alone doesn't show that meat is safe.",
         "Keep raw and cooked foods separate to avoid cross-contamination.",
         "Wash or peel fruits and vegetables when possible.",
         "Discard foods that smell bad, look moldy, or have unusual texture or color.",
@@ -882,6 +882,825 @@
       "notes": [
         "Prevention of bites and stings is easier and safer than treating them after they occur.",
         "If a bite or sting does occur, remain calm, limit movement, and seek further guidance from appropriate first-aid instructions or medical care."
+      ]
+    },
+    {
+      "id": "emergency_heart_attack",
+      "category": "Emergency",
+      "title": "Heart Attack (Chest Pain)",
+      "summary": "Recognize a heart attack before the heart stops, get help moving fast, and be ready to start CPR.",
+      "difficulty": "basic",
+      "tags": [
+        "heart attack",
+        "chest pain",
+        "cardiac",
+        "aspirin",
+        "myocardial infarction",
+        "angina"
+      ],
+      "steps": [
+        "Suspect a heart attack with chest pressure, squeezing, fullness or pain lasting more than a few minutes, or that goes away and comes back.",
+        "Look for pain or discomfort spreading to one or both arms, the back, neck, jaw or stomach, and for shortness of breath, cold sweat, nausea or lightheadedness.",
+        "Call emergency services immediately. Every minute without treatment costs heart muscle.",
+        "Have the person stop all activity and sit or rest in the position they find most comfortable, often half-sitting with knees bent.",
+        "Loosen tight clothing at the neck and waist.",
+        "If the person is not allergic to aspirin, has no bleeding disorder and hasn't been told by a doctor to avoid it, have them chew one regular 325 mg aspirin or four 81 mg low-dose tablets.",
+        "If they have their own prescribed nitroglycerin, help them take it as directed.",
+        "Stay with them, keep them calm and warm, and watch their breathing and responsiveness.",
+        "If they become unresponsive and stop breathing normally, start CPR right away and use an AED if one is available."
+      ],
+      "do_not": [
+        "Do not let the person walk, drive themselves or carry anything.",
+        "Do not wait to see whether the symptoms pass before calling for help.",
+        "Do not give aspirin to someone who is allergic to it, or substitute ibuprofen or acetaminophen, which don't have the same effect.",
+        "Do not give anything else by mouth."
+      ],
+      "watch_for": [
+        "Atypical symptoms, especially in women, older adults and people with diabetes: shortness of breath, nausea, unusual tiredness, or back or jaw pain with little or no chest pain.",
+        "Gasping or abnormal breathing, which should be treated as cardiac arrest.",
+        "Signs of shock: pale, cool, clammy skin and a weak, fast pulse."
+      ],
+      "notes": [
+        "A heart attack is a blocked artery; cardiac arrest is the heart stopping. A heart attack can lead to cardiac arrest, which is why you stay ready to start CPR.",
+        "Far from help, plan the fastest route to definitive care. Evacuation with minimal exertion by the patient is the goal."
+      ]
+    },
+    {
+      "id": "emergency_seizure",
+      "category": "Emergency",
+      "title": "Seizure",
+      "summary": "Keep a person safe during a convulsive seizure, help them recover afterward and know when it's an emergency.",
+      "difficulty": "basic",
+      "tags": [
+        "seizure",
+        "convulsion",
+        "epilepsy",
+        "fit",
+        "status epilepticus"
+      ],
+      "steps": [
+        "Stay calm and note the time the seizure started.",
+        "Ease the person to the ground if they are falling, and move hard or sharp objects away from them.",
+        "Put something soft and flat, such as a folded jacket, under their head.",
+        "Loosen anything tight around the neck and remove glasses.",
+        "Let the seizure run its course. Most stop on their own within 1 to 2 minutes.",
+        "When the jerking stops, gently roll the person onto their side to keep the airway clear.",
+        "Stay with them until they are fully awake. Speak calmly; confusion and sleepiness afterward are normal.",
+        "Call emergency services if the seizure lasts more than 5 minutes, another follows before they recover, they don't wake up, they are injured, pregnant or diabetic, it happened in water, or it is their first seizure."
+      ],
+      "do_not": [
+        "Do not put anything in the person's mouth. They cannot swallow their tongue.",
+        "Do not hold them down or try to stop their movements.",
+        "Do not give food, drink or pills until they are fully alert.",
+        "Do not leave them alone until they are fully aware of their surroundings."
+      ],
+      "watch_for": [
+        "Breathing that doesn't return to normal after the seizure; start CPR if they are unresponsive and not breathing normally.",
+        "Injuries from the fall, especially to the head.",
+        "Possible causes you can treat: low blood sugar, heat stroke or a head injury."
+      ],
+      "notes": [
+        "Some seizures are not convulsive: the person may stare blankly, fumble or wander, and be unaware. Guide them gently away from danger and stay with them.",
+        "If the person has a seizure action plan or rescue medication, follow it."
+      ]
+    },
+    {
+      "id": "emergency_unresponsive_recovery_position",
+      "category": "Emergency",
+      "title": "Unresponsive Person and the Recovery Position",
+      "summary": "Check an unresponsive person quickly, decide between CPR and the recovery position, and keep their airway open.",
+      "difficulty": "basic",
+      "tags": [
+        "unconscious",
+        "unresponsive",
+        "recovery position",
+        "airway",
+        "breathing",
+        "primary survey",
+        "fainting"
+      ],
+      "steps": [
+        "Check that the scene is safe for you before approaching.",
+        "Tap the person's shoulder firmly and shout, \"Are you okay?\"",
+        "If they don't respond, shout for help and call emergency services, or have someone else call while you continue.",
+        "Check breathing for no more than 10 seconds: look for the chest rising and listen for breaths.",
+        "If they are not breathing, or only gasping, start CPR immediately.",
+        "If they are breathing normally, quickly look for and control any severe bleeding.",
+        "Roll them into the recovery position: kneel beside them, place the near arm at a right angle, bring the far arm across the chest with the back of the hand against their cheek, bend the far knee, and pull on that knee to roll them toward you onto their side.",
+        "Tilt the head back slightly so the airway stays open and fluids can drain from the mouth.",
+        "Keep them warm, insulate them from the ground, and recheck breathing every minute or two until help arrives."
+      ],
+      "do_not": [
+        "Do not mistake occasional gasps for normal breathing; gasping means start CPR.",
+        "Do not give anything by mouth to someone who isn't fully awake.",
+        "Do not leave an unresponsive person on their back if they are vomiting or you must leave them."
+      ],
+      "watch_for": [
+        "Breathing that slows, becomes noisy or stops.",
+        "Possible spinal injury after a fall or crash. Move them only if their airway is at risk or you must leave, and keep the head in line with the body as you roll them.",
+        "Clues to the cause, such as a medical ID bracelet, a diabetes pump or a nearby medication."
+      ],
+      "notes": [
+        "A person who fainted usually wakes within a minute once lying flat. If they don't, treat them as unresponsive.",
+        "If the person has been in the recovery position for 30 minutes, roll them onto the other side to relieve pressure on the lower arm."
+      ]
+    },
+    {
+      "id": "emergency_poisoning",
+      "category": "Emergency",
+      "title": "Poisoning (Swallowed, Skin or Eyes)",
+      "summary": "Act on swallowed, splashed or spilled poisons, and get expert advice before guessing at treatment.",
+      "difficulty": "basic",
+      "tags": [
+        "poison",
+        "poisoning",
+        "overdose",
+        "chemical",
+        "ingestion",
+        "poison control",
+        "toxic"
+      ],
+      "steps": [
+        "Make sure the area is safe; move away from spilled chemicals or fumes before helping.",
+        "If the person is unresponsive, having trouble breathing or having a seizure, call emergency services immediately.",
+        "Otherwise call Poison Control (1-800-222-1222 in the US) or your local poison center, and have the container or product name in hand.",
+        "Swallowed: remove anything left in the mouth and follow the poison center's advice.",
+        "On the skin: remove contaminated clothing and jewelry, then rinse the skin with lots of lukewarm running water for 15 to 20 minutes.",
+        "In the eyes: rinse the eye with a gentle stream of lukewarm water for 15 to 20 minutes, holding the eyelid open and directing water away from the other eye.",
+        "Keep the container, plant sample or pill bottle and bring it with the person to medical care.",
+        "If they vomit, roll them onto their side so they don't choke."
+      ],
+      "do_not": [
+        "Do not make the person vomit, and do not use syrup of ipecac.",
+        "Do not give water, milk, activated charcoal or anything else by mouth unless the poison center tells you to.",
+        "Do not try to neutralize a chemical with another chemical.",
+        "Do not wait for symptoms to appear before calling for advice."
+      ],
+      "watch_for": [
+        "Drowsiness, confusion, slow breathing or pinpoint pupils, which can indicate an opioid overdose. Give naloxone if you have it and call for help.",
+        "Burns around the mouth, drooling or trouble swallowing after swallowing a corrosive.",
+        "Symptoms that start hours later, which is common with acetaminophen, mushrooms and some plants."
+      ],
+      "notes": [
+        "Store chemicals in their original labeled containers, never in food or drink bottles.",
+        "Write your local poison center number in your Emergency Planner contacts so it's there when you're offline."
+      ]
+    },
+    {
+      "id": "emergency_carbon_monoxide",
+      "category": "Emergency",
+      "title": "Carbon Monoxide Poisoning",
+      "summary": "Recognize carbon monoxide poisoning from generators, heaters, stoves and vehicles, and get everyone into fresh air.",
+      "difficulty": "basic",
+      "tags": [
+        "carbon monoxide",
+        "CO",
+        "generator",
+        "heater",
+        "fumes",
+        "exhaust",
+        "poisoning",
+        "headache"
+      ],
+      "steps": [
+        "Suspect carbon monoxide when people feel headache, dizziness, weakness, nausea, confusion or sleepiness near a fuel-burning engine, heater, stove or fire, especially indoors, in a tent or in a car.",
+        "Treat it as likely if several people or pets get sick at once, or symptoms ease after leaving the area.",
+        "Get everyone into fresh air immediately. Turn off the source only if you can do it on your way out.",
+        "Call emergency services. CO poisoning can need oxygen treatment even after people feel better.",
+        "If someone is unresponsive, check breathing and start CPR if they are not breathing normally.",
+        "Keep everyone out until the space has been aired out and the source is fixed or removed."
+      ],
+      "do_not": [
+        "Do not go back inside to fetch belongings.",
+        "Do not run a generator, grill, camp stove or charcoal indoors, in a garage, in a tent or near open windows.",
+        "Do not use an oven or gas range to heat a home.",
+        "Do not run a vehicle with its exhaust pipe blocked by snow."
+      ],
+      "watch_for": [
+        "People who are asleep or intoxicated, who may die before noticing symptoms.",
+        "Pregnant women, infants, older adults and people with heart or lung disease, who are at higher risk.",
+        "Lingering headache, memory problems or confusion in the days after exposure."
+      ],
+      "notes": [
+        "Carbon monoxide has no color or smell. A battery-powered CO alarm is the only reliable warning; keep one near sleeping areas and test it monthly.",
+        "Smoke from a campfire or a smoldering stove inside a tent or snow shelter is a common backcountry source."
+      ]
+    },
+    {
+      "id": "emergency_drowning",
+      "category": "Emergency",
+      "title": "Drowning and Near-Drowning",
+      "summary": "Help someone out of the water without becoming a second victim, then restore their breathing.",
+      "difficulty": "intermediate",
+      "tags": [
+        "drowning",
+        "near drowning",
+        "water rescue",
+        "rescue breaths",
+        "submersion",
+        "swimming"
+      ],
+      "steps": [
+        "Shout for help and call emergency services.",
+        "Reach, throw, don't go: reach with a pole or branch, or throw something that floats, a rope or a ring. Enter the water only if you are trained and it is safe.",
+        "Once the person is out, check responsiveness and breathing.",
+        "If they are not breathing normally, start CPR. Drowning is a breathing emergency, so if you are trained, begin with rescue breaths before chest compressions.",
+        "If they are breathing, place them in the recovery position so water and vomit can drain from the mouth.",
+        "Remove wet clothing, dry them and keep them warm to prevent hypothermia.",
+        "Have everyone who was pulled from the water, needed rescue breaths or is coughing checked by medical care."
+      ],
+      "do_not": [
+        "Do not jump in after someone unless you are trained in water rescue; panicking swimmers can pull rescuers under.",
+        "Do not try to drain water from the lungs or use abdominal thrusts. Start CPR instead.",
+        "Do not delay CPR to warm the person."
+      ],
+      "watch_for": [
+        "Coughing, chest pain, fast breathing or unusual sleepiness in the hours afterward, which can mean water damaged the lungs.",
+        "Vomiting during CPR. Roll them to the side, clear the mouth and continue.",
+        "Possible neck injury if the person dove into shallow water."
+      ],
+      "notes": [
+        "Drowning is usually silent: a person struggling to keep their mouth above water often cannot shout or wave.",
+        "Wear a life jacket on boats and when crossing or working near fast, cold water."
+      ]
+    },
+    {
+      "id": "injury_snakebite",
+      "category": "Injury",
+      "title": "Snakebite",
+      "summary": "Keep a snakebite victim calm and still, skip the folk remedies, and get them to antivenom.",
+      "difficulty": "intermediate",
+      "tags": [
+        "snakebite",
+        "snake",
+        "venom",
+        "rattlesnake",
+        "copperhead",
+        "coral snake",
+        "antivenom",
+        "bite"
+      ],
+      "steps": [
+        "Move away from the snake. Don't try to catch or kill it; a photo from a safe distance is enough.",
+        "Call emergency services or start moving toward medical care. Antivenom, given in a hospital, is the only effective treatment.",
+        "Keep the person calm and as still as possible.",
+        "Remove rings, watches, boots and tight clothing near the bite before swelling starts.",
+        "Keep the bitten limb still, loosely splinted if you can, and roughly level with the heart.",
+        "Mark the edge of the swelling with a pen and the time every 15 to 30 minutes so doctors can see how fast it spreads.",
+        "Wash the bite gently with soap and water and cover it with a clean, dry dressing.",
+        "If they must walk out, have them walk slowly with rests; carrying them is better when it's practical."
+      ],
+      "do_not": [
+        "Do not cut the wound or try to suck out the venom, by mouth or with a suction device.",
+        "Do not apply a tourniquet, ice or electric shock.",
+        "Do not give alcohol or caffeine.",
+        "Do not handle a dead snake; reflex bites can still inject venom."
+      ],
+      "watch_for": [
+        "Swelling spreading up the limb, severe pain, bruising or blistering.",
+        "Numbness or tingling around the mouth, a metallic taste, drooping eyelids, trouble swallowing or breathing.",
+        "Bleeding from the gums or wound, nausea, faintness or signs of shock."
+      ],
+      "notes": [
+        "Many bites are 'dry' with little or no venom, but you can't tell at first. Treat every bite from a venomous species as serious.",
+        "Pressure-immobilization bandaging is used for some snakes in Australia and elsewhere; it isn't recommended for North American pit viper bites (rattlesnakes, copperheads, cottonmouths)."
+      ]
+    },
+    {
+      "id": "injury_tick_bites",
+      "category": "Injury",
+      "title": "Tick Bites and Tick-Borne Illness",
+      "summary": "Remove ticks cleanly and early, and know the signs of Lyme disease and other tick-borne illness.",
+      "difficulty": "basic",
+      "tags": [
+        "tick",
+        "tick bite",
+        "lyme disease",
+        "tick removal",
+        "rocky mountain spotted fever",
+        "permethrin"
+      ],
+      "steps": [
+        "Check your whole body, clothing and gear after time in grass, brush or woods, including the scalp, behind the ears, armpits, waistband, behind the knees and groin.",
+        "Grasp the tick as close to the skin as possible with fine-tipped tweezers.",
+        "Pull straight up with steady, even pressure. Don't twist or jerk.",
+        "If mouthparts stay behind, try to remove them; if you can't, leave them and let the skin heal.",
+        "Clean the bite and your hands with soap and water or rubbing alcohol.",
+        "Kill the tick in alcohol, seal it in a bag or tape, or flush it. Don't crush it with your fingers.",
+        "Note the date and where you were; symptoms can take weeks to appear."
+      ],
+      "do_not": [
+        "Do not use heat, nail polish, petroleum jelly or other substances to make the tick back out; remove it right away.",
+        "Do not squeeze the tick's body."
+      ],
+      "watch_for": [
+        "An expanding red rash, sometimes with a bull's-eye pattern, appearing 3 to 30 days after the bite.",
+        "Fever, chills, headache, fatigue, or muscle and joint aches in the weeks after a bite.",
+        "A spotted rash on the wrists and ankles with fever, which can be Rocky Mountain spotted fever and needs prompt treatment."
+      ],
+      "notes": [
+        "The longer a tick stays attached, the higher the risk. Lyme disease usually needs a day or more of attachment, so daily checks make a big difference.",
+        "Treat clothing and boots with permethrin and use DEET, picaridin or oil of lemon eucalyptus on skin. Tuck pants into socks in tick country."
+      ]
+    },
+    {
+      "id": "injury_stings_spider_bites",
+      "category": "Injury",
+      "title": "Insect Stings, Spider Bites and Scorpions",
+      "summary": "Treat bee, wasp and ant stings, spider bites and scorpion stings, and spot the reactions that need help.",
+      "difficulty": "basic",
+      "tags": [
+        "bee sting",
+        "wasp",
+        "hornet",
+        "fire ant",
+        "spider bite",
+        "black widow",
+        "brown recluse",
+        "scorpion",
+        "insect"
+      ],
+      "steps": [
+        "Move away from the area; more insects may follow. If attacked by a swarm, cover your face and run to a building or vehicle.",
+        "If a stinger is left in the skin, remove it quickly by scraping or pulling. Speed matters more than method.",
+        "Wash the site with soap and water.",
+        "Apply a cold pack wrapped in cloth for 10 to 20 minutes to reduce pain and swelling.",
+        "Use an oral antihistamine for itching and an over-the-counter pain reliever as needed.",
+        "For a suspected black widow, brown recluse or scorpion sting, clean the site, apply cold, keep the area still and seek medical care.",
+        "If the person has an epinephrine auto-injector and shows any signs of a severe reaction, use it and call emergency services."
+      ],
+      "do_not": [
+        "Do not scratch or pop blisters and pustules, especially from fire ants; they can become infected.",
+        "Do not ignore a reaction that spreads beyond the sting site."
+      ],
+      "watch_for": [
+        "Signs of anaphylaxis: hives away from the sting, swelling of the face, lips or tongue, wheezing, trouble breathing or dizziness. See the Anaphylaxis entry.",
+        "Many stings at once, which can be dangerous even without an allergy.",
+        "Black widow: spreading pain, muscle cramps and stiffness, especially in the belly or back.",
+        "Brown recluse: a bite that turns into a blister or dark sore over several days.",
+        "Scorpion: numbness, muscle twitching, roving eye movements or drooling, especially in children."
+      ],
+      "notes": [
+        "Most spider bites are harmless, and many sores blamed on spiders are actually skin infections. A worsening sore needs medical attention either way.",
+        "Shake out boots, clothing and bedding in scorpion and spider country."
+      ]
+    },
+    {
+      "id": "injury_animal_bites",
+      "category": "Injury",
+      "title": "Animal Bites and Rabies Risk",
+      "summary": "Clean animal bites thoroughly, limit infection, and know which exposures need rabies treatment.",
+      "difficulty": "basic",
+      "tags": [
+        "animal bite",
+        "dog bite",
+        "cat bite",
+        "rabies",
+        "bat",
+        "raccoon",
+        "wound"
+      ],
+      "steps": [
+        "Get away from the animal and make sure it can't bite again.",
+        "Control bleeding with direct pressure.",
+        "Wash the wound thoroughly with soap and lots of running water for about 15 minutes. This is one of the most effective steps against rabies.",
+        "Cover the wound with a clean dressing.",
+        "Seek medical care for any bite that breaks the skin. Doctors decide on antibiotics, a tetanus shot and rabies treatment.",
+        "Note what kind of animal it was, where it was and how it behaved. If it's a pet, get the owner's contact and vaccination status.",
+        "Treat any contact with a bat as a possible exposure, including waking up with a bat in the room, even with no visible bite."
+      ],
+      "do_not": [
+        "Do not tightly close a bite wound with tape strips or glue; trapped bacteria raise the risk of infection.",
+        "Do not wait for symptoms of rabies. Once they appear it is almost always fatal, but treatment started promptly after exposure is highly effective.",
+        "Do not try to capture a wild animal yourself."
+      ],
+      "watch_for": [
+        "Redness, warmth, swelling, pus, red streaks or fever, which are signs of infection.",
+        "Cat bites and bites to the hand, which become infected especially often.",
+        "Wild animals acting strangely: unusually tame, aggressive, staggering or active by day when they're usually nocturnal."
+      ],
+      "notes": [
+        "In North America, bats, raccoons, skunks, foxes and coyotes are the main rabies carriers. Rodents and rabbits rarely carry it.",
+        "A healthy dog, cat or ferret that bit someone is usually observed for 10 days; if it stays healthy, rabies treatment isn't needed."
+      ]
+    },
+    {
+      "id": "injury_blisters_foot_care",
+      "category": "Injury",
+      "title": "Blisters and Foot Care",
+      "summary": "Stop hot spots before they become blisters, treat blisters that do form, and keep your feet working on the trail.",
+      "difficulty": "basic",
+      "tags": [
+        "blister",
+        "hot spot",
+        "feet",
+        "foot care",
+        "moleskin",
+        "trench foot",
+        "hiking",
+        "socks"
+      ],
+      "steps": [
+        "Stop as soon as you feel a hot spot, a sore or burning patch. Treating it now takes minutes; a blister can end a trip.",
+        "Dry the skin and cover the hot spot with smooth tape, moleskin or a blister bandage.",
+        "For a small, intact blister, leave the roof on and protect it with a padded ring cut from moleskin or foam, with the hole over the blister.",
+        "For a large, painful blister, clean the area, puncture the edge with a needle sterilized in flame or alcohol, and press the fluid out.",
+        "Leave the loose skin in place as a natural dressing, apply antibiotic ointment, and cover it.",
+        "If the roof has torn off, clean it, apply ointment and cover it with a non-stick dressing.",
+        "At breaks, take off boots and socks, air and dry your feet, and change into dry socks if they're damp."
+      ],
+      "do_not": [
+        "Do not ignore a hot spot to keep pace with the group.",
+        "Do not peel off the blister's roof unless it is already torn and dirty.",
+        "Do not put tape directly on an open blister; cover it with a dressing first."
+      ],
+      "watch_for": [
+        "Increasing redness, warmth, pus or red streaks, which mean infection.",
+        "Feet that have been cold and wet for many hours and look pale, swollen, numb or blotchy: trench (immersion) foot. Dry and warm them gently and keep them elevated.",
+        "Black toenails or pressure pain from boots that are too small for descents."
+      ],
+      "notes": [
+        "Prevent blisters with well-fitted, broken-in footwear, wool or synthetic socks (never cotton), liner socks and trimmed toenails.",
+        "Pre-tape known trouble spots before you start walking."
+      ]
+    },
+    {
+      "id": "injury_dislocations_slings",
+      "category": "Injury",
+      "title": "Dislocations, Slings and Buddy Taping",
+      "summary": "Support a dislocated joint in the position you find it, and improvise slings and buddy taping.",
+      "difficulty": "intermediate",
+      "tags": [
+        "dislocation",
+        "shoulder",
+        "finger",
+        "kneecap",
+        "sling",
+        "swathe",
+        "buddy taping",
+        "splint"
+      ],
+      "steps": [
+        "Suspect a dislocation if a joint looks deformed, is very painful and can't be moved normally after a fall or twist.",
+        "Check circulation, sensation and movement beyond the injury: color and warmth of the fingers or toes, whether the person can feel your touch and wiggle them.",
+        "Support the joint in the position you found it, padding gaps with clothing.",
+        "Shoulder or arm: make a sling from a triangular bandage, shirt or jacket so the forearm is supported across the chest, then tie a wide band (swathe) around the arm and chest to keep it still.",
+        "Finger or toe: tape it to its neighbor with padding between them (buddy taping).",
+        "Knee, ankle, elbow or wrist: splint it so it can't move, as described in the Suspected Fracture entry.",
+        "Recheck circulation, sensation and movement after immobilizing and every 15 to 30 minutes.",
+        "Apply cold wrapped in cloth and get the person to medical care."
+      ],
+      "do_not": [
+        "Do not try to force a joint back into place unless you are trained; you can damage nerves and blood vessels or miss a fracture.",
+        "Do not tie slings or splints so tightly that the fingers or toes become cold, pale, blue or numb."
+      ],
+      "watch_for": [
+        "Loss of pulse, a pale or cold hand or foot, or numbness beyond the joint; this is urgent.",
+        "Deformity near a joint that could be a fracture rather than a dislocation; treat it as both.",
+        "Pain that gets much worse after splinting; loosen and readjust."
+      ],
+      "notes": [
+        "A kneecap that slips to the outside of the knee often pops back when the leg is gently straightened. Splint it straight afterward and have it checked.",
+        "Wilderness first aid courses teach simple shoulder and finger reductions for when help is days away. Take one if you travel far from care."
+      ]
+    },
+    {
+      "id": "injury_spinal",
+      "category": "Injury",
+      "title": "Suspected Spinal Injury",
+      "summary": "Recognize when the neck or back may be injured and keep the person still and aligned until help arrives.",
+      "difficulty": "intermediate",
+      "tags": [
+        "spinal injury",
+        "neck injury",
+        "back injury",
+        "spine",
+        "fall",
+        "log roll",
+        "paralysis"
+      ],
+      "steps": [
+        "Suspect a spinal injury after a fall from height, a diving accident, a vehicle crash, a heavy blow to the head or back, or any head injury with altered alertness.",
+        "Also suspect it if the person has neck or back pain, numbness, tingling or weakness in the arms or legs.",
+        "Call emergency services.",
+        "Tell the person not to move. Kneel at their head and hold it steady with your hands, in line with the body, in the position you found it.",
+        "Keep them warm and insulated from the ground without moving them.",
+        "Move them only if you must: to open the airway, if they are vomiting, or to escape fire, water or other danger.",
+        "If you must roll them, log roll with helpers so the head, neck and body turn together as one unit.",
+        "Check breathing often. If they stop breathing normally, open the airway and start CPR; breathing comes first."
+      ],
+      "do_not": [
+        "Do not have the person sit up, stand or walk to test whether they can.",
+        "Do not twist or bend the neck or back.",
+        "Do not remove a helmet unless it blocks the airway or breathing."
+      ],
+      "watch_for": [
+        "Numbness, weakness or loss of movement in the limbs, or loss of bladder or bowel control.",
+        "Breathing that is weak or uses only the belly.",
+        "A person who is drunk, confused or distracted by another painful injury, who may not notice spinal pain."
+      ],
+      "notes": [
+        "Far from help, trained responders may use a checklist to rule out a spinal injury so an alert, uninjured person can walk out. If in doubt, treat it as a spinal injury.",
+        "A rolled sleeping pad or rolled clothing on both sides of the head can help hold it still if you must leave the person's side."
+      ]
+    },
+    {
+      "id": "injury_nosebleed",
+      "category": "Injury",
+      "title": "Nosebleed",
+      "summary": "Stop a nosebleed with the right posture and steady pressure, and know when it needs medical care.",
+      "difficulty": "basic",
+      "tags": ["nosebleed", "nose bleed", "epistaxis", "bleeding nose"],
+      "steps": [
+        "Have the person sit up and lean forward, so blood drains out of the nose instead of down the throat.",
+        "Pinch the soft part of the nose, just below the bony bridge, firmly closed.",
+        "Hold the pressure continuously for 10 to 15 minutes without letting go to check. Breathe through the mouth.",
+        "Have them spit out blood in the mouth rather than swallow it.",
+        "If bleeding continues, pinch for another 10 to 15 minutes.",
+        "Afterward, avoid blowing or picking the nose, bending over or heavy lifting for the rest of the day."
+      ],
+      "do_not": [
+        "Do not tilt the head back or lie down; swallowed blood can cause vomiting or choking.",
+        "Do not pack the nose with tissue that sticks to the clot and restarts bleeding when removed."
+      ],
+      "watch_for": [
+        "Bleeding that doesn't stop after 20 to 30 minutes of firm pressure.",
+        "A nosebleed after a head injury, especially with clear fluid from the nose.",
+        "Heavy bleeding in someone taking blood thinners, or dizziness and paleness from blood loss."
+      ],
+      "notes": [
+        "Dry air, cold weather and high altitude make nosebleeds more common. Saline spray or a thin layer of petroleum jelly inside the nostrils helps prevent them."
+      ]
+    },
+    {
+      "id": "injury_dental_emergencies",
+      "category": "Injury",
+      "title": "Dental Emergencies",
+      "summary": "Save a knocked-out tooth, protect a broken one and manage toothache until you can reach a dentist.",
+      "difficulty": "basic",
+      "tags": [
+        "tooth",
+        "dental",
+        "knocked out tooth",
+        "broken tooth",
+        "toothache",
+        "abscess",
+        "filling"
+      ],
+      "steps": [
+        "Knocked-out adult tooth: pick it up by the crown (the white part), never the root.",
+        "If it's dirty, rinse it briefly in milk, saline or clean water. Don't scrub it or wrap it in tissue.",
+        "Push it back into the socket right away if the person is alert, and have them bite gently on gauze or cloth to hold it.",
+        "If you can't put it back, keep it in milk, saline, or the person's own saliva (in the cheek if they won't swallow it), and get to a dentist, ideally within an hour.",
+        "Broken tooth: rinse the mouth with warm water, apply cold to the cheek, and cover sharp edges with dental wax or sugar-free gum.",
+        "Lost filling or crown: cover the area with temporary filling material from a dental kit, or reseat a crown with temporary dental cement.",
+        "Toothache: rinse with warm salt water, gently floss out trapped food, and use an over-the-counter pain reliever."
+      ],
+      "do_not": [
+        "Do not reinsert a baby tooth; it can damage the adult tooth underneath.",
+        "Do not store a knocked-out tooth in plain water for long or let it dry out.",
+        "Do not put aspirin directly against the gum; it burns the tissue."
+      ],
+      "watch_for": [
+        "Facial or jaw swelling, fever, or trouble swallowing or opening the mouth. A spreading dental infection is an emergency.",
+        "Signs of a jaw fracture: teeth that don't meet normally, numbness of the lip or chin."
+      ],
+      "notes": [
+        "A small dental kit with temporary filling material, wax and gauze takes little space in a remote first aid kit.",
+        "Clove oil (eugenol) on a cotton pellet can numb a painful tooth briefly; use it sparingly."
+      ]
+    },
+    {
+      "id": "injury_splinters_fishhooks",
+      "category": "Injury",
+      "title": "Splinters, Fishhooks and Embedded Objects",
+      "summary": "Remove small splinters and shallow fishhooks safely, and know when to leave an object in place.",
+      "difficulty": "intermediate",
+      "tags": [
+        "splinter",
+        "fishhook",
+        "fish hook",
+        "embedded object",
+        "impaled object",
+        "thorn",
+        "cactus"
+      ],
+      "steps": [
+        "Wash your hands and the skin around the object.",
+        "Splinter: grip the exposed end with clean tweezers and pull it out along the angle it went in. If it's under the skin, use a needle sterilized in flame or alcohol to lift the skin over it first.",
+        "Cactus spines and fine hairs: press tape or a thin layer of glue onto the area, let it set and peel it off.",
+        "Shallow fishhook: if the barb is just under the skin and not near an eye, joint or tendon, loop a length of strong line around the bend of the hook.",
+        "Press down on the hook's eye to free the barb, then give the line a quick, firm pull parallel to the shank so the hook pops back out the way it went in.",
+        "Alternatively, if the point is near the surface, push it through the skin, cut off the barb with pliers and back the hook out.",
+        "Clean the wound well, apply antibiotic ointment and cover it.",
+        "Large or deeply impaled objects: leave them in place, pad around them to hold them still, and get medical help."
+      ],
+      "do_not": [
+        "Do not remove anything embedded in the eye, or a large object impaled in the body; it may be plugging a bleeding vessel.",
+        "Do not dig for a deep splinter that you can't reach; it can be removed later by a medical professional.",
+        "Do not remove a fishhook near the eye, or one deep in the face, a joint or a tendon."
+      ],
+      "watch_for": [
+        "Redness, swelling, warmth or pus in the days after; puncture wounds trap bacteria.",
+        "A puncture through a shoe or into a joint, which carries a higher infection risk."
+      ],
+      "notes": [
+        "Puncture wounds need a current tetanus shot; get a booster if it has been 5 or more years since your last one."
+      ]
+    },
+    {
+      "id": "illness_altitude_sickness",
+      "category": "Illness",
+      "title": "Altitude Sickness (AMS, HAPE, HACE)",
+      "summary": "Recognize altitude sickness early, stop climbing when symptoms start, and descend fast when it turns serious.",
+      "difficulty": "intermediate",
+      "tags": [
+        "altitude sickness",
+        "AMS",
+        "HAPE",
+        "HACE",
+        "mountain sickness",
+        "high altitude",
+        "acclimatization"
+      ],
+      "steps": [
+        "Suspect acute mountain sickness (AMS) with a headache plus nausea, poor appetite, tiredness, dizziness or poor sleep after going above about 2,500 m (8,000 ft).",
+        "With mild AMS, stop ascending. Rest, drink enough fluid and use ibuprofen or acetaminophen for the headache.",
+        "Go higher only after symptoms have fully resolved. If they worsen despite a day of rest, descend.",
+        "Suspect HACE (brain swelling) with confusion, unusual behavior, extreme drowsiness, or stumbling. Test by having them walk heel-to-toe in a straight line.",
+        "Suspect HAPE (fluid in the lungs) with breathlessness at rest, a persistent cough, gurgling breath, pink frothy spit, or being much slower than companions.",
+        "With HACE or HAPE, descend immediately, at night if needed, at least 300 to 1,000 m (1,000 to 3,300 ft) or until symptoms improve. Don't let them descend alone.",
+        "Keep a HAPE patient warm and minimize their exertion; carry their pack. Give supplemental oxygen if available.",
+        "Get them to medical care as soon as possible."
+      ],
+      "do_not": [
+        "Do not climb higher with symptoms of altitude sickness.",
+        "Do not leave a person with altitude sickness alone or send them down by themselves.",
+        "Do not use alcohol or sleeping pills at altitude; they slow breathing during sleep."
+      ],
+      "watch_for": [
+        "Symptoms often start 6 to 12 hours after arriving at a new altitude, and are often worst at night.",
+        "Clumsiness and confusion, which are danger signs that are easy to dismiss as fatigue.",
+        "Breathlessness that persists after resting."
+      ],
+      "notes": [
+        "Above 3,000 m (10,000 ft), don't raise your sleeping altitude by more than about 500 m (1,600 ft) a day, and take a rest day every 3 to 4 days.",
+        "Climb high, sleep low: day hikes higher than camp help you acclimatize.",
+        "Acetazolamide can prevent and treat AMS; ask a doctor before your trip."
+      ]
+    },
+    {
+      "id": "illness_poison_ivy_oak_sumac",
+      "category": "Illness",
+      "title": "Poison Ivy, Oak and Sumac",
+      "summary": "Identify the plants, wash off their oil fast, and manage the itchy rash.",
+      "difficulty": "basic",
+      "tags": [
+        "poison ivy",
+        "poison oak",
+        "poison sumac",
+        "rash",
+        "urushiol",
+        "itch",
+        "plants"
+      ],
+      "steps": [
+        "Learn the plants: poison ivy and poison oak usually have three leaflets per leaf; poison sumac has 7 to 13 leaflets and grows in wet areas.",
+        "After contact, wash the skin with soap and cool water as soon as possible, ideally within minutes. Scrub under fingernails.",
+        "Wash clothing, boots, tools and gear that touched the plant; the oil stays active on them for a long time.",
+        "Rinse pets that ran through the plants, wearing gloves.",
+        "For the rash, use cool compresses, oatmeal baths, calamine lotion or hydrocortisone cream.",
+        "Take an oral antihistamine to help with itching and sleep."
+      ],
+      "do_not": [
+        "Do not burn poison ivy, oak or sumac; the smoke can cause a severe reaction in the lungs, eyes and throat.",
+        "Do not scratch the rash; broken skin can become infected.",
+        "Do not use antihistamine creams on the rash; they can cause another skin reaction."
+      ],
+      "watch_for": [
+        "A rash on the face, eyes, mouth or genitals, or over a large part of the body.",
+        "Trouble breathing or swallowing, especially after exposure to smoke.",
+        "Pus, increasing pain or fever, which suggest infection."
+      ],
+      "notes": [
+        "The rash usually appears 12 to 72 hours after contact and lasts 1 to 3 weeks. Fluid from blisters doesn't spread it; leftover oil on skin and gear does.",
+        "Leaves of three, let it be. In winter, bare vines and stems still carry the oil."
+      ]
+    },
+    {
+      "id": "illness_waterborne",
+      "category": "Illness",
+      "title": "Waterborne Illness (Giardia and Others)",
+      "summary": "Recognize illness from untreated water, rehydrate properly and keep it from spreading through a group.",
+      "difficulty": "basic",
+      "tags": [
+        "giardia",
+        "cryptosporidium",
+        "waterborne illness",
+        "diarrhea",
+        "contaminated water",
+        "oral rehydration"
+      ],
+      "steps": [
+        "Suspect waterborne illness with diarrhea, cramps, gas, bloating or nausea after drinking untreated water. Giardia often starts 1 to 2 weeks after exposure, so symptoms may begin after the trip.",
+        "Replace fluids and salts. Use oral rehydration salts, or make a solution with 1 L (about 1 quart) of safe water, 6 level teaspoons of sugar and half a level teaspoon of salt.",
+        "Sip small amounts often if nauseated, and keep drinking as long as diarrhea continues.",
+        "Eat bland food as appetite allows.",
+        "Wash hands with soap after using the toilet and before handling food, and don't share water bottles or prepare food for others.",
+        "See a doctor if symptoms last more than a few days. Giardia and some others need prescription treatment."
+      ],
+      "do_not": [
+        "Do not drink untreated water to stay hydrated while ill; you risk a second infection.",
+        "Do not rely on anti-diarrhea medicine if there's fever or blood in the stool."
+      ],
+      "watch_for": [
+        "Signs of dehydration: little or dark urine, dizziness, dry mouth, confusion. These are most dangerous in children and older adults.",
+        "Blood in the stool, high fever or severe belly pain.",
+        "Symptoms that come and go for weeks, which is typical of untreated Giardia."
+      ],
+      "notes": [
+        "Hand sanitizer does not kill Cryptosporidium. Wash with soap and water when you can.",
+        "See Water Purification in the Survival Guide for how to treat water before drinking."
+      ]
+    },
+    {
+      "id": "illness_acute_stress_panic",
+      "category": "Illness",
+      "title": "Acute Stress and Panic",
+      "summary": "Calm your own body in a crisis and give basic psychological first aid to someone overwhelmed.",
+      "difficulty": "basic",
+      "tags": [
+        "panic",
+        "panic attack",
+        "stress",
+        "anxiety",
+        "psychological first aid",
+        "breathing",
+        "grounding",
+        "shock"
+      ],
+      "steps": [
+        "Notice the signs: racing heart, fast breathing, shaking, tunnel vision, freezing or being unable to think clearly.",
+        "Slow your breathing: breathe in for a count of 4, hold for 4, out for 4, hold for 4, and repeat for a few minutes.",
+        "Ground yourself: name 5 things you can see, 4 you can touch, 3 you can hear, 2 you can smell and 1 you can taste.",
+        "Shrink the problem to the next small task, such as putting on a jacket or drinking water. Then do the one after that.",
+        "To help someone else, stay calm, speak slowly and simply, and sit with them. Tell them who you are and that you're there to help.",
+        "Make sure they're physically safe and see to basic needs: warmth, water, food, rest.",
+        "Listen without pushing them to talk about what happened, and give clear, accurate information about what's being done.",
+        "Help them connect with family, friends or other support as soon as possible."
+      ],
+      "do_not": [
+        "Do not tell someone to 'calm down' or that they're overreacting.",
+        "Do not force someone to describe a traumatic event in detail.",
+        "Do not assume chest pain or shortness of breath is panic, especially in older adults; rule out a medical cause."
+      ],
+      "watch_for": [
+        "Talk of suicide or self-harm. In the US, call or text 988 to reach the Suicide & Crisis Lifeline.",
+        "Confusion or unusual behavior that could come from a head injury, low blood sugar, hypothermia or altitude sickness.",
+        "Stress reactions that don't ease over the following weeks."
+      ],
+      "notes": [
+        "Strong reactions to an emergency are normal and usually fade over days to weeks.",
+        "Routine, purposeful tasks and staying connected with others help groups cope during long emergencies."
+      ]
+    },
+    {
+      "id": "preventive_field_hygiene_sanitation",
+      "category": "Preventive",
+      "title": "Field Hygiene and Sanitation",
+      "summary": "Dispose of human waste, wash hands and handle camp water and dishes so illness doesn't spread through a group.",
+      "difficulty": "basic",
+      "tags": [
+        "sanitation",
+        "hygiene",
+        "cat hole",
+        "latrine",
+        "handwashing",
+        "human waste",
+        "camp",
+        "leave no trace"
+      ],
+      "steps": [
+        "Choose a toilet site at least 60 m (200 ft, about 70 adult steps) from water, trails and camp.",
+        "Dig a cat hole 15 to 20 cm (6 to 8 in) deep and about 10 to 15 cm (4 to 6 in) wide. Afterward, fill it with the original soil and disguise it.",
+        "Pack out used toilet paper and hygiene products in a sealed bag, or bury toilet paper deep in the cat hole where that's allowed.",
+        "Wash hands with soap and water after using the toilet and before handling food. Use alcohol-based sanitizer when hands aren't visibly dirty and water is scarce.",
+        "For longer stays or groups, dig a single latrine trench away from water and cover waste with soil after each use.",
+        "Wash dishes and yourself at least 60 m from water, using small amounts of biodegradable soap, and scatter strained wastewater widely.",
+        "Pour water from group containers instead of dipping hands or cups into them."
+      ],
+      "do_not": [
+        "Do not relieve yourself near water sources, campsites or dry streambeds that may flow after rain.",
+        "Do not share water bottles, utensils or towels when someone is sick.",
+        "Do not let anyone with diarrhea or vomiting prepare food for others."
+      ],
+      "watch_for": [
+        "Several people in a group falling ill with diarrhea, which suggests contaminated water, food or poor handwashing.",
+        "Places with special rules, such as deserts, alpine areas, canyons and some rivers, where you must pack out all waste."
+      ],
+      "notes": [
+        "Hand sanitizer does not kill every germ, including norovirus and Cryptosporidium. Soap and water is best.",
+        "A small trowel, toilet paper, sanitizer and zip-top bags make a complete backcountry toilet kit."
       ]
     }
   ]

@@ -9,6 +9,7 @@ import {
 } from '../../constants';
 import emergencyData from '../data/emergency.json';
 import healthData from '../data/health.json';
+import homePrepData from '../data/homePrep.json';
 import roadsideData from '../data/roadside.json';
 import survivalData from '../data/survival.json';
 import toolsData from '../data/tools.json';
@@ -231,6 +232,7 @@ function getStaticSearchableItems(): SearchableItem[] {
     ...toolsData.entries,
     ...weatherData.entries,
     ...roadsideData.entries,
+    ...homePrepData.entries,
   ];
 
   allReferenceEntries.forEach((entry) => {

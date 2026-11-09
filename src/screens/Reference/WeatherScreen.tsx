@@ -9,12 +9,14 @@ const categoryMap: Record<string, string> = {
   RainAndFlooding: 'Rain & Flooding',
   WindAndStorms: 'Wind & Storms',
   SnowAndIce: 'Snow & Ice',
+  SmokeAndFog: 'Smoke & Fog',
 };
 
-const weatherCategories: CategoryType[] = [
+/** Exported so tests can check every data category has a row here. */
+export const weatherCategories: CategoryType[] = [
   {
     title: 'Cold Weather',
-    icon: 'snow-outline',
+    icon: 'thermometer-outline',
     id: 'weather_cold_weather',
     category: categoryMap.ColdWeather,
     data: data.entries,
@@ -42,9 +44,16 @@ const weatherCategories: CategoryType[] = [
   },
   {
     title: 'Snow & Ice',
-    icon: 'snow-sharp',
+    icon: 'snow-outline',
     id: 'weather_snow_and_ice',
     category: categoryMap.SnowAndIce,
+    data: data.entries,
+  },
+  {
+    title: 'Smoke & Fog',
+    icon: 'cloud-outline',
+    id: 'weather_smoke_fog',
+    category: categoryMap.SmokeAndFog,
     data: data.entries,
   },
 ];

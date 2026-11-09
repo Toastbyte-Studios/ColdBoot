@@ -1,0 +1,592 @@
+{
+  "metadata": {
+    "name": "Home Prep",
+    "version": "1.0.0",
+    "last_updated": "2026-11-09",
+    "disclaimer": "This information is general home preparedness guidance and is not a substitute for instructions from emergency officials, your utility companies or your doctor. When local officials give directions during an emergency, follow them.",
+    "categories": ["Water", "Food", "Power & Heat", "Sanitation", "Planning"],
+    "difficulty_levels": ["basic", "intermediate", "advanced"]
+  },
+  "entries": [
+    {
+      "id": "homeprep_water_storage",
+      "category": "Water",
+      "title": "Storing Water",
+      "summary": "Store enough clean water for your household, in the right containers, and keep it fresh.",
+      "difficulty": "basic",
+      "tags": [
+        "water storage",
+        "emergency water",
+        "how much water",
+        "water containers",
+        "water barrel",
+        "prepping"
+      ],
+      "steps": [
+        "Plan on at least 4 L (1 gallon) per person per day for drinking and basic hygiene. Store at least 3 days' worth, and 2 weeks' worth at home if you can.",
+        "Add more for nursing mothers, children, sick people, hot climates and pets.",
+        "Use food-grade containers made for water: unopened bottled water, or clean PETE (#1) or HDPE (#2) water jugs and barrels.",
+        "Clean reused containers with dish soap and water, then sanitize with 1 teaspoon of unscented bleach per liter (quart) of water. Swish, let stand 30 seconds, empty and air dry.",
+        "Fill them with tap water from a treated public supply; it needs nothing added. Well water or other sources should be disinfected first.",
+        "Seal the containers, label them with the date, and store them in a cool, dark place off the floor.",
+        "Replace home-filled water every 6 months. Keep commercially bottled water until its expiration date."
+      ],
+      "do_not": [
+        "Do not reuse milk or juice jugs; they're hard to clean and break down over time.",
+        "Do not store water containers near gasoline, pesticides or other chemicals; vapors can pass through plastic.",
+        "Do not store all your water in one large container that you can't move or carry."
+      ],
+      "watch_for": [
+        "Leaks, cloudiness or algae in stored water.",
+        "Weight: a 208 L (55 gal) barrel weighs about 208 kg (460 lb) full. Put it where it will stay and get a pump or siphon to draw from it."
+      ],
+      "notes": [
+        "Mix sizes: large containers at home, and smaller jugs or bottles you can carry if you evacuate.",
+        "Your water heater, pipes and ice also hold water you can use in an emergency. See Emergency Water Sources at Home."
+      ]
+    },
+    {
+      "id": "homeprep_water_disinfecting",
+      "category": "Water",
+      "title": "Disinfecting Water at Home",
+      "summary": "Make water safe to drink by boiling it or treating it with household bleach in the right amount.",
+      "difficulty": "basic",
+      "tags": [
+        "boil water",
+        "bleach",
+        "water disinfection",
+        "boil water notice",
+        "chlorine",
+        "safe drinking water",
+        "purification"
+      ],
+      "steps": [
+        "If water is cloudy, let it settle, then filter it through a clean cloth, paper towel or coffee filter first.",
+        "Boiling is the most reliable method: bring water to a rolling boil for 1 minute, or 3 minutes above 2,000 m (6,500 ft). Let it cool and store it in clean, covered containers.",
+        "If you can't boil, use plain, unscented liquid household bleach. Check the label for its strength (sodium hypochlorite percentage).",
+        "For 6% bleach, add 8 drops per 4 L (1 gallon), or 2 drops per liter (quart).",
+        "For 8.25% bleach, add 6 drops per 4 L (1 gallon), or 2 drops per liter (quart).",
+        "Double the dose if the water is still cloudy, colored or very cold after filtering.",
+        "Stir and wait at least 30 minutes. The water should have a slight chlorine smell. If not, repeat the dose and wait 15 more minutes.",
+        "Improve the flat taste of boiled water by pouring it back and forth between clean containers."
+      ],
+      "do_not": [
+        "Do not use scented, color-safe, splash-less or bleach with added cleaners.",
+        "Do not expect boiling or bleach to remove chemicals, fuel, heavy metals or salt.",
+        "Do not use water that smells of fuel or chemicals, even after treatment."
+      ],
+      "watch_for": [
+        "Old bleach, which loses strength over time. Use bleach less than about a year old.",
+        "Boil-water notices from your water utility. Use treated water for drinking, cooking, brushing teeth, washing dishes and making ice."
+      ],
+      "notes": [
+        "Use purification tablets for the organisms and contact times specified on their label. Portable filters alone may not remove bacteria or viruses; follow filtration with boiling or appropriate disinfection. During a boil-water advisory, follow the utility's instructions even for filtered water.",
+        "Floodwater may contain chemicals that no home treatment removes. Use stored water instead whenever possible."
+      ]
+    },
+    {
+      "id": "homeprep_emergency_water_sources",
+      "category": "Water",
+      "title": "Emergency Water Sources at Home",
+      "summary": "Find the hidden water already in your home when the taps stop, and protect it from contamination.",
+      "difficulty": "intermediate",
+      "tags": [
+        "water heater",
+        "emergency water",
+        "pipes",
+        "toilet tank",
+        "ice",
+        "water shutoff",
+        "no running water"
+      ],
+      "steps": [
+        "If officials report contamination of the public water supply, close your home's main water valve right away so dirty water doesn't enter your pipes and water heater.",
+        "Water heater: turn off the power or gas first, close the cold-water inlet valve at the top, open the drain valve at the bottom, and open a hot-water tap in the house to let air in.",
+        "Let the first water from the water heater run out until sediment clears, then collect the rest in clean containers.",
+        "Pipes: open the highest faucet in the house to let air in, then collect water from the lowest faucet.",
+        "Use melted ice cubes, and the liquid in canned fruits and vegetables.",
+        "Toilet tank water (not the bowl) can be used if it doesn't contain colored cleaners or tablets. Disinfect it before drinking.",
+        "Treat any water you're unsure of by boiling or with bleach. See Disinfecting Water at Home."
+      ],
+      "do_not": [
+        "Do not turn the water heater's power or gas back on until the tank is full again; an empty tank can be damaged or start a fire.",
+        "Do not drink water from swimming pools, hot tubs or waterbeds; use it for flushing toilets and cleaning only.",
+        "Do not use water from radiators or heating systems."
+      ],
+      "watch_for": [
+        "Hot water from the water heater; let it cool before draining.",
+        "Water that collected after the supply was contaminated; disinfect it before drinking."
+      ],
+      "notes": [
+        "A typical water heater holds 150 to 300 L (40 to 80 gal).",
+        "Learn where your main water shutoff is now. See Shutting Off Utilities."
+      ]
+    },
+    {
+      "id": "homeprep_food_power_outage",
+      "category": "Food",
+      "title": "Food Safety When the Power Fails",
+      "summary": "Keep refrigerated and frozen food cold as long as possible, and know what to throw out.",
+      "difficulty": "basic",
+      "tags": [
+        "power outage",
+        "refrigerator",
+        "freezer",
+        "food safety",
+        "spoiled food",
+        "dry ice",
+        "blackout"
+      ],
+      "steps": [
+        "Keep the refrigerator and freezer doors closed as much as possible.",
+        "A closed refrigerator keeps food cold for about 4 hours. A full freezer holds its temperature for about 48 hours, a half-full one about 24.",
+        "Put appliance thermometers in the refrigerator and freezer before an emergency so you can check temperatures without guessing.",
+        "If the outage will last longer than 4 hours, move perishables into coolers packed with ice or frozen gel packs.",
+        "Use dry ice for a long outage if you can get it; handle it with gloves and keep the room ventilated.",
+        "Throw out perishable food such as meat, poultry, fish, eggs, milk, soft cheese and leftovers that has been above 4 °C (40 °F) for more than 2 hours.",
+        "Frozen food that still has ice crystals or is at 4 °C (40 °F) or below can be refrozen or cooked."
+      ],
+      "do_not": [
+        "Do not taste food to decide whether it's safe; spoiled food can look and smell normal.",
+        "Do not store dry ice in a closed space where people sleep, or touch it with bare hands.",
+        "Do not put food outside in the snow; sun and animals can make it unsafe."
+      ],
+      "watch_for": [
+        "Insulin and refrigerated medicines; see Medications and Medical Needs.",
+        "Food that touched floodwater, which must be thrown out unless it's in sealed metal cans that can be cleaned."
+      ],
+      "notes": [
+        "Keep frozen water bottles in the freezer; they fill empty space, keep it cold longer and become drinking water.",
+        "When in doubt, throw it out."
+      ]
+    },
+    {
+      "id": "homeprep_food_supply_rotation",
+      "category": "Food",
+      "title": "Building and Rotating a Food Supply",
+      "summary": "Build a supply of food your household will actually eat, store it well and use it before it expires.",
+      "difficulty": "basic",
+      "tags": [
+        "food storage",
+        "emergency food",
+        "pantry",
+        "rotation",
+        "shelf life",
+        "canned food",
+        "prepping"
+      ],
+      "steps": [
+        "Start with at least 3 days of food for everyone, and build toward 2 weeks or more.",
+        "Store what you already eat: canned meats, fish, beans, soups, vegetables and fruit; peanut butter; rice, pasta and oats; crackers; dried fruit and nuts.",
+        "Choose foods that need little water or cooking, and include comfort foods.",
+        "Plan for special needs: infant formula, allergies, medical diets and pet food.",
+        "Store food in a cool, dry, dark place, ideally below 21 °C (70 °F), off the floor and in sealed containers to keep pests out.",
+        "Rotate: put new purchases at the back and use the oldest first.",
+        "Check dates every 6 months, and eat or donate food before it expires.",
+        "Keep a manual can opener and basic utensils with the supply."
+      ],
+      "do_not": [
+        "Do not store food in a garage, attic or car where temperatures swing widely.",
+        "Do not stock up on foods nobody in the household likes; they won't get rotated.",
+        "Do not eat from cans that are bulging, leaking, deeply dented along a seam or badly rusted."
+      ],
+      "watch_for": [
+        "Salty foods, which increase how much water you need.",
+        "Pests such as weevils, mice and moths in grains."
+      ],
+      "notes": [
+        "Pantry tracks what you have and when it expires, and the Depletion Calculator shows how long it will last.",
+        "An adult typically needs around 2,000 calories a day, more when working hard or in the cold."
+      ],
+      "related_screen": "Pantry",
+      "related_screen_label": "Open Pantry"
+    },
+    {
+      "id": "homeprep_cooking_without_power",
+      "category": "Food",
+      "title": "Cooking Without Power",
+      "summary": "Cook and heat food safely during an outage, and use less fuel doing it.",
+      "difficulty": "basic",
+      "tags": [
+        "cooking without power",
+        "camp stove",
+        "grill",
+        "power outage",
+        "fuel",
+        "no-cook meals",
+        "outage"
+      ],
+      "steps": [
+        "Use grills, camp stoves and propane burners outdoors only, away from doors, windows and vents.",
+        "Indoors, cook only with appliances made for indoor use, such as a fireplace or wood stove that vents to a chimney.",
+        "Plan some no-cook meals: canned food can be eaten cold, and sandwiches, cereal and fruit need no heat.",
+        "Save fuel: use lids, cut food into small pieces, and soak beans and pasta as their cooking instructions allow. Do not shorten safety-critical boiling times.",
+        "Retained-heat cooking: follow a tested recipe with specified initial boiling and holding times, rather than switching off as soon as food boils. Dried kidney beans must be soaked for at least 5 hours, drained, and boiled briskly in fresh water for at least 30 minutes before any retained-heat stage.",
+        "Keep a fire extinguisher and a pot lid nearby to smother small grease fires."
+      ],
+      "do_not": [
+        "Do not use a charcoal or gas grill, camp stove or generator indoors, in a garage or on an enclosed porch.",
+        "Do not use a gas oven or range to heat your home.",
+        "Do not leave cooking unattended."
+      ],
+      "watch_for": [
+        "Signs of carbon monoxide poisoning: headache, dizziness, nausea, confusion. Get everyone into fresh air.",
+        "Fire hazards near grills and stoves: overhanging branches, fences and dry grass."
+      ],
+      "notes": [
+        "Store extra propane tanks outdoors, upright and away from the house.",
+        "A thermos keeps water hot for hours after one boil."
+      ]
+    },
+    {
+      "id": "homeprep_power_outage",
+      "category": "Power & Heat",
+      "title": "Getting Through a Power Outage",
+      "summary": "Keep light, communications and essential devices running through a long outage, and stay safe while you do.",
+      "difficulty": "basic",
+      "tags": [
+        "power outage",
+        "blackout",
+        "grid down",
+        "flashlight",
+        "power bank",
+        "downed power line",
+        "electricity"
+      ],
+      "steps": [
+        "Use flashlights and battery lanterns for light, not candles.",
+        "Unplug sensitive electronics and appliances to protect them from a surge when power returns. Leave one lamp switched on so you know when it's back.",
+        "Save phone battery: lower screen brightness, close apps, and turn on low-power mode. Charge phones from power banks or a car outside.",
+        "Keep a battery-powered or hand-crank radio for news.",
+        "If someone depends on powered medical equipment, have a backup power plan, and know where to go if it runs out.",
+        "Check on neighbors, especially older people and those living alone.",
+        "Report the outage to your utility, and treat traffic lights that are out as all-way stops."
+      ],
+      "do_not": [
+        "Do not go near downed power lines; stay at least 10 m (33 ft) away and assume they're live.",
+        "Do not run a car in an attached garage, even with the door open, to charge devices or stay warm.",
+        "Do not open the refrigerator and freezer more than you must."
+      ],
+      "watch_for": [
+        "Heat or cold in the house; see Staying Warm Without Power and Staying Cool Without Power.",
+        "Fire from candles, space heaters and overloaded extension cords."
+      ],
+      "notes": [
+        "Device Status shows your phone's battery and how long it may last.",
+        "Keep spare batteries and charged power banks with your emergency supplies, and rotate them."
+      ],
+      "related_screen": "DeviceStatus",
+      "related_screen_label": "Open Device Status"
+    },
+    {
+      "id": "homeprep_generator_safety",
+      "category": "Power & Heat",
+      "title": "Generator Safety",
+      "summary": "Run a portable generator without poisoning your household, electrocuting anyone or starting a fire.",
+      "difficulty": "intermediate",
+      "tags": [
+        "generator",
+        "portable generator",
+        "carbon monoxide",
+        "backfeed",
+        "transfer switch",
+        "extension cord",
+        "power outage"
+      ],
+      "steps": [
+        "Run the generator outdoors only, at least 6 m (20 ft) from the house, with the exhaust pointing away from doors, windows and vents.",
+        "Install battery-powered carbon monoxide alarms near sleeping areas and test them.",
+        "Set it on a dry, level surface, sheltered from rain under an open canopy, never in water or on wet ground.",
+        "Plug appliances into the generator directly, with heavy-duty outdoor extension cords rated for the load.",
+        "Add up the wattage of what you'll run, including the extra startup surge of motors such as refrigerators and pumps, and stay under the generator's rating.",
+        "Turn off the generator and let it cool before refueling.",
+        "Store fuel in approved containers away from the house and any flame, and add stabilizer for long-term storage."
+      ],
+      "do_not": [
+        "Do not run a generator inside a home, garage, basement, crawl space or shed, even with doors and windows open.",
+        "Do not plug a generator into a wall outlet to power the house (backfeeding). It can electrocute utility workers and neighbors. Have an electrician install a transfer switch.",
+        "Do not refuel a hot or running generator."
+      ],
+      "watch_for": [
+        "Headache, dizziness, nausea or tiredness indoors while the generator runs. Get everyone into fresh air and call for help.",
+        "Damaged or frayed cords, and cords running under rugs or through water."
+      ],
+      "notes": [
+        "Run the generator for a while every few months so it starts when you need it.",
+        "Many carbon monoxide deaths after storms come from generators. Placement is what keeps you safe."
+      ]
+    },
+    {
+      "id": "homeprep_staying_warm_without_power",
+      "category": "Power & Heat",
+      "title": "Staying Warm Without Power",
+      "summary": "Keep your household warm through a winter outage without risking fire or carbon monoxide.",
+      "difficulty": "basic",
+      "tags": [
+        "no heat",
+        "winter outage",
+        "staying warm",
+        "space heater",
+        "frozen pipes",
+        "cold house",
+        "insulation"
+      ],
+      "steps": [
+        "Pick one small room, ideally on the sunny side and away from outside walls, and gather everyone there.",
+        "Close doors to other rooms, and hang blankets over doorways and windows. Open curtains on sunny windows by day and close them at night.",
+        "Wear layers, a hat and socks, and use sleeping bags and blankets. Sleeping together in one room helps.",
+        "Eat regular meals and drink warm fluids; your body burns food for heat.",
+        "Use only heaters rated for indoor use, follow their ventilation instructions, and keep a carbon monoxide alarm nearby.",
+        "A fireplace or wood stove that vents to a chimney is a safe heat source; open the damper first.",
+        "Prevent frozen pipes: let cold-water taps drip and open cabinet doors under sinks.",
+        "If it gets too cold to stay safely, go to a warming center or a friend's home."
+      ],
+      "do_not": [
+        "Do not heat your home with an oven, gas range, grill, camp stove or generator.",
+        "Do not leave space heaters unattended or near curtains and bedding.",
+        "Do not use a fireplace whose chimney hasn't been inspected."
+      ],
+      "watch_for": [
+        "Hypothermia in older adults, infants and anyone sick: shivering, confusion, drowsiness, slurred speech.",
+        "Burst pipes when the heat comes back. Know where your main water shutoff is."
+      ],
+      "notes": [
+        "A tent set up indoors and covered with blankets holds body heat well.",
+        "Hot water bottles in sleeping bags add warmth for hours."
+      ]
+    },
+    {
+      "id": "homeprep_staying_cool_without_power",
+      "category": "Power & Heat",
+      "title": "Staying Cool Without Power",
+      "summary": "Get through a heat wave with no air conditioning, and spot heat illness before it becomes an emergency.",
+      "difficulty": "basic",
+      "tags": [
+        "heat wave",
+        "no air conditioning",
+        "staying cool",
+        "heat illness",
+        "power outage",
+        "summer",
+        "cooling center"
+      ],
+      "steps": [
+        "Close blinds and curtains on sunny windows during the day.",
+        "Open windows at night and early morning to let cooler air through, especially on opposite sides of the house.",
+        "Stay on the lowest floor, where it's coolest.",
+        "Drink water regularly, even if you're not thirsty, and avoid alcohol and heavy meals.",
+        "Cool your body: take cool showers or baths, and put damp cloths on your neck, wrists and armpits.",
+        "Do heavy work in the early morning or evening, and rest in the shade during the hottest hours.",
+        "Go to a cooling center, library or other air-conditioned place if you can, especially during the hottest part of the day.",
+        "Check on older neighbors, infants, people with chronic illness and pets at least twice a day."
+      ],
+      "do_not": [
+        "Do not rely on a fan alone when it's very hot; once the air is hotter than about 35 °C (95 °F), fans can't prevent heat illness.",
+        "Do not leave anyone, including pets, in a parked car."
+      ],
+      "watch_for": [
+        "Heavy sweating, weakness, headache, nausea and cramps: heat exhaustion. Move to a cooler place and cool down.",
+        "Confusion, fainting, or hot skin, dry or still sweating: heat stroke. Call emergency services and cool the person immediately.",
+        "Medications that make heat illness more likely; ask a doctor or pharmacist."
+      ],
+      "notes": [
+        "The Extreme Heat Wave scenario card covers the first hours and days.",
+        "Heat kills more people in the US than any other kind of weather."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "homeprep_sanitation_no_water",
+      "category": "Sanitation",
+      "title": "Toilets and Sanitation When the Water's Off",
+      "summary": "Deal with human waste safely when toilets won't flush, and keep the household from getting sick.",
+      "difficulty": "basic",
+      "tags": [
+        "emergency toilet",
+        "bucket toilet",
+        "sanitation",
+        "no water",
+        "sewer",
+        "waste disposal",
+        "hygiene"
+      ],
+      "steps": [
+        "If the sewer works but the water is off, flush by pouring a bucket of water (about 4 to 8 L, or 1 to 2 gallons) quickly into the bowl. Use water you can't drink, such as bath or pool water.",
+        "If the sewer may be broken, as after an earthquake or flood, don't flush at all.",
+        "Make an emergency toilet: line a sturdy bucket with two heavy-duty trash bags, or line the empty toilet bowl the same way.",
+        "After each use, cover waste with a scoop of cat litter, sawdust, shredded paper or dry soil to absorb liquid and cut odor. Keep the lid on.",
+        "When a bag is no more than half full, tie it shut and put it in a covered trash can or container outside, away from water and living areas, until it can be collected.",
+        "Set up a handwashing station near the toilet: a jug of water with a spigot, soap and a bucket to catch the water.",
+        "Clean toilet areas and surfaces regularly with a bleach solution, about 80 ml (1/3 cup) of bleach per 4 L (1 gallon) of water."
+      ],
+      "do_not": [
+        "Do not bury waste near wells, gardens or water you might drink.",
+        "Do not put bags of waste in with regular household trash without checking local guidance.",
+        "Do not skip handwashing; diarrhea spreads fast in households without running water."
+      ],
+      "watch_for": [
+        "Diarrhea or vomiting in the household. Keep the sick person's toilet separate if you can.",
+        "Sewage backing up into drains, which means the sewer is damaged. Stop using any water that goes down a drain."
+      ],
+      "notes": [
+        "Keep an emergency toilet kit ready: a bucket with a lid, heavy-duty bags, absorbent material, toilet paper, gloves, hand sanitizer and bleach.",
+        "Using separate containers for urine and feces reduces odor and the volume of waste you need to store."
+      ]
+    },
+    {
+      "id": "homeprep_go_bag",
+      "category": "Planning",
+      "title": "Building a Go-Bag",
+      "summary": "Pack a bag for each person with what you'd need to leave home in minutes and get by for several days.",
+      "difficulty": "basic",
+      "tags": [
+        "go bag",
+        "bug out bag",
+        "evacuation kit",
+        "72 hour kit",
+        "emergency kit",
+        "grab and go",
+        "prepping"
+      ],
+      "steps": [
+        "Pack one bag per person, light enough for them to carry. Keep bags near the door or in the car.",
+        "Water and food: water for at least a day plus a way to treat more, and 3 days of food that needs no cooking.",
+        "Health: a first aid kit, a 7-day supply of medications, spare glasses or contacts, and hygiene items.",
+        "Light and communication: flashlight or headlamp, extra batteries, a battery-powered or hand-crank radio, a phone charger and power bank.",
+        "Documents: copies of IDs, insurance, prescriptions and important contacts in a waterproof bag, plus cash in small bills.",
+        "Clothing: a change of clothes, warm layers, rain gear and sturdy shoes.",
+        "Tools: multitool, whistle, N95 masks, duct tape, local paper map, and work gloves.",
+        "Add what's specific to your household: infant supplies, pet food and leashes, mobility aids, a comfort item for children.",
+        "Check the bags every 6 months: replace expired food, water, medicine and batteries, and update clothing for the season."
+      ],
+      "do_not": [
+        "Do not pack so much that you can't carry the bag a long distance.",
+        "Do not keep the only copy of important documents in the bag."
+      ],
+      "watch_for": [
+        "Children who've outgrown clothes and shoes in their bag.",
+        "Heat in a car trunk, which spoils food, medicine and batteries faster."
+      ],
+      "notes": [
+        "Turn this list into a Checklist so you can tick items off as you pack and review.",
+        "Your Emergency Planner holds contacts and rally points that pair with the go-bag."
+      ],
+      "related_screen": "Checklist",
+      "related_screen_label": "Open Checklist"
+    },
+    {
+      "id": "homeprep_family_emergency_plan",
+      "category": "Planning",
+      "title": "Making a Household Emergency Plan",
+      "summary": "Decide ahead of time how your household will reach each other, where you'll meet and how you'll leave.",
+      "difficulty": "basic",
+      "tags": [
+        "emergency plan",
+        "family plan",
+        "meeting place",
+        "rally point",
+        "out of area contact",
+        "evacuation route",
+        "communication plan"
+      ],
+      "steps": [
+        "Choose an out-of-area contact everyone will call or text to check in. Long-distance connections often work when local ones are jammed.",
+        "Pick two meeting places: one just outside your home, and one outside your neighborhood in case you can't get home.",
+        "Plan two evacuation routes out of your area in different directions, and know where you would go.",
+        "Find out the emergency plans at work, schools and child care, and who is allowed to pick up children.",
+        "Plan for anyone who needs extra help: older relatives, people with disabilities, and pets.",
+        "Write contacts down on paper as well as in your phone, and give each person a copy.",
+        "Practice the plan at least once a year, including a home fire drill and driving the evacuation routes."
+      ],
+      "do_not": [
+        "Do not rely on calling during a disaster; text messages often get through when calls don't.",
+        "Do not assume everyone will be home when something happens."
+      ],
+      "watch_for": [
+        "Plans that only one person knows. Make sure everyone, including children, knows the basics.",
+        "Out-of-date phone numbers and changes in schools or work."
+      ],
+      "notes": [
+        "The Emergency Planner stores contacts, rally points and your communication plan, all available offline."
+      ],
+      "related_screen": "EmergencyPlan",
+      "related_screen_label": "Open Emergency Planner"
+    },
+    {
+      "id": "homeprep_shutting_off_utilities",
+      "category": "Planning",
+      "title": "Shutting Off Utilities",
+      "summary": "Know where your gas, water and electricity shutoffs are, and when and how to turn them off.",
+      "difficulty": "intermediate",
+      "tags": [
+        "gas shutoff",
+        "water shutoff",
+        "main breaker",
+        "gas leak",
+        "utilities",
+        "burst pipe",
+        "earthquake"
+      ],
+      "steps": [
+        "Find and label your gas meter valve, main water shutoff and electrical panel now, before an emergency.",
+        "Gas: shut it off only if you smell gas, hear hissing, or officials tell you to. Use a wrench to turn the valve a quarter turn so it runs crosswise to the pipe.",
+        "If you smell gas, get everyone out first, then shut off the gas from outside if you can do it safely, and call the gas company from away from the building.",
+        "Water: turn the main valve clockwise to close it when a pipe bursts, or when officials report the water supply is contaminated.",
+        "Electricity: switch off the individual circuit breakers first, then the main breaker. To restore power, turn on the main first, then the circuits one at a time.",
+        "Keep a wrench tied near the gas meter, and show every adult in the household where the shutoffs are."
+      ],
+      "do_not": [
+        "Do not turn the gas back on yourself; once it's off, only the gas company should restore it and relight pilot lights.",
+        "Do not touch the electrical panel if you're standing in water or the area is wet. Call an electrician or the utility.",
+        "Do not use light switches, phones or anything that could spark inside a building that smells of gas."
+      ],
+      "watch_for": [
+        "A meter that's still spinning or a hissing sound after shutting the gas off; leave and call for help.",
+        "Water damage near the panel or appliances after a flood; have them checked before using them."
+      ],
+      "notes": [
+        "Some homes have automatic seismic or excess-flow gas shutoff valves; know whether yours does.",
+        "Turning off gas unnecessarily can leave you without heat for days while you wait for the utility."
+      ]
+    },
+    {
+      "id": "homeprep_medications_medical",
+      "category": "Planning",
+      "title": "Medications and Medical Needs",
+      "summary": "Keep medicines and medical supplies going through an emergency, including insulin and powered devices.",
+      "difficulty": "basic",
+      "tags": [
+        "medication",
+        "prescriptions",
+        "insulin",
+        "medical devices",
+        "oxygen",
+        "refills",
+        "emergency supply"
+      ],
+      "steps": [
+        "Keep a written list of everyone's medications, doses, allergies, conditions and doctors, in your go-bag and wallet.",
+        "Build a reserve of at least 7 days of prescription medicines, and more if your doctor and pharmacy allow early refills.",
+        "Store medicines in a cool, dry place and rotate them so the reserve stays in date.",
+        "Insulin in vials or cartridges, opened or not, can be kept unrefrigerated between 15 and 30 °C (59 to 86 °F) for up to 28 days. Check your product's label; some differ.",
+        "Keep insulin and other refrigerated medicines out of direct heat and sunlight, in an insulated bag with cool packs if possible, without letting them freeze.",
+        "For powered medical devices, keep backup batteries charged, know how long they last, and register with your utility's medical priority program if it has one.",
+        "Keep extra over-the-counter basics: pain relievers, antihistamines, anti-diarrhea medicine and oral rehydration salts."
+      ],
+      "do_not": [
+        "Do not use medicines that got wet in floodwater; replace them.",
+        "Do not use insulin that has frozen or looks cloudy when it should be clear.",
+        "Do not use oxygen near open flames, candles or a gas stove."
+      ],
+      "watch_for": [
+        "Running low on medicine during a long emergency. Contact a pharmacy early; many areas allow emergency refills during declared disasters.",
+        "Signs of illness getting worse without regular medication, such as high or low blood sugar or breathing trouble."
+      ],
+      "notes": [
+        "Ask your pharmacist which of your medicines are temperature-sensitive.",
+        "Keep a cooler and gel packs in the freezer for moving medicines quickly in an outage."
+      ]
+    }
+  ]
+}

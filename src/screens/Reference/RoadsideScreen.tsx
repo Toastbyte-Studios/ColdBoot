@@ -10,6 +10,7 @@ const categoryMap: Record<string, string> = {
   StuckAndRecovery: 'Stuck & Recovery',
   RoadsideSafety: 'Roadside Safety',
   VehicleKit: 'Vehicle Kit',
+  DrivingEmergencies: 'Driving Emergencies',
 };
 
 /** Exported so tests can check every data category has a row here. */
@@ -56,6 +57,13 @@ export const roadsideCategories: CategoryType[] = [
     category: categoryMap.VehicleKit,
     data: data.entries,
   },
+  {
+    title: 'Driving Emergencies',
+    icon: 'alert-circle-outline',
+    id: 'roadside_driving_emergencies',
+    category: categoryMap.DrivingEmergencies,
+    data: data.entries,
+  },
 ];
 
 /**
@@ -63,7 +71,7 @@ export const roadsideCategories: CategoryType[] = [
  *
  * @remarks
  * Lists roadside service categories (tires, battery, engine, recovery,
- * safety, vehicle kit) backed by `roadside.json`. Each row opens the shared
+ * safety, vehicle kit, driving emergencies) backed by `roadside.json`. Each row opens the shared
  * category screen, and entries render on the shared entry screen.
  *
  * @returns A React element containing the Roadside screen layout.

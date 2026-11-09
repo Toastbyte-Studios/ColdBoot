@@ -1,15 +1,17 @@
 import emergencyData from '../data/emergency.json';
 import healthData from '../data/health.json';
+import homePrepData from '../data/homePrep.json';
 import roadsideData from '../data/roadside.json';
 import survivalData from '../data/survival.json';
 import toolsData from '../data/tools.json';
 import weatherData from '../data/weather.json';
 import ReferenceEntryType from '../types/data-type';
 
-/** Every entry the Entry screen can open, from all six reference books. */
+/** Every entry the Entry screen can open, from all seven reference books. */
 export const ALL_REFERENCE_ENTRIES: readonly ReferenceEntryType[] = [
   ...emergencyData.entries,
   ...healthData.entries,
+  ...homePrepData.entries,
   ...roadsideData.entries,
   ...survivalData.entries,
   ...toolsData.entries,

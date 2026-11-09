@@ -1,15 +1,16 @@
 {
   "metadata": {
     "name": "Weather",
-    "version": "1.0.0",
-    "last_updated": "2025-12-14",
+    "version": "1.1.0",
+    "last_updated": "2026-11-09",
     "disclaimer": "This information provides general wilderness weather survival guidance. It is not a substitute for professional training. Use your judgment and adapt to real conditions.",
     "categories": [
       "Cold Weather",
       "Heat & Sun",
       "Rain & Flooding",
       "Wind & Storms",
-      "Snow & Ice"
+      "Snow & Ice",
+      "Smoke & Fog"
     ],
     "difficulty_levels": ["basic", "intermediate", "advanced"]
   },
@@ -59,7 +60,7 @@
         "Check exposed skin frequently, especially fingers, toes, nose, cheeks, and ears.",
         "Look for pale, waxy, numb, or hard skin—these are signs of frostbite.",
         "Move to shelter or block wind with a jacket, pack, or terrain feature.",
-        "Warm affected areas gradually using body heat (armpits, against warm skin, spare dry mittens).",
+        "Once you're sure the area won't refreeze, rewarm it in warm water, 37–39 °C (99–102 °F), that feels comfortable on unhurt skin. If you can't, warm it against body heat (armpits, belly, a companion's skin).",
         "Replace wet gloves or socks with dry materials if available.",
         "If rewarming begins, keep the area warm; repeated freezing after thawing causes severe damage.",
         "Avoid walking on frostbitten feet unless absolutely necessary; pressure can worsen injury."
@@ -108,8 +109,8 @@
       ],
       "watch_for": [
         "Headache, dizziness, weakness, rapid heartbeat.",
-        "Hot, flushed, dry skin (a sign of dangerous heatstroke).",
-        "Mental confusion, stumbling, or lack of sweating in extreme cases."
+        "Confusion, slurred speech, stumbling or collapse with hot skin, which may be dry or sweaty. This is heat stroke: call for help and cool the person immediately, ideally in cold water.",
+        "Seizures or loss of consciousness in extreme cases."
       ],
       "notes": [
         "Evaporation cools the body; wet a cloth and fan yourself when breeze is limited.",
@@ -126,7 +127,7 @@
       "steps": [
         "Cover skin with clothing, hats, or improvised shades (bandanas, wraps, cloth layers).",
         "Use natural shade whenever possible, such as trees, cliffs, or your shelter.",
-        "Moisten clothing in extreme heat to cool the skin while still blocking UV.",
+        "Moisten clothing in extreme heat to cool the skin, but stay in shade where you can; wet fabric lets through more UV.",
         "If burned, keep skin covered and out of direct sun.",
         "Cool the area with clean water or damp cloths to relieve heat and soothe pain.",
         "Drink extra water; sunburn increases dehydration."
@@ -240,6 +241,7 @@
       "difficulty": "advanced",
       "tags": ["lightning", "storm", "weather", "electrical", "high ground"],
       "steps": [
+        "There is no safe place outside in a thunderstorm. When you hear thunder, get into a substantial building or a hard-topped vehicle if one is within reach, and stay until 30 minutes after the last thunder. Tents and open shelters give no protection; use the steps below only if you can't reach shelter.",
         "Move off ridges, peaks, and exposed high ground immediately.",
         "Avoid isolated tall trees; instead, shelter near shorter, uniform tree clusters if forested.",
         "Keep at least 50–100 feet (15–30 m) away from tall objects like cliffs, towers, or solitary trees.",
@@ -272,7 +274,7 @@
       "steps": [
         "Identify slopes between 30–45 degrees—these are the most avalanche-prone.",
         "Look for signs of unstable snow: recent slides, cracking snow, hollow 'whump' sounds, or rapid warming.",
-        "Travel along ridgelines or low-angle terrain whenever possible.",
+        "Travel on low-angle terrain that has no steeper slopes above it, or on wind-scoured ridges, keeping well back from cornice edges. Don't travel or stop under steep slopes.",
         "Cross suspect slopes one at a time to minimize risk.",
         "Have an escape plan before entering any avalanche terrain—note safe runouts or islands of safety."
       ],
@@ -315,7 +317,7 @@
       "do_not": [
         "Do not create a completely sealed shelter; ventilation is essential.",
         "Do not build in unstable snow where collapse risk is high.",
-        "Do not use candles or stoves inside unless the shelter is large and adequately vented."
+        "Do not run a stove inside a snow shelter; cook outside or at the entrance. A candle needs an open vent that you check often, since vents ice over."
       ],
       "watch_for": [
         "Roof sagging or cracking—add reinforcement or exit immediately.",
@@ -411,7 +413,7 @@
         "Do not ration water too early; dehydration impairs judgment quickly."
       ],
       "watch_for": [
-        "Rapid breathing, confusion, or lack of sweating—potential heatstroke.",
+        "Confusion, rapid breathing or collapse with hot skin, sweaty or dry—potential heatstroke. Cool the person immediately.",
         "Sunburn increasing heat absorption and dehydration.",
         "Dry, cracked lips or dark urine indicating dehydration."
       ],
@@ -564,19 +566,19 @@
         "wind indicators"
       ],
       "steps": [
-        "Force 0 (Calm): Smoke rises vertically; no wind movement.",
-        "Force 1 (Light Air): Smoke drifts slightly; leaves barely move.",
-        "Force 2 (Light Breeze): Leaves rustle; small twigs move.",
-        "Force 3 (Gentle Breeze): Flags extend slightly; leaves and small branches move.",
-        "Force 4 (Moderate Breeze): Dust and loose paper lift; small branches sway.",
-        "Force 5 (Fresh Breeze): Small trees begin to sway; waves form on lakes.",
-        "Force 6 (Strong Breeze): Large branches move; umbrellas difficult to use.",
-        "Force 7 (Near Gale): Whole trees move; walking becomes challenging.",
-        "Force 8 (Gale): Twigs break off trees; progress on foot is difficult.",
-        "Force 9 (Severe Gale): Slight structural damage possible; visibility reduced.",
-        "Force 10 (Storm): Trees uprooted in places; heavy structural effects.",
-        "Force 11 (Violent Storm): Widespread structural damage; extremely dangerous.",
-        "Force 12 (Hurricane): Devastation; complete loss of structural integrity in many areas."
+        "Force 0 (Calm, under 1 km/h / under 1 mph): Smoke rises vertically.",
+        "Force 1 (Light Air, 1–5 km/h / 1–3 mph): Smoke drifts with the wind; leaves barely move.",
+        "Force 2 (Light Breeze, 6–11 km/h / 4–7 mph): Wind felt on face; leaves rustle.",
+        "Force 3 (Gentle Breeze, 12–19 km/h / 8–12 mph): Leaves and small twigs in constant motion; light flags extend.",
+        "Force 4 (Moderate Breeze, 20–28 km/h / 13–18 mph): Dust and loose paper lift; small branches move.",
+        "Force 5 (Fresh Breeze, 29–38 km/h / 19–24 mph): Small trees in leaf begin to sway; crested wavelets on lakes.",
+        "Force 6 (Strong Breeze, 39–49 km/h / 25–31 mph): Large branches move; umbrellas difficult to use.",
+        "Force 7 (Near Gale, 50–61 km/h / 32–38 mph): Whole trees move; walking against the wind is difficult.",
+        "Force 8 (Gale, 62–74 km/h / 39–46 mph): Twigs break off trees; progress on foot is hard.",
+        "Force 9 (Severe Gale, 75–88 km/h / 47–54 mph): Slight structural damage, such as shingles blown off.",
+        "Force 10 (Storm, 89–102 km/h / 55–63 mph): Trees uprooted; considerable structural damage.",
+        "Force 11 (Violent Storm, 103–117 km/h / 64–72 mph): Widespread damage; extremely dangerous.",
+        "Force 12 (Hurricane, 118 km/h / 73 mph or more): Devastation."
       ],
       "do_not": [
         "Do not travel on exposed ridges or open water above Force 6 conditions.",
@@ -585,13 +587,291 @@
       ],
       "watch_for": [
         "Tree movement—one of the easiest ways to estimate wind strength.",
-        "Whitecaps forming on lakes (typically start at Force 4–5).",
-        "Loose debris lifting from the ground, which signals dangerous wind speeds."
+        "Whitecaps on open water (scattered from Force 3, frequent by Force 4).",
+        "Branches and larger debris flying through the air, which signals dangerous wind (Force 8 and above)."
       ],
       "notes": [
         "You can estimate wind speed visually without instruments, critical when planning shelter placement and travel.",
         "Wind often increases before major weather systems—use the Beaufort scale to detect early storm escalation."
       ]
+    },
+    {
+      "id": "weather_tornado_safety",
+      "category": "Wind & Storms",
+      "title": "Tornado Safety",
+      "summary": "Know the warning signs of a tornado and where to shelter at home, outdoors and in a vehicle.",
+      "difficulty": "basic",
+      "tags": [
+        "tornado",
+        "twister",
+        "funnel cloud",
+        "tornado warning",
+        "tornado watch",
+        "shelter",
+        "severe storm"
+      ],
+      "steps": [
+        "Know the difference: a tornado watch means conditions favor tornadoes; a warning means one has been seen or detected on radar. Act immediately on a warning.",
+        "Watch for a dark, often greenish sky, large hail, a low rotating wall cloud, a loud roar like a freight train, or debris swirling at ground level.",
+        "Go to a storm shelter, basement or the lowest floor of a sturdy building.",
+        "Get into a small interior room, hallway or closet with no windows, and put as many walls between you and the outside as possible.",
+        "Crouch low, face down, and cover your head and neck with your arms. A bike or sports helmet, mattress or heavy blankets add protection.",
+        "Leave a mobile home or trailer for a sturdy building or shelter before the storm arrives; mobile homes offer little protection even when tied down.",
+        "In a vehicle, drive to a sturdy shelter if you can. If you're caught by flying debris, either stay buckled in with your head below the windows and covered, or get out and lie flat in a ditch or low area noticeably lower than the road, covering your head."
+      ],
+      "do_not": [
+        "Do not shelter under a highway overpass; wind speeds up through the gap and debris flies through it.",
+        "Do not open windows to equalize pressure; it wastes time and lets debris in.",
+        "Do not wait to see the tornado before taking shelter; many are hidden by rain or darkness."
+      ],
+      "watch_for": [
+        "Tornadoes at night, which are especially deadly because they're hard to see. Keep a weather radio on.",
+        "Downed power lines, gas leaks and unstable structures after the storm passes."
+      ],
+      "notes": [
+        "Practice going to your shelter spot with your household so everyone knows where it is.",
+        "The Severe Storm / Tornado Warning scenario card walks through the first minutes, hour and day."
+      ],
+      "related_screen": "ScenarioCards",
+      "related_screen_label": "Open Scenario Cards"
+    },
+    {
+      "id": "weather_hurricane",
+      "category": "Wind & Storms",
+      "title": "Hurricanes and Tropical Storms",
+      "summary": "Prepare for a hurricane, decide early whether to evacuate, shelter safely and avoid the dangers that follow.",
+      "difficulty": "intermediate",
+      "tags": [
+        "hurricane",
+        "tropical storm",
+        "cyclone",
+        "typhoon",
+        "storm surge",
+        "evacuation",
+        "flooding"
+      ],
+      "steps": [
+        "Know your evacuation zone and route before storm season, and leave when officials order it. Water, not wind, causes most hurricane deaths: storm surge on the coast and flooding from rain far inland.",
+        "When a storm is forecast, gather at least several days of water (about 4 L, or 1 gallon, per person per day), food, medicine, cash, batteries and fuel.",
+        "Fill your vehicle's tank, charge phones and power banks, and download offline maps.",
+        "Bring in or tie down outdoor furniture and other objects that wind can throw. Cover windows with shutters or plywood.",
+        "If staying, shelter in an interior room on the lowest floor that won't flood, away from windows.",
+        "If the eye passes over and the wind stops, stay put; the other side of the storm arrives soon with wind from the opposite direction.",
+        "After the storm, stay out of floodwater and away from downed power lines, and only go outside once officials say it's safe."
+      ],
+      "do_not": [
+        "Do not drive or walk through floodwater; 15 cm (6 in) of moving water can knock you down and 30 cm (1 ft) can float a car.",
+        "Do not run a generator indoors or in a garage.",
+        "Do not shelter in a mobile home or a home in a surge zone."
+      ],
+      "watch_for": [
+        "Rising water. If it reaches your home, move to the highest floor, but not into a closed attic where you could be trapped. Go onto the roof only as a last resort.",
+        "Tornadoes, which often form in a hurricane's outer bands.",
+        "Heat illness and carbon monoxide poisoning during the power outages that follow."
+      ],
+      "notes": [
+        "The Saffir-Simpson scale rates wind only: Category 1 is 119–153 km/h (74–95 mph), Category 3 is 178–208 km/h (111–129 mph), and Category 5 is 252 km/h (157 mph) or more. A weaker storm can still bring deadly surge and rain.",
+        "Typhoons and cyclones are the same kind of storm in other ocean basins."
+      ]
+    },
+    {
+      "id": "weather_barometer_reading",
+      "category": "Wind & Storms",
+      "title": "Reading a Barometer",
+      "summary": "Use air pressure trends to anticipate changing weather when you have no forecast.",
+      "difficulty": "intermediate",
+      "tags": [
+        "barometer",
+        "air pressure",
+        "pressure trend",
+        "forecasting",
+        "hPa",
+        "inHg",
+        "weather prediction"
+      ],
+      "steps": [
+        "Take readings from the same place over time. The trend over several hours matters far more than any single number.",
+        "Standard sea-level pressure is about 1013 hPa (29.92 inHg). Higher usually means more settled weather; lower usually means unsettled.",
+        "Steady or slowly rising pressure generally means fair or improving weather.",
+        "Pressure falling about 1 to 3 hPa over 3 hours suggests weather is changing; clouds and wind may increase.",
+        "Pressure falling more than about 6 hPa in 3 hours warns of a strong storm or front approaching. Secure camp or head for shelter.",
+        "A quick rise after a fall often brings clearing skies along with strong, gusty wind.",
+        "Combine pressure with what you see: thickening, lowering clouds and a shifting wind confirm a falling barometer."
+      ],
+      "do_not": [
+        "Do not compare readings taken at different elevations; climbing about 100 m (330 ft) drops pressure about 12 hPa, which looks like a storm on the gauge.",
+        "Do not rely on pressure alone for thunderstorms; they can build fast with little pressure change beforehand."
+      ],
+      "watch_for": [
+        "Rapid falls in mountains, on the water or before a long exposed crossing.",
+        "Hourly swings in the tropics, where pressure rises and falls twice daily on its own."
+      ],
+      "notes": [
+        "Many phones have a pressure sensor; Barometric Pressure logs readings and shows the trend for you.",
+        "Read the trend when you're stopped in camp, not while hiking up or down."
+      ],
+      "related_screen": "BarometricPressure",
+      "related_screen_label": "Open Barometric Pressure"
+    },
+    {
+      "id": "cold_weather_wind_chill",
+      "category": "Cold Weather",
+      "title": "Wind Chill and Frostbite Risk",
+      "summary": "Understand how wind speeds up heat loss and how long exposed skin can last at a given wind chill.",
+      "difficulty": "basic",
+      "tags": [
+        "wind chill",
+        "frostbite",
+        "feels like",
+        "cold",
+        "wind",
+        "exposure",
+        "winter"
+      ],
+      "steps": [
+        "Wind chill describes how fast exposed skin loses heat in wind. It's colder to skin than the thermometer shows, but it can't cool objects below the actual air temperature.",
+        "At wind chills from about -28 to -39 °C (-18 to -38 °F), exposed skin can freeze in 10 to 30 minutes.",
+        "From about -40 to -47 °C (-40 to -53 °F), skin can freeze in 5 to 10 minutes.",
+        "Colder than about -48 °C (-54 °F), skin can freeze in under 5 minutes, and below about -55 °C (-67 °F) in under 2.",
+        "Cover all skin: face mask or buff, goggles, hat over the ears, mittens rather than gloves.",
+        "Add a windproof outer layer; blocking the wind does more than adding insulation underneath.",
+        "Check each other's faces often for white or gray patches, the first sign of frostnip."
+      ],
+      "do_not": [
+        "Do not count on a vehicle starting in extreme wind chill; dress for the walk.",
+        "Do not touch metal or fuel with bare skin in severe cold; fuel at sub-zero temperatures can freeze skin instantly."
+      ],
+      "watch_for": [
+        "Moving fast, such as on a snowmobile, bike or ski lift, which creates your own wind chill.",
+        "Wet skin or clothing, which loses heat far faster than the chart predicts.",
+        "Hypothermia, which can occur well above freezing in wind and rain."
+      ],
+      "notes": [
+        "Cold Weather mode helps protect your phone's battery when it's this cold out.",
+        "These times are for healthy adults; children, older adults and people with poor circulation freeze faster."
+      ],
+      "related_screen": "ColdWeather",
+      "related_screen_label": "Open Cold Weather"
+    },
+    {
+      "id": "heat_sun_heat_index",
+      "category": "Heat & Sun",
+      "title": "Heat Index and Heat Danger Levels",
+      "summary": "Use the heat index to judge how dangerous hot, humid weather is, and adjust work and travel to match.",
+      "difficulty": "basic",
+      "tags": [
+        "heat index",
+        "humidity",
+        "feels like",
+        "heat",
+        "heat illness",
+        "WBGT",
+        "hot weather"
+      ],
+      "steps": [
+        "Heat index combines temperature and humidity: humid air slows sweat evaporation, so your body cools less effectively.",
+        "Caution at 27–32 °C (80–90 °F) heat index: fatigue is possible with prolonged exposure and activity.",
+        "Extreme caution at 32–39 °C (90–103 °F): heat cramps and heat exhaustion are possible.",
+        "Danger at 39–51 °C (103–124 °F): heat exhaustion is likely and heat stroke is possible with continued activity.",
+        "Extreme danger at 52 °C (125 °F) or higher: heat stroke is highly likely.",
+        "Schedule hard work and travel for early morning and evening, rest in shade, and drink regularly before you're thirsty.",
+        "Watch everyone in the group for heat illness and stop at the first signs."
+      ],
+      "do_not": [
+        "Do not forget that heat index is measured in shade; full sun can add up to about 8 °C (15 °F).",
+        "Do not leave people or pets in parked vehicles, even briefly."
+      ],
+      "watch_for": [
+        "Heavy sweating, weakness, headache and nausea (heat exhaustion), and confusion or collapse (heat stroke, an emergency).",
+        "Nights that stay hot, which prevent recovery and raise risk on following days.",
+        "Older adults, young children, people on some medications and anyone not used to the heat."
+      ],
+      "notes": [
+        "Wet bulb globe temperature (WBGT), used by the military and sports, also accounts for sun and wind and is better for planning hard work in the sun.",
+        "It takes about 1 to 2 weeks of gradual exposure to acclimatize to heat."
+      ]
+    },
+    {
+      "id": "smoke_fog_wildfire_smoke",
+      "category": "Smoke & Fog",
+      "title": "Wildfire Smoke and Air Quality",
+      "summary": "Judge smoke levels by visibility when you can't check an air quality index, and protect your lungs.",
+      "difficulty": "basic",
+      "tags": [
+        "wildfire smoke",
+        "air quality",
+        "AQI",
+        "smoke",
+        "N95",
+        "respirator",
+        "air purifier",
+        "visibility"
+      ],
+      "steps": [
+        "Estimate smoke with the 5-3-1 visibility method: face away from the sun and find landmarks you know are about 5, 3 and 1 miles (8, 5 and 1.6 km) away.",
+        "Visibility under 5 miles (8 km): young children, adults over 65, pregnant people and anyone with heart or lung disease should limit time outdoors.",
+        "Under 3 miles (5 km): those groups should stay indoors, and everyone else should limit outdoor activity.",
+        "Under 1 mile (1.6 km): everyone should stay indoors.",
+        "Indoors, close windows and doors, run a HEPA air purifier, and set up one clean room to spend most of your time in.",
+        "If you must be outside, wear a well-fitted N95 or P100 respirator with no gaps around the edges.",
+        "In a vehicle, close the windows and set the ventilation to recirculate.",
+        "Avoid strenuous activity, which makes you breathe in more smoke."
+      ],
+      "do_not": [
+        "Do not rely on cloth or surgical masks; they don't filter fine smoke particles.",
+        "Do not burn candles, fry food or vacuum indoors during smoke events; they add particles.",
+        "Do not use ozone-producing 'purifiers'."
+      ],
+      "watch_for": [
+        "Coughing, wheezing, chest tightness, shortness of breath or an asthma attack.",
+        "Chest pain or palpitations in people with heart disease. Seek medical care.",
+        "Haze from humidity or fog, which makes the visibility method less reliable."
+      ],
+      "notes": [
+        "A box fan with a MERV 13 or better furnace filter taped to the back makes a low-cost emergency air cleaner. Never leave it running unattended.",
+        "If smoke is heavy for days and you can leave safely, go somewhere with cleaner air."
+      ]
+    },
+    {
+      "id": "smoke_fog_fog_whiteout",
+      "category": "Smoke & Fog",
+      "title": "Fog and Whiteout",
+      "summary": "Travel safely, or know when to stop, when fog or blowing snow hides the road, trail or horizon.",
+      "difficulty": "intermediate",
+      "tags": [
+        "fog",
+        "whiteout",
+        "visibility",
+        "flat light",
+        "blizzard",
+        "navigation",
+        "driving in fog"
+      ],
+      "steps": [
+        "Driving: slow down, use low beams and fog lights, and leave several times your normal following distance.",
+        "Use the right edge line of the road as a guide, and roll down a window at intersections to listen for traffic.",
+        "If you can't see, pull completely off the road as far as you can, turn on hazards, set the parking brake and take your foot off the brake pedal so drivers don't follow your taillights.",
+        "On foot: stop and fix your position on the map before visibility drops, then navigate by compass bearing and pace count.",
+        "Keep the group close enough to see one another, and use voices or whistles to stay together.",
+        "In a whiteout, throw a snowball or a dark object ahead of you to see the slope and edges.",
+        "If you can't navigate safely, stop, shelter and wait for visibility to improve."
+      ],
+      "do_not": [
+        "Do not use high beams in fog; the light reflects back and makes it harder to see.",
+        "Do not walk near cornices, cliff edges or steep slopes in whiteout or flat light.",
+        "Do not stop in a traffic lane."
+      ],
+      "watch_for": [
+        "Freezing fog, which coats roads, trees and power lines with ice.",
+        "Vertigo and disorientation in whiteout, when the ground and sky blend together.",
+        "Valleys and areas near water, where fog forms first and lasts longest."
+      ],
+      "notes": [
+        "Fog often forms on clear, calm nights and burns off by midmorning. Waiting a few hours is often the safest choice.",
+        "A GPS position from Map helps in fog, but carry a compass in case the battery fails."
+      ],
+      "related_screen": "MapScreen",
+      "related_screen_label": "Open Map"
     }
   ]
 }

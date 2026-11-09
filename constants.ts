@@ -227,6 +227,12 @@ export const REFERENCE_TOOLS: ToolType[] = [
     icon: 'car-outline',
     id: 'ref_roadside',
   },
+  {
+    name: 'Home Prep',
+    screen: 'HomePrep',
+    icon: 'home-outline',
+    id: 'ref_home_prep',
+  },
 ];
 
 export const PREPPER_TOOLS: ToolType[] = [
