@@ -133,6 +133,31 @@ describe('Tutorial flow components', () => {
     expect(onSkip).not.toHaveBeenCalled();
   });
 
+  test('TutorialModal scrolls step content while keeping navigation visible', () => {
+    const { tree } = renderTutorialModal({ platform: 'ios' });
+    const { ScrollView, StyleSheet, View } = require('react-native');
+    const content = tree.root.findByType(ScrollView);
+    const constrainedViews = tree.root
+      .findAllByType(View)
+      .filter(
+        (view) => StyleSheet.flatten(view.props.style)?.maxHeight === '100%',
+      );
+
+    expect(constrainedViews).toHaveLength(2);
+    expect(
+      content.findByProps({
+        accessibilityLabel:
+          'Your field kit for the outdoors and for when the grid goes down. Here is a quick tour.',
+      }),
+    ).toBeTruthy();
+    expect(
+      content.findAllByProps({ accessibilityLabel: 'Next tutorial step' }),
+    ).toHaveLength(0);
+    expect(
+      tree.root.findByProps({ accessibilityLabel: 'Next tutorial step' }),
+    ).toBeTruthy();
+  });
+
   test('TutorialModal spotlights guided UI targets and hides skip on done', () => {
     const onSpotlightTargetChange = jest.fn();
     const { act, tree } = renderTutorialModal({
