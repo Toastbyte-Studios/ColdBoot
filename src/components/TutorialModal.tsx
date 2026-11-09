@@ -4,6 +4,7 @@ import {
   Animated,
   Easing,
   Platform,
+  ScrollView,
   StyleSheet,
   View,
   Text as RNText,
@@ -179,6 +180,10 @@ export default function TutorialModal({
 
   useEffect(() => {
     let mounted = true;
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion,
+    );
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => {
         // Only an "on" answer changes anything, so skip the re-render otherwise.
@@ -187,6 +192,7 @@ export default function TutorialModal({
       .catch(() => {});
     return () => {
       mounted = false;
+      subscription.remove();
     };
   }, []);
 
@@ -301,75 +307,80 @@ export default function TutorialModal({
             ))}
           </View>
 
-          <Animated.View style={[styles.content, stepTransform]}>
-            <View
-              style={[
-                styles.iconBadge,
-                { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
-              ]}
+          <Animated.View style={[styles.contentViewport, stepTransform]}>
+            <ScrollView
+              style={styles.content}
+              contentContainerStyle={styles.contentContainer}
             >
-              <Ionicons name={step.icon} size={34} color={COLORS.BRAND} />
-            </View>
-            <RNText
-              style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
-              accessibilityRole="header"
-            >
-              {step.title}
-            </RNText>
-            <RNText
-              style={[styles.description, { color: COLORS.PRIMARY_DARK }]}
-              accessibilityLabel={step.description}
-            >
-              {step.description}
-            </RNText>
-
-            {step.tips ? (
-              <View style={styles.tips}>
-                {step.tips.map((tip) => (
-                  <View key={tip.text} style={styles.tipRow}>
-                    <Ionicons
-                      name={tip.icon}
-                      size={18}
-                      color={COLORS.SECONDARY_ACCENT}
-                    />
-                    <RNText style={[styles.tipText, { color: COLORS.MUTED }]}>
-                      {tip.text}
-                    </RNText>
-                  </View>
-                ))}
+              <View
+                style={[
+                  styles.iconBadge,
+                  { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
+                ]}
+              >
+                <Ionicons name={step.icon} size={34} color={COLORS.BRAND} />
               </View>
-            ) : null}
+              <RNText
+                style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
+                accessibilityRole="header"
+              >
+                {step.title}
+              </RNText>
+              <RNText
+                style={[styles.description, { color: COLORS.PRIMARY_DARK }]}
+                accessibilityLabel={step.description}
+              >
+                {step.description}
+              </RNText>
 
-            {step.showModules ? (
-              <View style={styles.modules}>
-                {MODULES.map((module) => (
-                  <View
-                    key={module.id}
-                    style={[
-                      styles.moduleChip,
-                      {
-                        backgroundColor: withAlpha(COLORS.BRAND, 0.08),
-                        borderColor: withAlpha(COLORS.BRAND, 0.2),
-                      },
-                    ]}
-                  >
-                    <Ionicons
-                      name={module.icon}
-                      size={16}
-                      color={COLORS.BRAND}
-                    />
-                    <RNText
+              {step.tips ? (
+                <View style={styles.tips}>
+                  {step.tips.map((tip) => (
+                    <View key={tip.text} style={styles.tipRow}>
+                      <Ionicons
+                        name={tip.icon}
+                        size={18}
+                        color={COLORS.SECONDARY_ACCENT}
+                      />
+                      <RNText style={[styles.tipText, { color: COLORS.MUTED }]}>
+                        {tip.text}
+                      </RNText>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+
+              {step.showModules ? (
+                <View style={styles.modules}>
+                  {MODULES.map((module) => (
+                    <View
+                      key={module.id}
                       style={[
-                        styles.moduleLabel,
-                        { color: COLORS.PRIMARY_DARK },
+                        styles.moduleChip,
+                        {
+                          backgroundColor: withAlpha(COLORS.BRAND, 0.08),
+                          borderColor: withAlpha(COLORS.BRAND, 0.2),
+                        },
                       ]}
                     >
-                      {module.name}
-                    </RNText>
-                  </View>
-                ))}
-              </View>
-            ) : null}
+                      <Ionicons
+                        name={module.icon}
+                        size={16}
+                        color={COLORS.BRAND}
+                      />
+                      <RNText
+                        style={[
+                          styles.moduleLabel,
+                          { color: COLORS.PRIMARY_DARK },
+                        ]}
+                      >
+                        {module.name}
+                      </RNText>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
+            </ScrollView>
           </Animated.View>
 
           <View style={styles.footer}>
@@ -416,7 +427,8 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
     alignItems: 'center',
     paddingHorizontal: 20,
-    paddingVertical: 20,
+    paddingTop: 20,
+    paddingBottom: 20 + TUTORIAL_CARD_BOTTOM_OFFSET,
     zIndex: 300,
   },
   overlayTop: {
@@ -425,18 +437,20 @@ const styles = StyleSheet.create({
   cardContainer: {
     width: '100%',
     maxWidth: 560,
-    marginBottom: TUTORIAL_CARD_BOTTOM_OFFSET,
+    maxHeight: '100%',
   },
   cardContainerTop: {
     marginBottom: 0,
   },
   card: {
     width: '100%',
+    maxHeight: '100%',
     borderRadius: 20,
     borderWidth: StyleSheet.hairlineWidth,
     paddingHorizontal: 20,
     paddingTop: SPACING.md,
     paddingBottom: 20,
+    flexShrink: 1,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 20,
@@ -465,6 +479,14 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    minHeight: 0,
+  },
+  contentViewport: {
+    flex: 1,
+    minHeight: 0,
+  },
+  contentContainer: {
+    flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: SPACING.md,
@@ -530,5 +552,6 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     flex: 1,
+    paddingHorizontal: SPACING.sm,
   },
 });
