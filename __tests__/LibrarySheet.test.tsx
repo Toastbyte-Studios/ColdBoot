@@ -1,6 +1,10 @@
 import React from 'react';
 import { BackHandler, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
+import {
+  TutorialSpotlightContext,
+  TutorialSpotlightContextValue,
+} from '../src/components/TutorialSpotlightContext';
 import LibrarySheet from '../src/screens/Map/components/LibrarySheet';
 
 let mockIsFocused = true;
@@ -199,6 +203,50 @@ describe('LibrarySheet', () => {
     });
 
     expect(remove).toHaveBeenCalled();
+    addListener.mockRestore();
+  });
+
+  it('yields Android back throughout a tour, then resumes closing', async () => {
+    const onClose = jest.fn();
+    const addListener = jest.spyOn(BackHandler, 'addEventListener');
+    const host: TutorialSpotlightContextValue = {
+      target: undefined,
+      setSpotlightLayout: jest.fn(),
+      containerRef: { current: null },
+      navSearchRef: { current: null },
+      sectionHeaderRef: { current: null },
+    };
+    const content = (value: TutorialSpotlightContextValue) => (
+      <TutorialSpotlightContext.Provider value={value}>
+        <LibrarySheet {...baseProps} isOpen onClose={() => onClose()} />
+      </TutorialSpotlightContext.Provider>
+    );
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(content(host));
+    });
+
+    for (const target of ['mapLibrary', 'mapWaypoint'] as const) {
+      await ReactTestRenderer.act(async () => {
+        tree.update(content({ ...host, activeTourId: 'map', target }));
+      });
+
+      const handler = addListener.mock.calls.at(-1)?.[1] as () => boolean;
+      expect(handler()).toBe(false);
+      expect(onClose).not.toHaveBeenCalled();
+    }
+
+    await ReactTestRenderer.act(async () => {
+      tree.update(content(host));
+    });
+
+    const handler = addListener.mock.calls.at(-1)?.[1] as () => boolean;
+    expect(handler()).toBe(true);
+    expect(onClose).toHaveBeenCalledTimes(1);
+
+    await ReactTestRenderer.act(async () => {
+      tree.unmount();
+    });
     addListener.mockRestore();
   });
 

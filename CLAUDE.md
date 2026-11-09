@@ -81,21 +81,22 @@ src/
 Before building a screen part from scratch, check whether one of these already
 covers it:
 
-| Need                              | Use                                                         |
-| --------------------------------- | ----------------------------------------------------------- |
-| A form on a card, keyboard-aware  | `screens/Shared/Prepper/FormCard`                           |
-| A "manage categories" row         | `components/CategoryManagerRow`                             |
-| A titled block of prose and lists | `components/EntrySection` (`EntrySection`, `EntryItemList`) |
-| A lookup table (morse, NATO)      | `components/ReferenceTable`                                 |
-| A note composer                   | `screens/Notepad/Shared/NoteEditor`                         |
-| Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                  |
-| Title a screen with its own frame | `navigation/ScreenHeaderContext` (`useScreenHeader`)        |
-| Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)      |
-| A row that shows a status colour  | `ModuleRow` with `iconColor`                                |
-| A module's at-a-glance card       | `components/ModuleHero`, passed as `ModuleScreen`'s `hero`  |
-| Readiness checks (maps, plan…)    | `screens/DeviceStatus/useReadinessItems`                    |
-| A reference entry by id           | `utils/referenceEntries` (`findReferenceEntry`)             |
-| A fixed top over a scrolling list | `components/PinnedHeaderScreen` (Home, `ModuleScreen`)      |
+| Need                              | Use                                                           |
+| --------------------------------- | ------------------------------------------------------------- |
+| A form on a card, keyboard-aware  | `screens/Shared/Prepper/FormCard`                             |
+| A "manage categories" row         | `components/CategoryManagerRow`                               |
+| A titled block of prose and lists | `components/EntrySection` (`EntrySection`, `EntryItemList`)   |
+| A lookup table (morse, NATO)      | `components/ReferenceTable`                                   |
+| A note composer                   | `screens/Notepad/Shared/NoteEditor`                           |
+| Pantry/Inventory row copy         | `screens/Shared/Prepper/itemRowFormatters`                    |
+| Title a screen with its own frame | `navigation/ScreenHeaderContext` (`useScreenHeader`)          |
+| Open the Settings sheet           | `components/SettingsSheetContext` (`useSettingsSheet`)        |
+| A row that shows a status colour  | `ModuleRow` with `iconColor`                                  |
+| A module's at-a-glance card       | `components/ModuleHero`, passed as `ModuleScreen`'s `hero`    |
+| Readiness checks (maps, plan…)    | `screens/DeviceStatus/useReadinessItems`                      |
+| A reference entry by id           | `utils/referenceEntries` (`findReferenceEntry`)               |
+| A fixed top over a scrolling list | `components/PinnedHeaderScreen` (Home, `ModuleScreen`)        |
+| A guided tour of a screen         | `TutorialSpotlightContext` `startTour` (see `Map/useMapTour`) |
 
 ```tsx
 import { observer } from 'mobx-react-lite';

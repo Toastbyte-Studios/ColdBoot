@@ -78,6 +78,7 @@ import MapPanel, {
 import { type DownloadAreaParams } from './components/offline/DownloadConfirmScreen';
 import DownloadProgressChip from './components/offline/DownloadProgressChip';
 import { requestForegroundNotificationPermission } from './requestForegroundNotificationPermission';
+import { useMapTour } from './useMapTour';
 import type { PackRegion } from '../../utils/offlinePacks';
 
 /**
@@ -219,6 +220,8 @@ type MapScreenRouteParams = {
   radiusMiles?: number;
   /** Opens the Library sheet on this tab, e.g. 'maps' from Settings. */
   library?: LibraryTab;
+  /** Replays the map tour, from Help → Replay Map Tour. */
+  tour?: boolean;
 };
 
 export default observer(function MapScreen() {
@@ -237,13 +240,21 @@ export default observer(function MapScreen() {
   const offlineDownloadStore = useOfflineDownloadStore();
   const offlineMapLibrary = useOfflineMapLibraryStore();
   const devToolsStore = useDevToolsStore();
+  const clearTourRequest = useCallback(
+    () => navigation.setParams({ tour: undefined }),
+    [navigation],
+  );
+  // The first visit runs the map tour before anything asks for location.
+  const mapTour = useMapTour({
+    replayRequested: route.params?.tour === true,
+    onReplayHandled: clearTourRequest,
+  });
   // Per-session dismissal of the simulated-offline banner. Intentionally not
   // persisted — we want the banner to reappear each time the toggle is flipped
   // back on so QA stays aware the map is in a simulated state.
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const [permissionStatus, setPermissionStatus] =
     useState<LocationPermissionStatus>('undetermined');
-  const [locationReady, setLocationReady] = useState(false);
   const [heading, setHeading] = useState(0);
   /** False until the compass first reports, so the map shows a dot, not a
    * north-pointing arrow it can't vouch for. */
@@ -304,7 +315,11 @@ export default observer(function MapScreen() {
   // ────────────────────────────────────────────────────────
 
   // Live GPS position from MapLibre LocationManager — drives coords display and locate-me.
-  const mlPosition = useCurrentPosition();
+  // Listening starts the location manager, which prompts on iOS, so it waits
+  // for the map tour like the explicit request below.
+  const mlPosition = useCurrentPosition({
+    enabled: mapTour.readyForLocation,
+  });
 
   // Disable swipe-back while map is active (conflicts with map panning)
   useEffect(() => {
@@ -320,13 +335,16 @@ export default observer(function MapScreen() {
     }
   }, [devToolsStore.simulatedOffline]);
 
-  // Request location permission via LocationManager (unified iOS + Android)
+  // Request location permission via LocationManager (unified iOS + Android),
+  // once the first-visit map tour has explained why.
   useEffect(() => {
+    if (!mapTour.readyForLocation) {
+      return;
+    }
     requestLocationPermission().then((status) => {
       setPermissionStatus(status);
-      setLocationReady(true);
     });
-  }, []);
+  }, [mapTour.readyForLocation]);
 
   // Keep permissionStatusRef in sync so AppState callback can read it.
   useEffect(() => {
@@ -934,92 +952,125 @@ export default observer(function MapScreen() {
           all live in the Library sheet, so it and the flag open without
           location access: what's saved, or typed in by hand, needs no fix. */}
       <View style={styles.mapActions}>
-        <IconButton
-          name="library-outline"
-          size={22}
-          onPress={() => {
-            if (librarySheetOpen) {
-              setLibrarySheetOpen(false);
-              return;
+        {/* Each control sits in a plain View the map tour can measure:
+            IconButton doesn't forward a ref. */}
+        <View ref={mapTour.targets.mapLibrary} collapsable={false}>
+          <IconButton
+            name="library-outline"
+            size={22}
+            onPress={() => {
+              if (librarySheetOpen) {
+                setLibrarySheetOpen(false);
+                return;
+              }
+              openLibrary();
+            }}
+            accessibilityLabel={
+              librarySheetOpen ? 'Close library' : 'Open library'
             }
-            openLibrary();
-          }}
-          accessibilityLabel={
-            librarySheetOpen ? 'Close library' : 'Open library'
-          }
-        />
-        <IconButton
-          name="flag-outline"
-          size={22}
-          onPress={() => {
-            openLibrary('new-waypoint');
-          }}
-          accessibilityLabel="Add waypoint"
-        />
+          />
+        </View>
+        <View ref={mapTour.targets.mapWaypoint} collapsable={false}>
+          <IconButton
+            name="flag-outline"
+            size={22}
+            onPress={() => {
+              openLibrary('new-waypoint');
+            }}
+            accessibilityLabel="Add waypoint"
+          />
+        </View>
         {/* Not an IconButton while recording: only the glyph pulses, so the
             animation has to wrap the icon rather than the pressable. */}
-        <Touchable
-          style={styles.recordAction}
-          rippleColor={COLORS.BRAND}
-          onPress={recordingState !== 'stopped' ? handleRecordPress : undefined}
-          disabled={
-            permissionStatus !== 'granted' || recordingState === 'stopped'
-          }
-          accessibilityLabel={
-            recordingState === 'recording'
-              ? 'Stop recording'
-              : 'Start recording'
-          }
-          accessibilityRole="button"
-        >
-          <Animated.View
-            style={
-              recordingState === 'recording'
-                ? { opacity: pulseAnim }
-                : undefined
+        <View ref={mapTour.targets.mapRecord} collapsable={false}>
+          <Touchable
+            style={styles.recordAction}
+            rippleColor={COLORS.BRAND}
+            onPress={
+              recordingState !== 'stopped' ? handleRecordPress : undefined
             }
+            disabled={
+              permissionStatus !== 'granted' || recordingState === 'stopped'
+            }
+            accessibilityLabel={
+              recordingState === 'recording'
+                ? 'Stop recording'
+                : 'Start recording'
+            }
+            accessibilityRole="button"
           >
-            <Icon
-              name={recordingState === 'recording' ? 'square' : 'ellipse'}
-              size={20}
-              color={
-                recordingState === 'recording' ? COLORS.ERROR : COLORS.BRAND
+            <Animated.View
+              style={
+                recordingState === 'recording'
+                  ? { opacity: pulseAnim }
+                  : undefined
               }
-            />
-          </Animated.View>
-        </Touchable>
-        <IconButton
-          name="locate-outline"
-          size={22}
-          onPress={handleFollowPress}
-          disabled={permissionStatus !== 'granted'}
-          selected={followMode !== 'off'}
-          color={followMode !== 'off' ? COLORS.BRAND : undefined}
-          accessibilityLabel="Follow my location"
-          accessibilityHint={
-            followMode !== 'off'
-              ? 'Stops keeping the map centred on you'
-              : 'Keeps the map centred on you as you move'
-          }
-        />
+            >
+              <Icon
+                name={recordingState === 'recording' ? 'square' : 'ellipse'}
+                size={20}
+                color={
+                  recordingState === 'recording' ? COLORS.ERROR : COLORS.BRAND
+                }
+              />
+            </Animated.View>
+          </Touchable>
+        </View>
+        <View ref={mapTour.targets.mapFollow} collapsable={false}>
+          <IconButton
+            name="locate-outline"
+            size={22}
+            onPress={handleFollowPress}
+            disabled={permissionStatus !== 'granted'}
+            selected={followMode !== 'off'}
+            color={followMode !== 'off' ? COLORS.BRAND : undefined}
+            accessibilityLabel="Follow my location"
+            accessibilityHint={
+              followMode !== 'off'
+                ? 'Stops keeping the map centred on you'
+                : 'Keeps the map centred on you as you move'
+            }
+          />
+        </View>
         {/* Trails sit over the base map, so this needs no location access. */}
-        <IconButton
-          name="trail-sign-outline"
-          size={22}
-          onPress={() => settingsStore.setShowTrails(!settingsStore.showTrails)}
-          selected={settingsStore.showTrails}
-          color={settingsStore.showTrails ? COLORS.BRAND : undefined}
-          accessibilityLabel="Show trails"
-          accessibilityHint={
-            settingsStore.showTrails
-              ? 'Hides trails, tracks and peaks'
-              : 'Draws trails, tracks and peaks over the map'
-          }
-        />
+        <View ref={mapTour.targets.mapTrails} collapsable={false}>
+          <IconButton
+            name="trail-sign-outline"
+            size={22}
+            onPress={() =>
+              settingsStore.setShowTrails(!settingsStore.showTrails)
+            }
+            selected={settingsStore.showTrails}
+            color={settingsStore.showTrails ? COLORS.BRAND : undefined}
+            accessibilityLabel="Show trails"
+            accessibilityHint={
+              settingsStore.showTrails
+                ? 'Hides trails, tracks and peaks'
+                : 'Draws trails, tracks and peaks over the map'
+            }
+          />
+        </View>
+        {mapTour.replay ? (
+          <View
+            ref={mapTour.targets.mapTour}
+            collapsable={false}
+            style={styles.tourAction}
+          >
+            <IconButton
+              name="help-circle-outline"
+              size={22}
+              onPress={mapTour.replay}
+              accessibilityLabel="Map tour"
+              accessibilityHint="Walks through each of the map's tools"
+            />
+          </View>
+        ) : null}
       </View>
       <View style={[styles.wrapper, { paddingBottom: footerClearance }]}>
         {/* Map — outer view owns sizing/sheet; inner view clips map tiles to rounded corners */}
         <View
+          ref={mapTour.targets.mapView}
+          collapsable={false}
           style={styles.mapWrapper}
           onLayout={(e) => setMapContainerHeight(e.nativeEvent.layout.height)}
         >
@@ -1032,7 +1083,6 @@ export default observer(function MapScreen() {
               onCenterChange={handleMapCenterChange}
               userHeading={compassReady ? heading : null}
               showTrails={settingsStore.showTrails}
-              locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
               onLongPressMap={handleLongPressMap}
@@ -1102,7 +1152,11 @@ export default observer(function MapScreen() {
         </View>
 
         {/* Compass */}
-        <View style={styles.compassContainer}>
+        <View
+          ref={mapTour.targets.mapCompass}
+          collapsable={false}
+          style={styles.compassContainer}
+        >
           <CompassRing ringSpin={ringSpin} labelSpin={labelSpin} />
           <CompassDataPanel
             heading={heading}
@@ -1124,6 +1178,10 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
       paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
       paddingTop: SPACING.sm,
       paddingBottom: SPACING.sm,
+    },
+    // The tour button is the odd one out, so it sits apart at the far end.
+    tourAction: {
+      marginLeft: 'auto',
     },
     recordAction: {
       // Matches IconButton's target so the row lines up.

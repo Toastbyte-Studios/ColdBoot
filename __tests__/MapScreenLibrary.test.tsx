@@ -4,12 +4,20 @@ import {
   Layer,
   LocationManager,
   useCurrentPosition,
+  UserLocation,
 } from '@maplibre/maplibre-react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { makeAutoObservable, runInAction } from 'mobx';
 import React from 'react';
+import { InteractionManager } from 'react-native';
 import CompassHeading from 'react-native-compass-heading';
 import ReactTestRenderer from 'react-test-renderer';
 import { mockSetStop } from '../__mocks__/@maplibre/maplibre-react-native';
+import {
+  TutorialSpotlightContext,
+  TutorialSpotlightContextValue,
+  TutorialTour,
+} from '../src/components/TutorialSpotlightContext';
 import { navigationRef } from '../src/navigation/navigationRef';
 import MapScreen from '../src/screens/Map/MapScreen';
 
@@ -60,6 +68,7 @@ const mockNavigation = {
 };
 
 jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => true,
   useNavigation: () => mockNavigation,
   useRoute: () => ({ params: mockRouteParams }),
 }));
@@ -220,6 +229,59 @@ describe('MapScreen Library', () => {
     expect(findButton(tree, 'Follow my location')).toBeDefined();
     expect(findButton(tree, 'Download offline area')).toBeUndefined();
     expect(findButton(tree, 'Map Library')).toBeUndefined();
+  });
+
+  it('shows the map while the first-visit tour holds location access', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(null);
+    (AsyncStorage.setItem as jest.Mock).mockResolvedValueOnce(undefined);
+    const interactions = jest
+      .spyOn(InteractionManager, 'runAfterInteractions')
+      .mockImplementation((task) => {
+        if (typeof task === 'function') task();
+        return { cancel: jest.fn() } as unknown as ReturnType<
+          typeof InteractionManager.runAfterInteractions
+        >;
+      });
+    (LocationManager.requestPermissions as jest.Mock).mockClear();
+    (useCurrentPosition as jest.Mock).mockReturnValue(null);
+    const host: TutorialSpotlightContextValue = {
+      target: undefined,
+      setSpotlightLayout: jest.fn(),
+      containerRef: { current: null },
+      navSearchRef: { current: null },
+      sectionHeaderRef: { current: null },
+      startTour: jest.fn(),
+    };
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    await ReactTestRenderer.act(async () => {
+      tree = ReactTestRenderer.create(
+        <TutorialSpotlightContext.Provider value={host}>
+          <MapScreen />
+        </TutorialSpotlightContext.Provider>,
+      );
+    });
+
+    const map = tree.root.findByProps({ testID: 'map-view' });
+    expect(host.startTour).toHaveBeenCalledTimes(1);
+    expect(LocationManager.requestPermissions).not.toHaveBeenCalled();
+    expect(useCurrentPosition).toHaveBeenLastCalledWith({ enabled: false });
+    expect(tree.root.findAllByType(UserLocation)).toHaveLength(0);
+    expect(
+      tree.root.findByType(Camera).props.trackUserLocation,
+    ).toBeUndefined();
+
+    await ReactTestRenderer.act(async () => {
+      const tour = (host.startTour as jest.Mock).mock
+        .calls[0][0] as TutorialTour;
+      tour.onFinish?.('skip');
+    });
+    expect(LocationManager.requestPermissions).toHaveBeenCalledTimes(1);
+    expect(useCurrentPosition).toHaveBeenCalledWith({ enabled: true });
+    expect(tree.root.findByProps({ testID: 'map-view' })).toBe(map);
+    await ReactTestRenderer.act(async () => {
+      tree.unmount();
+    });
+    interactions.mockRestore();
   });
 
   it('closes the Library when its button is pressed again', async () => {
