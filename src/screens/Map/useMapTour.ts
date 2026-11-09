@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useIsFocused } from '@react-navigation/native';
 import {
   useCallback,
   useContext,
@@ -51,6 +52,8 @@ export function useMapTour({
   const { startTour, registerSpotlightTarget, endTour } = useContext(
     TutorialSpotlightContext,
   );
+  const isFocused = useIsFocused();
+  const startedRef = useRef(false);
   // Without a shell to draw the tour there is nothing to wait for.
   const [readyForLocation, setReadyForLocation] = useState(!startTour);
 
@@ -77,7 +80,7 @@ export function useMapTour({
   );
 
   useEffect(() => {
-    if (!registerSpotlightTarget) {
+    if (!isFocused || !registerSpotlightTarget) {
       return;
     }
     const unregister = (
@@ -87,12 +90,13 @@ export function useMapTour({
       ][]
     ).map(([name, ref]) => registerSpotlightTarget(name, ref));
     return () => unregister.forEach((fn) => fn());
-  }, [registerSpotlightTarget, targets]);
+  }, [isFocused, registerSpotlightTarget, targets]);
 
   const run = useCallback(() => {
     if (!startTour) {
       return;
     }
+    startedRef.current = true;
     startTour({
       id: MAP_TOUR_ID,
       steps: MAP_TUTORIAL_STEPS,
@@ -109,54 +113,50 @@ export function useMapTour({
   // First visit: wait for the push animation to settle, so the controls are
   // where the spotlight will measure them, then start.
   useEffect(() => {
-    if (!startTour) {
+    if (!isFocused || !startTour || (startedRef.current && !replayRequested)) {
       return;
     }
     let cancelled = false;
     let task: { cancel: () => void } | undefined;
-    AsyncStorage.getItem(MAP_TUTORIAL_STORAGE_KEY)
-      .then((seen) => {
-        if (cancelled) return;
-        if (seen !== null) {
-          setReadyForLocation(true);
-          return;
+    if (replayRequested) {
+      task = InteractionManager.runAfterInteractions(() => {
+        if (!cancelled) {
+          run();
+          onReplayHandled();
         }
-        task = InteractionManager.runAfterInteractions(() => {
-          if (!cancelled) run();
-        });
-      })
-      .catch(() => {
-        if (!cancelled) setReadyForLocation(true);
       });
+    } else {
+      AsyncStorage.getItem(MAP_TUTORIAL_STORAGE_KEY)
+        .then((seen) => {
+          if (cancelled || startedRef.current) return;
+          if (seen !== null) {
+            setReadyForLocation(true);
+            return;
+          }
+          task = InteractionManager.runAfterInteractions(() => {
+            if (!cancelled && !startedRef.current) run();
+          });
+        })
+        .catch(() => {
+          if (!cancelled && !startedRef.current) setReadyForLocation(true);
+        });
+    }
     return () => {
       cancelled = true;
       task?.cancel();
     };
-  }, [run, startTour]);
+  }, [isFocused, onReplayHandled, replayRequested, run, startTour]);
 
-  const mountedRef = useRef(true);
-  useEffect(
-    () => () => {
-      mountedRef.current = false;
-    },
-    [],
-  );
-
-  // A replay from Help. Clearing the request re-runs this effect, so the
-  // pending start is guarded by mountedRef rather than cancelled on cleanup.
+  // Native stacks keep covered screens mounted. Release the tour on blur too.
   useEffect(() => {
-    if (!replayRequested) {
+    if (!isFocused) {
       return;
     }
-    onReplayHandled();
-    InteractionManager.runAfterInteractions(() => {
-      if (mountedRef.current) run();
-    });
-  }, [onReplayHandled, replayRequested, run]);
-
-  // Leaving the Map (Android Back) ends its tour rather than leaving it
-  // pointing at controls that are gone.
-  useEffect(() => () => endTour?.(MAP_TOUR_ID), [endTour]);
+    return () => {
+      startedRef.current = false;
+      endTour?.(MAP_TOUR_ID);
+    };
+  }, [endTour, isFocused]);
 
   return { targets, readyForLocation, replay: startTour ? run : undefined };
 }

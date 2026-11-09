@@ -255,7 +255,6 @@ export default observer(function MapScreen() {
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
   const [permissionStatus, setPermissionStatus] =
     useState<LocationPermissionStatus>('undetermined');
-  const [locationReady, setLocationReady] = useState(false);
   const [heading, setHeading] = useState(0);
   /** False until the compass first reports, so the map shows a dot, not a
    * north-pointing arrow it can't vouch for. */
@@ -344,7 +343,6 @@ export default observer(function MapScreen() {
     }
     requestLocationPermission().then((status) => {
       setPermissionStatus(status);
-      setLocationReady(true);
     });
   }, [mapTour.readyForLocation]);
 
@@ -1085,7 +1083,6 @@ export default observer(function MapScreen() {
               onCenterChange={handleMapCenterChange}
               userHeading={compassReady ? heading : null}
               showTrails={settingsStore.showTrails}
-              locationReady={locationReady}
               cameraRef={cameraRef}
               onMapReady={() => setMapReady(true)}
               onLongPressMap={handleLongPressMap}

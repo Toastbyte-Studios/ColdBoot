@@ -9,13 +9,7 @@ import {
   type CameraRef,
 } from '@maplibre/maplibre-react-native';
 import React, { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { StyleSheet, Text, TextInput, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../../components/AppButton';
 import IconButton from '../../../components/IconButton';
@@ -76,7 +70,6 @@ type Props = {
   showTrails?: boolean;
   /** A direct user pan or zoom, including while a locate flight is in progress. */
   onUserCameraGesture?: () => void;
-  locationReady: boolean;
   cameraRef: React.RefObject<CameraRef | null>;
   onMapReady?: () => void;
   onLongPressMap?: (coordinate: {
@@ -118,7 +111,6 @@ export default function MapPanel({
   onCenterChange,
   userHeading = null,
   showTrails = false,
-  locationReady,
   cameraRef,
   onMapReady,
   onLongPressMap,
@@ -158,216 +150,190 @@ export default function MapPanel({
 
   return (
     <View style={styles.mapContainer}>
-      {!locationReady ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.SECONDARY_ACCENT} />
-          <Text style={styles.loadingText}>Requesting location…</Text>
+      {permissionStatus === 'denied' && (
+        <View style={styles.deniedBanner}>
+          <Text style={styles.deniedText}>
+            Location access denied — enable it in Settings to see your position.
+          </Text>
         </View>
-      ) : (
-        <>
-          {permissionStatus === 'denied' && (
-            <View style={styles.deniedBanner}>
-              <Text style={styles.deniedText}>
-                Location access denied — enable it in Settings to see your
-                position.
-              </Text>
-            </View>
-          )}
-          <Map
-            accessible
-            accessibilityLabel="Map"
-            style={styles.map}
-            mapStyle={MAP_STYLE_URL}
-            compass
-            compassPosition={{ top: 16, right: 16 }}
-            attribution
-            attributionPosition={{ bottom: 8, right: 8 }}
-            logo={false}
-            onDidFinishLoadingMap={() => {
-              onMapReady?.();
-            }}
-            onRegionDidChange={(event) => {
-              const [longitude, latitude] = event.nativeEvent.center;
-              onCenterChange?.({ latitude, longitude });
-            }}
-            onRegionIsChanging={(event) => {
-              if (event.nativeEvent.userInteraction) {
-                onUserCameraGesture?.();
-              }
-            }}
-            onLongPress={(event) => {
-              const [lng, lat] = event.nativeEvent.lngLat;
-              onLongPressMap?.({ latitude: lat, longitude: lng });
-            }}
-          >
-            {/* TODO: Scale bar — MapLibre RN v11 does not expose a built-in
+      )}
+      <Map
+        accessible
+        accessibilityLabel="Map"
+        style={styles.map}
+        mapStyle={MAP_STYLE_URL}
+        compass
+        compassPosition={{ top: 16, right: 16 }}
+        attribution
+        attributionPosition={{ bottom: 8, right: 8 }}
+        logo={false}
+        onDidFinishLoadingMap={() => {
+          onMapReady?.();
+        }}
+        onRegionDidChange={(event) => {
+          const [longitude, latitude] = event.nativeEvent.center;
+          onCenterChange?.({ latitude, longitude });
+        }}
+        onRegionIsChanging={(event) => {
+          if (event.nativeEvent.userInteraction) {
+            onUserCameraGesture?.();
+          }
+        }}
+        onLongPress={(event) => {
+          const [lng, lat] = event.nativeEvent.lngLat;
+          onLongPressMap?.({ latitude: lat, longitude: lng });
+        }}
+      >
+        {/* TODO: Scale bar — MapLibre RN v11 does not expose a built-in
                 scaleBar prop on Map. Implement as a React Native overlay that
                 calculates scale from zoom + center latitude using the Web
                 Mercator meters-per-pixel formula, or defer to a follow-up issue. */}
-            <Camera
-              ref={cameraRef}
-              initialViewState={{
-                center: [0, 0],
-                zoom: zoomFromDelta(DELTA.latitudeDelta),
-              }}
-              trackUserLocation={
-                followUser && permissionStatus === 'granted'
-                  ? 'default'
-                  : undefined
-              }
-              onTrackUserLocationChange={(event) => {
-                if (event.nativeEvent.trackUserLocation === null) {
-                  onFollowUserEnded?.();
-                }
-              }}
-            />
-            {/* First, so the user's position and any drawn track (added
+        <Camera
+          ref={cameraRef}
+          initialViewState={{
+            center: [0, 0],
+            zoom: zoomFromDelta(DELTA.latitudeDelta),
+          }}
+          trackUserLocation={
+            followUser && permissionStatus === 'granted' ? 'default' : undefined
+          }
+          onTrackUserLocationChange={(event) => {
+            if (event.nativeEvent.trackUserLocation === null) {
+              onFollowUserEnded?.();
+            }
+          }}
+        />
+        {/* First, so the user's position and any drawn track (added
                 later) sit above the trail labels. */}
-            <TrailsOverlay
-              visible={showTrails}
-              measurementSystem={measurementSystem}
+        <TrailsOverlay
+          visible={showTrails}
+          measurementSystem={measurementSystem}
+        />
+        <Images images={USER_HEADING_IMAGES} />
+        {permissionStatus === 'granted' && (
+          <UserLocation>
+            <UserHeadingPuck heading={userHeading} />
+          </UserLocation>
+        )}
+        {waypoints.map((wp) => (
+          <Marker key={wp.id} id={wp.id} lngLat={[wp.longitude, wp.latitude]}>
+            <View
+              accessible
+              style={[
+                styles.markerDot,
+                wp.id === activeWaypointId && styles.markerDotActive,
+              ]}
+              accessibilityLabel={`Waypoint: ${wp.name}`}
             />
-            <Images images={USER_HEADING_IMAGES} />
-            {permissionStatus === 'granted' && (
-              <UserLocation>
-                <UserHeadingPuck heading={userHeading} />
-              </UserLocation>
-            )}
-            {waypoints.map((wp) => (
-              <Marker
-                key={wp.id}
-                id={wp.id}
-                lngLat={[wp.longitude, wp.latitude]}
-              >
-                <View
-                  accessible
-                  style={[
-                    styles.markerDot,
-                    wp.id === activeWaypointId && styles.markerDotActive,
-                  ]}
-                  accessibilityLabel={`Waypoint: ${wp.name}`}
-                />
-              </Marker>
-            ))}
-            {viewedTrackCoords.length > 1 && (
-              <GeoJSONSource
-                id="viewed-track"
-                data={{
-                  type: 'Feature',
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: viewedTrackCoords.map((c) => [
-                      c.longitude,
-                      c.latitude,
-                    ]),
-                  },
-                  properties: {},
-                }}
-              >
-                <Layer
-                  id="viewed-track-layer"
-                  type="line"
-                  style={styles.viewedTrackLineStyle}
-                />
-              </GeoJSONSource>
-            )}
-            {recordingPolylineCoords.length > 1 && (
-              <GeoJSONSource
-                id="recording-track"
-                data={{
-                  type: 'Feature',
-                  geometry: {
-                    type: 'LineString',
-                    coordinates: recordingPolylineCoords.map((c) => [
-                      c.longitude,
-                      c.latitude,
-                    ]),
-                  },
-                  properties: {},
-                }}
-              >
-                <Layer
-                  id="recording-track-layer"
-                  type="line"
-                  style={styles.recordingLineStyle}
-                />
-              </GeoJSONSource>
-            )}
-          </Map>
+          </Marker>
+        ))}
+        {viewedTrackCoords.length > 1 && (
+          <GeoJSONSource
+            id="viewed-track"
+            data={{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: viewedTrackCoords.map((c) => [
+                  c.longitude,
+                  c.latitude,
+                ]),
+              },
+              properties: {},
+            }}
+          >
+            <Layer
+              id="viewed-track-layer"
+              type="line"
+              style={styles.viewedTrackLineStyle}
+            />
+          </GeoJSONSource>
+        )}
+        {recordingPolylineCoords.length > 1 && (
+          <GeoJSONSource
+            id="recording-track"
+            data={{
+              type: 'Feature',
+              geometry: {
+                type: 'LineString',
+                coordinates: recordingPolylineCoords.map((c) => [
+                  c.longitude,
+                  c.latitude,
+                ]),
+              },
+              properties: {},
+            }}
+          >
+            <Layer
+              id="recording-track-layer"
+              type="line"
+              style={styles.recordingLineStyle}
+            />
+          </GeoJSONSource>
+        )}
+      </Map>
 
-          {recordingState === 'recording' && (
-            <View style={styles.hud}>
-              <Icon
-                name="stopwatch-outline"
-                size={14}
-                color={OVERLAY_FOREGROUND}
-              />
-              <Text style={styles.hudText}>
-                {formatElapsed(recordingElapsed)}
-              </Text>
-              <Icon
-                name="navigate-outline"
-                size={14}
-                color={OVERLAY_FOREGROUND}
-                style={styles.hudSecondIcon}
-              />
-              <Text style={styles.hudText}>
-                {formatDistance(recordingDistance, measurementSystem)}
-              </Text>
-            </View>
-          )}
+      {recordingState === 'recording' && (
+        <View style={styles.hud}>
+          <Icon name="stopwatch-outline" size={14} color={OVERLAY_FOREGROUND} />
+          <Text style={styles.hudText}>{formatElapsed(recordingElapsed)}</Text>
+          <Icon
+            name="navigate-outline"
+            size={14}
+            color={OVERLAY_FOREGROUND}
+            style={styles.hudSecondIcon}
+          />
+          <Text style={styles.hudText}>
+            {formatDistance(recordingDistance, measurementSystem)}
+          </Text>
+        </View>
+      )}
 
-          {/* Which saved track is drawn, and the way to clear it. Bottom-left:
+      {/* Which saved track is drawn, and the way to clear it. Bottom-left:
               the top belongs to the recording HUD, the save bar and the
               download chip, and attribution sits bottom-right. */}
-          {viewedTrackName !== null && (
-            <View style={styles.trackChip}>
-              <Icon
-                name="footsteps-outline"
-                size={14}
-                color={OVERLAY_FOREGROUND}
-              />
-              <Text style={styles.trackChipText} numberOfLines={1}>
-                {viewedTrackName}
-              </Text>
-              <IconButton
-                name="close-outline"
-                size={18}
-                color={OVERLAY_FOREGROUND}
-                onPress={() => onClearViewedTrack?.()}
-                accessibilityLabel={`Hide track ${viewedTrackName} from map`}
-                style={styles.trackChipClose}
-              />
-            </View>
-          )}
+      {viewedTrackName !== null && (
+        <View style={styles.trackChip}>
+          <Icon name="footsteps-outline" size={14} color={OVERLAY_FOREGROUND} />
+          <Text style={styles.trackChipText} numberOfLines={1}>
+            {viewedTrackName}
+          </Text>
+          <IconButton
+            name="close-outline"
+            size={18}
+            color={OVERLAY_FOREGROUND}
+            onPress={() => onClearViewedTrack?.()}
+            accessibilityLabel={`Hide track ${viewedTrackName} from map`}
+            style={styles.trackChipClose}
+          />
+        </View>
+      )}
 
-          {recordingState === 'stopped' && (
-            <View style={styles.saveToolbar}>
-              <TextInput
-                style={styles.saveNameInput}
-                placeholder="Track name (optional)"
-                placeholderTextColor={COLORS.SECONDARY_ACCENT}
-                value={saveName}
-                onChangeText={setSaveName}
-                accessibilityLabel="Track name input"
-              />
-              <AppButton
-                label="Save"
-                size="small"
-                tint={COLORS.SECONDARY_ACCENT}
-                onPress={handleSave}
-                accessibilityLabel="Save track"
-              />
-              <AppButton
-                label="Discard"
-                size="small"
-                variant="destructive"
-                onPress={handleDiscard}
-                accessibilityLabel="Discard track"
-              />
-            </View>
-          )}
-        </>
+      {recordingState === 'stopped' && (
+        <View style={styles.saveToolbar}>
+          <TextInput
+            style={styles.saveNameInput}
+            placeholder="Track name (optional)"
+            placeholderTextColor={COLORS.SECONDARY_ACCENT}
+            value={saveName}
+            onChangeText={setSaveName}
+            accessibilityLabel="Track name input"
+          />
+          <AppButton
+            label="Save"
+            size="small"
+            tint={COLORS.SECONDARY_ACCENT}
+            onPress={handleSave}
+            accessibilityLabel="Save track"
+          />
+          <AppButton
+            label="Discard"
+            size="small"
+            variant="destructive"
+            onPress={handleDiscard}
+            accessibilityLabel="Discard track"
+          />
+        </View>
       )}
     </View>
   );
@@ -382,16 +348,6 @@ function makeStyles(colors: ReturnType<typeof useTheme>) {
     },
     map: {
       flex: 1,
-    },
-    loadingContainer: {
-      flex: 1,
-      justifyContent: 'center',
-      alignItems: 'center',
-      gap: 12,
-    },
-    loadingText: {
-      fontSize: 14,
-      color: colors.PRIMARY_DARK,
     },
     deniedBanner: {
       paddingHorizontal: 16,

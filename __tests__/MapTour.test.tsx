@@ -15,6 +15,11 @@ import {
 import { MapTour, useMapTour } from '../src/screens/Map/useMapTour';
 
 const mockedStorage = AsyncStorage as jest.Mocked<typeof AsyncStorage>;
+let mockIsFocused = true;
+
+jest.mock('@react-navigation/native', () => ({
+  useIsFocused: () => mockIsFocused,
+}));
 
 // Run deferred work at once, so a test doesn't wait on the push animation.
 jest
@@ -56,26 +61,137 @@ async function renderHook({
     return <View />;
   }
   let tree!: ReactTestRenderer.ReactTestRenderer;
-  await ReactTestRenderer.act(async () => {
-    tree = ReactTestRenderer.create(
-      host ? (
-        <TutorialSpotlightContext.Provider value={host}>
-          <Harness />
-        </TutorialSpotlightContext.Provider>
-      ) : (
+  const content = () =>
+    host ? (
+      <TutorialSpotlightContext.Provider value={host}>
         <Harness />
-      ),
+      </TutorialSpotlightContext.Provider>
+    ) : (
+      <Harness />
     );
+  await ReactTestRenderer.act(async () => {
+    tree = ReactTestRenderer.create(content());
   });
-  return { result, tree, onReplayHandled };
+  const focus = async (focused: boolean) => {
+    mockIsFocused = focused;
+    await ReactTestRenderer.act(async () => {
+      tree.update(content());
+    });
+  };
+  const requestReplay = async (requested: boolean) => {
+    replayRequested = requested;
+    await ReactTestRenderer.act(async () => {
+      tree.update(content());
+    });
+  };
+  return { result, tree, onReplayHandled, focus, requestReplay };
 }
 
 beforeEach(() => {
   jest.clearAllMocks();
+  mockIsFocused = true;
   mockedStorage.setItem.mockResolvedValue(undefined);
 });
 
 describe('useMapTour', () => {
+  test('ignores a storage read completed after blur and retries on focus', async () => {
+    let resolveRead!: (value: string | null) => void;
+    mockedStorage.getItem
+      .mockImplementationOnce(
+        () =>
+          new Promise((resolve) => {
+            resolveRead = resolve;
+          }),
+      )
+      .mockResolvedValue(null);
+    const { host } = makeHost();
+    const { focus } = await renderHook({ host });
+
+    await focus(false);
+    await ReactTestRenderer.act(async () => {
+      resolveRead(null);
+    });
+    expect(host.startTour).not.toHaveBeenCalled();
+
+    await focus(true);
+    expect(host.startTour).toHaveBeenCalledTimes(1);
+  });
+
+  test.each([false, true])(
+    'cancels a deferred start on blur and retries on focus (replay: %s)',
+    async (replayRequested) => {
+      mockedStorage.getItem.mockResolvedValue(null);
+      const callbacks: (() => void)[] = [];
+      const cancel = jest.fn();
+      const interactions = jest
+        .spyOn(InteractionManager, 'runAfterInteractions')
+        .mockImplementation((task) => {
+          if (typeof task === 'function') callbacks.push(task);
+          return { cancel } as unknown as ReturnType<
+            typeof InteractionManager.runAfterInteractions
+          >;
+        });
+      const { host } = makeHost();
+      const { focus, onReplayHandled } = await renderHook({
+        host,
+        replayRequested,
+      });
+
+      await focus(false);
+      expect(cancel).toHaveBeenCalledTimes(1);
+      await ReactTestRenderer.act(async () => {
+        callbacks[0]();
+      });
+      expect(host.startTour).not.toHaveBeenCalled();
+      expect(onReplayHandled).not.toHaveBeenCalled();
+
+      await focus(true);
+      await ReactTestRenderer.act(async () => {
+        callbacks[1]();
+      });
+      expect(host.startTour).toHaveBeenCalledTimes(1);
+      expect(onReplayHandled).toHaveBeenCalledTimes(replayRequested ? 1 : 0);
+      interactions.mockImplementation((task) => {
+        if (typeof task === 'function') task();
+        return { cancel: jest.fn() } as unknown as ReturnType<
+          typeof InteractionManager.runAfterInteractions
+        >;
+      });
+    },
+  );
+
+  test('restores a covered Map’s targets when the replay Map is popped', async () => {
+    mockedStorage.getItem.mockResolvedValue('true');
+    const { host } = makeHost();
+    const registered = new Map<string, React.RefObject<View | null>>();
+    (host.registerSpotlightTarget as jest.Mock).mockImplementation(
+      (name: string, ref: React.RefObject<View | null>) => {
+        registered.set(name, ref);
+        return () => {
+          if (registered.get(name) === ref) registered.delete(name);
+        };
+      },
+    );
+    const first = await renderHook({ host });
+    const originalTargets = new Map(registered);
+    await first.focus(false);
+    expect(registered.size).toBe(0);
+    expect(host.endTour).toHaveBeenCalledWith(MAP_TOUR_ID);
+
+    mockIsFocused = true;
+    const second = await renderHook({ host, replayRequested: true });
+    expect(registered.get('mapView')).not.toBe(originalTargets.get('mapView'));
+    await ReactTestRenderer.act(async () => {
+      second.tree.unmount();
+    });
+    await first.focus(true);
+    expect(registered).toEqual(originalTargets);
+    await ReactTestRenderer.act(async () => {
+      first.result.current?.replay?.();
+    });
+    expect(host.startTour).toHaveBeenCalledTimes(2);
+  });
+
   test('without the app shell, location is not held back', async () => {
     const { result } = await renderHook({});
 
@@ -138,6 +254,32 @@ describe('useMapTour', () => {
 
     expect(onReplayHandled).toHaveBeenCalledTimes(1);
     expect(host.startTour).toHaveBeenCalledTimes(1);
+  });
+
+  test('clearing a first-visit replay request does not start a second tour', async () => {
+    mockedStorage.getItem.mockResolvedValue(null);
+    const { host } = makeHost();
+    const { requestReplay } = await renderHook({
+      host,
+      replayRequested: true,
+    });
+
+    await requestReplay(false);
+    expect(host.startTour).toHaveBeenCalledTimes(1);
+    expect(mockedStorage.getItem).not.toHaveBeenCalled();
+  });
+
+  test('Help can replay again after the first-visit tour finishes', async () => {
+    mockedStorage.getItem.mockResolvedValue(null);
+    const { host } = makeHost();
+    const { requestReplay } = await renderHook({ host });
+    const tour = (host.startTour as jest.Mock).mock.calls[0][0] as TutorialTour;
+    await ReactTestRenderer.act(async () => {
+      tour.onFinish?.('complete');
+    });
+
+    await requestReplay(true);
+    expect(host.startTour).toHaveBeenCalledTimes(2);
   });
 
   test('registers every spotlight target the steps use, and cleans up', async () => {
