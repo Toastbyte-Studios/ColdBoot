@@ -506,5 +506,6 @@ const styles = StyleSheet.create({
   },
   footerButton: {
     flex: 1,
+    paddingHorizontal: SPACING.sm,
   },
 });
