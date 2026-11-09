@@ -113,7 +113,9 @@ describe('Tutorial flow components', () => {
       onSkip,
     });
 
-    for (let step = 0; step < 6; step += 1) {
+    const { TUTORIAL_STEPS } = require('../src/components/TutorialModal');
+
+    for (let step = 0; step < TUTORIAL_STEPS.length - 1; step += 1) {
       act(() => {
         tree.root
           .findByProps({ accessibilityLabel: 'Next tutorial step' })
@@ -131,6 +133,31 @@ describe('Tutorial flow components', () => {
     expect(onSkip).not.toHaveBeenCalled();
   });
 
+  test('TutorialModal scrolls step content while keeping navigation visible', () => {
+    const { tree } = renderTutorialModal({ platform: 'ios' });
+    const { ScrollView, StyleSheet, View } = require('react-native');
+    const content = tree.root.findByType(ScrollView);
+    const constrainedViews = tree.root
+      .findAllByType(View)
+      .filter(
+        (view) => StyleSheet.flatten(view.props.style)?.maxHeight === '100%',
+      );
+
+    expect(constrainedViews).toHaveLength(2);
+    expect(
+      content.findByProps({
+        accessibilityLabel:
+          'Your field kit for the outdoors and for when the grid goes down. Here is a quick tour.',
+      }),
+    ).toBeTruthy();
+    expect(
+      content.findAllByProps({ accessibilityLabel: 'Next tutorial step' }),
+    ).toHaveLength(0);
+    expect(
+      tree.root.findByProps({ accessibilityLabel: 'Next tutorial step' }),
+    ).toBeTruthy();
+  });
+
   test('TutorialModal spotlights guided UI targets and hides skip on done', () => {
     const onSpotlightTargetChange = jest.fn();
     const { act, tree } = renderTutorialModal({
@@ -139,39 +166,36 @@ describe('Tutorial flow components', () => {
       onSkip: jest.fn(),
       onSpotlightTargetChange,
     });
+    const { TUTORIAL_STEPS } = require('../src/components/TutorialModal');
+    const stepIndex = (id: string) =>
+      TUTORIAL_STEPS.findIndex((step: { id: string }) => step.id === id);
 
-    const pressNext = () => {
-      act(() => {
-        tree.root
-          .findByProps({ accessibilityLabel: 'Next tutorial step' })
-          .props.onPress();
-      });
+    const pressNext = (times = 1) => {
+      for (let i = 0; i < times; i += 1) {
+        act(() => {
+          tree.root
+            .findByProps({ accessibilityLabel: 'Next tutorial step' })
+            .props.onPress();
+        });
+      }
     };
 
-    pressNext();
-    pressNext();
-    pressNext();
-    pressNext();
+    pressNext(stepIndex('shortcuts'));
 
     const renderedStep = JSON.stringify(tree.toJSON());
 
     expect(renderedStep).toContain('Shortcuts');
-    expect(renderedStep).not.toContain('Tab Bar');
+    expect(renderedStep).toContain(
+      `Step ${stepIndex('shortcuts') + 1} of ${TUTORIAL_STEPS.length}`,
+    );
     expect(
       tree.root.findByProps({
         accessibilityLabel:
           'Your most-used tools and Alerts, one tap away. Change them in Settings.',
       }),
     ).toBeTruthy();
-    expect(() =>
-      tree.root.findByProps({
-        accessibilityLabel:
-          'Your most-used tools and Alerts, one tap away. Change them in Settings. Hold the red SOS button for one second in an emergency.',
-      }),
-    ).toThrow();
 
-    pressNext();
-    pressNext();
+    pressNext(TUTORIAL_STEPS.length - 1 - stepIndex('shortcuts'));
 
     expect(() =>
       tree.root.findByProps({ accessibilityLabel: 'Skip tutorial' }),
@@ -179,7 +203,63 @@ describe('Tutorial flow components', () => {
 
     expect(onSpotlightTargetChange).toHaveBeenCalledWith('logo');
     expect(onSpotlightTargetChange).toHaveBeenCalledWith('navSearch');
+    expect(onSpotlightTargetChange).toHaveBeenCalledWith('settings');
     expect(onSpotlightTargetChange).toHaveBeenCalledWith('footerButtons');
+  });
+
+  test('TutorialModal goes back a step and hides Back on the first step', () => {
+    const onSpotlightTargetChange = jest.fn();
+    const { act, tree } = renderTutorialModal({
+      platform: 'ios',
+      onSpotlightTargetChange,
+    });
+
+    expect(() =>
+      tree.root.findByProps({ accessibilityLabel: 'Previous tutorial step' }),
+    ).toThrow();
+
+    act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Next tutorial step' })
+        .props.onPress();
+    });
+    act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Next tutorial step' })
+        .props.onPress();
+    });
+    expect(onSpotlightTargetChange).toHaveBeenLastCalledWith('logo');
+
+    act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Previous tutorial step' })
+        .props.onPress();
+    });
+
+    expect(JSON.stringify(tree.toJSON())).toContain('Swipe to Navigate');
+    expect(onSpotlightTargetChange).toHaveBeenLastCalledWith(undefined);
+  });
+
+  test('TutorialModal lists every module', () => {
+    const { act, tree } = renderTutorialModal({ platform: 'ios' });
+    const { TUTORIAL_STEPS } = require('../src/components/TutorialModal');
+    const { MODULES } = require('../constants');
+    const modulesIndex = TUTORIAL_STEPS.findIndex(
+      (step: { id: string }) => step.id === 'modules',
+    );
+
+    for (let i = 0; i < modulesIndex; i += 1) {
+      act(() => {
+        tree.root
+          .findByProps({ accessibilityLabel: 'Next tutorial step' })
+          .props.onPress();
+      });
+    }
+
+    const rendered = JSON.stringify(tree.toJSON());
+    for (const module of MODULES) {
+      expect(rendered).toContain(module.name);
+    }
   });
 
   test.each([

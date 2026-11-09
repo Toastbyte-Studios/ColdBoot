@@ -16,6 +16,8 @@ export type AppBarProps = {
   logoRef: React.RefObject<View | null>;
   /** Spotlit by the tutorial. */
   searchRef: React.RefObject<View | null>;
+  /** Spotlit by the tutorial. */
+  settingsRef?: React.RefObject<View | null>;
   onHomePress: () => void;
   onSearchPress: () => void;
   onSettingsPress: () => void;
@@ -51,6 +53,7 @@ const NAV_BUTTON = 34;
 export default function AppBar({
   logoRef,
   searchRef,
+  settingsRef,
   onHomePress,
   onSearchPress,
   onSettingsPress,
@@ -125,6 +128,7 @@ export default function AppBar({
       </Pressable>
 
       <Pressable
+        ref={settingsRef}
         onPress={onSettingsPress}
         accessibilityRole="button"
         accessibilityLabel="Settings"
