@@ -19,6 +19,7 @@ import {
 import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { useActiveRouteName } from '../hooks/useActiveRouteName';
 import { useIsDarkMode } from '../hooks/useIsDarkMode';
+import { useTheme } from '../hooks/useTheme';
 import {
   useNavigationHistory,
   useGestureNavigation,
@@ -50,6 +51,91 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
 }>;
 
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
+
+/** Breathing room between a spotlit control and the edge of its cut-out. */
+const SPOTLIGHT_PADDING = 6;
+const SPOTLIGHT_RING_WIDTH = 2.5;
+
+/** A tutorial cut-out, already padded, in the shell's coordinates. */
+type SpotlightShapeSpec =
+  | { kind: 'circle'; cx: number; cy: number; r: number }
+  | {
+      kind: 'rect';
+      x: number;
+      y: number;
+      width: number;
+      height: number;
+      radius: number;
+    };
+
+/**
+ * The shape the backdrop cuts out around a target: a circle for the round
+ * logo, a pill for the app bar's buttons, a rounded box for a section header.
+ */
+function spotlightShapeFor(
+  target: TutorialSpotlightTarget | undefined,
+  layout: SpotlightLayout | null,
+): SpotlightShapeSpec | null {
+  if (!layout || !target || target === 'footerButtons') {
+    return null;
+  }
+  if (target === 'logo') {
+    return {
+      kind: 'circle',
+      cx: layout.x + layout.width / 2,
+      cy: layout.y + layout.height / 2,
+      r: Math.min(layout.width, layout.height) / 2 + SPOTLIGHT_PADDING,
+    };
+  }
+  const height = layout.height + SPOTLIGHT_PADDING * 2;
+  return {
+    kind: 'rect',
+    x: layout.x - SPOTLIGHT_PADDING,
+    y: layout.y - SPOTLIGHT_PADDING,
+    width: layout.width + SPOTLIGHT_PADDING * 2,
+    height,
+    radius: target === 'sectionHeader' ? 8 + SPOTLIGHT_PADDING : height / 2,
+  };
+}
+
+/** Draws a cut-out shape: filled in the mask, stroked for the ring. */
+function SpotlightShape({
+  shape,
+  fill,
+  stroke,
+  strokeWidth,
+}: {
+  shape: SpotlightShapeSpec;
+  fill: string;
+  stroke?: string;
+  strokeWidth?: number;
+}) {
+  if (shape.kind === 'circle') {
+    return (
+      <Circle
+        cx={shape.cx}
+        cy={shape.cy}
+        r={shape.r}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+      />
+    );
+  }
+  return (
+    <SvgRect
+      x={shape.x}
+      y={shape.y}
+      width={shape.width}
+      height={shape.height}
+      rx={shape.radius}
+      ry={shape.radius}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+    />
+  );
+}
 
 /**
  * Routes that take the whole window on Android, with no app bar and no bottom
@@ -101,6 +187,7 @@ function AppShellBody({ children }: Props) {
   const activeRouteName = useActiveRouteName();
   const appBarHeader = useAppBarHeader();
   const isDarkMode = useIsDarkMode();
+  const COLORS = useTheme();
   const isFullScreenRoute =
     Platform.OS === 'android' &&
     activeRouteName !== undefined &&
@@ -121,6 +208,7 @@ function AppShellBody({ children }: Props) {
   const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
   const navSearchRef = useRef<View>(null);
+  const settingsRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
 
   const markTutorialComplete = () => {
@@ -156,9 +244,11 @@ function AppShellBody({ children }: Props) {
         ? logoRef.current
         : tutorialSpotlightTarget === 'navSearch'
           ? navSearchRef.current
-          : tutorialSpotlightTarget === 'sectionHeader'
-            ? sectionHeaderRef.current
-            : null;
+          : tutorialSpotlightTarget === 'settings'
+            ? settingsRef.current
+            : tutorialSpotlightTarget === 'sectionHeader'
+              ? sectionHeaderRef.current
+              : null;
     if (!targetRef) return;
     let cancelled = false;
     targetRef.measureInWindow(
@@ -237,6 +327,11 @@ function AppShellBody({ children }: Props) {
     [navigationHistory, disableGestureNavigation],
   );
 
+  const spotlightShape = spotlightShapeFor(
+    tutorialSpotlightTarget,
+    spotlightLayout,
+  );
+
   const handleSpotlightTargetChange = useCallback(
     (target?: TutorialSpotlightTarget) => {
       setTutorialSpotlightTarget(target);
@@ -275,6 +370,7 @@ function AppShellBody({ children }: Props) {
               <AppBar
                 logoRef={logoRef}
                 searchRef={navSearchRef}
+                settingsRef={settingsRef}
                 onHomePress={() => navigation.dispatch(StackActions.popToTop())}
                 onSearchPress={() => navigation.navigate('Search')}
                 onSettingsPress={() => setIsSettingsVisible(true)}
@@ -303,43 +399,9 @@ function AppShellBody({ children }: Props) {
                     height="5000"
                     fill="white"
                   />
-                  {spotlightLayout && tutorialSpotlightTarget === 'logo' && (
-                    <Circle
-                      cx={spotlightLayout.x + spotlightLayout.width / 2}
-                      cy={spotlightLayout.y + spotlightLayout.height / 2}
-                      r={
-                        Math.min(
-                          spotlightLayout.width,
-                          spotlightLayout.height,
-                        ) / 2
-                      }
-                      fill="black"
-                    />
-                  )}
-                  {spotlightLayout &&
-                    tutorialSpotlightTarget === 'navSearch' && (
-                      <SvgRect
-                        x={spotlightLayout.x}
-                        y={spotlightLayout.y}
-                        width={spotlightLayout.width}
-                        height={spotlightLayout.height}
-                        rx={spotlightLayout.height / 2}
-                        ry={spotlightLayout.height / 2}
-                        fill="black"
-                      />
-                    )}
-                  {spotlightLayout &&
-                    tutorialSpotlightTarget === 'sectionHeader' && (
-                      <SvgRect
-                        x={spotlightLayout.x}
-                        y={spotlightLayout.y}
-                        width={spotlightLayout.width}
-                        height={spotlightLayout.height}
-                        rx={8}
-                        ry={8}
-                        fill="black"
-                      />
-                    )}
+                  {spotlightShape ? (
+                    <SpotlightShape shape={spotlightShape} fill="black" />
+                  ) : null}
                 </Mask>
               </Defs>
               <SvgRect
@@ -350,6 +412,15 @@ function AppShellBody({ children }: Props) {
                 fill="rgba(0,0,0,0.65)"
                 mask="url(#backdropMask)"
               />
+              {/* An accent ring draws the eye to the cut-out. */}
+              {spotlightShape ? (
+                <SpotlightShape
+                  shape={spotlightShape}
+                  fill="none"
+                  stroke={COLORS.ACCENT}
+                  strokeWidth={SPOTLIGHT_RING_WIDTH}
+                />
+              ) : null}
             </Svg>
           )}
 

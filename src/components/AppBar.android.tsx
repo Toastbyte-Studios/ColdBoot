@@ -36,6 +36,7 @@ const MARK_SIZE = 32;
 export default function AppBar({
   logoRef,
   searchRef,
+  settingsRef,
   onHomePress,
   onSearchPress,
   onSettingsPress,
@@ -123,13 +124,15 @@ export default function AppBar({
         />
       </View>
 
-      <IconButton
-        name="settings-outline"
-        size={24}
-        color={COLORS.PRIMARY_DARK}
-        onPress={onSettingsPress}
-        accessibilityLabel="Settings"
-      />
+      <View ref={settingsRef} collapsable={false}>
+        <IconButton
+          name="settings-outline"
+          size={24}
+          color={COLORS.PRIMARY_DARK}
+          onPress={onSettingsPress}
+          accessibilityLabel="Settings"
+        />
+      </View>
     </View>
   );
 }
