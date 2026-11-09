@@ -175,7 +175,8 @@ export default function TutorialModal({
     let mounted = true;
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => {
-        if (mounted) setReduceMotion(enabled);
+        // Only an "on" answer changes anything, so skip the re-render otherwise.
+        if (mounted && enabled) setReduceMotion(true);
       })
       .catch(() => {});
     return () => {
