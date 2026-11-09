@@ -10,6 +10,7 @@ import React, {
   useState,
 } from 'react';
 import {
+  BackHandler,
   PanResponder,
   Platform,
   StatusBar,
@@ -34,11 +35,13 @@ import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import { SettingsSheetContext } from './SettingsSheetContext';
 import ShortcutBar from './ShortcutBar';
-import TutorialModal from './TutorialModal';
+import TutorialModal, { TUTORIAL_STEPS } from './TutorialModal';
 import {
   SpotlightLayout,
+  TutorialFinishReason,
   TutorialSpotlightContext,
   TutorialSpotlightTarget,
+  TutorialTour,
 } from './TutorialSpotlightContext';
 
 type Props = PropsWithChildren;
@@ -47,7 +50,7 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
   Home: undefined;
   Search: undefined;
   DownloadArea: undefined;
-  MapScreen: { library: 'maps' };
+  MapScreen: { library?: 'maps'; tour?: boolean };
 }>;
 
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
@@ -55,6 +58,13 @@ const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
 /** Breathing room between a spotlit control and the edge of its cut-out. */
 const SPOTLIGHT_PADDING = 6;
 const SPOTLIGHT_RING_WIDTH = 2.5;
+/** Targets that are panels, not buttons: cut out as rounded boxes. */
+const PANEL_TARGETS = new Set<TutorialSpotlightTarget>([
+  'sectionHeader',
+  'mapView',
+  'mapCompass',
+]);
+const PANEL_RADIUS = 12;
 
 /** A tutorial cut-out, already padded, in the shell's coordinates. */
 type SpotlightShapeSpec =
@@ -70,7 +80,7 @@ type SpotlightShapeSpec =
 
 /**
  * The shape the backdrop cuts out around a target: a circle for the round
- * logo, a pill for the app bar's buttons, a rounded box for a section header.
+ * logo, a pill for buttons, a rounded box for a panel such as the map.
  */
 function spotlightShapeFor(
   target: TutorialSpotlightTarget | undefined,
@@ -94,7 +104,9 @@ function spotlightShapeFor(
     y: layout.y - SPOTLIGHT_PADDING,
     width: layout.width + SPOTLIGHT_PADDING * 2,
     height,
-    radius: target === 'sectionHeader' ? 8 + SPOTLIGHT_PADDING : height / 2,
+    radius: PANEL_TARGETS.has(target)
+      ? PANEL_RADIUS + SPOTLIGHT_PADDING
+      : height / 2,
   };
 }
 
@@ -199,27 +211,80 @@ function AppShellBody({ children }: Props) {
   );
   const [isHelpVisible, setIsHelpVisible] = useState(false);
   const [isAlertsVisible, setIsAlertsVisible] = useState(false);
-  const [isTutorialVisible, setIsTutorialVisible] = useState(false);
+  const [activeTour, setActiveTour] = useState<TutorialTour | null>(null);
   const [tutorialSpotlightTarget, setTutorialSpotlightTarget] = useState<
     TutorialSpotlightTarget | undefined
   >(undefined);
   const [spotlightLayout, setSpotlightLayout] =
     useState<SpotlightLayout | null>(null);
+  const [shellHeight, setShellHeight] = useState(0);
   const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
   const navSearchRef = useRef<View>(null);
   const settingsRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
+  /** Views screens have offered to spotlight (the Map's controls). */
+  const screenTargetsRef = useRef(
+    new Map<TutorialSpotlightTarget, React.RefObject<View | null>>(),
+  );
 
-  const markTutorialComplete = () => {
-    AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true')
-      .catch(() => {
-        // Ignore persistence failures so users are not blocked in the tutorial.
-      })
-      .finally(() => {
-        setIsTutorialVisible(false);
-      });
-  };
+  const startTour = useCallback((tour: TutorialTour) => {
+    setActiveTour(tour);
+  }, []);
+
+  const firstRunTour = useMemo<TutorialTour>(
+    () => ({
+      id: 'main',
+      steps: TUTORIAL_STEPS,
+      onFinish: () => {
+        AsyncStorage.setItem(TUTORIAL_STORAGE_KEY, 'true').catch(() => {
+          // Ignore persistence failures so users are not blocked in the
+          // tutorial.
+        });
+      },
+    }),
+    [],
+  );
+
+  const finishTour = useCallback(
+    (reason: TutorialFinishReason) => {
+      activeTour?.onFinish?.(reason);
+      setActiveTour(null);
+    },
+    [activeTour],
+  );
+
+  const endTour = useCallback((id: string) => {
+    setActiveTour((current) => (current?.id === id ? null : current));
+  }, []);
+
+  // Android Back during a tour skips it, rather than navigating away underneath.
+  useEffect(() => {
+    if (!activeTour) {
+      return;
+    }
+    const subscription = BackHandler.addEventListener(
+      'hardwareBackPress',
+      () => {
+        finishTour('skip');
+        return true;
+      },
+    );
+    return () => subscription.remove();
+  }, [activeTour, finishTour]);
+
+  const registerSpotlightTarget = useCallback(
+    (target: TutorialSpotlightTarget, ref: React.RefObject<View | null>) => {
+      const targets = screenTargetsRef.current;
+      targets.set(target, ref);
+      return () => {
+        if (targets.get(target) === ref) {
+          targets.delete(target);
+        }
+      };
+    },
+    [],
+  );
 
   useEffect(() => {
     let isMounted = true;
@@ -227,7 +292,7 @@ function AppShellBody({ children }: Props) {
     AsyncStorage.getItem(TUTORIAL_STORAGE_KEY)
       .then((value) => {
         if (isMounted && value === null) {
-          setIsTutorialVisible(true);
+          setActiveTour((current) => current ?? firstRunTour);
         }
       })
       .catch(() => {});
@@ -235,7 +300,7 @@ function AppShellBody({ children }: Props) {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [firstRunTour]);
 
   useEffect(() => {
     setSpotlightLayout(null);
@@ -248,7 +313,10 @@ function AppShellBody({ children }: Props) {
             ? settingsRef.current
             : tutorialSpotlightTarget === 'sectionHeader'
               ? sectionHeaderRef.current
-              : null;
+              : tutorialSpotlightTarget
+                ? (screenTargetsRef.current.get(tutorialSpotlightTarget)
+                    ?.current ?? null)
+                : null;
     if (!targetRef) return;
     let cancelled = false;
     targetRef.measureInWindow(
@@ -271,6 +339,14 @@ function AppShellBody({ children }: Props) {
       cancelled = true;
     };
   }, [tutorialSpotlightTarget]);
+
+  // The card moves to the top when what it points at is in the lower half.
+  const tutorialPlacement: 'top' | 'bottom' =
+    spotlightLayout &&
+    shellHeight > 0 &&
+    spotlightLayout.y + spotlightLayout.height / 2 > shellHeight / 2
+      ? 'top'
+      : 'bottom';
 
   const panResponder = useMemo(
     () =>
@@ -358,11 +434,16 @@ function AppShellBody({ children }: Props) {
           containerRef: gestureContainerRef,
           navSearchRef,
           sectionHeaderRef,
+          registerSpotlightTarget,
+          startTour,
+          endTour,
+          activeTourId: activeTour?.id,
         }}
       >
         <View
           ref={gestureContainerRef}
           style={styles.gestureContainer}
+          onLayout={(e) => setShellHeight(e.nativeEvent.layout.height)}
           {...panResponder.panHandlers}
         >
           <View style={styles.shell}>
@@ -383,7 +464,7 @@ function AppShellBody({ children }: Props) {
             </SettingsSheetContext.Provider>
           </View>
 
-          {isTutorialVisible && (
+          {activeTour && (
             <Svg
               width="100%"
               height="100%"
@@ -441,9 +522,13 @@ function AppShellBody({ children }: Props) {
           )}
 
           <TutorialModal
-            visible={isTutorialVisible}
-            onComplete={markTutorialComplete}
-            onSkip={markTutorialComplete}
+            key={activeTour?.id ?? 'none'}
+            visible={activeTour !== null}
+            steps={activeTour?.steps}
+            minCardHeight={activeTour?.minCardHeight}
+            placement={tutorialPlacement}
+            onComplete={() => finishTour('complete')}
+            onSkip={() => finishTour('skip')}
             onSpotlightTargetChange={handleSpotlightTargetChange}
           />
         </View>
@@ -468,7 +553,12 @@ function AppShellBody({ children }: Props) {
         onClose={() => setIsHelpVisible(false)}
         onLaunchTutorial={() => {
           setIsHelpVisible(false);
-          setIsTutorialVisible(true);
+          setActiveTour(firstRunTour);
+        }}
+        onLaunchMapTutorial={() => {
+          setIsHelpVisible(false);
+          // The Map starts its own tour once its controls are on screen.
+          navigation.navigate('MapScreen', { tour: true });
         }}
       />
     </ScreenContainer>

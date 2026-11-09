@@ -8,36 +8,33 @@ import {
   View,
   Text as RNText,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { MODULES } from '../../constants';
 import { useTheme } from '../hooks/useTheme';
 import { withAlpha } from '../theme/colorUtils';
 import { FOOTER_HEIGHT, SPACING } from '../theme/constants';
 import AppButton from './AppButton';
-import { TutorialSpotlightTarget } from './TutorialSpotlightContext';
+import type {
+  TutorialSpotlightTarget,
+  TutorialStep,
+} from './TutorialSpotlightContext';
+
+export type { TutorialStep } from './TutorialSpotlightContext';
 
 interface TutorialModalProps {
   visible: boolean;
   onComplete: () => void;
   onSkip: () => void;
   onSpotlightTargetChange?: (target?: TutorialSpotlightTarget) => void;
-}
-
-/** A short line under a step's description, with its own icon. */
-interface TutorialTip {
-  icon: string;
-  text: string;
-}
-
-export interface TutorialStep {
-  id: string;
-  icon: string;
-  title: string;
-  description: string;
-  spotlightTarget?: TutorialSpotlightTarget;
-  tips?: TutorialTip[];
-  /** Shows a chip for each module, read from MODULES so it can't drift. */
-  showModules?: boolean;
+  /** Defaults to the first-run tour. */
+  steps?: TutorialStep[];
+  /**
+   * Where the card sits. The shell moves it to the top when the spotlit
+   * control is in the lower half, so the card never covers it.
+   */
+  placement?: 'top' | 'bottom';
+  minCardHeight?: number;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -139,7 +136,8 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
     id: 'done',
     icon: 'checkmark-circle-outline',
     title: "You're Ready",
-    description: 'Replay this tour any time from Settings → Help & tutorial.',
+    description:
+      'Replay this tour any time from Settings → Help & tutorial. The Map has a short tour of its own the first time you open it.',
   },
 ];
 
@@ -148,21 +146,29 @@ const TUTORIAL_CARD_BOTTOM_OFFSET = FOOTER_HEIGHT + TUTORIAL_CARD_BOTTOM_GAP;
 /** How far a step slides in from, in the direction of travel. */
 const STEP_SLIDE_DISTANCE = 18;
 const STEP_ANIMATION_MS = 220;
+/** Keeps the card from jumping in height between short and long steps. */
+const DEFAULT_CARD_MIN_HEIGHT = 420;
+/** Room between a top-placed card and the status bar. */
+const TOP_PLACEMENT_GAP = 8;
 
 export default function TutorialModal({
   visible,
   onComplete,
   onSkip,
   onSpotlightTargetChange,
+  steps = TUTORIAL_STEPS,
+  placement = 'bottom',
+  minCardHeight = DEFAULT_CARD_MIN_HEIGHT,
 }: TutorialModalProps) {
   const COLORS = useTheme();
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const progress = useRef(new Animated.Value(1)).current;
   const direction = useRef<1 | -1>(1);
   const isFirstStep = currentStep === 0;
-  const isLastStep = currentStep === TUTORIAL_STEPS.length - 1;
-  const step = TUTORIAL_STEPS[currentStep];
+  const isLastStep = currentStep === steps.length - 1;
+  const step = steps[Math.min(currentStep, steps.length - 1)];
   const spotlightTarget = step.spotlightTarget;
 
   useEffect(() => {
@@ -226,16 +232,30 @@ export default function TutorialModal({
     ],
   };
 
-  const stepLabel = `Step ${currentStep + 1} of ${TUTORIAL_STEPS.length}`;
+  const stepLabel = `Step ${currentStep + 1} of ${steps.length}`;
 
   return (
-    <View style={styles.overlay}>
-      <View style={styles.cardContainer}>
+    <View
+      style={[
+        styles.overlay,
+        placement === 'top' && [
+          styles.overlayTop,
+          { paddingTop: insets.top + TOP_PLACEMENT_GAP },
+        ],
+      ]}
+    >
+      <View
+        style={[
+          styles.cardContainer,
+          placement === 'top' && styles.cardContainerTop,
+        ]}
+      >
         <View
           accessibilityViewIsModal
           style={[
             styles.card,
             {
+              minHeight: minCardHeight,
               backgroundColor: COLORS.SURFACE,
               borderColor: COLORS.BORDER,
               shadowColor: COLORS.PRIMARY_DARK,
@@ -265,7 +285,7 @@ export default function TutorialModal({
             accessibilityElementsHidden
             importantForAccessibility="no-hide-descendants"
           >
-            {TUTORIAL_STEPS.map((tutorialStep, index) => (
+            {steps.map((tutorialStep, index) => (
               <View
                 key={tutorialStep.id}
                 style={[
@@ -399,10 +419,16 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     zIndex: 300,
   },
+  overlayTop: {
+    justifyContent: 'flex-start',
+  },
   cardContainer: {
     width: '100%',
     maxWidth: 560,
     marginBottom: TUTORIAL_CARD_BOTTOM_OFFSET,
+  },
+  cardContainerTop: {
+    marginBottom: 0,
   },
   card: {
     width: '100%',
@@ -411,8 +437,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: SPACING.md,
     paddingBottom: 20,
-    // Keeps the card from jumping in height between short and long steps.
-    minHeight: 420,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.25,
     shadowRadius: 20,

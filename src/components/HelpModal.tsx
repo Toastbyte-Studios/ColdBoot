@@ -24,6 +24,8 @@ interface HelpModalProps {
   visible: boolean;
   onClose: () => void;
   onLaunchTutorial?: () => void;
+  /** Opens the Map and runs its tour. */
+  onLaunchMapTutorial?: () => void;
 }
 
 type HelpSection = 'what' | 'how' | 'privacy' | 'terms' | 'contact';
@@ -205,6 +207,7 @@ export const HelpModal = ({
   visible,
   onClose,
   onLaunchTutorial,
+  onLaunchMapTutorial,
 }: HelpModalProps) => {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
@@ -336,6 +339,16 @@ export const HelpModal = ({
                                 variant="tinted"
                                 onPress={() => onLaunchTutorial?.()}
                                 accessibilityLabel="Replay tutorial now"
+                                style={styles.tutorialActionButton}
+                              />
+                            ) : null}
+                            {showTutorialAction && onLaunchMapTutorial ? (
+                              <AppButton
+                                label="Replay Map Tour"
+                                icon="map-outline"
+                                variant="tinted"
+                                onPress={onLaunchMapTutorial}
+                                accessibilityLabel="Open the map and replay its tour"
                                 style={styles.tutorialActionButton}
                               />
                             ) : null}

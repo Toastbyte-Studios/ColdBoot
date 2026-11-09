@@ -304,6 +304,68 @@ describe('Tutorial flow components', () => {
     expect(onLaunchTutorial).toHaveBeenCalledTimes(1);
   });
 
+  test('HelpModal replays the map tour from How to use', () => {
+    jest.resetModules();
+    setPlatform('ios');
+    const React = require('react');
+    const ReactTestRenderer: RendererModule = require('react-test-renderer');
+    const { HelpModal } = require('../src/components/HelpModal');
+    const onLaunchMapTutorial = jest.fn();
+    let tree!: ReactTestRenderer;
+
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(
+        React.createElement(HelpModal, {
+          visible: true,
+          onClose: jest.fn(),
+          onLaunchTutorial: jest.fn(),
+          onLaunchMapTutorial,
+        }),
+      );
+    });
+
+    ReactTestRenderer.act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'How to use collapsed' })
+        .props.onPress();
+    });
+    ReactTestRenderer.act(() => {
+      tree.root
+        .findByProps({
+          accessibilityLabel: 'Open the map and replay its tour',
+        })
+        .props.onPress();
+    });
+
+    expect(onLaunchMapTutorial).toHaveBeenCalledTimes(1);
+  });
+
+  test('TutorialModal renders the steps it is given', () => {
+    jest.resetModules();
+    setPlatform('ios');
+    const React = require('react');
+    const ReactTestRenderer: RendererModule = require('react-test-renderer');
+    const TutorialModal = require('../src/components/TutorialModal').default;
+    const { MAP_TUTORIAL_STEPS } = require('../src/screens/Map/mapTour');
+    let tree!: ReactTestRenderer;
+
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(
+        React.createElement(TutorialModal, {
+          visible: true,
+          onComplete: jest.fn(),
+          onSkip: jest.fn(),
+          steps: MAP_TUTORIAL_STEPS,
+          placement: 'top',
+        }),
+      );
+    });
+
+    const rendered = JSON.stringify(tree.toJSON());
+    expect(rendered).toContain('Map Basics');
+    expect(rendered).toContain(`Step 1 of ${MAP_TUTORIAL_STEPS.length}`);
+  });
+
   test('HelpModal links URLs without their trailing full stop', () => {
     const { act, tree } = renderHelpModal('ios');
 
