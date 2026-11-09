@@ -173,6 +173,10 @@ export default function TutorialModal({
 
   useEffect(() => {
     let mounted = true;
+    const subscription = AccessibilityInfo.addEventListener(
+      'reduceMotionChanged',
+      setReduceMotion,
+    );
     AccessibilityInfo.isReduceMotionEnabled()
       .then((enabled) => {
         // Only an "on" answer changes anything, so skip the re-render otherwise.
@@ -181,6 +185,7 @@ export default function TutorialModal({
       .catch(() => {});
     return () => {
       mounted = false;
+      subscription.remove();
     };
   }, []);
 
