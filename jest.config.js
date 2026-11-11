@@ -22,6 +22,8 @@ const shared = {
     '@react-native-clipboard/clipboard':
       '<rootDir>/__mocks__/@react-native-clipboard/clipboard.ts',
     'react-native-fs': '<rootDir>/__mocks__/react-native-fs.ts',
+    '^react-native-nitro-sound$':
+      '<rootDir>/__mocks__/react-native-nitro-sound.ts',
     '@maplibre/maplibre-react-native':
       '<rootDir>/__mocks__/@maplibre/maplibre-react-native.tsx',
     '@react-native-menu/menu':

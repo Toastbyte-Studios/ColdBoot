@@ -1,33 +1,26 @@
-import { Platform } from 'react-native';
-
 /**
  * Normalises a recorder metering reading to a 0-100 scale.
  *
- * `react-native-nitro-sound` reports metering differently per platform: iOS
- * gives decibels from -160 (silence) to 0 (max), Android gives a raw
- * amplitude. Both are mapped here so a level of 50 means roughly the same
- * loudness on either platform.
+ * `react-native-nitro-sound` reports metering in dBFS on both platforms:
+ * -160 (silence) to 0 (the loudest the microphone can capture). iOS averages
+ * power over the update window; Android takes `MediaRecorder`'s peak
+ * amplitude since the last reading and converts it with 20·log10. Both are
+ * mapped the same way here, for the Voice Log recorder's level bars. (The
+ * decibel meter works in dB itself; see `utils/soundLevel`.)
  *
- * The sensitivity constants come from the Decibel Meter screen, which this
- * was extracted from so the meter and the Voice Log recorder read alike.
+ * (Android used to be treated as a raw 0-32767 amplitude. The library has
+ * reported dBFS there for a while, so every reading went negative and the
+ * bars sat at zero.)
  *
- * @param metering - `currentMetering` from a record-back event. Undefined or
- *   null is treated as silence.
+ * @param metering - `currentMetering` from a record-back event, in dBFS.
+ *   Undefined or null is treated as silence.
  * @returns A level from 0 (silence) to 100 (loud).
  */
 export function normalizeMeteringLevel(metering: number | undefined): number {
   const raw = metering ?? -160;
-
-  let level: number;
-  if (Platform.OS === 'ios') {
-    // -80 dB (quiet room) to -10 dB (loud), scaled to 75% sensitivity.
-    const adjusted = Math.max(-80, Math.min(-10, raw));
-    level = ((adjusted + 80) / 70) * 75;
-  } else {
-    // Amplitude, capped then scaled to the same 75% sensitivity.
-    const adjusted = Math.min(raw, 16000);
-    level = adjusted / 240;
-  }
+  // -80 dBFS (quiet room) to -10 dBFS (loud), scaled to 75% sensitivity.
+  const adjusted = Math.max(-80, Math.min(-10, raw));
+  const level = ((adjusted + 80) / 70) * 75;
 
   if (!isFinite(level)) {
     return 0;

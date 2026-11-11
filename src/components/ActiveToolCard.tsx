@@ -121,7 +121,7 @@ const ActiveToolCard = observer(() => {
 
   const stop = () => {
     if (activeTool?.kind === 'decibel') {
-      core.setDecibelMeterActive(false);
+      core.stopDecibelMeter();
     } else {
       core.setFlashlightMode(FlashlightModes.OFF);
     }
