@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
-import PinnedHeaderScreen from '../src/components/PinnedHeaderScreen';
+import PinnedHeaderScreen, {
+  MIN_LIST_HEIGHT,
+} from '../src/components/PinnedHeaderScreen';
 
 jest.mock('../src/hooks/useFooterClearance', () => ({
   useFooterClearance: () => 120,
@@ -49,7 +51,7 @@ describe('PinnedHeaderScreen', () => {
     expect(style).toEqual({ paddingBottom: 120 });
   });
 
-  it('lets the header scroll too when it would take most of the screen', async () => {
+  it('lets the header scroll too when the list would be left less than its minimum', async () => {
     let tree!: ReactTestRenderer.ReactTestRenderer;
     await ReactTestRenderer.act(async () => {
       tree = ReactTestRenderer.create(
@@ -75,14 +77,16 @@ describe('PinnedHeaderScreen', () => {
         .findAllByType(Text)
         .map((node) => node.props.children);
 
+    // 600 frame - 120 footer leaves 480 for the header and the list.
+    const tallestPinned = 480 - MIN_LIST_HEIGHT;
     await ReactTestRenderer.act(async () => {
       withLayout()[0].props.onLayout(layout(600));
-      withLayout()[1].props.onLayout(layout(264));
+      withLayout()[1].props.onLayout(layout(tallestPinned));
     });
     expect(scrolled()).toEqual(['List']);
 
     await ReactTestRenderer.act(async () => {
-      withLayout()[1].props.onLayout(layout(265));
+      withLayout()[1].props.onLayout(layout(tallestPinned + 1));
     });
     expect(scrolled()).toEqual(['Hero', 'List']);
     const [page, list] = tree.root.findAllByType(ScrollView);
@@ -131,9 +135,9 @@ describe('PinnedHeaderScreen', () => {
     });
 
     for (const [height, pinned] of [
-      [300, false],
+      [400, false],
       [200, true],
-      [300, false],
+      [400, false],
     ] as const) {
       await ReactTestRenderer.act(async () => {
         withLayout()[1].props.onLayout(layout(height));

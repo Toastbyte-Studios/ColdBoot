@@ -1,17 +1,22 @@
 import React, { PropsWithChildren, useEffect, useRef, useState } from 'react';
 import { Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useFooterClearance } from '../hooks/useFooterClearance';
-import { SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
+import { ROW_MIN_HEIGHT, SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
 import ScreenBody from './ScreenBody';
 
 const isAndroid = Platform.OS === 'android';
 
 /**
- * The most of the screen the pinned header may take. Past this (the largest
- * text sizes, a small phone with a tall hero) the list would be left a sliver,
- * so the header scrolls with it instead.
+ * The least list the pinned header must leave visible, in rows. The header
+ * may take as much of the screen as it needs so long as this many rows still
+ * fit beneath it; the half row hints that the list scrolls. Only when even
+ * that won't fit (the largest text sizes on a small phone) does the header
+ * scroll with the list.
  */
-export const MAX_PINNED_SHARE = 0.55;
+export const MIN_LIST_ROWS = 2.5;
+
+/** `MIN_LIST_ROWS` in points, using the platform's grouped-row height. */
+export const MIN_LIST_HEIGHT = ROW_MIN_HEIGHT * MIN_LIST_ROWS;
 
 type Props = PropsWithChildren<{
   /**
@@ -34,9 +39,10 @@ type Props = PropsWithChildren<{
  * cards in either part carry their own `SCREEN_GUTTER` there. On iOS both
  * parts share the screen gutter.
  *
- * If the header would take more than `MAX_PINNED_SHARE` of the screen, it
- * scrolls with the whole page, as before. Both scroll views stay mounted so
- * changing modes preserves the header's loaded state.
+ * The list takes all the height the header leaves, above the shortcut bar,
+ * and scrolls within it. Only if that would be less than `MIN_LIST_HEIGHT`
+ * does the header scroll with the whole page instead. Both scroll views stay
+ * mounted so changing modes preserves the header's loaded state.
  */
 export default function PinnedHeaderScreen({
   header,
@@ -50,8 +56,7 @@ export default function PinnedHeaderScreen({
   const listScroll = useRef<ScrollView>(null);
   const pinned =
     frameHeight === 0 ||
-    headerHeight <=
-      Math.max(0, frameHeight - footerClearance) * MAX_PINNED_SHARE;
+    frameHeight - footerClearance - headerHeight >= MIN_LIST_HEIGHT;
 
   useEffect(() => {
     pageScroll.current?.scrollTo({ y: 0, animated: false });
