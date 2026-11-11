@@ -13,7 +13,25 @@
  *
  * Levels are unweighted, not A-weighted like a proper sound level meter, and
  * the exposure guidance below is written for dBA. Treat both as estimates.
+ *
+ * The two platforms meter differently (see `MeterReadings`), and only one of
+ * them reports what the average and the noise dose need.
  */
+
+/**
+ * What each recorder reading measures.
+ *
+ * - `power`: the average power over the update interval (iOS, from
+ *   `AVAudioRecorder.averagePower`). Summing these over time gives the
+ *   session's sound energy, so the average (Leq) and noise dose are sound.
+ * - `peak`: the loudest single sample since the last reading (Android, from
+ *   `MediaRecorder.getMaxAmplitude`). Treating a peak as if it lasted the
+ *   whole interval turns a short click into sustained noise, by an amount that
+ *   depends on the sound and that no calibration can undo, so a session of
+ *   peaks has no average or dose. Min, max and the history graph (which shows
+ *   the loudest moment anyway) are still meaningful.
+ */
+export type MeterReadings = 'power' | 'peak';
 
 /**
  * Typical dBFS → dB SPL offset for a phone's built-in microphone with
@@ -71,6 +89,8 @@ export type HistoryPoint = {
  */
 export type SoundSession = {
   startedAt: number;
+  /** What the readings measure; decides whether Leq and dose are available. */
+  readings: MeterReadings;
   /** When the last reading arrived, or null before the first. */
   lastReadingAt: number | null;
   /** The displayed level, smoothed. Null before the first reading. */
@@ -88,9 +108,13 @@ export type SoundSession = {
   history: HistoryPoint[];
 };
 
-export function createSoundSession(now: number): SoundSession {
+export function createSoundSession(
+  now: number,
+  readings: MeterReadings = 'power',
+): SoundSession {
   return {
     startedAt: now,
+    readings,
     lastReadingAt: null,
     currentDbfs: null,
     minDbfs: null,
@@ -164,10 +188,15 @@ export function addReading(
  * The session's equivalent continuous level (Leq), in dBFS: the steady level
  * with the same total energy. This is what "average" means for sound; a plain
  * mean of decibels would understate loud moments. Null until there's at least
- * one interval to average over.
+ * one interval to average over, and always null for a session of peak
+ * readings, which can't give the energy (see `MeterReadings`).
  */
 export function sessionLeqDbfs(session: SoundSession): number | null {
-  if (session.measuredMs <= 0 || session.energy <= 0) {
+  if (
+    session.readings !== 'power' ||
+    session.measuredMs <= 0 ||
+    session.energy <= 0
+  ) {
     return null;
   }
   return 10 * Math.log10(session.energy / session.measuredMs);
@@ -213,11 +242,16 @@ export function nioshAllowedMs(splDb: number): number {
  *
  * With a 3 dB exchange rate the dose is just the session's energy against
  * the limit's energy, so it comes straight from Leq and the time measured.
+ * Null for a session of peak readings, which has no Leq (see
+ * `MeterReadings`).
  */
 export function nioshDosePercent(
   session: SoundSession,
   calibrationDb: number,
-): number {
+): number | null {
+  if (session.readings !== 'power') {
+    return null;
+  }
   const leq = sessionLeqDbfs(session);
   if (leq === null) {
     return 0;

@@ -12,6 +12,7 @@ import { FlashlightModeType } from '../types/common-types';
 import {
   addReading,
   createSoundSession,
+  MeterReadings,
   SoundSession,
 } from '../utils/soundLevel';
 
@@ -25,6 +26,31 @@ import {
 export const DECIBEL_METER_RECORDING_PATH = `${RNFS.CachesDirectoryPath}/decibel-meter.${
   Platform.OS === 'ios' ? 'm4a' : 'mp4'
 }`;
+
+/**
+ * What the recorder's readings measure on this platform: average power on
+ * iOS, peak amplitude on Android (see `MeterReadings`).
+ */
+const METER_READINGS: MeterReadings =
+  Platform.OS === 'android' ? 'peak' : 'power';
+
+/**
+ * Every start and stop of the meter's recorder, in order. The recorder is one
+ * native singleton writing to one file, so a start must not reach it while an
+ * earlier stop is still releasing it (or deleting that file). This lives at
+ * module level, not on the store, because `RootStore.reset()` swaps in a new
+ * store while the old one may still be shutting the recorder down.
+ *
+ * Never rejects: each step's own caller sees its failure.
+ */
+let meterLifecycle: Promise<void> = Promise.resolve();
+
+/** Runs a recorder step once every earlier one has finished. */
+function queueMeterStep(step: () => Promise<void>): Promise<void> {
+  const run = meterLifecycle.then(step);
+  meterLifecycle = run.catch(() => undefined);
+  return run;
+}
 
 /** Deletes the meter's throwaway recording, if there is one. */
 async function discardMeterRecording(): Promise<void> {
@@ -451,6 +477,16 @@ export class SignalingStore {
   }
 
   /**
+   * Bumped by every start and stop, so a queued start can tell it has been
+   * overtaken (stopped, or stopped and started again) before its turn came.
+   */
+  private meterGeneration: number = 0;
+  /** Whether this store's recorder has started and not been stopped yet. */
+  private meterRecorderRunning: boolean = false;
+  /** Set by `dispose`; a disposed store never starts the meter again. */
+  private disposed: boolean = false;
+
+  /**
    * Starts the decibel meter: records from the microphone with metering on
    * and feeds each reading into a fresh `soundSession`.
    *
@@ -458,62 +494,81 @@ export class SignalingStore {
    * when the user navigates away and can be stopped from anywhere (the
    * running-tool card) with the microphone actually released.
    *
+   * The meter shows as running straight away; the recorder itself starts
+   * once any earlier stop has finished releasing it.
+   *
    * Microphone permission must already be granted. Throws if the recorder
    * can't start, leaving the meter stopped.
    */
   async startDecibelMeter(): Promise<void> {
-    if (this.decibelMeterActive) {
+    if (this.decibelMeterActive || this.disposed) {
       return;
     }
     this.setDecibelMeterActive(true);
-    this.soundSession = createSoundSession(Date.now());
-    try {
-      await discardMeterRecording();
-      await NitroSound.startRecorder(
-        DECIBEL_METER_RECORDING_PATH,
-        {
-          // Turn off automatic gain and voice processing, which squash loud
-          // sounds and lift quiet ones: fine for a voice memo, wrong for a
-          // meter.
-          AVModeIOS: 'measurement',
-          AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
-        },
-        true,
-      );
-      NitroSound.addRecordBackListener(this.handleMeterReading);
-    } catch (error) {
-      runInAction(() => {
-        this.setDecibelMeterActive(false);
-        this.soundSession = null;
-      });
-      NitroSound.removeRecordBackListener();
-      await discardMeterRecording();
-      throw error;
-    }
-    // Stopped while the recorder was still starting: stop it now.
-    if (!this.decibelMeterActive) {
-      await this.releaseMeterRecorder();
-    }
+    this.soundSession = createSoundSession(Date.now(), METER_READINGS);
+    const generation = ++this.meterGeneration;
+
+    await queueMeterStep(async () => {
+      if (generation !== this.meterGeneration) {
+        // Stopped before the recorder got going: nothing to start.
+        return;
+      }
+      try {
+        await discardMeterRecording();
+        await NitroSound.startRecorder(
+          DECIBEL_METER_RECORDING_PATH,
+          {
+            // Turn off automatic gain and voice processing, which squash loud
+            // sounds and lift quiet ones: fine for a voice memo, wrong for a
+            // meter.
+            AVModeIOS: 'measurement',
+            AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+          },
+          true,
+        );
+        this.meterRecorderRunning = true;
+        NitroSound.addRecordBackListener(this.handleMeterReading);
+      } catch (error) {
+        NitroSound.removeRecordBackListener();
+        await discardMeterRecording();
+        runInAction(() => {
+          // Only undo the state this start set up; if the meter has been
+          // stopped (or restarted) since, that state is someone else's.
+          if (generation === this.meterGeneration) {
+            this.setDecibelMeterActive(false);
+            this.soundSession = null;
+          }
+        });
+        throw error;
+      }
+    });
   }
 
   /**
    * Stops the decibel meter, releases the microphone and deletes the
    * throwaway recording. Safe to call when the meter isn't running.
+   *
+   * The meter shows as stopped straight away. The returned promise settles
+   * once the recorder is released, including one that was still starting.
    */
   async stopDecibelMeter(): Promise<void> {
     if (!this.decibelMeterActive) {
       return;
     }
     this.setDecibelMeterActive(false);
-    await this.releaseMeterRecorder();
+    this.meterGeneration++;
+    await queueMeterStep(this.releaseMeterRecorder);
   }
 
   private async releaseMeterRecorder(): Promise<void> {
     NitroSound.removeRecordBackListener();
-    try {
-      await NitroSound.stopRecorder();
-    } catch (error) {
-      console.warn('Error stopping the decibel meter recorder:', error);
+    if (this.meterRecorderRunning) {
+      this.meterRecorderRunning = false;
+      try {
+        await NitroSound.stopRecorder();
+      } catch (error) {
+        console.warn('Error stopping the decibel meter recorder:', error);
+      }
     }
     await discardMeterRecording();
   }
@@ -673,6 +728,11 @@ export class SignalingStore {
     this.stopStrobe();
     this.stopMorseTransmission();
     this.appStateSubscription?.remove();
+    // Release the microphone, including a recorder that's still starting.
+    // The release is queued ahead of anything the replacement store starts,
+    // so it can't stop or delete the next session's recording.
+    this.disposed = true;
+    this.stopDecibelMeter();
 
     // Release audio resources
     if (this.dotSound) {

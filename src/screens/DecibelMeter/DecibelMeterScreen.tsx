@@ -29,6 +29,7 @@ import {
   referenceFor,
   sessionLeqDbfs,
   SOUND_REFERENCES,
+  SoundSession,
   toSpl,
 } from '../../utils/soundLevel';
 import LevelHistoryChart, { bandColor } from './components/LevelHistoryChart';
@@ -94,6 +95,21 @@ function formatDose(percent: number): string {
     return 'under 1%';
   }
   return `${Math.round(percent)}%`;
+}
+
+/**
+ * The session's noise dose line. There's no dose when the microphone maxed
+ * out (the real level is unknown) or when the phone only reports peaks.
+ */
+function doseText(session: SoundSession, calibrationDb: number): string {
+  if (session.maxDbfs !== null && isClipping(session.maxDbfs)) {
+    return 'Noise dose is unavailable because the microphone reached its limit.';
+  }
+  const dose = nioshDosePercent(session, calibrationDb);
+  if (dose === null) {
+    return "Noise dose isn't available on Android, where the microphone reports only the loudest moment of each reading, not the average.";
+  }
+  return `Noise dose this session: ${formatDose(dose)} of a day's safe limit.`;
 }
 
 /** What the current level means for hearing, per NIOSH and the CDC. */
@@ -198,6 +214,8 @@ const DecibelMeterScreenImpl = () => {
     caption = 'Start the meter to measure the sound around you.';
   }
 
+  // A session of peak readings has no average (see `MeterReadings`), so it
+  // shows MIN / MAX / TIME rather than an AVG that never fills in.
   const stats = session
     ? [
         {
@@ -207,10 +225,14 @@ const DecibelMeterScreenImpl = () => {
               ? '—'
               : formatLevel(session.minDbfs, calibration),
         },
-        {
-          label: 'AVG',
-          value: leq === null ? '—' : formatLevel(leq, calibration),
-        },
+        ...(session.readings === 'power'
+          ? [
+              {
+                label: 'AVG',
+                value: leq === null ? '—' : formatLevel(leq, calibration),
+              },
+            ]
+          : []),
         {
           label: 'MAX',
           value:
@@ -338,15 +360,7 @@ const DecibelMeterScreenImpl = () => {
                 : hearingAdvice(currentSpl)}
             </Text>
             <Text style={[styles.detail, { color: COLORS.MUTED }]}>
-              {session.maxDbfs !== null && isClipping(session.maxDbfs) ? (
-                'Noise dose is unavailable because the microphone reached its limit.'
-              ) : (
-                <>
-                  Noise dose this session:{' '}
-                  {formatDose(nioshDosePercent(session, calibration))} of a day's
-                  safe limit.
-                </>
-              )}
+              {doseText(session, calibration)}
             </Text>
           </View>
         </View>

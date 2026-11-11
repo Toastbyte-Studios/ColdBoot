@@ -168,12 +168,37 @@ describe('NIOSH exposure', () => {
 
   it('doubles the dose for each 3 dB of calibration', () => {
     const session = steady(createSoundSession(0), -15, 0, 60_000);
-    const base = nioshDosePercent(session, 0);
+    const base = nioshDosePercent(session, 0) ?? NaN;
     expect(nioshDosePercent(session, 3)).toBeCloseTo(base * 1.995, 3);
   });
 
   it('is zero with nothing measured', () => {
     expect(nioshDosePercent(createSoundSession(0), 0)).toBe(0);
+  });
+});
+
+describe('peak readings (Android)', () => {
+  const peaks = () => {
+    let session = steady(createSoundSession(0, 'peak'), -60, 0, 5000);
+    return steady(session, -20, 5100, 4900);
+  };
+
+  it('has no average or dose, since peaks are not energy', () => {
+    const session = peaks();
+    expect(sessionLeqDbfs(session)).toBeNull();
+    expect(nioshDosePercent(session, 0)).toBeNull();
+  });
+
+  it('still tracks min, max, time and history', () => {
+    const session = peaks();
+    expect(session.minDbfs).toBe(-60);
+    expect(session.maxDbfs).toBe(-20);
+    expect(session.measuredMs).toBeCloseTo(10_000, -3);
+    expect(session.history.length).toBeGreaterThan(0);
+  });
+
+  it('defaults to power readings', () => {
+    expect(createSoundSession(0).readings).toBe('power');
   });
 });
 

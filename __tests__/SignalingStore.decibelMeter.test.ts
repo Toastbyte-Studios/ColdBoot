@@ -50,12 +50,17 @@ jest.mock('@react-native-community/netinfo', () => ({
   addEventListener: jest.fn(() => jest.fn()),
 }));
 
+let mockPlatformOS = 'ios';
 jest.mock('react-native', () => ({
   AppState: {
     addEventListener: jest.fn(() => ({ remove: jest.fn() })),
   },
   NativeModules: {},
-  Platform: { OS: 'ios' },
+  Platform: {
+    get OS() {
+      return mockPlatformOS;
+    },
+  },
 }));
 
 describe('SignalingStore - Decibel Meter', () => {
@@ -126,6 +131,32 @@ describe('SignalingStore - Decibel Meter', () => {
       removeRecordBackListener: jest.Mock;
     };
     const fs = RNFS as unknown as { exists: jest.Mock; unlink: jest.Mock };
+
+    /** Lets every queued promise callback run. */
+    const flush = () => new Promise((resolve) => setImmediate(resolve));
+
+    /** A promise and the function that settles it, usable in either order. */
+    const deferred = () => {
+      let release!: () => void;
+      const released = new Promise<string>((resolve) => {
+        release = () => resolve('');
+      });
+      return { released, release };
+    };
+
+    /** Makes the next stopRecorder hang until the returned function is called. */
+    const holdNextStop = () => {
+      const { released, release } = deferred();
+      recorder.stopRecorder.mockImplementationOnce(() => released);
+      return release;
+    };
+
+    /** Makes the next startRecorder hang until the returned function is called. */
+    const holdNextStart = () => {
+      const { released, release } = deferred();
+      recorder.startRecorder.mockImplementationOnce(() => released);
+      return release;
+    };
 
     it('records to the throwaway cache file with metering on', async () => {
       await store.startDecibelMeter();
@@ -215,23 +246,136 @@ describe('SignalingStore - Decibel Meter', () => {
     });
 
     it('releases the recorder if stopped while it was starting', async () => {
-      let finishStart!: () => void;
-      recorder.startRecorder.mockImplementationOnce(
-        () =>
-          new Promise<string>((resolve) => {
-            finishStart = () => resolve('');
-          }),
-      );
+      const finishStart = holdNextStart();
 
       const starting = store.startDecibelMeter();
-      await Promise.resolve();
-      await Promise.resolve();
+      await flush();
       const stopping = store.stopDecibelMeter();
       finishStart();
       await Promise.all([starting, stopping]);
 
       expect(store.decibelMeterActive).toBe(false);
       expect(recorder.stopRecorder).toHaveBeenCalled();
+    });
+
+    it('waits for a pending stop before starting the recorder again', async () => {
+      await store.startDecibelMeter();
+      const finishStop = holdNextStop();
+
+      const stopping = store.stopDecibelMeter();
+      const restarting = store.startDecibelMeter();
+      await flush();
+
+      // The meter shows as running again, but the recorder hasn't been
+      // touched until the old one has stopped and its file is gone.
+      expect(store.decibelMeterActive).toBe(true);
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(1);
+
+      fs.exists.mockResolvedValue(true);
+      finishStop();
+      await Promise.all([stopping, restarting]);
+      fs.exists.mockResolvedValue(false);
+
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(2);
+      // The old stop's delete ran before the new recording started.
+      const deleted = fs.unlink.mock.invocationCallOrder;
+      const started = recorder.startRecorder.mock.invocationCallOrder[1];
+      expect(deleted.some((order) => order < started)).toBe(true);
+      expect(deleted.every((order) => order < started)).toBe(true);
+      expect(store.decibelMeterActive).toBe(true);
+      expect(recorder.addRecordBackListener).toHaveBeenCalledTimes(2);
+    });
+
+    it('skips a start that was stopped before its turn', async () => {
+      await store.startDecibelMeter();
+      const finishStop = holdNextStop();
+
+      const stopping = store.stopDecibelMeter();
+      const restarting = store.startDecibelMeter();
+      const stoppingAgain = store.stopDecibelMeter();
+      finishStop();
+      await Promise.all([stopping, restarting, stoppingAgain]);
+
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(1);
+      expect(recorder.stopRecorder).toHaveBeenCalledTimes(1);
+      expect(store.decibelMeterActive).toBe(false);
+    });
+
+    it('releases the recorder when the store is disposed', async () => {
+      await store.startDecibelMeter();
+
+      store.dispose();
+      await flush();
+
+      expect(store.decibelMeterActive).toBe(false);
+      expect(recorder.removeRecordBackListener).toHaveBeenCalled();
+      expect(recorder.stopRecorder).toHaveBeenCalledTimes(1);
+    });
+
+    it('releases a recorder that was still starting when disposed', async () => {
+      const finishStart = holdNextStart();
+
+      const starting = store.startDecibelMeter();
+      await flush();
+      store.dispose();
+      finishStart();
+      await starting;
+      await flush();
+
+      expect(recorder.stopRecorder).toHaveBeenCalledTimes(1);
+      expect(store.decibelMeterActive).toBe(false);
+    });
+
+    it('does not start again once disposed', async () => {
+      store.dispose();
+      await store.startDecibelMeter();
+
+      expect(store.decibelMeterActive).toBe(false);
+      expect(recorder.startRecorder).not.toHaveBeenCalled();
+    });
+
+    it("finishes a disposed store's cleanup before the next store records", async () => {
+      await store.startDecibelMeter();
+      const finishStop = holdNextStop();
+
+      // What RootStore.reset() does: dispose, then build a fresh store.
+      store.dispose();
+      const next = new SignalingStore();
+      const starting = next.startDecibelMeter();
+      await flush();
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(1);
+
+      finishStop();
+      await starting;
+
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(2);
+      expect(recorder.stopRecorder.mock.invocationCallOrder[0]).toBeLessThan(
+        recorder.startRecorder.mock.invocationCallOrder[1],
+      );
+      expect(next.decibelMeterActive).toBe(true);
+      await next.stopDecibelMeter();
+    });
+
+    it('records power readings on iOS and peaks on Android', async () => {
+      await store.startDecibelMeter();
+      // The suite mocks Platform.OS as iOS.
+      expect(store.soundSession?.readings).toBe('power');
+      await store.stopDecibelMeter();
+
+      // The platform is read once, when the store module loads.
+      let AndroidStore!: typeof SignalingStore;
+      mockPlatformOS = 'android';
+      try {
+        jest.isolateModules(() => {
+          AndroidStore = require('../src/stores/SignalingStore').SignalingStore;
+        });
+      } finally {
+        mockPlatformOS = 'ios';
+      }
+      const android = new AndroidStore();
+      await android.startDecibelMeter();
+      expect(android.soundSession?.readings).toBe('peak');
+      await android.stopDecibelMeter();
     });
 
     it('stops when ColdBoot goes to the background, not when inactive', async () => {

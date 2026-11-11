@@ -6,6 +6,7 @@ import {
   addReading,
   BASE_SPL_OFFSET_DB,
   createSoundSession,
+  MeterReadings,
   SoundSession,
 } from '../src/utils/soundLevel';
 
@@ -50,9 +51,12 @@ jest.mock('../src/components/StackScreen', () => {
 });
 
 /** A session that has been at `spl` dB (uncalibrated) for ten seconds. */
-function sessionAt(spl: number): SoundSession {
+function sessionAt(
+  spl: number,
+  readings: MeterReadings = 'power',
+): SoundSession {
   const dbfs = spl - BASE_SPL_OFFSET_DB;
-  let session = createSoundSession(0);
+  let session = createSoundSession(0, readings);
   for (let t = 0; t <= 10_000; t += 100) {
     session = addReading(session, dbfs, t);
   }
@@ -123,6 +127,29 @@ describe('DecibelMeterScreen', () => {
     expect(shown).toContain('0:10');
     expect(shown).toContain('Quiet enough to listen all day.');
     expect(mockStackProps.subtitle).toBe('62 dB');
+  });
+
+  it("shows the session's noise dose", async () => {
+    mockSignaling.decibelMeterActive = true;
+    mockSignaling.soundSession = sessionAt(95);
+    const tree = await render();
+
+    expect(texts(tree)).toContain(
+      "Noise dose this session: under 1% of a day's safe limit.",
+    );
+  });
+
+  it('leaves out the average and dose when readings are peaks', async () => {
+    mockSignaling.decibelMeterActive = true;
+    mockSignaling.soundSession = sessionAt(95, 'peak');
+    const tree = await render();
+    const shown = texts(tree);
+
+    expect(shown).toEqual(expect.arrayContaining(['MIN', 'MAX', 'TIME']));
+    expect(shown).not.toContain('AVG');
+    expect(shown).toContain(
+      "Noise dose isn't available on Android, where the microphone reports only the loudest moment of each reading, not the average.",
+    );
   });
 
   it('gives NIOSH exposure advice for loud levels', async () => {
