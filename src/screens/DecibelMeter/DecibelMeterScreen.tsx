@@ -333,12 +333,20 @@ const DecibelMeterScreenImpl = () => {
           <SectionEyebrow>Hearing safety</SectionEyebrow>
           <View style={[styles.card, styles.textCard, cardSurface(COLORS)]}>
             <Text style={[styles.body, { color: COLORS.PRIMARY_DARK }]}>
-              {hearingAdvice(currentSpl)}
+              {session.maxDbfs !== null && isClipping(session.maxDbfs)
+                ? 'The microphone reached its limit during this session. Sound may be louder than shown; use hearing protection or move away.'
+                : hearingAdvice(currentSpl)}
             </Text>
             <Text style={[styles.detail, { color: COLORS.MUTED }]}>
-              Noise dose this session:{' '}
-              {formatDose(nioshDosePercent(session, calibration))} of a day's
-              safe limit.
+              {session.maxDbfs !== null && isClipping(session.maxDbfs) ? (
+                'Noise dose is unavailable because the microphone reached its limit.'
+              ) : (
+                <>
+                  Noise dose this session:{' '}
+                  {formatDose(nioshDosePercent(session, calibration))} of a day's
+                  safe limit.
+                </>
+              )}
             </Text>
           </View>
         </View>
