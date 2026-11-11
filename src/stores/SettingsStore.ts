@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { SQLiteDatabase } from '../types/database-types';
+import { clampCalibration } from '../utils/soundLevel';
 import { getToolById } from '../utils/tools';
 
 export type FontSize = 'small' | 'medium' | 'large';
@@ -97,6 +98,12 @@ export class SettingsStore {
    * RootStore applies it to CoreStore and BarometerStore.
    */
   coldMode: boolean = false;
+  /**
+   * Decibel meter calibration, in whole dB added to every reading, so the
+   * meter can be matched to a sound level meter the user trusts. Phones'
+   * microphones differ by several dB. See `utils/soundLevel`.
+   */
+  soundMeterCalibration: number = 0;
   private settingsDb: SQLiteDatabase | null = null;
 
   constructor() {
@@ -110,6 +117,17 @@ export class SettingsStore {
   async setFontSize(size: FontSize) {
     runInAction(() => {
       this.fontSize = size;
+    });
+    await this.persistSettings();
+  }
+
+  /**
+   * Sets the decibel meter calibration, clamped to ±MAX_CALIBRATION_DB.
+   * @param db - Whole dB to add to every reading.
+   */
+  async setSoundMeterCalibration(db: number) {
+    runInAction(() => {
+      this.soundMeterCalibration = clampCalibration(db);
     });
     await this.persistSettings();
   }
@@ -403,6 +421,18 @@ export class SettingsStore {
         });
       }
 
+      const calibrationRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'soundMeterCalibration'",
+      );
+      if (calibrationRes[0].rows.length > 0) {
+        const value = Number(calibrationRes[0].rows.item(0).value);
+        if (isFinite(value)) {
+          runInAction(() => {
+            this.soundMeterCalibration = clampCalibration(value);
+          });
+        }
+      }
+
       // Load last backup timestamp
       const lastBackupRes = await this.settingsDb.executeSql(
         "SELECT value FROM settings WHERE key = 'lastBackupAt'",
@@ -474,6 +504,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('coldMode', ?)",
         [this.coldMode ? 'true' : 'false'],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('soundMeterCalibration', ?)",
+        [String(this.soundMeterCalibration)],
       );
       if (this.lastBackupAt !== null) {
         await this.settingsDb.executeSql(

@@ -36,11 +36,20 @@ describe('normalizeMeteringLevel', () => {
     expect(level).toBeLessThan(60);
   });
 
-  test('Android: amplitude scales and caps', () => {
+  test('Android: reads dBFS on the same scale as iOS', () => {
     setPlatform('android');
-    expect(normalizeMeteringLevel(0)).toBe(0);
-    expect(normalizeMeteringLevel(2400)).toBeCloseTo(10, 5);
-    expect(normalizeMeteringLevel(999999)).toBeCloseTo(66.67, 1);
+    expect(normalizeMeteringLevel(-160)).toBe(0);
+    expect(normalizeMeteringLevel(-80)).toBe(0);
+    expect(normalizeMeteringLevel(-10)).toBeCloseTo(75, 5);
+    setPlatform('ios');
+    const ios = normalizeMeteringLevel(-45);
+    setPlatform('android');
+    expect(normalizeMeteringLevel(-45)).toBe(ios);
+  });
+
+  test('Android: a speaking-level reading is not stuck at zero', () => {
+    setPlatform('android');
+    expect(normalizeMeteringLevel(-30)).toBeGreaterThan(40);
   });
 
   test('never leaves the 0-100 range', () => {

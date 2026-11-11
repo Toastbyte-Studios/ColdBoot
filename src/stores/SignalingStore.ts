@@ -1,9 +1,41 @@
 import { makeAutoObservable, runInAction } from 'mobx';
-import { AppState, NativeEventSubscription } from 'react-native';
+import { AppState, NativeEventSubscription, Platform } from 'react-native';
+import RNFS from 'react-native-fs';
+import NitroSound, {
+  AudioSourceAndroidType,
+  type RecordBackType,
+} from 'react-native-nitro-sound';
 import Sound from 'react-native-sound';
 import Torch from 'react-native-torch';
 import { FlashlightModes } from '../../constants';
 import { FlashlightModeType } from '../types/common-types';
+import {
+  addReading,
+  createSoundSession,
+  SoundSession,
+} from '../utils/soundLevel';
+
+/**
+ * Where the decibel meter's recorder writes. The recorder can only meter
+ * while it records to a file, so it gets one throwaway file in the caches
+ * directory (never backed up), overwritten each session and deleted on stop.
+ * Left to its default, the recorder saves a new timestamped file to Documents
+ * every session and nothing ever deletes it.
+ */
+export const DECIBEL_METER_RECORDING_PATH = `${RNFS.CachesDirectoryPath}/decibel-meter.${
+  Platform.OS === 'ios' ? 'm4a' : 'mp4'
+}`;
+
+/** Deletes the meter's throwaway recording, if there is one. */
+async function discardMeterRecording(): Promise<void> {
+  try {
+    if (await RNFS.exists(DECIBEL_METER_RECORDING_PATH)) {
+      await RNFS.unlink(DECIBEL_METER_RECORDING_PATH);
+    }
+  } catch (error) {
+    console.warn('Could not delete the decibel meter recording:', error);
+  }
+}
 
 export class SignalingStore {
   private appStateSubscription: NativeEventSubscription;
@@ -178,6 +210,12 @@ export class SignalingStore {
     // If returning to foreground while flashlight should be on, re-apply.
     if (state === 'active') {
       this.applyFlashlightState();
+    }
+    // The meter only listens while ColdBoot is on screen. iOS cuts the
+    // microphone off in the background anyway (no background audio mode),
+    // and Android would otherwise keep recording out of sight.
+    if (state === 'background') {
+      this.stopDecibelMeter();
     }
   };
 
@@ -385,7 +423,13 @@ export class SignalingStore {
   // ===== Decibel Meter =====
   // --------------------------------------------------------------------
   decibelMeterActive: boolean = false;
-  currentDecibelLevel: number = 0; // Current decibel level (0-100 normalized scale)
+  /**
+   * The current or last meter session: level, min / average / max, history.
+   * In dBFS; the screen converts with the calibration setting. Kept after
+   * the meter stops so the results can still be read; cleared by
+   * `resetSoundSession` and replaced when the meter starts again.
+   */
+  soundSession: SoundSession | null = null;
 
   /**
    * When the currently-running tool started, as a Unix timestamp, or `null`
@@ -407,7 +451,97 @@ export class SignalingStore {
   }
 
   /**
-   * Sets the decibel meter active state.
+   * Starts the decibel meter: records from the microphone with metering on
+   * and feeds each reading into a fresh `soundSession`.
+   *
+   * The store owns the recorder, not the screen, so the meter keeps running
+   * when the user navigates away and can be stopped from anywhere (the
+   * running-tool card) with the microphone actually released.
+   *
+   * Microphone permission must already be granted. Throws if the recorder
+   * can't start, leaving the meter stopped.
+   */
+  async startDecibelMeter(): Promise<void> {
+    if (this.decibelMeterActive) {
+      return;
+    }
+    this.setDecibelMeterActive(true);
+    this.soundSession = createSoundSession(Date.now());
+    try {
+      await discardMeterRecording();
+      await NitroSound.startRecorder(
+        DECIBEL_METER_RECORDING_PATH,
+        {
+          // Turn off automatic gain and voice processing, which squash loud
+          // sounds and lift quiet ones: fine for a voice memo, wrong for a
+          // meter.
+          AVModeIOS: 'measurement',
+          AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+        },
+        true,
+      );
+      NitroSound.addRecordBackListener(this.handleMeterReading);
+    } catch (error) {
+      runInAction(() => {
+        this.setDecibelMeterActive(false);
+        this.soundSession = null;
+      });
+      NitroSound.removeRecordBackListener();
+      await discardMeterRecording();
+      throw error;
+    }
+    // Stopped while the recorder was still starting: stop it now.
+    if (!this.decibelMeterActive) {
+      await this.releaseMeterRecorder();
+    }
+  }
+
+  /**
+   * Stops the decibel meter, releases the microphone and deletes the
+   * throwaway recording. Safe to call when the meter isn't running.
+   */
+  async stopDecibelMeter(): Promise<void> {
+    if (!this.decibelMeterActive) {
+      return;
+    }
+    this.setDecibelMeterActive(false);
+    await this.releaseMeterRecorder();
+  }
+
+  private async releaseMeterRecorder(): Promise<void> {
+    NitroSound.removeRecordBackListener();
+    try {
+      await NitroSound.stopRecorder();
+    } catch (error) {
+      console.warn('Error stopping the decibel meter recorder:', error);
+    }
+    await discardMeterRecording();
+  }
+
+  private handleMeterReading(event: RecordBackType) {
+    if (!this.decibelMeterActive || !this.soundSession) {
+      return;
+    }
+    this.soundSession = addReading(
+      this.soundSession,
+      event.currentMetering,
+      Date.now(),
+    );
+  }
+
+  /**
+   * Clears the session's min / average / max and history. If the meter is
+   * running, it carries on into a fresh session.
+   */
+  resetSoundSession() {
+    this.soundSession = this.decibelMeterActive
+      ? createSoundSession(Date.now())
+      : null;
+  }
+
+  /**
+   * Sets the decibel meter active state. Only the flag: use
+   * `startDecibelMeter` / `stopDecibelMeter` to run the recorder.
    * When active, the decibel meter appears in the footer.
    *
    * @param active - Whether the decibel meter should be active.
@@ -415,22 +549,9 @@ export class SignalingStore {
   setDecibelMeterActive(active: boolean) {
     const changed = active !== this.decibelMeterActive;
     this.decibelMeterActive = active;
-    if (!active) {
-      // Reset level when deactivated
-      this.currentDecibelLevel = 0;
-    }
     if (changed) {
       this.decibelMeterActiveSince = active ? Date.now() : null;
     }
-  }
-
-  /**
-   * Updates the current decibel level.
-   *
-   * @param level - The decibel level (0-100 normalized scale).
-   */
-  setCurrentDecibelLevel(level: number) {
-    this.currentDecibelLevel = Math.max(0, Math.min(100, level));
   }
 
   // --------------------------------------------------------------------

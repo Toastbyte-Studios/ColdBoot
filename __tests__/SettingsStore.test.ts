@@ -319,6 +319,38 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('sound meter calibration', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('is 0 dB by default', () => {
+      expect(settingsStore.soundMeterCalibration).toBe(0);
+    });
+
+    it('saves whole dB, kept within ±20', async () => {
+      await settingsStore.setSoundMeterCalibration(4.4);
+      expect(settingsStore.soundMeterCalibration).toBe(4);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('soundMeterCalibration', ?)",
+        ['4'],
+      );
+
+      await settingsStore.setSoundMeterCalibration(-50);
+      expect(settingsStore.soundMeterCalibration).toBe(-20);
+    });
+
+    it('is restored on the next launch', async () => {
+      await settingsStore.setSoundMeterCalibration(-6);
+
+      const relaunched = new SettingsStore();
+      await relaunched.initSettingsDb(mockDb);
+      await relaunched.loadSettings(mockDb);
+
+      expect(relaunched.soundMeterCalibration).toBe(-6);
+    });
+  });
+
   describe('shortcuts', () => {
     beforeEach(async () => {
       await settingsStore.initSettingsDb(mockDb);

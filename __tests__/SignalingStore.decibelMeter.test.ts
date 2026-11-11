@@ -2,8 +2,14 @@
  * @format
  */
 
+import { AppState } from 'react-native';
+import RNFS from 'react-native-fs';
+import NitroSound, { AudioSourceAndroidType } from 'react-native-nitro-sound';
 import { FlashlightModes } from '../constants';
-import { SignalingStore } from '../src/stores/SignalingStore';
+import {
+  DECIBEL_METER_RECORDING_PATH,
+  SignalingStore,
+} from '../src/stores/SignalingStore';
 
 // Mock react-native-geolocation-service
 jest.mock('react-native-geolocation-service', () => ({
@@ -80,41 +86,6 @@ describe('SignalingStore - Decibel Meter', () => {
 
       expect(store.decibelMeterActive).toBe(false);
     });
-
-    it('should reset decibel level when deactivated', () => {
-      store.setDecibelMeterActive(true);
-      store.setCurrentDecibelLevel(75);
-      expect(store.currentDecibelLevel).toBe(75);
-
-      store.setDecibelMeterActive(false);
-
-      expect(store.currentDecibelLevel).toBe(0);
-    });
-  });
-
-  describe('setCurrentDecibelLevel', () => {
-    it('should set current decibel level within valid range', () => {
-      store.setCurrentDecibelLevel(50);
-      expect(store.currentDecibelLevel).toBe(50);
-    });
-
-    it('should clamp decibel level to minimum of 0', () => {
-      store.setCurrentDecibelLevel(-10);
-      expect(store.currentDecibelLevel).toBe(0);
-    });
-
-    it('should clamp decibel level to maximum of 100', () => {
-      store.setCurrentDecibelLevel(150);
-      expect(store.currentDecibelLevel).toBe(100);
-    });
-
-    it('should handle boundary values correctly', () => {
-      store.setCurrentDecibelLevel(0);
-      expect(store.currentDecibelLevel).toBe(0);
-
-      store.setCurrentDecibelLevel(100);
-      expect(store.currentDecibelLevel).toBe(100);
-    });
   });
 
   describe('Initial state', () => {
@@ -122,8 +93,8 @@ describe('SignalingStore - Decibel Meter', () => {
       expect(store.decibelMeterActive).toBe(false);
     });
 
-    it('should have decibel level at 0 by default', () => {
-      expect(store.currentDecibelLevel).toBe(0);
+    it('has no session until the meter starts', () => {
+      expect(store.soundSession).toBeNull();
     });
   });
 
@@ -144,6 +115,139 @@ describe('SignalingStore - Decibel Meter', () => {
 
       expect(store.getActiveSince('flashlight')).toBeNull();
       expect(store.getActiveSince('decibel')).toBe(2000);
+    });
+  });
+
+  describe('startDecibelMeter / stopDecibelMeter', () => {
+    const recorder = NitroSound as unknown as {
+      startRecorder: jest.Mock;
+      stopRecorder: jest.Mock;
+      addRecordBackListener: jest.Mock;
+      removeRecordBackListener: jest.Mock;
+    };
+    const fs = RNFS as unknown as { exists: jest.Mock; unlink: jest.Mock };
+
+    it('records to the throwaway cache file with metering on', async () => {
+      await store.startDecibelMeter();
+
+      expect(store.decibelMeterActive).toBe(true);
+      expect(recorder.startRecorder).toHaveBeenCalledWith(
+        DECIBEL_METER_RECORDING_PATH,
+        {
+          AVModeIOS: 'measurement',
+          AudioSourceAndroid: AudioSourceAndroidType.VOICE_RECOGNITION,
+        },
+        true,
+      );
+      expect(DECIBEL_METER_RECORDING_PATH).toMatch(/^\/tmp\/cache\//);
+      expect(recorder.addRecordBackListener).toHaveBeenCalledTimes(1);
+    });
+
+    it('feeds readings into a fresh session while running', async () => {
+      await store.startDecibelMeter();
+      expect(store.soundSession).not.toBeNull();
+      const listener = recorder.addRecordBackListener.mock.calls[0][0];
+
+      listener({ currentMetering: -40 });
+      expect(store.soundSession?.currentDbfs).toBe(-40);
+      expect(store.soundSession?.maxDbfs).toBe(-40);
+
+      await store.stopDecibelMeter();
+      listener({ currentMetering: -5 });
+      // Kept after stopping so the results can be read, but not added to.
+      expect(store.soundSession?.maxDbfs).toBe(-40);
+    });
+
+    it('starts a new session each time the meter starts', async () => {
+      await store.startDecibelMeter();
+      recorder.addRecordBackListener.mock.calls[0][0]({ currentMetering: -20 });
+      await store.stopDecibelMeter();
+
+      await store.startDecibelMeter();
+      expect(store.soundSession?.maxDbfs).toBeNull();
+    });
+
+    it('resets the session, carrying on if the meter is running', async () => {
+      await store.startDecibelMeter();
+      recorder.addRecordBackListener.mock.calls[0][0]({ currentMetering: -20 });
+
+      store.resetSoundSession();
+      expect(store.soundSession).not.toBeNull();
+      expect(store.soundSession?.maxDbfs).toBeNull();
+
+      await store.stopDecibelMeter();
+      store.resetSoundSession();
+      expect(store.soundSession).toBeNull();
+    });
+
+    it('stops the recorder and deletes the recording', async () => {
+      await store.startDecibelMeter();
+      fs.exists.mockResolvedValueOnce(true);
+
+      await store.stopDecibelMeter();
+
+      expect(store.decibelMeterActive).toBe(false);
+      expect(recorder.removeRecordBackListener).toHaveBeenCalled();
+      expect(recorder.stopRecorder).toHaveBeenCalledTimes(1);
+      expect(fs.unlink).toHaveBeenCalledWith(DECIBEL_METER_RECORDING_PATH);
+    });
+
+    it('does nothing when stopped while not running', async () => {
+      await store.stopDecibelMeter();
+      expect(recorder.stopRecorder).not.toHaveBeenCalled();
+    });
+
+    it('does not start a second recorder while one is running', async () => {
+      await store.startDecibelMeter();
+      await store.startDecibelMeter();
+      expect(recorder.startRecorder).toHaveBeenCalledTimes(1);
+    });
+
+    it('stays stopped and rethrows when the recorder fails to start', async () => {
+      recorder.startRecorder.mockRejectedValueOnce(
+        new Error('Recording permission denied.'),
+      );
+
+      await expect(store.startDecibelMeter()).rejects.toThrow('permission');
+      expect(store.decibelMeterActive).toBe(false);
+      expect(store.getActiveSince('decibel')).toBeNull();
+      expect(store.soundSession).toBeNull();
+    });
+
+    it('releases the recorder if stopped while it was starting', async () => {
+      let finishStart!: () => void;
+      recorder.startRecorder.mockImplementationOnce(
+        () =>
+          new Promise<string>((resolve) => {
+            finishStart = () => resolve('');
+          }),
+      );
+
+      const starting = store.startDecibelMeter();
+      await Promise.resolve();
+      await Promise.resolve();
+      const stopping = store.stopDecibelMeter();
+      finishStart();
+      await Promise.all([starting, stopping]);
+
+      expect(store.decibelMeterActive).toBe(false);
+      expect(recorder.stopRecorder).toHaveBeenCalled();
+    });
+
+    it('stops when ColdBoot goes to the background, not when inactive', async () => {
+      const onChange = (AppState.addEventListener as jest.Mock).mock.calls.at(
+        -1,
+      )[1];
+      await store.startDecibelMeter();
+
+      onChange('inactive');
+      await Promise.resolve();
+      expect(store.decibelMeterActive).toBe(true);
+
+      onChange('background');
+      await Promise.resolve();
+      expect(store.decibelMeterActive).toBe(false);
+      expect(recorder.removeRecordBackListener).toHaveBeenCalled();
     });
   });
 });
