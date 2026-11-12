@@ -27,11 +27,6 @@ jest.mock('../src/hooks/useActiveRouteName', () => ({
   useActiveRouteName: jest.fn(() => undefined),
 }));
 
-// AppShell reads the theme for the spotlight ring. The real hook pulls in the
-// root store, so resolve the light palette directly.
-jest.mock('../src/hooks/useTheme', () => ({
-  useTheme: jest.fn(() => require('../src/theme/colors').LIGHT_COLORS),
-}));
 jest.mock('../src/hooks/useIsDarkMode', () => ({
   useIsDarkMode: () => false,
 }));

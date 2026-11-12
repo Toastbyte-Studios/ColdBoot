@@ -17,10 +17,8 @@ import {
   StyleSheet,
   View,
 } from 'react-native';
-import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import { useActiveRouteName } from '../hooks/useActiveRouteName';
 import { useIsDarkMode } from '../hooks/useIsDarkMode';
-import { useTheme } from '../hooks/useTheme';
 import {
   useNavigationHistory,
   useGestureNavigation,
@@ -35,6 +33,7 @@ import ScreenContainer from './ScreenContainer';
 import { SettingsModal } from './SettingsModal';
 import { SettingsSheetContext } from './SettingsSheetContext';
 import ShortcutBar from './ShortcutBar';
+import { spotlightShapeFor } from './tutorialLayout';
 import TutorialModal, { TUTORIAL_STEPS } from './TutorialModal';
 import {
   SpotlightLayout,
@@ -54,100 +53,6 @@ type AppShellNavigationProp = NativeStackNavigationProp<{
 }>;
 
 const TUTORIAL_STORAGE_KEY = 'hasSeenTutorial';
-
-/** Breathing room between a spotlit control and the edge of its cut-out. */
-const SPOTLIGHT_PADDING = 6;
-const SPOTLIGHT_RING_WIDTH = 2.5;
-/** Targets that are panels, not buttons: cut out as rounded boxes. */
-const PANEL_TARGETS = new Set<TutorialSpotlightTarget>([
-  'sectionHeader',
-  'mapView',
-  'mapCompass',
-]);
-const PANEL_RADIUS = 12;
-
-/** A tutorial cut-out, already padded, in the shell's coordinates. */
-type SpotlightShapeSpec =
-  | { kind: 'circle'; cx: number; cy: number; r: number }
-  | {
-      kind: 'rect';
-      x: number;
-      y: number;
-      width: number;
-      height: number;
-      radius: number;
-    };
-
-/**
- * The shape the backdrop cuts out around a target: a circle for the round
- * logo, a pill for buttons, a rounded box for a panel such as the map.
- */
-function spotlightShapeFor(
-  target: TutorialSpotlightTarget | undefined,
-  layout: SpotlightLayout | null,
-): SpotlightShapeSpec | null {
-  if (!layout || !target || target === 'footerButtons') {
-    return null;
-  }
-  if (target === 'logo') {
-    return {
-      kind: 'circle',
-      cx: layout.x + layout.width / 2,
-      cy: layout.y + layout.height / 2,
-      r: Math.min(layout.width, layout.height) / 2 + SPOTLIGHT_PADDING,
-    };
-  }
-  const height = layout.height + SPOTLIGHT_PADDING * 2;
-  return {
-    kind: 'rect',
-    x: layout.x - SPOTLIGHT_PADDING,
-    y: layout.y - SPOTLIGHT_PADDING,
-    width: layout.width + SPOTLIGHT_PADDING * 2,
-    height,
-    radius: PANEL_TARGETS.has(target)
-      ? PANEL_RADIUS + SPOTLIGHT_PADDING
-      : height / 2,
-  };
-}
-
-/** Draws a cut-out shape: filled in the mask, stroked for the ring. */
-function SpotlightShape({
-  shape,
-  fill,
-  stroke,
-  strokeWidth,
-}: {
-  shape: SpotlightShapeSpec;
-  fill: string;
-  stroke?: string;
-  strokeWidth?: number;
-}) {
-  if (shape.kind === 'circle') {
-    return (
-      <Circle
-        cx={shape.cx}
-        cy={shape.cy}
-        r={shape.r}
-        fill={fill}
-        stroke={stroke}
-        strokeWidth={strokeWidth}
-      />
-    );
-  }
-  return (
-    <SvgRect
-      x={shape.x}
-      y={shape.y}
-      width={shape.width}
-      height={shape.height}
-      rx={shape.radius}
-      ry={shape.radius}
-      fill={fill}
-      stroke={stroke}
-      strokeWidth={strokeWidth}
-    />
-  );
-}
 
 /**
  * Routes that take the whole window on Android, with no app bar and no bottom
@@ -199,7 +104,6 @@ function AppShellBody({ children }: Props) {
   const activeRouteName = useActiveRouteName();
   const appBarHeader = useAppBarHeader();
   const isDarkMode = useIsDarkMode();
-  const COLORS = useTheme();
   const isFullScreenRoute =
     Platform.OS === 'android' &&
     activeRouteName !== undefined &&
@@ -217,11 +121,11 @@ function AppShellBody({ children }: Props) {
   >(undefined);
   const [spotlightLayout, setSpotlightLayout] =
     useState<SpotlightLayout | null>(null);
-  const [shellHeight, setShellHeight] = useState(0);
   const logoRef = useRef<View>(null);
   const gestureContainerRef = useRef<View>(null);
   const navSearchRef = useRef<View>(null);
   const settingsRef = useRef<View>(null);
+  const footerRef = useRef<View>(null);
   const sectionHeaderRef = useRef<View>(null);
   /** Views screens have offered to spotlight (the Map's controls). */
   const screenTargetsRef = useRef(
@@ -303,7 +207,12 @@ function AppShellBody({ children }: Props) {
   }, [firstRunTour]);
 
   useEffect(() => {
-    setSpotlightLayout(null);
+    // The previous hole stays until the new target is measured, so stepping
+    // between neighbouring controls doesn't flash the text across the panel.
+    if (!tutorialSpotlightTarget) {
+      setSpotlightLayout(null);
+      return;
+    }
     const targetRef =
       tutorialSpotlightTarget === 'logo'
         ? logoRef.current
@@ -311,12 +220,14 @@ function AppShellBody({ children }: Props) {
           ? navSearchRef.current
           : tutorialSpotlightTarget === 'settings'
             ? settingsRef.current
-            : tutorialSpotlightTarget === 'sectionHeader'
-              ? sectionHeaderRef.current
-              : tutorialSpotlightTarget
-                ? (screenTargetsRef.current.get(tutorialSpotlightTarget)
-                    ?.current ?? null)
-                : null;
+            : tutorialSpotlightTarget === 'footerButtons'
+              ? footerRef.current
+              : tutorialSpotlightTarget === 'sectionHeader'
+                ? sectionHeaderRef.current
+                : tutorialSpotlightTarget
+                  ? (screenTargetsRef.current.get(tutorialSpotlightTarget)
+                      ?.current ?? null)
+                  : null;
     if (!targetRef) return;
     let cancelled = false;
     targetRef.measureInWindow(
@@ -339,14 +250,6 @@ function AppShellBody({ children }: Props) {
       cancelled = true;
     };
   }, [tutorialSpotlightTarget]);
-
-  // The card moves to the top when what it points at is in the lower half.
-  const tutorialPlacement: 'top' | 'bottom' =
-    spotlightLayout &&
-    shellHeight > 0 &&
-    spotlightLayout.y + spotlightLayout.height / 2 > shellHeight / 2
-      ? 'top'
-      : 'bottom';
 
   const panResponder = useMemo(
     () =>
@@ -443,7 +346,6 @@ function AppShellBody({ children }: Props) {
         <View
           ref={gestureContainerRef}
           style={styles.gestureContainer}
-          onLayout={(e) => setShellHeight(e.nativeEvent.layout.height)}
           {...panResponder.panHandlers}
         >
           <View style={styles.shell}>
@@ -464,55 +366,8 @@ function AppShellBody({ children }: Props) {
             </SettingsSheetContext.Provider>
           </View>
 
-          {activeTour && (
-            <Svg
-              width="100%"
-              height="100%"
-              pointerEvents="none"
-              style={styles.tutorialBackdrop}
-            >
-              <Defs>
-                <Mask id="backdropMask">
-                  <SvgRect
-                    x="-1000"
-                    y="-1000"
-                    width="5000"
-                    height="5000"
-                    fill="white"
-                  />
-                  {spotlightShape ? (
-                    <SpotlightShape shape={spotlightShape} fill="black" />
-                  ) : null}
-                </Mask>
-              </Defs>
-              <SvgRect
-                x="-1000"
-                y="-1000"
-                width="5000"
-                height="5000"
-                fill="rgba(0,0,0,0.65)"
-                mask="url(#backdropMask)"
-              />
-              {/* An accent ring draws the eye to the cut-out. */}
-              {spotlightShape ? (
-                <SpotlightShape
-                  shape={spotlightShape}
-                  fill="none"
-                  stroke={COLORS.ACCENT}
-                  strokeWidth={SPOTLIGHT_RING_WIDTH}
-                />
-              ) : null}
-            </Svg>
-          )}
-
           {isFullScreenRoute ? null : (
-            <View
-              style={
-                tutorialSpotlightTarget === 'footerButtons'
-                  ? styles.spotlightTarget
-                  : undefined
-              }
-            >
+            <View ref={footerRef} collapsable={false}>
               <ShortcutBar
                 onAlertsPress={() => setIsAlertsVisible(true)}
                 onAlertsClose={() => setIsAlertsVisible(false)}
@@ -525,8 +380,7 @@ function AppShellBody({ children }: Props) {
             key={activeTour?.id ?? 'none'}
             visible={activeTour !== null}
             steps={activeTour?.steps}
-            minCardHeight={activeTour?.minCardHeight}
-            placement={tutorialPlacement}
+            spotlight={spotlightShape}
             onComplete={() => finishTour('complete')}
             onSkip={() => finishTour('skip')}
             onSpotlightTargetChange={handleSpotlightTargetChange}
@@ -580,14 +434,5 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     width: '100%',
     alignItems: 'stretch',
-  },
-  tutorialBackdrop: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 100,
-  },
-  spotlightTarget: {
-    position: 'relative',
-    zIndex: 200,
-    elevation: 200,
   },
 });

@@ -3,6 +3,7 @@ import {
   AccessibilityInfo,
   Animated,
   Easing,
+  LayoutChangeEvent,
   Platform,
   ScrollView,
   StyleSheet,
@@ -10,12 +11,14 @@ import {
   Text as RNText,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Svg, { Circle, Defs, Mask, Rect as SvgRect } from 'react-native-svg';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { MODULES } from '../../constants';
 import { useTheme } from '../hooks/useTheme';
 import { withAlpha } from '../theme/colorUtils';
-import { FOOTER_HEIGHT, SPACING } from '../theme/constants';
+import { SPACING } from '../theme/constants';
 import AppButton from './AppButton';
+import { SpotlightShapeSpec, tutorialPanelLayout } from './tutorialLayout';
 import type {
   TutorialSpotlightTarget,
   TutorialStep,
@@ -31,11 +34,10 @@ interface TutorialModalProps {
   /** Defaults to the first-run tour. */
   steps?: TutorialStep[];
   /**
-   * Where the card sits. The shell moves it to the top when the spotlit
-   * control is in the lower half, so the card never covers it.
+   * The hole to cut in the panel, where the step points. Measured by
+   * AppShell in the shell's coordinates, which this overlay shares.
    */
-  placement?: 'top' | 'bottom';
-  minCardHeight?: number;
+  spotlight?: SpotlightShapeSpec | null;
 }
 
 export const TUTORIAL_STEPS: TutorialStep[] = [
@@ -142,15 +144,52 @@ export const TUTORIAL_STEPS: TutorialStep[] = [
   },
 ];
 
-const TUTORIAL_CARD_BOTTOM_GAP = 5;
-const TUTORIAL_CARD_BOTTOM_OFFSET = FOOTER_HEIGHT + TUTORIAL_CARD_BOTTOM_GAP;
 /** How far a step slides in from, in the direction of travel. */
 const STEP_SLIDE_DISTANCE = 18;
 const STEP_ANIMATION_MS = 220;
-/** Keeps the card from jumping in height between short and long steps. */
-const DEFAULT_CARD_MIN_HEIGHT = 420;
-/** Room between a top-placed card and the status bar. */
-const TOP_PLACEMENT_GAP = 8;
+const PANEL_RADIUS = 28;
+const RING_WIDTH = 3;
+/** The app shows dimly around the panel's edges, as with any sheet. */
+const SCRIM = 'rgba(0, 0, 0, 0.6)';
+
+/** Draws a hole: filled in the mask, stroked for the ring around it. */
+function HoleShape({
+  shape,
+  fill,
+  stroke,
+  strokeWidth,
+}: {
+  shape: SpotlightShapeSpec;
+  fill: string;
+  stroke?: string;
+  strokeWidth?: number;
+}) {
+  if (shape.kind === 'circle') {
+    return (
+      <Circle
+        cx={shape.cx}
+        cy={shape.cy}
+        r={shape.r}
+        fill={fill}
+        stroke={stroke}
+        strokeWidth={strokeWidth}
+      />
+    );
+  }
+  return (
+    <SvgRect
+      x={shape.x}
+      y={shape.y}
+      width={shape.width}
+      height={shape.height}
+      rx={shape.radius}
+      ry={shape.radius}
+      fill={fill}
+      stroke={stroke}
+      strokeWidth={strokeWidth}
+    />
+  );
+}
 
 export default function TutorialModal({
   visible,
@@ -158,11 +197,11 @@ export default function TutorialModal({
   onSkip,
   onSpotlightTargetChange,
   steps = TUTORIAL_STEPS,
-  placement = 'bottom',
-  minCardHeight = DEFAULT_CARD_MIN_HEIGHT,
+  spotlight = null,
 }: TutorialModalProps) {
   const COLORS = useTheme();
   const insets = useSafeAreaInsets();
+  const [size, setSize] = useState({ width: 0, height: 0 });
   const [currentStep, setCurrentStep] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
   const progress = useRef(new Animated.Value(1)).current;
@@ -226,6 +265,23 @@ export default function TutorialModal({
     setCurrentStep(next);
   };
 
+  const handleLayout = (event: LayoutChangeEvent) => {
+    const { width, height } = event.nativeEvent.layout;
+    setSize((prev) =>
+      prev.width === width && prev.height === height ? prev : { width, height },
+    );
+  };
+
+  // A step's hole only shows once this step's target has been measured;
+  // until then the text has the whole panel.
+  const layout = tutorialPanelLayout({
+    width: size.width,
+    height: size.height,
+    insets,
+    shape: step.spotlightTarget ? spotlight : null,
+  });
+  const { panel, hole, content } = layout;
+
   const stepTransform = {
     opacity: progress,
     transform: [
@@ -241,178 +297,224 @@ export default function TutorialModal({
   const stepLabel = `Step ${currentStep + 1} of ${steps.length}`;
 
   return (
-    <View
-      style={[
-        styles.overlay,
-        placement === 'top' && [
-          styles.overlayTop,
-          { paddingTop: insets.top + TOP_PLACEMENT_GAP },
-        ],
-      ]}
-    >
+    // Fills the shell and swallows every touch: the app underneath, even
+    // what shows through the hole, waits until the tour is over.
+    <View style={styles.overlay} onLayout={handleLayout}>
+      {size.width > 0 ? (
+        <Svg
+          width={size.width}
+          height={size.height}
+          pointerEvents="none"
+          style={StyleSheet.absoluteFill}
+        >
+          <Defs>
+            <Mask id="tutorialHole">
+              <SvgRect
+                x={0}
+                y={0}
+                width={size.width}
+                height={size.height}
+                fill="white"
+              />
+              {hole ? <HoleShape shape={hole} fill="black" /> : null}
+            </Mask>
+          </Defs>
+          <SvgRect
+            x={0}
+            y={0}
+            width={size.width}
+            height={size.height}
+            fill={SCRIM}
+            mask="url(#tutorialHole)"
+          />
+          <SvgRect
+            x={panel.x}
+            y={panel.y}
+            width={panel.width}
+            height={panel.height}
+            rx={PANEL_RADIUS}
+            ry={PANEL_RADIUS}
+            fill={COLORS.SURFACE}
+            stroke={COLORS.BORDER}
+            strokeWidth={StyleSheet.hairlineWidth}
+            mask="url(#tutorialHole)"
+          />
+          {/* An accent ring draws the eye to what shows through. */}
+          {hole ? (
+            <HoleShape
+              shape={hole}
+              fill="none"
+              stroke={COLORS.ACCENT}
+              strokeWidth={RING_WIDTH}
+            />
+          ) : null}
+        </Svg>
+      ) : null}
+
       <View
+        accessibilityViewIsModal
         style={[
-          styles.cardContainer,
-          placement === 'top' && styles.cardContainerTop,
+          styles.content,
+          {
+            left: content.x,
+            top: content.y,
+            width: content.width,
+            height: content.height,
+          },
         ]}
       >
-        <View
-          accessibilityViewIsModal
-          style={[
-            styles.card,
-            {
-              minHeight: minCardHeight,
-              backgroundColor: COLORS.SURFACE,
-              borderColor: COLORS.BORDER,
-              shadowColor: COLORS.PRIMARY_DARK,
-            },
-          ]}
-        >
-          <View style={styles.header}>
-            <RNText
-              style={[styles.eyebrow, { color: COLORS.MUTED }]}
-              accessibilityLabel={stepLabel}
-            >
-              {stepLabel.toUpperCase()}
-            </RNText>
-            {!isLastStep && (
-              <AppButton
-                label="Skip"
-                variant="plain"
-                size="small"
-                onPress={onSkip}
-                accessibilityLabel="Skip tutorial"
-              />
-            )}
-          </View>
-
-          <View
-            style={styles.progressTrack}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
+        <View style={styles.header}>
+          <RNText
+            style={[styles.eyebrow, { color: COLORS.MUTED }]}
+            accessibilityLabel={stepLabel}
           >
-            {steps.map((tutorialStep, index) => (
-              <View
-                key={tutorialStep.id}
-                style={[
-                  styles.progressSegment,
-                  {
-                    backgroundColor:
-                      index <= currentStep
-                        ? COLORS.BRAND
-                        : withAlpha(COLORS.BRAND, 0.18),
-                  },
-                ]}
-              />
-            ))}
-          </View>
+            {stepLabel.toUpperCase()}
+          </RNText>
+          {!isLastStep && (
+            <AppButton
+              label="Skip"
+              variant="plain"
+              size="small"
+              onPress={onSkip}
+              accessibilityLabel="Skip tutorial"
+            />
+          )}
+        </View>
 
-          <Animated.View style={[styles.contentViewport, stepTransform]}>
-            <ScrollView
-              style={styles.content}
-              contentContainerStyle={styles.contentContainer}
+        <View
+          style={styles.progressTrack}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        >
+          {steps.map((tutorialStep, index) => (
+            <View
+              key={tutorialStep.id}
+              style={[
+                styles.progressSegment,
+                {
+                  backgroundColor:
+                    index <= currentStep
+                      ? COLORS.BRAND
+                      : withAlpha(COLORS.BRAND, 0.18),
+                },
+              ]}
+            />
+          ))}
+        </View>
+
+        <Animated.View style={[styles.stepViewport, stepTransform]}>
+          <ScrollView
+            style={styles.stepScroll}
+            contentContainerStyle={styles.stepBody}
+          >
+            <View
+              style={[
+                styles.iconBadge,
+                { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
+              ]}
             >
-              <View
-                style={[
-                  styles.iconBadge,
-                  { backgroundColor: withAlpha(COLORS.BRAND, 0.12) },
-                ]}
-              >
-                <Ionicons name={step.icon} size={34} color={COLORS.BRAND} />
+              <Ionicons name={step.icon} size={48} color={COLORS.BRAND} />
+            </View>
+            <RNText
+              style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
+              accessibilityRole="header"
+            >
+              {step.title}
+            </RNText>
+            <RNText
+              style={[styles.description, { color: COLORS.PRIMARY_DARK }]}
+              accessibilityLabel={step.description}
+            >
+              {step.description}
+            </RNText>
+
+            {step.tips ? (
+              <View style={styles.tips}>
+                {step.tips.map((tip) => (
+                  <View
+                    key={tip.text}
+                    style={[
+                      styles.tipRow,
+                      { backgroundColor: withAlpha(COLORS.BRAND, 0.06) },
+                    ]}
+                  >
+                    <Ionicons
+                      name={tip.icon}
+                      size={22}
+                      color={COLORS.SECONDARY_ACCENT}
+                    />
+                    <RNText
+                      style={[styles.tipText, { color: COLORS.PRIMARY_DARK }]}
+                    >
+                      {tip.text}
+                    </RNText>
+                  </View>
+                ))}
               </View>
-              <RNText
-                style={[styles.title, { color: COLORS.PRIMARY_DARK }]}
-                accessibilityRole="header"
-              >
-                {step.title}
-              </RNText>
-              <RNText
-                style={[styles.description, { color: COLORS.PRIMARY_DARK }]}
-                accessibilityLabel={step.description}
-              >
-                {step.description}
-              </RNText>
+            ) : null}
 
-              {step.tips ? (
-                <View style={styles.tips}>
-                  {step.tips.map((tip) => (
-                    <View key={tip.text} style={styles.tipRow}>
-                      <Ionicons
-                        name={tip.icon}
-                        size={18}
-                        color={COLORS.SECONDARY_ACCENT}
-                      />
-                      <RNText style={[styles.tipText, { color: COLORS.MUTED }]}>
-                        {tip.text}
-                      </RNText>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-
-              {step.showModules ? (
-                <View style={styles.modules}>
-                  {MODULES.map((module) => (
-                    <View
-                      key={module.id}
+            {step.showModules ? (
+              <View style={styles.modules}>
+                {MODULES.map((module) => (
+                  <View
+                    key={module.id}
+                    style={[
+                      styles.moduleChip,
+                      {
+                        backgroundColor: withAlpha(COLORS.BRAND, 0.08),
+                        borderColor: withAlpha(COLORS.BRAND, 0.2),
+                      },
+                    ]}
+                  >
+                    <Ionicons
+                      name={module.icon}
+                      size={18}
+                      color={COLORS.BRAND}
+                    />
+                    <RNText
                       style={[
-                        styles.moduleChip,
-                        {
-                          backgroundColor: withAlpha(COLORS.BRAND, 0.08),
-                          borderColor: withAlpha(COLORS.BRAND, 0.2),
-                        },
+                        styles.moduleLabel,
+                        { color: COLORS.PRIMARY_DARK },
                       ]}
                     >
-                      <Ionicons
-                        name={module.icon}
-                        size={16}
-                        color={COLORS.BRAND}
-                      />
-                      <RNText
-                        style={[
-                          styles.moduleLabel,
-                          { color: COLORS.PRIMARY_DARK },
-                        ]}
-                      >
-                        {module.name}
-                      </RNText>
-                    </View>
-                  ))}
-                </View>
-              ) : null}
-            </ScrollView>
-          </Animated.View>
+                      {module.name}
+                    </RNText>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+          </ScrollView>
+        </Animated.View>
 
-          <View style={styles.footer}>
-            {isFirstStep ? null : (
-              <AppButton
-                label="Back"
-                variant="tinted"
-                size="large"
-                icon="chevron-back-outline"
-                onPress={() => goTo(currentStep - 1)}
-                accessibilityLabel="Previous tutorial step"
-                style={styles.footerButton}
-              />
-            )}
+        <View style={styles.footer}>
+          {isFirstStep ? null : (
             <AppButton
-              label={
-                isLastStep ? 'Get Started' : isFirstStep ? 'Start Tour' : 'Next'
-              }
+              label="Back"
+              variant="tinted"
               size="large"
-              onPress={() => {
-                if (isLastStep) {
-                  onComplete();
-                  return;
-                }
-                goTo(currentStep + 1);
-              }}
-              accessibilityLabel={
-                isLastStep ? 'Finish tutorial' : 'Next tutorial step'
-              }
+              icon="chevron-back-outline"
+              onPress={() => goTo(currentStep - 1)}
+              accessibilityLabel="Previous tutorial step"
               style={styles.footerButton}
             />
-          </View>
+          )}
+          <AppButton
+            label={
+              isLastStep ? 'Get Started' : isFirstStep ? 'Start Tour' : 'Next'
+            }
+            size="large"
+            onPress={() => {
+              if (isLastStep) {
+                onComplete();
+                return;
+              }
+              goTo(currentStep + 1);
+            }}
+            accessibilityLabel={
+              isLastStep ? 'Finish tutorial' : 'Next tutorial step'
+            }
+            style={styles.footerButton}
+          />
         </View>
       </View>
     </View>
@@ -421,51 +523,27 @@ export default function TutorialModal({
 
 const styles = StyleSheet.create({
   overlay: {
-    // AppShell renders this inside a full-screen flex container, so
-    // absolute fill correctly covers the active app viewport.
+    // AppShell renders this last in its full-screen container, so absolute
+    // fill covers the whole app, app bar and shortcut bar included.
     ...StyleSheet.absoluteFillObject,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 20 + TUTORIAL_CARD_BOTTOM_OFFSET,
     zIndex: 300,
   },
-  overlayTop: {
-    justifyContent: 'flex-start',
-  },
-  cardContainer: {
-    width: '100%',
-    maxWidth: 560,
-    maxHeight: '100%',
-  },
-  cardContainerTop: {
-    marginBottom: 0,
-  },
-  card: {
-    width: '100%',
-    maxHeight: '100%',
-    borderRadius: 20,
-    borderWidth: StyleSheet.hairlineWidth,
-    paddingHorizontal: 20,
-    paddingTop: SPACING.md,
-    paddingBottom: 20,
-    flexShrink: 1,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 12,
+  content: {
+    position: 'absolute',
+    paddingHorizontal: SPACING.xl,
+    paddingTop: SPACING.lg,
+    paddingBottom: SPACING.xl,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    minHeight: 32,
+    minHeight: 36,
   },
   eyebrow: {
-    fontSize: 12,
+    fontSize: 13,
     fontWeight: '700',
-    letterSpacing: 0.8,
+    letterSpacing: 1,
   },
   progressTrack: {
     flexDirection: 'row',
@@ -474,57 +552,59 @@ const styles = StyleSheet.create({
   },
   progressSegment: {
     flex: 1,
-    height: 4,
-    borderRadius: 2,
+    height: 5,
+    borderRadius: 2.5,
   },
-  content: {
+  stepViewport: {
     flex: 1,
     minHeight: 0,
   },
-  contentViewport: {
+  stepScroll: {
     flex: 1,
-    minHeight: 0,
   },
-  contentContainer: {
+  stepBody: {
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    gap: SPACING.md,
-    paddingHorizontal: SPACING.xs,
-    paddingVertical: 20,
+    gap: SPACING.lg,
+    paddingVertical: SPACING.xl,
   },
   iconBadge: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 104,
+    height: 104,
+    borderRadius: 52,
     alignItems: 'center',
     justifyContent: 'center',
   },
   title: {
-    fontSize: 24,
+    fontSize: 30,
+    lineHeight: 36,
     fontWeight: '800',
     textAlign: 'center',
   },
   description: {
-    fontSize: 16,
-    lineHeight: 23,
+    fontSize: 18,
+    lineHeight: 26,
     textAlign: 'center',
+    maxWidth: 520,
   },
   tips: {
     alignSelf: 'stretch',
     gap: SPACING.sm,
     marginTop: SPACING.xs,
-    paddingHorizontal: SPACING.sm,
   },
   tipRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: SPACING.md,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: SPACING.md,
+    borderRadius: 14,
   },
   tipText: {
     flex: 1,
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 17,
+    lineHeight: 23,
   },
   modules: {
     flexDirection: 'row',
@@ -536,19 +616,20 @@ const styles = StyleSheet.create({
   moduleChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: SPACING.md,
-    paddingVertical: 7,
-    borderRadius: 16,
+    gap: SPACING.sm,
+    paddingHorizontal: SPACING.lg,
+    paddingVertical: 10,
+    borderRadius: 20,
     borderWidth: 1,
   },
   moduleLabel: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: '600',
   },
   footer: {
     flexDirection: 'row',
     gap: SPACING.md,
+    paddingTop: SPACING.md,
   },
   footerButton: {
     flex: 1,

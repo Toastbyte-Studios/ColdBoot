@@ -7,12 +7,6 @@ export const MAP_TUTORIAL_STORAGE_KEY = 'hasSeenMapTutorial';
 export const MAP_TOUR_ID = 'map';
 
 /**
- * The map tour's card is shorter than the first-run tour's: most steps point
- * at a control, and a tall card would hide the map they act on.
- */
-export const MAP_TOUR_CARD_MIN_HEIGHT = 340;
-
-/**
  * The Map's own tour. It runs the first time the screen opens, before the
  * location prompt, so the first step can say why the app wants location.
  * Keep it in step with the action row in MapScreen.

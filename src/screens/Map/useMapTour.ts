@@ -14,7 +14,6 @@ import {
   TutorialSpotlightContext,
 } from '../../components/TutorialSpotlightContext';
 import {
-  MAP_TOUR_CARD_MIN_HEIGHT,
   MAP_TOUR_ID,
   MAP_TUTORIAL_STEPS,
   MAP_TUTORIAL_STORAGE_KEY,
@@ -100,7 +99,6 @@ export function useMapTour({
     startTour({
       id: MAP_TOUR_ID,
       steps: MAP_TUTORIAL_STEPS,
-      minCardHeight: MAP_TOUR_CARD_MIN_HEIGHT,
       onFinish: () => {
         AsyncStorage.setItem(MAP_TUTORIAL_STORAGE_KEY, 'true').catch(() => {
           // A failed write only means the tour shows again next time.

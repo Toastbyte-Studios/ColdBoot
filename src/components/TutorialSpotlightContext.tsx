@@ -57,8 +57,6 @@ export interface TutorialTour {
   /** Also resets the card to step one when a different tour starts. */
   id: string;
   steps: TutorialStep[];
-  /** Short tours can use a shorter card, so it covers less of the screen. */
-  minCardHeight?: number;
   onFinish?: (reason: TutorialFinishReason) => void;
 }
 
