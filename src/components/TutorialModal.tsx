@@ -18,7 +18,11 @@ import { useTheme } from '../hooks/useTheme';
 import { withAlpha } from '../theme/colorUtils';
 import { SPACING } from '../theme/constants';
 import AppButton from './AppButton';
-import { SpotlightShapeSpec, tutorialPanelLayout } from './tutorialLayout';
+import {
+  safeAreaInsetsInShell,
+  SpotlightShapeSpec,
+  tutorialPanelLayout,
+} from './tutorialLayout';
 import type {
   TutorialSpotlightTarget,
   TutorialStep,
@@ -277,7 +281,7 @@ export default function TutorialModal({
   const layout = tutorialPanelLayout({
     width: size.width,
     height: size.height,
-    insets,
+    insets: safeAreaInsetsInShell(insets),
     shape: step.spotlightTarget ? spotlight : null,
   });
   const { panel, hole, content } = layout;

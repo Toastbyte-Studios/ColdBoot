@@ -3,9 +3,14 @@ import {
   MIN_CONTENT_HEIGHT,
   PANEL_MARGIN,
   SPOTLIGHT_PADDING,
+  safeAreaInsetsInShell,
   spotlightShapeFor,
   tutorialPanelLayout,
 } from '../src/components/tutorialLayout';
+import {
+  SCREEN_CONTAINER_TOP_INSET,
+  SCREEN_INSET,
+} from '../src/theme/constants';
 
 // An iPhone-sized shell with a notch and a home indicator.
 const SCREEN = { width: 390, height: 844 };
@@ -56,6 +61,39 @@ describe('spotlightShapeFor', () => {
 });
 
 describe('tutorialPanelLayout', () => {
+  test('converts window safe-area insets to shell coordinates', () => {
+    const shellInsets = safeAreaInsetsInShell(INSETS);
+    const { panel } = tutorialPanelLayout({
+      width: SCREEN.width - SCREEN_INSET * 2,
+      height: SCREEN.height - SCREEN_CONTAINER_TOP_INSET,
+      insets: shellInsets,
+      shape: null,
+    });
+
+    expect(shellInsets).toEqual({
+      top: INSETS.top - SCREEN_CONTAINER_TOP_INSET,
+      bottom: INSETS.bottom,
+      left: -SCREEN_INSET,
+      right: -SCREEN_INSET,
+    });
+    expect(panel).toEqual({
+      x: 0,
+      y: INSETS.top,
+      width: SCREEN.width - SCREEN_INSET * 2,
+      height: SCREEN.height - INSETS.top - INSETS.bottom - PANEL_MARGIN * 2,
+    });
+    expect(panel.x + SCREEN_INSET).toBe(SCREEN_INSET);
+    expect(panel.y + SCREEN_CONTAINER_TOP_INSET).toBe(
+      INSETS.top + PANEL_MARGIN,
+    );
+    expect(panel.x + panel.width + SCREEN_INSET).toBe(
+      SCREEN.width - SCREEN_INSET,
+    );
+    expect(panel.y + panel.height + SCREEN_CONTAINER_TOP_INSET).toBe(
+      SCREEN.height - INSETS.bottom - PANEL_MARGIN,
+    );
+  });
+
   test('without a hole, the panel fills the safe area and the text fills it', () => {
     const { panel, hole, content } = tutorialPanelLayout({
       ...SCREEN,

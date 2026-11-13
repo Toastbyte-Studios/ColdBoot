@@ -1,3 +1,4 @@
+import { SCREEN_CONTAINER_TOP_INSET, SCREEN_INSET } from '../theme/constants';
 import type {
   SpotlightLayout,
   TutorialSpotlightTarget,
@@ -91,6 +92,21 @@ export interface TutorialPanelLayout {
   hole: SpotlightShapeSpec | null;
   /** Where the step's text and buttons go: the panel, less the hole. */
   content: Box;
+}
+
+/** Converts window-relative safe-area insets to the inset shell's coordinates. */
+export function safeAreaInsetsInShell(insets: {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+}): { top: number; right: number; bottom: number; left: number } {
+  return {
+    top: insets.top - SCREEN_CONTAINER_TOP_INSET,
+    right: insets.right - SCREEN_INSET,
+    bottom: insets.bottom,
+    left: insets.left - SCREEN_INSET,
+  };
 }
 
 /**
