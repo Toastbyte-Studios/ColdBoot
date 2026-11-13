@@ -137,13 +137,18 @@ describe('Tutorial flow components', () => {
     const { tree } = renderTutorialModal({ platform: 'ios' });
     const { ScrollView, StyleSheet, View } = require('react-native');
     const content = tree.root.findByType(ScrollView);
-    const constrainedViews = tree.root
-      .findAllByType(View)
-      .filter(
-        (view) => StyleSheet.flatten(view.props.style)?.maxHeight === '100%',
+    // The step body may shrink to whatever room the hole leaves; the buttons
+    // sit outside the scroll so they're always reachable.
+    const shrinkableViews = tree.root.findAll((node) => {
+      const style = StyleSheet.flatten(node.props.style);
+      return (
+        (node.type === View || typeof node.type !== 'string') &&
+        style?.flex === 1 &&
+        style?.minHeight === 0
       );
+    });
 
-    expect(constrainedViews).toHaveLength(2);
+    expect(shrinkableViews.length).toBeGreaterThan(0);
     expect(
       content.findByProps({
         accessibilityLabel:
@@ -381,7 +386,6 @@ describe('Tutorial flow components', () => {
           onComplete: jest.fn(),
           onSkip: jest.fn(),
           steps: MAP_TUTORIAL_STEPS,
-          placement: 'top',
         }),
       );
     });
@@ -389,6 +393,64 @@ describe('Tutorial flow components', () => {
     const rendered = JSON.stringify(tree.toJSON());
     expect(rendered).toContain('Map Basics');
     expect(rendered).toContain(`Step 1 of ${MAP_TUTORIAL_STEPS.length}`);
+  });
+
+  test('TutorialModal fills the screen and cuts a ringed hole for the spotlight', () => {
+    jest.resetModules();
+    setPlatform('ios');
+    const React = require('react');
+    const ReactTestRenderer: RendererModule = require('react-test-renderer');
+    const { View } = require('react-native');
+    const TutorialModal = require('../src/components/TutorialModal').default;
+    const { LIGHT_COLORS } = require('../src/theme/colors');
+    const { TUTORIAL_STEPS } = require('../src/components/TutorialModal');
+    const logoIndex = TUTORIAL_STEPS.findIndex(
+      (step: { id: string }) => step.id === 'logo',
+    );
+    const hole = { kind: 'circle', cx: 36, cy: 80, r: 26 };
+    let tree!: ReactTestRenderer;
+
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(
+        React.createElement(TutorialModal, {
+          visible: true,
+          onComplete: jest.fn(),
+          onSkip: jest.fn(),
+          spotlight: hole,
+        }),
+      );
+    });
+
+    // The overlay sizes itself from its own layout.
+    ReactTestRenderer.act(() => {
+      tree.root
+        .findAll(
+          (node: { type: unknown; props: { onLayout?: unknown } }) =>
+            node.type === View && typeof node.props.onLayout === 'function',
+        )[0]
+        .props.onLayout({
+          nativeEvent: { layout: { x: 0, y: 0, width: 390, height: 844 } },
+        });
+    });
+
+    const ringsFor = () =>
+      tree.root.findAll(
+        (node: { props: { stroke?: string; cx?: number } }) =>
+          node.props.stroke === LIGHT_COLORS.ACCENT && node.props.cx === 36,
+      );
+
+    // The first step points at nothing, so the panel has no hole.
+    expect(ringsFor()).toHaveLength(0);
+
+    for (let i = 0; i < logoIndex; i += 1) {
+      ReactTestRenderer.act(() => {
+        tree.root
+          .findByProps({ accessibilityLabel: 'Next tutorial step' })
+          .props.onPress();
+      });
+    }
+
+    expect(ringsFor().length).toBeGreaterThan(0);
   });
 
   test('HelpModal links URLs without their trailing full stop', () => {

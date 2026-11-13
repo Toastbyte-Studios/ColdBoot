@@ -27,11 +27,6 @@ jest.mock('../src/hooks/useActiveRouteName', () => ({
   useActiveRouteName: jest.fn(() => undefined),
 }));
 
-// AppShell reads the theme for the spotlight ring. The real hook pulls in the
-// root store, so resolve the light palette directly.
-jest.mock('../src/hooks/useTheme', () => ({
-  useTheme: jest.fn(() => require('../src/theme/colors').LIGHT_COLORS),
-}));
 jest.mock('../src/hooks/useIsDarkMode', () => ({
   useIsDarkMode: () => false,
 }));
@@ -84,7 +79,19 @@ jest.mock('../src/components/ScreenContainer', () => ({
 jest.mock('../src/components/SettingsModal', () => ({
   SettingsModal: () => null,
 }));
-jest.mock('../src/components/ShortcutBar', () => () => null);
+jest.mock(
+  '../src/components/ShortcutBar',
+  () =>
+    ({ spotlightRef }: { spotlightRef?: unknown }) => {
+      const { View: MockView } = require('react-native');
+      return (
+        <MockView
+          accessibilityLabel="Shortcut bar"
+          testID={spotlightRef ? 'shortcut-spotlight-target' : undefined}
+        />
+      );
+    },
+);
 jest.mock('../src/components/TutorialModal', () => () => null);
 
 const AppShell = require('../src/components/AppShell')
@@ -149,6 +156,9 @@ test('AppShell renders its children without a translate transform', () => {
   });
 
   expect(tree.root.findByProps({ accessibilityLabel: 'App bar' })).toBeTruthy();
+  expect(
+    tree.root.findByProps({ testID: 'shortcut-spotlight-target' }),
+  ).toBeTruthy();
   expect(tree.root.findByProps({ children: 'Screen content' })).toBeTruthy();
   expect(hasTransformStyle(tree.toJSON())).toBe(false);
 });

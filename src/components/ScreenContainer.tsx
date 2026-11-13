@@ -2,7 +2,7 @@ import React, { PropsWithChildren } from 'react';
 import { Platform, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { useTheme } from '../hooks/useTheme';
-import { SCREEN_INSET } from '../theme';
+import { SCREEN_CONTAINER_TOP_INSET, SCREEN_INSET } from '../theme';
 
 type Props = {
   style?: StyleProp<ViewStyle>;
@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     alignSelf: 'stretch',
-    paddingTop: 10,
+    paddingTop: SCREEN_CONTAINER_TOP_INSET,
     paddingHorizontal: SCREEN_INSET,
     alignItems: 'center',
   },

@@ -30,6 +30,8 @@ export const SCREEN_GUTTER = 16;
  * hardcoding the number in two places.
  */
 export const SCREEN_INSET = 10;
+/** Top padding ScreenContainer applies to its content. */
+export const SCREEN_CONTAINER_TOP_INSET = 10;
 
 /**
  * Gutter for text that sits directly on the screen ground rather than inside a
