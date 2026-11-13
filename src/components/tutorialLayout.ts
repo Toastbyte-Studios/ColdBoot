@@ -135,7 +135,10 @@ export function tutorialPanelLayout({
     Math.max(spaceAbove, spaceBelow) < MIN_CONTENT_HEIGHT
   ) {
     const shortfall = MIN_CONTENT_HEIGHT - Math.max(spaceAbove, spaceBelow);
-    const trimmedHeight = Math.max(MIN_HOLE_HEIGHT, hole.height - shortfall);
+    const trimmedHeight = Math.max(
+      Math.min(MIN_HOLE_HEIGHT, hole.height),
+      hole.height - shortfall,
+    );
     const trimmedBy = hole.height - trimmedHeight;
     hole = {
       ...hole,
