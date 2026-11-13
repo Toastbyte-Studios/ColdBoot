@@ -9,18 +9,18 @@ import {
 
 /**
  * One-line summaries of what each module holds, keyed by the module ids in
- * the root `constants.ts`.
+ * the root `constants.ts`. Each item starts with a capital, like a tool name.
  *
  * These live beside the module list rather than in `constants.ts` so the tool
  * metadata stays a plain data table; this is presentation copy used by Home.
  */
 export const MODULE_SUBTITLES: Record<string, string> = {
-  home_communications: 'Morse · whistle · frequencies',
-  home_core: 'Flashlight · notepad · status',
-  home_earth: 'Sun · moon · pressure · sky',
-  home_navigation: 'Offline maps · grid · star map',
-  home_prepper: 'Pantry · inventory · planning',
-  home_reference: 'Health · survival · weather',
+  home_communications: 'Morse · Whistle · Frequencies',
+  home_core: 'Flashlight · Notepad · Status',
+  home_earth: 'Sun · Moon · Pressure · Sky',
+  home_navigation: 'Offline maps · Grid · Star map',
+  home_prepper: 'Pantry · Inventory · Planning',
+  home_reference: 'Health · Survival · Weather',
 };
 
 /**
