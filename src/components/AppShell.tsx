@@ -367,13 +367,12 @@ function AppShellBody({ children }: Props) {
           </View>
 
           {isFullScreenRoute ? null : (
-            <View ref={footerRef} collapsable={false}>
-              <ShortcutBar
-                onAlertsPress={() => setIsAlertsVisible(true)}
-                onAlertsClose={() => setIsAlertsVisible(false)}
-                alertsActive={isAlertsVisible}
-              />
-            </View>
+            <ShortcutBar
+              spotlightRef={footerRef}
+              onAlertsPress={() => setIsAlertsVisible(true)}
+              onAlertsClose={() => setIsAlertsVisible(false)}
+              alertsActive={isAlertsVisible}
+            />
           )}
 
           <TutorialModal

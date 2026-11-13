@@ -40,10 +40,11 @@ type Props = {
   onAlertsPress: () => void;
   onAlertsClose: () => void;
   alertsActive: boolean;
+  spotlightRef?: React.Ref<View>;
 };
 
 const ShortcutBar = observer(
-  ({ onAlertsPress, onAlertsClose, alertsActive }: Props) => {
+  ({ onAlertsPress, onAlertsClose, alertsActive, spotlightRef }: Props) => {
     const COLORS = useTheme();
     const insets = useSafeAreaInsets();
     const rippleColor = useRippleColor();
@@ -130,6 +131,7 @@ const ShortcutBar = observer(
 
     return (
       <View
+        ref={spotlightRef}
         style={[
           styles.bar,
           {

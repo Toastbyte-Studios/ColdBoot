@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, StyleSheet } from 'react-native';
+import { Modal, StyleSheet, View } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AlertsSheet from '../src/components/AlertsSheet';
 import ShortcutBar from '../src/components/ShortcutBar';
@@ -118,6 +118,26 @@ describe('ShortcutBar', () => {
     expect(rendered).toContain('Map');
     expect(rendered).toContain('Voice Log');
     expect(rendered).toContain('Alerts');
+  });
+
+  it('attaches the spotlight ref to the measured bar root', () => {
+    const spotlightRef = React.createRef<View>();
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(
+        <ShortcutBar
+          onAlertsPress={mockOnAlertsPress}
+          onAlertsClose={mockOnAlertsClose}
+          alertsActive={false}
+          spotlightRef={spotlightRef}
+        />,
+      );
+    });
+
+    expect(spotlightRef.current).toBe(
+      tree.root.findAllByType(View)[0].instance,
+    );
   });
 
   it('navigates to a shortcut screen when tapped', () => {
