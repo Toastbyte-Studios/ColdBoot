@@ -34,7 +34,7 @@ function render(props: Partial<React.ComponentProps<typeof ModuleRow>> = {}) {
       <ModuleRow
         title="Core"
         icon="pulse-outline"
-        subtitle="Flashlight · notepad · status"
+        subtitle="Flashlight · Notepad · Status"
         {...props}
       />,
     );
@@ -97,7 +97,7 @@ describe('ModuleRow on Android', () => {
 
     expect(buttons).toHaveLength(1);
     expect(buttons[0].props.accessibilityLabel).toBe(
-      'Core. Flashlight · notepad · status',
+      'Core. Flashlight · Notepad · Status',
     );
     expect(buttons[0].props.android_ripple.color).toBeDefined();
 
@@ -115,7 +115,7 @@ describe('ModuleRow on Android', () => {
     );
 
     expect(button.props.accessibilityLabel).toBe(
-      'Core. Flashlight · notepad · status. On',
+      'Core. Flashlight · Notepad · Status. On',
     );
   });
 });
