@@ -410,6 +410,17 @@ describe('MapScreen Library', () => {
     );
   });
 
+  it('does not send the position anywhere when a GPS fix arrives', async () => {
+    const { reverseGeocode } = require('../src/utils/reverseGeocode');
+    (reverseGeocode as jest.Mock).mockClear();
+
+    await renderScreen(true);
+
+    // The map used to look every fix up with OpenStreetMap Nominatim to
+    // label the compass panel. Position must stay on the device.
+    expect(reverseGeocode).not.toHaveBeenCalled();
+  });
+
   it('keeps the last tab when opened from the toolbar', async () => {
     mockRouteParams = { library: 'maps' };
     const tree = await renderScreen(true);

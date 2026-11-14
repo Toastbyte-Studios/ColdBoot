@@ -61,7 +61,6 @@ import {
 } from '../../stores/StoreContext';
 import { Track, TrackPoint } from '../../stores/TrackStore';
 import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
-import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
 import LibrarySheet, {
@@ -198,8 +197,6 @@ function stopAndroidForegroundService(): void {
 const MAP_ANIMATE_DURATION_MS = 400;
 /** Number of GPS points between polyline state updates during recording (performance optimisation). */
 const POLYLINE_UPDATE_INTERVAL = 3;
-/** Minimum coordinate delta (~100 m) before triggering a new reverse-geocode request. */
-const GEOCODE_THRESHOLD = 0.001;
 
 const isAndroid = Platform.OS === 'android';
 
@@ -271,11 +268,9 @@ export default observer(function MapScreen() {
     longitude: number;
     altitude: number | null;
   } | null>(null);
-  const [locationName, setLocationName] = useState<string | null>(null);
   // watchIdRef tracks the Geolocation watch used exclusively during track recording.
   const watchIdRef = useRef<number | null>(null);
   // Holds the AbortController for the in-flight Nominatim request
-  const geocodeAbortRef = useRef<AbortController | null>(null);
   const [librarySheetOpen, setLibrarySheetOpen] = useState(false);
   /** Tab to open the Library on; undefined keeps the last one shown. */
   const [libraryOpenTab, setLibraryOpenTab] = useState<
@@ -387,44 +382,22 @@ export default observer(function MapScreen() {
     CompassHeading.setLocation?.(latitude, longitude, altitude ?? 0);
   }, [mlPosition]);
 
-  // Drive coords and geocoding from MapLibre's useCurrentPosition hook.
-  // This replaces the previous Geolocation.watchPosition for non-recording use.
-  const lastGeocodedLatRef = useRef<number | null>(null);
-  const lastGeocodedLngRef = useRef<number | null>(null);
-
+  // Drive coords from MapLibre's useCurrentPosition hook.
+  //
+  // The position is not sent anywhere. This effect used to reverse-geocode
+  // it through OpenStreetMap Nominatim every ~100 m to fill a "Location" row
+  // in the compass panel. That streamed the user's movements to a third
+  // party for one line of text, and automatic lookups like it are what
+  // Nominatim's usage policy asks apps not to do. Naming an offline map
+  // (offlinePackNaming) still looks a place up, once, when the user starts
+  // a download.
   useEffect(() => {
     if (!mlPosition) {
       return;
     }
     const { latitude, longitude, altitude } = mlPosition.coords;
     setCoords({ latitude, longitude, altitude: altitude ?? null });
-
-    // Only reverse-geocode when position has moved meaningfully
-    if (
-      lastGeocodedLatRef.current === null ||
-      lastGeocodedLngRef.current === null ||
-      Math.abs(latitude - lastGeocodedLatRef.current) > GEOCODE_THRESHOLD ||
-      Math.abs(longitude - lastGeocodedLngRef.current) > GEOCODE_THRESHOLD
-    ) {
-      lastGeocodedLatRef.current = latitude;
-      lastGeocodedLngRef.current = longitude;
-      geocodeAbortRef.current?.abort();
-      geocodeAbortRef.current = new AbortController();
-      reverseGeocode(latitude, longitude, {
-        signal: geocodeAbortRef.current.signal,
-      }).then((result) => {
-        setLocationName(result?.compassName ?? '--');
-      });
-    }
   }, [mlPosition]);
-
-  // Cancel any in-flight geocode request on unmount
-  useEffect(() => {
-    return () => {
-      geocodeAbortRef.current?.abort();
-      geocodeAbortRef.current = null;
-    };
-  }, []);
 
   // Clean up recording timer on unmount; stop foreground service if still running
   useEffect(() => {
@@ -1158,11 +1131,7 @@ export default observer(function MapScreen() {
           style={styles.compassContainer}
         >
           <CompassRing ringSpin={ringSpin} labelSpin={labelSpin} />
-          <CompassDataPanel
-            heading={heading}
-            coords={coords}
-            locationName={locationName}
-          />
+          <CompassDataPanel heading={heading} coords={coords} />
         </View>
       </View>
     </ScreenBody>
