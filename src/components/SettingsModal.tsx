@@ -874,11 +874,27 @@ export const SettingsModal = observer(
               {/* ── Attributions ───────────────────────────────────────── */}
               <GroupLabel>ATTRIBUTIONS</GroupLabel>
               <View style={[styles.group, t.groupThemed, styles.groupPadded]}>
+                {/* Each licence here requires its credit to be shown in
+                    the app. Knot authors are listed per image in
+                    src/assets/images/reference/knots/CREDITS.md; keep the
+                    two in step. */}
                 <RNText style={[styles.rowSubtitle, t.mutedText]}>
-                  Knot diagrams sourced from Wikimedia Commons contributors,
-                  licensed under CC BY-SA 3.0
-                  (https://creativecommons.org/licenses/by-sa/3.0/) except where
-                  noted as Public Domain.
+                  Knot photographs by Cyrus Andiron and WetCanvas, from
+                  Wikimedia Commons (https://commons.wikimedia.org/), licensed
+                  under CC BY-SA 3.0
+                  (https://creativecommons.org/licenses/by-sa/3.0/). Resized and
+                  converted to WebP. The overhand knot photograph is in the
+                  public domain.
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Maps © OpenMapTiles and © OpenStreetMap contributors
+                  (https://www.openstreetmap.org/copyright), served by
+                  OpenFreeMap.
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Seasonal Outlook weather data by Open-Meteo.com, from the
+                  ECMWF SEAS5 model, licensed under CC BY 4.0
+                  (https://creativecommons.org/licenses/by/4.0/).
                 </RNText>
               </View>
 

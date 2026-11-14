@@ -422,7 +422,10 @@ function DownloadConfirmScreen({
               style={styles.map}
               mapStyle={MAP_STYLE_URL}
               logo={false}
-              attribution={false}
+              // OpenStreetMap's licence asks for the credit on every map
+              // shown, previews included.
+              attribution
+              attributionPosition={{ bottom: 8, right: 8 }}
               accessibilityLabel="Area to download. Pan and zoom to centre it."
               onRegionDidChange={(event) => {
                 const [longitude, latitude] = event.nativeEvent.center;
@@ -478,7 +481,8 @@ function DownloadConfirmScreen({
                 style={styles.map}
                 mapStyle={MAP_STYLE_URL}
                 logo={false}
-                attribution={false}
+                attribution
+                attributionPosition={{ bottom: 8, right: 8 }}
               >
                 {bounds && (
                   <Camera
