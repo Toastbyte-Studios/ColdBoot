@@ -27,7 +27,6 @@ import React, {
   useState,
 } from 'react';
 import {
-  Alert,
   Animated,
   Easing,
   AppState,
@@ -98,31 +97,6 @@ async function requestLocationPermission(): Promise<'granted' | 'denied'> {
     return granted ? 'granted' : 'denied';
   } catch {
     return 'denied';
-  }
-}
-
-/**
- * Upgrades iOS location authorization to 'always' so GPS callbacks continue
- * when the screen is locked during trail recording.
- * Android needs nothing here: the location foreground service is started
- * while the app is on screen, so it keeps GPS alive on the while-in-use
- * grant and ACCESS_BACKGROUND_LOCATION is not requested or declared.
- */
-async function requestBackgroundLocationPermission(): Promise<void> {
-  try {
-    if (Platform.OS === 'ios') {
-      const status = await Geolocation.requestAuthorization('always');
-      if (status !== 'granted') {
-        Alert.alert(
-          'Background Location',
-          'To keep recording while the screen is locked, allow "Always" location access in Settings → Privacy → Location Services → Cold Boot.',
-          [{ text: 'OK' }],
-        );
-      }
-      return;
-    }
-  } catch {
-    // Non-fatal — recording still works in foreground
   }
 }
 
@@ -621,9 +595,12 @@ export default observer(function MapScreen() {
 
   const handleRecordPress = useCallback(() => {
     if (recordingStateRef.current === 'idle') {
-      // Request background location permission so GPS continues when screen locks.
-      // Non-blocking — recording starts immediately; the permission prompt is async.
-      requestBackgroundLocationPermission();
+      // No "Always" location request on either platform. Recording can only
+      // start with while-in-use access already granted (the button is
+      // disabled otherwise) and that is enough to keep going with the screen
+      // locked: iOS continues updates that began in the foreground because
+      // the app declares the location background mode, and Android does the
+      // same through the foreground service started below.
       // On Android, start the foreground service before GPS sampling begins so
       // the OS doesn't kill the process when the screen is locked.
       startAndroidForegroundService();

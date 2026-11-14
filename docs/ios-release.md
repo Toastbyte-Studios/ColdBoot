@@ -50,7 +50,7 @@ Keep yourself in an internal group (`TBS`) to verify builds within minutes, befo
 
 Left sidebar → **Test Information**: feedback email, and "What to Test" notes.
 
-Spell out the background location use, e.g. _"Cold Boot records GPS trails for outdoor safety and continues recording while backgrounded, which is why Always location is requested."_ Vague background-location justifications get rejected more often than the feature itself.
+Spell out the background location use, e.g. _"Cold Boot records GPS trails for outdoor safety and continues recording while backgrounded, using the location background mode with While Using the App access; Always is not requested."_ Vague background-location justifications get rejected more often than the feature itself.
 
 ---
 
