@@ -6,6 +6,7 @@ import {
 import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import ModuleHero from '../../components/ModuleHero';
+import { usePreciseLocation } from '../../hooks/usePreciseLocation';
 import { LOCATION_PERMISSION_DENIED } from '../../stores/CoreStore';
 import {
   useCoreStore,
@@ -55,6 +56,9 @@ const NavigationHero = observer(() => {
       });
     }
   }, [maps]);
+
+  // The hero shows where you are and how far the rally points are.
+  usePreciseLocation();
 
   const system = settings.measurementSystem;
   const fix = core.lastFix;

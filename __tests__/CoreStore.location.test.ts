@@ -88,6 +88,102 @@ describe('CoreStore location permission flow', () => {
     await flushPromises();
 
     expect(store.locationError).toBe(LOCATION_PERMISSION_DENIED);
+    // Denied is final: a second, full-accuracy attempt would only re-prompt.
+    expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
     store.stopDeviceStatusMonitoring();
+  });
+
+  describe('fix accuracy', () => {
+    const optionsOfCall = (index: number) =>
+      geolocation.getCurrentPosition.mock.calls[index][2];
+
+    test('the routine poll asks for a low-power fix and accepts a cached one', async () => {
+      const store = new CoreStore();
+
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+
+      expect(optionsOfCall(0)).toMatchObject({
+        enableHighAccuracy: false,
+        maximumAge: store.gpsIntervalMs,
+      });
+      store.stopDeviceStatusMonitoring();
+    });
+
+    test('falls back to full accuracy when a low-power fix fails', async () => {
+      geolocation.getCurrentPosition.mockImplementationOnce(
+        (_success, error) => {
+          if (!error) throw new Error('missing geolocation error callback');
+          error({ code: 2, message: 'Position unavailable' });
+        },
+      );
+      const store = new CoreStore();
+
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(2);
+      expect(optionsOfCall(1)).toMatchObject({ enableHighAccuracy: true });
+      expect(store.lastFix).not.toBeNull();
+      expect(store.locationError).toBeNull();
+      store.stopDeviceStatusMonitoring();
+    });
+
+    test('reports the error when the full-accuracy retry fails too', async () => {
+      geolocation.getCurrentPosition
+        .mockImplementationOnce((_success, error) => {
+          error?.({ code: 3, message: 'Timed out' });
+        })
+        .mockImplementationOnce((_success, error) => {
+          error?.({ code: 3, message: 'Timed out' });
+        });
+      const store = new CoreStore();
+
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(2);
+      expect(store.locationError).toBe('Timed out');
+      store.stopDeviceStatusMonitoring();
+    });
+
+    test('takes full-accuracy fixes while a screen has asked for them', async () => {
+      const store = new CoreStore();
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+      geolocation.getCurrentPosition.mockClear();
+
+      const release = store.retainPreciseGps();
+
+      // One straight away, so the screen doesn't open on a coarse fix.
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+      expect(optionsOfCall(0)).toMatchObject({ enableHighAccuracy: true });
+
+      // A second screen asking does not take another fix.
+      const releaseSecond = store.retainPreciseGps();
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+
+      // Still precise until every holder has let go, and releasing twice
+      // doesn't count twice.
+      release();
+      release();
+      store.setGpsIntervalMs(store.gpsIntervalMs / 2);
+      expect(optionsOfCall(1)).toMatchObject({ enableHighAccuracy: true });
+
+      releaseSecond();
+      store.setGpsIntervalMs(store.gpsIntervalMs / 2);
+      expect(optionsOfCall(2)).toMatchObject({ enableHighAccuracy: false });
+
+      store.stopDeviceStatusMonitoring();
+    });
+
+    test('asking for precision before polling has started takes no fix', () => {
+      const store = new CoreStore();
+
+      const release = store.retainPreciseGps();
+
+      expect(geolocation.getCurrentPosition).not.toHaveBeenCalled();
+      release();
+    });
   });
 });

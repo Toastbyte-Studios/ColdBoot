@@ -19,6 +19,7 @@ const mockStores = {
     isCharging: false,
     lowPowerMode: false,
     batteryEstimateMinutes: 130,
+    retainPreciseGps: jest.fn(() => jest.fn()),
     batteryTemperatureC: -2 as number | null,
     storageFree: 40 * GB,
     storageTotal: 128 * GB,
@@ -68,6 +69,9 @@ jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({ navigate: mockNavigate }),
+  // Runs the effect like useEffect: the screen under test is always focused.
+  useFocusEffect: (effect: () => void | (() => void)) =>
+    require('react').useEffect(effect, [effect]),
 }));
 
 jest.mock('../src/components/SettingsSheetContext', () => ({

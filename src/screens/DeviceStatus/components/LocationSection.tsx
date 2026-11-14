@@ -1,5 +1,6 @@
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { usePreciseLocation } from '../../../hooks/usePreciseLocation';
 import { useCoreStore, useSettingsStore } from '../../../stores/StoreContext';
 import { ddToMgrs } from '../../../utils/gridReference';
 import { formatDateTime } from '../../../utils/timeFormat';
@@ -21,6 +22,8 @@ import StatusSection from './StatusSection';
  */
 const LocationSection = observer(() => {
   const core = useCoreStore();
+  // This section reports the fix itself, accuracy included.
+  usePreciseLocation();
   const settings = useSettingsStore();
   const now = useNow();
   const fix = core.lastFix;
