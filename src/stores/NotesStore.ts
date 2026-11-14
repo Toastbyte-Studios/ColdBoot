@@ -9,6 +9,10 @@ import {
   runMigrations,
 } from '../utils/dbMigrations';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
+import {
+  attachmentUris,
+  deleteAttachmentFiles,
+} from '../utils/noteAttachments';
 import { formatTime } from '../utils/timeFormat';
 
 let SQLite: SQLiteStatic | null = null;
@@ -354,6 +358,10 @@ export class NotesStore {
   ) {
     const note = this.notes.find((n) => n.id === noteId);
     if (note) {
+      const removedPhotos =
+        params.photoUris !== undefined
+          ? note.photoUris.filter((uri) => !params.photoUris?.includes(uri))
+          : [];
       runInAction(() => {
         if (params.title !== undefined) {
           note.title = params.title;
@@ -372,7 +380,22 @@ export class NotesStore {
         }
       });
       await this.updateNote(note);
+      // Only once the note no longer points at them.
+      await this.deleteUnreferencedFiles(removedPhotos);
     }
+  }
+
+  /**
+   * Deletes attachment files that no note refers to any more. Checked
+   * against every remaining note, so a file two notes share (possible after
+   * a merge restore) survives until the last of them goes.
+   */
+  private async deleteUnreferencedFiles(uris: string[]): Promise<void> {
+    if (uris.length === 0) {
+      return;
+    }
+    const stillUsed = new Set(this.notes.flatMap(attachmentUris));
+    await deleteAttachmentFiles(uris.filter((uri) => !stillUsed.has(uri)));
   }
 
   /**
@@ -432,6 +455,8 @@ export class NotesStore {
    * @returns A Promise that resolves when the deletion process is complete.
    */
   async deleteNote(noteId: string) {
+    const deleted = this.notes.find((n) => n.id === noteId);
+    const files = deleted ? attachmentUris(deleted) : [];
     // Remove from SQLite first to ensure consistency
     try {
       await this.initNotesDb();
@@ -440,6 +465,7 @@ export class NotesStore {
         runInAction(() => {
           this.notes = this.notes.filter((n) => n.id !== noteId);
         });
+        await this.deleteUnreferencedFiles(files);
         return;
       }
       await this.notesDb.executeSql('DELETE FROM notes WHERE id = ?', [noteId]);
@@ -447,6 +473,9 @@ export class NotesStore {
       runInAction(() => {
         this.notes = this.notes.filter((n) => n.id !== noteId);
       });
+      // Last, and only after the row is gone: deleting a note deletes its
+      // photos and recording too, but a failed delete must leave them.
+      await this.deleteUnreferencedFiles(files);
     } catch (error) {
       console.error('Failed to delete note from database:', noteId, error);
       // Reload notes from database to recover from inconsistent state
@@ -898,6 +927,8 @@ export class NotesStore {
     mode: 'replace' | 'merge',
   ): Promise<void> {
     await this.initNotesDb();
+    const replacedFiles =
+      mode === 'replace' ? this.notes.flatMap(attachmentUris) : [];
     if (this.notesDb) {
       const noteSql =
         mode === 'replace'
@@ -953,6 +984,10 @@ export class NotesStore {
         this.notes = [...this.notes, ...newNotes];
       }
     });
+    // A replace restore drops every existing note. Their files go too,
+    // except any the restored notes still point at (restoring a backup on
+    // the device it came from).
+    await this.deleteUnreferencedFiles(replacedFiles);
   }
 
   // --------------------------------------------------------------------
