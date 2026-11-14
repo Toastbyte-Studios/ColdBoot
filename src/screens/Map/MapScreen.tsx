@@ -77,6 +77,7 @@ import MapPanel, {
 } from './components/MapPanel';
 import { type DownloadAreaParams } from './components/offline/DownloadConfirmScreen';
 import DownloadProgressChip from './components/offline/DownloadProgressChip';
+import { livePolylinePoints } from './livePolyline';
 import { requestForegroundNotificationPermission } from './requestForegroundNotificationPermission';
 import { useMapTour } from './useMapTour';
 import type { PackRegion } from '../../utils/offlinePacks';
@@ -703,8 +704,10 @@ export default observer(function MapScreen() {
           }
           // Batch polyline updates to avoid excessive re-renders
           if (pts.length % POLYLINE_UPDATE_INTERVAL === 0 || pts.length === 1) {
+            // A capped number of points, however long the trail gets; see
+            // livePolylinePoints for why.
             setRecordingPolylineCoords(
-              pts.map((p) => ({
+              livePolylinePoints(pts).map((p) => ({
                 latitude: p.latitude,
                 longitude: p.longitude,
               })),

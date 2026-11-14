@@ -129,6 +129,23 @@ export default function MapPanel({
 }: Props) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  // Rebuilt only when the trail's points change. The panel re-renders for
+  // many other reasons (heading, position, follow mode), and a new object
+  // here would re-send the whole line to the native map each time.
+  const recordingTrackGeoJson = useMemo(
+    () => ({
+      type: 'Feature' as const,
+      geometry: {
+        type: 'LineString' as const,
+        coordinates: recordingPolylineCoords.map((c) => [
+          c.longitude,
+          c.latitude,
+        ]),
+      },
+      properties: {},
+    }),
+    [recordingPolylineCoords],
+  );
 
   const [saveName, setSaveName] = useState('');
 
@@ -250,20 +267,7 @@ export default function MapPanel({
           </GeoJSONSource>
         )}
         {recordingPolylineCoords.length > 1 && (
-          <GeoJSONSource
-            id="recording-track"
-            data={{
-              type: 'Feature',
-              geometry: {
-                type: 'LineString',
-                coordinates: recordingPolylineCoords.map((c) => [
-                  c.longitude,
-                  c.latitude,
-                ]),
-              },
-              properties: {},
-            }}
-          >
+          <GeoJSONSource id="recording-track" data={recordingTrackGeoJson}>
             <Layer
               id="recording-track-layer"
               type="line"
