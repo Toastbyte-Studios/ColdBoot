@@ -42,11 +42,7 @@ let mockLibraryProps:
         center: { latitude: number; longitude: number };
         radiusMiles: number;
       }) => void;
-      onViewTrack?: (track: {
-        id: string;
-        name?: string;
-        points: { latitude: number; longitude: number }[];
-      }) => void;
+      onViewTrack?: (track: { id: string; name?: string }) => void;
       onHideTrack?: () => void;
       onDeleteTrack?: (id: string) => Promise<void> | void;
       viewedTrackId?: string | null;
@@ -95,6 +91,19 @@ jest.mock('../src/utils/reverseGeocode', () => ({
   reverseGeocode: jest.fn(() => Promise.resolve(null)),
 }));
 
+// The store lists track summaries and reads a track's points on demand, so
+// the points a test wants on the map are registered here by track id.
+const mockTrackPoints: Record<string, object[]> = {
+  'track-1': [
+    { latitude: 36.2, longitude: -115.1, altitude: null, timestamp: 0 },
+    { latitude: 36.21, longitude: -115.11, altitude: null, timestamp: 1 },
+  ],
+};
+const mockTrackStore = {
+  tracks: [],
+  getTrackPoints: jest.fn(async (id: string) => mockTrackPoints[id] ?? []),
+};
+
 const mockWaypointStore = {
   waypoints: [],
   activeWaypointId: null,
@@ -117,7 +126,7 @@ const mockSettingsStore = makeAutoObservable(
 
 jest.mock('../src/stores/StoreContext', () => ({
   useWaypointStore: () => mockWaypointStore,
-  useTrackStore: () => ({ tracks: [] }),
+  useTrackStore: () => mockTrackStore,
   useSettingsStore: () => mockSettingsStore,
   useOfflineDownloadStore: () => ({ state: 'inactive' }),
   useOfflineMapLibraryStore: () => ({ load: jest.fn(() => Promise.resolve()) }),
@@ -139,10 +148,7 @@ jest.mock('../src/screens/Map/components/LibrarySheet', () => {
       center: { latitude: number; longitude: number };
       radiusMiles: number;
     }) => void;
-    onViewTrack?: (track: {
-      id: string;
-      points: { latitude: number; longitude: number }[];
-    }) => void;
+    onViewTrack?: (track: { id: string }) => void;
   }) => {
     mockLibraryProps = props;
     return (
@@ -572,10 +578,7 @@ describe('MapScreen follow-my-location toggle', () => {
     await pressFollow(tree);
 
     await ReactTestRenderer.act(async () => {
-      mockLibraryProps?.onViewTrack?.({
-        id: 'track-1',
-        points: [{ latitude: 36.2, longitude: -115.1 }],
-      });
+      mockLibraryProps?.onViewTrack?.({ id: 'track-1' });
     });
 
     expect(follow(tree).props.selected).toBe(false);

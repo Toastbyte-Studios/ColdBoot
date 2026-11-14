@@ -13,15 +13,50 @@ export interface TrackPoint {
 }
 
 /**
- * A saved breadcrumb trail with metadata and serialised GPS points.
+ * What the app keeps in memory for every saved trail: enough to list it.
+ *
+ * A trail's points are left in SQLite until something needs them. One trail
+ * can be several thousand points, and loading them all at launch meant
+ * parsing every trail ever recorded, and having MobX track each point, just
+ * to show a list of names.
  */
-export interface Track {
+export interface TrackSummary {
   id: string;
   name: string;
   createdAt: string; // ISO date string
   durationSeconds: number;
   distanceMeters: number;
+}
+
+/**
+ * A saved breadcrumb trail with its GPS points. Read one with
+ * `TrackStore.getTrack`; the store's own list holds summaries.
+ */
+export interface Track extends TrackSummary {
   points: TrackPoint[]; // stored as a JSON blob in SQLite
+}
+
+/** `points` column → points. An unreadable column reads as an empty trail. */
+function parsePoints(raw: unknown): TrackPoint[] {
+  if (typeof raw !== 'string') {
+    return [];
+  }
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as TrackPoint[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+function summaryOf(track: TrackSummary): TrackSummary {
+  return {
+    id: track.id,
+    name: track.name,
+    createdAt: track.createdAt,
+    durationSeconds: track.durationSeconds,
+    distanceMeters: track.distanceMeters,
+  };
 }
 
 /** Returns a default track name like "Track 2024-06-15 14:30". */
@@ -36,11 +71,21 @@ function defaultTrackName(): string {
  * Tracks are saved to coldboot.db and persist across app restarts.
  */
 export class TrackStore {
-  tracks: Track[] = [];
+  tracks: TrackSummary[] = [];
   trackDb: SQLiteDatabase | null = null;
+  /**
+   * Points for trails that have no database row to be read back from: the
+   * store runs without SQLite in tests and when the database fails to open.
+   * Not observable; nothing renders from it.
+   */
+  private memoryPoints = new Map<string, TrackPoint[]>();
 
   constructor() {
-    makeAutoObservable(this, {}, { autoBind: true });
+    makeAutoObservable<TrackStore, 'memoryPoints'>(
+      this,
+      { memoryPoints: false },
+      { autoBind: true },
+    );
   }
 
   /**
@@ -79,10 +124,10 @@ export class TrackStore {
       return;
     }
     const [results] = await this.trackDb.executeSql(
-      'SELECT id, name, createdAt, durationSeconds, distanceMeters, points ' +
+      'SELECT id, name, createdAt, durationSeconds, distanceMeters ' +
         'FROM tracks ORDER BY createdAt DESC',
     );
-    const loaded: Track[] = [];
+    const loaded: TrackSummary[] = [];
     for (let i = 0; i < results.rows.length; i++) {
       const row = results.rows.item(i);
       loaded.push({
@@ -91,12 +136,64 @@ export class TrackStore {
         createdAt: row.createdAt as string,
         durationSeconds: row.durationSeconds as number,
         distanceMeters: row.distanceMeters as number,
-        points: JSON.parse(row.points as string) as TrackPoint[],
       });
     }
     runInAction(() => {
       this.tracks = loaded;
     });
+  }
+
+  /**
+   * The points of one saved trail, read when the trail is opened on the map.
+   * Empty when the trail is unknown or its stored points can't be read.
+   */
+  async getTrackPoints(id: string): Promise<TrackPoint[]> {
+    if (!this.trackDb) {
+      return this.memoryPoints.get(id) ?? [];
+    }
+    const [results] = await this.trackDb.executeSql(
+      'SELECT points FROM tracks WHERE id = ?',
+      [id],
+    );
+    return results.rows.length > 0
+      ? parsePoints(results.rows.item(0).points)
+      : [];
+  }
+
+  /** A saved trail with its points, or null when there is no such trail. */
+  async getTrack(id: string): Promise<Track | null> {
+    const summary = this.tracks.find((track) => track.id === id);
+    if (!summary) {
+      return null;
+    }
+    return { ...summaryOf(summary), points: await this.getTrackPoints(id) };
+  }
+
+  /** Every saved trail with its points, for a backup. Newest first. */
+  async getAllTracks(): Promise<Track[]> {
+    if (!this.trackDb) {
+      return this.tracks.map((track) => ({
+        ...summaryOf(track),
+        points: this.memoryPoints.get(track.id) ?? [],
+      }));
+    }
+    const [results] = await this.trackDb.executeSql(
+      'SELECT id, name, createdAt, durationSeconds, distanceMeters, points ' +
+        'FROM tracks ORDER BY createdAt DESC',
+    );
+    const all: Track[] = [];
+    for (let i = 0; i < results.rows.length; i++) {
+      const row = results.rows.item(i);
+      all.push({
+        id: row.id as string,
+        name: row.name as string,
+        createdAt: row.createdAt as string,
+        durationSeconds: row.durationSeconds as number,
+        distanceMeters: row.distanceMeters as number,
+        points: parsePoints(row.points),
+      });
+    }
+    return all;
   }
 
   /**
@@ -130,9 +227,11 @@ export class TrackStore {
           JSON.stringify(track.points),
         ],
       );
+    } else {
+      this.memoryPoints.set(track.id, points);
     }
     runInAction(() => {
-      this.tracks.unshift(track);
+      this.tracks.unshift(summaryOf(track));
     });
     return track;
   }
@@ -169,18 +268,24 @@ export class TrackStore {
         throw error;
       }
     }
-    runInAction(() => {
+    const existingIds = new Set(this.tracks.map((t) => t.id));
+    const incoming =
+      mode === 'replace'
+        ? tracks
+        : tracks.filter((t) => !existingIds.has(t.id));
+    if (!this.trackDb) {
       if (mode === 'replace') {
-        this.tracks = [...tracks].sort((a, b) =>
-          b.createdAt.localeCompare(a.createdAt),
-        );
-      } else {
-        const existingIds = new Set(this.tracks.map((t) => t.id));
-        const incoming = tracks.filter((t) => !existingIds.has(t.id));
-        this.tracks = [...incoming, ...this.tracks].sort((a, b) =>
-          b.createdAt.localeCompare(a.createdAt),
-        );
+        this.memoryPoints.clear();
       }
+      for (const track of incoming) {
+        this.memoryPoints.set(track.id, track.points);
+      }
+    }
+    runInAction(() => {
+      const kept = mode === 'replace' ? [] : this.tracks;
+      this.tracks = [...incoming.map(summaryOf), ...kept].sort((a, b) =>
+        b.createdAt.localeCompare(a.createdAt),
+      );
     });
   }
 
@@ -191,6 +296,7 @@ export class TrackStore {
     if (this.trackDb) {
       await this.trackDb.executeSql('DELETE FROM tracks WHERE id = ?', [id]);
     }
+    this.memoryPoints.delete(id);
     runInAction(() => {
       this.tracks = this.tracks.filter((t) => t.id !== id);
     });

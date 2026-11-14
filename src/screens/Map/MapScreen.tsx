@@ -59,7 +59,7 @@ import {
   useOfflineMapLibraryStore,
   useDevToolsStore,
 } from '../../stores/StoreContext';
-import { Track, TrackPoint } from '../../stores/TrackStore';
+import { Track, TrackPoint, TrackSummary } from '../../stores/TrackStore';
 import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import { reverseGeocode } from '../../utils/reverseGeocode';
 import CompassDataPanel from './components/CompassDataPanel';
@@ -779,24 +779,40 @@ export default observer(function MapScreen() {
     recordingDistanceRef.current = 0;
   }, []);
 
+  // The library lists track summaries; a track's points are read from the
+  // database only now, when it is opened.
+  const viewRequestRef = useRef(0);
   const handleViewTrack = useCallback(
-    (track: Track) => {
-      setViewedTrack(track);
+    async (summary: TrackSummary) => {
       setLibrarySheetOpen(false);
+      const request = ++viewRequestRef.current;
+      let points: TrackPoint[];
+      try {
+        points = await trackStore.getTrackPoints(summary.id);
+      } catch (error) {
+        console.warn('MapScreen: could not load track points', error);
+        points = [];
+      }
+      // A later tap, or Hide, while this one was loading wins.
+      if (request !== viewRequestRef.current) {
+        return;
+      }
+      setViewedTrack({ ...summary, points });
       // Pan map to first point of track
-      if (track.points.length > 0) {
+      if (points.length > 0) {
         moveCamera({
-          center: [track.points[0].longitude, track.points[0].latitude],
+          center: [points[0].longitude, points[0].latitude],
           zoom: zoomFromDelta(DELTA.latitudeDelta),
           duration: MAP_ANIMATE_DURATION_MS,
           easing: 'fly',
         });
       }
     },
-    [moveCamera],
+    [moveCamera, trackStore],
   );
 
   const handleHideTrack = useCallback(() => {
+    viewRequestRef.current += 1;
     setViewedTrack(null);
   }, []);
 
@@ -931,12 +947,16 @@ export default observer(function MapScreen() {
     outputRange: ['0deg', '360deg'],
   });
 
-  const viewedTrackCoords = viewedTrack
-    ? viewedTrack.points.map((p) => ({
-        latitude: p.latitude,
-        longitude: p.longitude,
-      }))
-    : [];
+  const viewedTrackCoords = useMemo(
+    () =>
+      viewedTrack
+        ? viewedTrack.points.map((p) => ({
+            latitude: p.latitude,
+            longitude: p.longitude,
+          }))
+        : [],
+    [viewedTrack],
+  );
 
   return (
     <ScreenBody>

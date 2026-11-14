@@ -41,7 +41,12 @@ export {
 } from './RepeaterBookStore';
 export { WeatherOutlookStore } from './WeatherOutlookStore';
 export { WaypointStore, type Waypoint } from './WaypointStore';
-export { TrackStore, type Track, type TrackPoint } from './TrackStore';
+export {
+  TrackStore,
+  type Track,
+  type TrackPoint,
+  type TrackSummary,
+} from './TrackStore';
 export {
   OfflineMapLibraryStore,
   type RefreshPackResult,

@@ -274,7 +274,8 @@ export const SettingsModal = observer(
             shortcuts: settingsStore.shortcuts,
           },
           waypointStore.waypoints,
-          trackStore.tracks,
+          // The store's list holds summaries; a backup needs the points.
+          await trackStore.getAllTracks(),
           emergencyPlanStore.contacts,
           emergencyPlanStore.rallyPoints,
           hasPersistedCommunicationPlan(emergencyPlanStore.communicationPlan)
