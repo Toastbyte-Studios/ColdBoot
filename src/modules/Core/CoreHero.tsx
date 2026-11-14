@@ -76,6 +76,7 @@ const CoreHero = observer(() => {
         level,
         core.isCharging,
         core.batteryEstimateMinutes,
+        core.batteryEstimateMeasured,
       )}
       headlineTone={headlineTone}
       detail={detail}

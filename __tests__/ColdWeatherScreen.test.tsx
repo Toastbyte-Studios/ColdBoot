@@ -20,6 +20,7 @@ const mockCore = {
   batteryLevel: 0.42 as number | null,
   isCharging: false as boolean | null,
   batteryEstimateMinutes: 190 as number | null,
+  batteryEstimateMeasured: true,
   batteryTemperatureC: null as number | null,
 };
 
@@ -86,20 +87,31 @@ describe('batterySummary', () => {
   const { batterySummary } = loadScreen('android');
 
   it('reads level and time left', () => {
-    expect(batterySummary(0.42, false, 190)).toBe(
+    expect(batterySummary(0.42, false, 190, true)).toBe(
       '42% · about 3 hr 10 min left',
     );
-    expect(batterySummary(0.42, false, 45)).toBe('42% · about 45 min left');
-    expect(batterySummary(0.42, false, 120)).toBe('42% · about 2 hr left');
+    expect(batterySummary(0.42, false, 45, true)).toBe(
+      '42% · about 45 min left',
+    );
+    expect(batterySummary(0.42, false, 120, true)).toBe(
+      '42% · about 2 hr left',
+    );
   });
 
   it('says charging instead of a time when plugged in', () => {
-    expect(batterySummary(0.8, true, 50)).toBe('80% · charging');
+    expect(batterySummary(0.8, true, 50, true)).toBe('80% · charging');
   });
 
   it('handles nothing known yet', () => {
-    expect(batterySummary(null, null, null)).toBe('Checking battery…');
-    expect(batterySummary(0.5, false, null)).toBe('50%');
+    expect(batterySummary(null, null, null, true)).toBe('Checking battery…');
+    expect(batterySummary(0.5, false, null, true)).toBe('50%');
+  });
+
+  it('marks a time that is not based on this phone as a rough guide', () => {
+    expect(batterySummary(0.42, false, 190, false)).toBe(
+      '42% · about 3 hr 10 min left (rough guide)',
+    );
+    expect(batterySummary(0.8, true, 50, false)).toBe('80% · charging');
   });
 });
 

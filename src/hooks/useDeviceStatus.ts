@@ -95,12 +95,18 @@ export function useDeviceStatus() {
       const parts = [];
       if (hrs > 0) parts.push(`${hrs} ${hWord}`);
       if (mins > 0 || hrs === 0) parts.push(`${mins} ${mWord}`);
-      return `${parts.join(' ')} remaining`;
+      const rough = core.batteryEstimateMeasured ? '' : ', rough guide';
+      return `${parts.join(' ')} remaining${rough}`;
     })();
 
     if (core.isCharging) return `${pct}% (Charging — ${estimateStr})`;
     return `${pct}% (${estimateStr})`;
-  }, [core.batteryLevel, core.batteryEstimateMinutes, core.isCharging]);
+  }, [
+    core.batteryLevel,
+    core.batteryEstimateMinutes,
+    core.batteryEstimateMeasured,
+    core.isCharging,
+  ]);
 
   /**
    * A memoized string describing the last known device location fix or error status.

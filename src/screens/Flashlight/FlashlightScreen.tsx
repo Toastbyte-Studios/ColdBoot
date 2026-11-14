@@ -59,7 +59,13 @@ const FlashlightScreenImpl = () => {
           : 'Off';
 
   return (
-    <StackScreen title="Flashlight" subtitle={activeLabel}>
+    <StackScreen
+      title="Flashlight"
+      subtitle={activeLabel}
+      // Always on screen, not only once the strobe is running: by then the
+      // light is already flashing.
+      note="Strobe and SOS flash rapidly. Flashing light can trigger seizures in people with photosensitive epilepsy. Don't aim it at anyone's eyes, and turn it off if someone nearby feels unwell."
+    >
       <GroupContainer>
         <ModuleRow
           title="Flashlight On"

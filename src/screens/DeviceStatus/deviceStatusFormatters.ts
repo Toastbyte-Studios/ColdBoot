@@ -111,28 +111,36 @@ export function formatMinutes(minutes: number): string {
   return `${hrs} hr ${mins} min`;
 }
 
+/** Shown with a battery estimate that isn't based on this phone yet. */
+export const ROUGH_ESTIMATE_LABEL =
+  "Rough guide. Not based on this phone's battery use yet.";
+
 /**
  * The battery estimate for its row: time left on battery, or time to full when
- * charging. The store's figure is a rough baseline until a few samples have
- * shown the real drain rate, hence "About".
+ * charging.
+ *
+ * Until the store has watched the level move, its figure is a fixed baseline
+ * (8 hours from full, 2 hours to charge) that knows nothing about this phone
+ * or what it is running. `measured` says which one this is; an unmeasured
+ * figure carries `detail` so nobody plans around a number the app made up.
  */
 export function batteryEstimate(
   minutes: number | null,
   charging: boolean | null,
   level: number | null,
-): { label: string; value: string } {
-  if (charging) {
-    if (level != null && level >= 0.99)
-      return { label: 'Charging', value: 'Full' };
-    return {
-      label: 'Time to full',
-      value:
-        minutes == null ? 'Calculating…' : `About ${formatMinutes(minutes)}`,
-    };
+  measured: boolean,
+): { label: string; value: string; detail?: string } {
+  if (charging && level != null && level >= 0.99) {
+    return { label: 'Charging', value: 'Full' };
+  }
+  const label = charging ? 'Time to full' : 'Time left';
+  if (minutes == null) {
+    return { label, value: 'Calculating…' };
   }
   return {
-    label: 'Time left',
-    value: minutes == null ? 'Calculating…' : `About ${formatMinutes(minutes)}`,
+    label,
+    value: `About ${formatMinutes(minutes)}`,
+    ...(measured ? {} : { detail: ROUGH_ESTIMATE_LABEL }),
   };
 }
 
