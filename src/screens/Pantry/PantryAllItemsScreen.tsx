@@ -7,6 +7,7 @@ import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
@@ -40,6 +41,8 @@ export default observer(function PantryAllItemsScreen(): React.JSX.Element {
   const pantry = usePantryStore();
   const COLORS = useTheme();
   const allItems = pantry.allItemsSorted;
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleAllItems = useProgressiveList(allItems);
 
   const handleItemPress = (item: PantryItem) => {
     navigation.navigate('EditPantryItem', { item });
@@ -53,7 +56,7 @@ export default observer(function PantryAllItemsScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {allItems.map((item, index) => (
+          {visibleAllItems.map((item, index) => (
             <ModuleRow
               key={item.id}
               title={item.name}
@@ -61,7 +64,7 @@ export default observer(function PantryAllItemsScreen(): React.JSX.Element {
               subtitle={formatItemSubtitle(item)}
               value={formatItemQuantity(item)}
               variant="tool"
-              showSeparator={index < allItems.length - 1}
+              showSeparator={index < visibleAllItems.length - 1}
               onPress={() => handleItemPress(item)}
             />
           ))}

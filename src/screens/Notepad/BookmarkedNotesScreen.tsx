@@ -11,6 +11,7 @@ import ModuleRow from '../../components/ModuleRow';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
@@ -52,6 +53,8 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
     () => sortNotes(bookmarkedNotes, settings.noteSortOrder),
     [bookmarkedNotes, settings.noteSortOrder],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedNotes = useProgressiveList(sortedNotes);
 
   return (
     <StackScreen title="Bookmarked Notes">
@@ -64,13 +67,13 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedNotes.map((note, index) => (
+          {visibleSortedNotes.map((note, index) => (
             <ModuleRow
               key={note.id}
               title={note.title || '(Untitled)'}
               icon="document-text-outline"
               variant="tool"
-              showSeparator={index < sortedNotes.length - 1}
+              showSeparator={index < visibleSortedNotes.length - 1}
               onPress={() => navigation.navigate('NoteEntry', { note })}
             />
           ))}

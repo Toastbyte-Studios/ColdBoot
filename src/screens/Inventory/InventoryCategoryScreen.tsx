@@ -8,6 +8,7 @@ import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -66,6 +67,8 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
       ),
     [items],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedItems = useProgressiveList(sortedItems);
 
   const handleAddItem = () => {
     navigation.navigate('NewInventoryItem', { category });
@@ -93,7 +96,7 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedItems.map((item, index) => (
+          {visibleSortedItems.map((item, index) => (
             <ModuleRow
               key={item.id}
               title={item.name}
@@ -101,7 +104,7 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
               subtitle={formatItemSubtitle(item, category)}
               value={formatItemQuantity(item)}
               variant="tool"
-              showSeparator={index < sortedItems.length - 1}
+              showSeparator={index < visibleSortedItems.length - 1}
               onPress={() => handleItemPress(item)}
             />
           ))}

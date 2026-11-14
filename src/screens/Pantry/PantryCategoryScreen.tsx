@@ -8,6 +8,7 @@ import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
@@ -66,6 +67,8 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
       ),
     [items],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedItems = useProgressiveList(sortedItems);
 
   const handleAddItem = () => {
     if (!isValidCategory) {
@@ -106,7 +109,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedItems.map((item, index) => (
+          {visibleSortedItems.map((item, index) => (
             <ModuleRow
               key={item.id}
               title={item.name}
@@ -114,7 +117,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
               subtitle={formatItemSubtitle(item, category)}
               value={formatItemQuantity(item)}
               variant="tool"
-              showSeparator={index < sortedItems.length - 1}
+              showSeparator={index < visibleSortedItems.length - 1}
               onPress={() => handleItemPress(item)}
             />
           ))}

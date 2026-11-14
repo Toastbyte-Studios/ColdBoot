@@ -23,6 +23,7 @@ import SelectMenu from '../../components/SelectMenu';
 import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -54,6 +55,8 @@ const RepeaterBookScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
+  // Drawn a batch at a time: a metro area can list several hundred.
+  const visibleRepeaters = useProgressiveList(store.filteredRepeaters);
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
   useEffect(() => {
@@ -239,7 +242,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
         )}
 
         {/* Repeater list */}
-        {store.filteredRepeaters.map((repeater, index) => (
+        {visibleRepeaters.map((repeater, index) => (
           <Touchable
             key={repeater.id || index}
             onPress={() => handleRepeaterPress(repeater)}

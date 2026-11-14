@@ -6,6 +6,7 @@ import { NoteSortSelector } from '../../components/NoteSortSelector';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
@@ -43,6 +44,8 @@ export default observer(function RecentNotesScreen() {
     () => sortNotes(core.recentNotesTop20, settings.noteSortOrder),
     [core.recentNotesTop20, settings.noteSortOrder],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedNotes = useProgressiveList(sortedNotes);
 
   return (
     <StackScreen title="Recent Notes">
@@ -63,7 +66,7 @@ export default observer(function RecentNotesScreen() {
             },
           ]}
         >
-          {sortedNotes.map((note, index) => (
+          {visibleSortedNotes.map((note, index) => (
             <Touchable
               key={note.id}
               accessibilityRole="button"
@@ -78,7 +81,7 @@ export default observer(function RecentNotesScreen() {
                 style={[
                   styles.itemRow,
                   { borderBottomColor: COLORS.SECONDARY_ACCENT },
-                  index === sortedNotes.length - 1 && styles.lastItemRow,
+                  index === visibleSortedNotes.length - 1 && styles.lastItemRow,
                 ]}
               >
                 <Text
