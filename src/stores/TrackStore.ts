@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 import { SQLiteDatabase } from '../types/database-types';
 
 /**
@@ -22,6 +23,31 @@ export interface Track {
   durationSeconds: number;
   distanceMeters: number;
   points: TrackPoint[]; // stored as a JSON blob in SQLite
+}
+
+const TrackPointsSchema = z.array(
+  z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    altitude: z.number().nullable(),
+    timestamp: z.number(),
+  }),
+);
+
+/**
+ * Reads the `points` column of a track row. `null` when the JSON is cut
+ * short or isn't a list of points, so the caller can skip that one row.
+ */
+function parseTrackPoints(raw: unknown): TrackPoint[] | null {
+  if (typeof raw !== 'string') {
+    return null;
+  }
+  try {
+    const parsed = TrackPointsSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Returns a default track name like "Track 2024-06-15 14:30". */
@@ -85,13 +111,19 @@ export class TrackStore {
     const loaded: Track[] = [];
     for (let i = 0; i < results.rows.length; i++) {
       const row = results.rows.item(i);
+      // One unreadable row must not hide every other trail.
+      const points = parseTrackPoints(row.points);
+      if (!points) {
+        console.warn('TrackStore: skipping a track with unreadable points');
+        continue;
+      }
       loaded.push({
         id: row.id as string,
         name: row.name as string,
         createdAt: row.createdAt as string,
         durationSeconds: row.durationSeconds as number,
         distanceMeters: row.distanceMeters as number,
-        points: JSON.parse(row.points as string) as TrackPoint[],
+        points,
       });
     }
     runInAction(() => {

@@ -315,6 +315,39 @@ describe('RepeaterBookStore', () => {
     expect(store.repeaters).toEqual([]);
   });
 
+  it('loadFromCache ignores a cache of the wrong shape', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify({ ...mockCache, repeaters: [{ callSign: 'W4TST' }] }),
+    );
+
+    await store.loadFromCache();
+
+    expect(store.repeaters).toEqual([]);
+    expect(store.queryLat).toBeNull();
+    expect(store.isCachedData).toBe(false);
+  });
+
+  it('loadCustomRepeaters keeps readable entries and drops the rest', async () => {
+    const good = { ...mockCache.repeaters[0], id: 'custom-1', isCustom: true };
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify([good, { id: 'custom-2' }, 'nonsense', null]),
+    );
+
+    await store.loadCustomRepeaters();
+
+    expect(store.customRepeaters.map((r) => r.id)).toEqual(['custom-1']);
+  });
+
+  it('loadCustomRepeaters treats a non-list as no entries', async () => {
+    (AsyncStorage.getItem as jest.Mock).mockResolvedValueOnce(
+      JSON.stringify({ id: 'custom-1' }),
+    );
+
+    await store.loadCustomRepeaters();
+
+    expect(store.customRepeaters).toEqual([]);
+  });
+
   // ── fetchRepeaters ─────────────────────────────────────────────────────────
 
   it('fetchRepeaters queries current state and all neighbours in parallel', async () => {

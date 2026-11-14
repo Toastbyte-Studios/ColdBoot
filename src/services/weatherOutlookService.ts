@@ -391,7 +391,17 @@ export async function getCachedOutlook(
       return null;
     }
     const row = result.rows.item(0) as { data: string };
-    return JSON.parse(row.data) as SeasonalOutlook;
+    const cached = JSON.parse(row.data) as Partial<SeasonalOutlook> | null;
+    // Enough of a check that a truncated or old-format row reads as "no
+    // cache" (and is refetched) instead of reaching the screen.
+    if (
+      !cached ||
+      typeof cached.fetchedAt !== 'string' ||
+      !Array.isArray(cached.months)
+    ) {
+      return null;
+    }
+    return cached as SeasonalOutlook;
   } catch {
     return null;
   }
