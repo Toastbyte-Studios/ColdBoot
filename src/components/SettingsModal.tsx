@@ -282,8 +282,12 @@ export const SettingsModal = observer(
             : null,
           repeaterBookStore.customRepeaters,
         );
-        await exportBackup(backupData);
-        await settingsStore.setLastBackupAt(Date.now());
+        // Only a backup that left the app counts: dismissing the share sheet
+        // saves nothing, and "Last backed up" must not say otherwise.
+        const shared = await exportBackup(backupData);
+        if (shared) {
+          await settingsStore.setLastBackupAt(Date.now());
+        }
       } catch (error) {
         Alert.alert(
           'Export Failed',
@@ -703,6 +707,11 @@ export const SettingsModal = observer(
                   {settingsStore.lastBackupAt
                     ? `Last backed up: ${formatBackupDate(settingsStore.lastBackupAt)}`
                     : 'No backup yet'}
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  A backup is an unencrypted file containing your notes,
+                  emergency contacts and GPS trails. Photos and voice recordings
+                  are not included. Save it somewhere only you can reach.
                 </RNText>
 
                 <AppButton

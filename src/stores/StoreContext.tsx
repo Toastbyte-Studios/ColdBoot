@@ -1,4 +1,5 @@
 import React, { createContext, useContext, ReactNode, useEffect } from 'react';
+import { purgeExportedBackups } from '../utils/backupService';
 import { RootStore } from './RootStore';
 
 const StoreContext = createContext<RootStore | null>(null);
@@ -13,6 +14,10 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
     rootStore.coreStore.startDeviceStatusMonitoring();
     rootStore.astronomyEventStore.start(rootStore.coreStore);
     rootStore.solarCycleNotificationStore.start(rootStore.coreStore);
+
+    // Remove any backup file a previous export left in the cache. It never
+    // rejects, so there's nothing to handle.
+    purgeExportedBackups();
 
     // Load persisted data asynchronously
     const startupPromise = rootStore.startupPromise;

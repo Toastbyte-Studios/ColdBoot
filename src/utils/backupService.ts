@@ -369,15 +369,67 @@ export async function readBackupFile(
 }
 
 /**
+ * Deletes every exported backup file left in the cache directory.
+ *
+ * A backup is plain JSON holding notes, emergency contacts and GPS trails.
+ * `exportBackup` has to write one to disk so the share sheet can hand it
+ * over, but once that's done the copy has no further use and shouldn't sit
+ * in the cache until the OS happens to clear it. Called before each export
+ * and at app start, so a copy lasts at most until the next launch.
+ *
+ * Never throws: failing to tidy up must not block an export or startup.
+ */
+export async function purgeExportedBackups(): Promise<void> {
+  try {
+    const files = await RNFS.readDir(RNFS.CachesDirectoryPath);
+    await Promise.all(
+      files
+        .filter(
+          (f) =>
+            f.name.startsWith(BACKUP_FILE_PREFIX) &&
+            f.name.endsWith('.json') &&
+            !f.isDirectory(),
+        )
+        .map((f) => RNFS.unlink(f.path).catch(() => undefined)),
+    );
+  } catch {
+    // The cache directory may not exist yet; there is nothing to remove.
+  }
+}
+
+/**
  * Exports a backup by writing it to a temporary file and opening
  * the native share sheet so the user can save it to Files, email it, etc.
  * Both iOS and Android share the file URI so the filename and extension
  * are preserved by all share targets.
+ *
+ * Resolves `true` when the share sheet reports the file was handed to a
+ * target, `false` when the user dismissed it. Callers use that to decide
+ * whether a backup was actually made.
+ *
+ * The temporary file is removed straight away on a dismissal, where nothing
+ * else can be reading it. After a completed share it is left for
+ * `purgeExportedBackups`, because some share targets finish copying after
+ * the sheet has closed and deleting under them would lose the backup.
  */
-export async function exportBackup(backupData: BackupData): Promise<void> {
+export async function exportBackup(backupData: BackupData): Promise<boolean> {
+  await purgeExportedBackups();
   const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}.json`;
   const destPath = `${RNFS.CachesDirectoryPath}/${filename}`;
   const json = JSON.stringify(backupData, null, 2);
   await RNFS.writeFile(destPath, json, 'utf8');
-  await Share.share({ url: `file://${destPath}`, title: filename });
+  try {
+    const result = await Share.share({
+      url: `file://${destPath}`,
+      title: filename,
+    });
+    if (result.action === Share.dismissedAction) {
+      await RNFS.unlink(destPath).catch(() => undefined);
+      return false;
+    }
+    return true;
+  } catch (error) {
+    await RNFS.unlink(destPath).catch(() => undefined);
+    throw error;
+  }
 }
