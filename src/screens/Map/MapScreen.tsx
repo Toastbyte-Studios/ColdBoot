@@ -33,7 +33,6 @@ import {
   AppState,
   AppStateStatus,
   NativeModules,
-  PermissionsAndroid,
   Platform,
   StyleSheet,
   Text,
@@ -105,8 +104,9 @@ async function requestLocationPermission(): Promise<'granted' | 'denied'> {
 /**
  * Upgrades iOS location authorization to 'always' so GPS callbacks continue
  * when the screen is locked during trail recording.
- * On Android 10+ (API 29+) requests ACCESS_BACKGROUND_LOCATION, directing
- * the user to Settings on Android 11+ where runtime granting isn't allowed.
+ * Android needs nothing here: the location foreground service is started
+ * while the app is on screen, so it keeps GPS alive on the while-in-use
+ * grant and ACCESS_BACKGROUND_LOCATION is not requested or declared.
  */
 async function requestBackgroundLocationPermission(): Promise<void> {
   try {
@@ -120,37 +120,6 @@ async function requestBackgroundLocationPermission(): Promise<void> {
         );
       }
       return;
-    }
-
-    // Android 10+ requires ACCESS_BACKGROUND_LOCATION separately
-    if (Platform.OS === 'android' && Number(Platform.Version) >= 29) {
-      const already = await PermissionsAndroid.check(
-        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
-      );
-      if (already) {
-        return;
-      }
-      // Android 11+ (API 30+) must be granted via Settings; runtime dialog not available
-      if (Number(Platform.Version) >= 30) {
-        Alert.alert(
-          'Background Location',
-          'To keep recording while the screen is locked, go to Settings → Apps → Cold Boot → Permissions → Location → Allow all the time.',
-          [{ text: 'OK' }],
-        );
-        return;
-      }
-      // Android 10 (API 29) can request at runtime
-      await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.ACCESS_BACKGROUND_LOCATION,
-        {
-          title: 'Background Location',
-          message:
-            'Allow Cold Boot to access location in the background so your GPS trail continues recording when the screen is locked.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'Allow',
-        },
-      );
     }
   } catch {
     // Non-fatal — recording still works in foreground
