@@ -164,7 +164,7 @@ describe('NotesStore attachment cleanup', () => {
   it('keeps a file another note still points at', async () => {
     await store.importNotesData(
       ['General'],
-      [note('copy', { photoUris: [photoA] })],
+      [note('copy', { photoUris: [`${DOCS}/photo_a.jpg`] })],
       'merge',
     );
     unlink.mockClear();
@@ -172,6 +172,16 @@ describe('NotesStore attachment cleanup', () => {
     await store.deleteNote('text-note');
 
     expect(deletedPaths()).toEqual([`${DOCS}/photo_b.jpg`]);
+  });
+
+  it('keeps replaced files referenced through an equivalent URI', async () => {
+    await store.importNotesData(
+      ['General'],
+      [note('restored', { photoUris: [`${DOCS}/photo_a.jpg`] })],
+      'replace',
+    );
+
+    expect(deletedPaths()).toEqual([`${DOCS}/photo_b.jpg`, audio].sort());
   });
 
   it('a replace restore deletes files the restored notes no longer use', async () => {

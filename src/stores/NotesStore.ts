@@ -12,6 +12,7 @@ import { requestForegroundLocationPermission } from '../utils/locationPermission
 import {
   attachmentUris,
   deleteAttachmentFiles,
+  resolveOwnedAttachmentPath,
 } from '../utils/noteAttachments';
 import { formatTime } from '../utils/timeFormat';
 
@@ -396,8 +397,17 @@ export class NotesStore {
     if (uris.length === 0) {
       return;
     }
-    const stillUsed = new Set(this.notes.flatMap(attachmentUris));
-    await deleteAttachmentFiles(uris.filter((uri) => !stillUsed.has(uri)));
+    const stillUsed = new Set(
+      this.notes
+        .flatMap(attachmentUris)
+        .map(resolveOwnedAttachmentPath)
+        .filter((path): path is string => path !== null),
+    );
+    const unreferenced = uris.filter((uri) => {
+      const path = resolveOwnedAttachmentPath(uri);
+      return path !== null && !stillUsed.has(path);
+    });
+    await deleteAttachmentFiles(unreferenced);
   }
 
   /**
