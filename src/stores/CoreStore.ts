@@ -63,6 +63,8 @@ export class CoreStore {
   gpsIntervalMs: number = GPS_INTERVAL_MS;
   /** How many screens currently need full-accuracy fixes. */
   private preciseGpsHolders = 0;
+  private gpsPollingGeneration = 0;
+  private gpsRequestGeneration = 0;
 
   /**
    * Sets a fallback battery estimate for charging devices.
@@ -308,21 +310,42 @@ export class CoreStore {
    * so a failed one is retried at full accuracy before an error is shown.
    */
   private gpsGetFix = () => {
-    this.readPosition(this.preciseGpsHolders > 0);
+    const requestGeneration = ++this.gpsRequestGeneration;
+    this.readPosition(
+      this.preciseGpsHolders > 0,
+      this.gpsPollingGeneration,
+      requestGeneration,
+    );
   };
 
-  private readPosition(precise: boolean): void {
+  private readPosition(
+    precise: boolean,
+    pollingGeneration: number,
+    requestGeneration: number,
+  ): void {
     Geolocation.getCurrentPosition(
       (pos) => {
+        if (
+          pollingGeneration !== this.gpsPollingGeneration ||
+          requestGeneration !== this.gpsRequestGeneration
+        ) {
+          return;
+        }
         runInAction(() => {
           this.lastFix = pos;
           this.locationError = null;
         });
       },
       (err) => {
+        if (
+          pollingGeneration !== this.gpsPollingGeneration ||
+          requestGeneration !== this.gpsRequestGeneration
+        ) {
+          return;
+        }
         const denied = err.code === LOCATION_PERMISSION_DENIED_CODE;
         if (!precise && !denied) {
-          this.readPosition(true);
+          this.readPosition(true, pollingGeneration, requestGeneration);
           return;
         }
         runInAction(() => {
@@ -353,6 +376,7 @@ export class CoreStore {
    * @returns {Promise<void>} Resolves when polling is started or an error is handled.
    */
   private async startGpsPolling(): Promise<void> {
+    const pollingGeneration = ++this.gpsPollingGeneration;
     if (Platform.OS === 'android' && this.locationRequestedThisForeground) {
       const [fineGranted, coarseGranted] = await Promise.all([
         PermissionsAndroid.check(
@@ -362,6 +386,7 @@ export class CoreStore {
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         ),
       ]);
+      if (pollingGeneration !== this.gpsPollingGeneration) return;
       if (!fineGranted && !coarseGranted) {
         return;
       }
@@ -371,6 +396,7 @@ export class CoreStore {
     }
 
     const auth = await requestForegroundLocationPermission();
+    if (pollingGeneration !== this.gpsPollingGeneration) return;
     if (auth === 'granted') {
       runInAction(() => {
         this.locationError = null;
@@ -407,6 +433,7 @@ export class CoreStore {
    * @private
    */
   private stopGpsPolling() {
+    this.gpsPollingGeneration += 1;
     if (this.gpsIv) clearInterval(this.gpsIv);
     this.gpsIv = null;
   }

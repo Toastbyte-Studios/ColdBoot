@@ -177,6 +177,54 @@ describe('CoreStore location permission flow', () => {
       store.stopDeviceStatusMonitoring();
     });
 
+    test('ignores a routine fix that completes after a precise fix', async () => {
+      geolocation.getCurrentPosition.mockImplementation(() => undefined);
+      const store = new CoreStore();
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+
+      store.retainPreciseGps();
+
+      const preciseFix = {
+        coords: {
+          latitude: 38,
+          longitude: -122,
+          altitude: 0,
+          accuracy: 5,
+          altitudeAccuracy: 5,
+          heading: 0,
+          speed: 0,
+        },
+        timestamp: Date.now(),
+      };
+      const routineFix = {
+        ...preciseFix,
+        coords: { ...preciseFix.coords, latitude: 37 },
+      };
+
+      geolocation.getCurrentPosition.mock.calls[1][0](preciseFix);
+      geolocation.getCurrentPosition.mock.calls[0][0](routineFix);
+
+      expect(store.lastFix?.coords.latitude).toBe(38);
+      store.stopDeviceStatusMonitoring();
+    });
+
+    test('does not retry a pending routine fix after polling stops', async () => {
+      geolocation.getCurrentPosition.mockImplementation(() => undefined);
+      const store = new CoreStore();
+      store.startDeviceStatusMonitoring();
+      await flushPromises();
+
+      store.stopDeviceStatusMonitoring();
+      geolocation.getCurrentPosition.mock.calls[0][1]?.({
+        code: 2,
+        message: 'Position unavailable',
+      });
+
+      expect(geolocation.getCurrentPosition).toHaveBeenCalledTimes(1);
+      expect(store.locationError).toBeNull();
+    });
+
     test('asking for precision before polling has started takes no fix', () => {
       const store = new CoreStore();
 
