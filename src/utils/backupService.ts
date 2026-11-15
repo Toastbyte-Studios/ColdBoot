@@ -5,6 +5,7 @@
 
 import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
+import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
 import type {
   CommunicationPlan,
@@ -29,10 +30,13 @@ import type { Waypoint } from '../stores/WaypointStore';
 export const BACKUP_VERSION = '2.0';
 export const BACKUP_FILE_PREFIX = 'coldboot-backup-';
 
+const currentSessionExportPaths = new Set<string>();
+
 /** All version strings that this app can read. */
 const SUPPORTED_BACKUP_VERSIONS = ['1.0', '2.0'] as const;
 
 export type RestoreMode = 'replace' | 'merge';
+export type BackupExportResult = 'shared' | 'dismissed' | 'unconfirmed';
 
 export interface BackupSettings {
   fontSize: FontSize;
@@ -369,15 +373,94 @@ export async function readBackupFile(
 }
 
 /**
- * Exports a backup by writing it to a temporary file and opening
- * the native share sheet so the user can save it to Files, email it, etc.
- * Both iOS and Android share the file URI so the filename and extension
- * are preserved by all share targets.
+ * Deletes exported backup files from previous app sessions.
+ *
+ * A backup is plain JSON holding notes, emergency contacts and GPS trails.
+ * `exportBackup` has to write one to disk so the share sheet can hand it
+ * over. Files shared during the current session are kept because a recipient
+ * may still be copying them after the share sheet closes.
+ *
+ * Never throws: failing to tidy up must not block an export or startup.
  */
-export async function exportBackup(backupData: BackupData): Promise<void> {
-  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}.json`;
+export async function purgeExportedBackups(): Promise<void> {
+  try {
+    const files = await RNFS.readDir(RNFS.CachesDirectoryPath);
+    await Promise.all(
+      files
+        .filter(
+          (f) =>
+            f.name.startsWith(BACKUP_FILE_PREFIX) &&
+            f.name.endsWith('.json') &&
+            !f.isDirectory() &&
+            !currentSessionExportPaths.has(f.path),
+        )
+        .map((f) => RNFS.unlink(f.path).catch(() => undefined)),
+    );
+  } catch {
+    // The cache directory may not exist yet; there is nothing to remove.
+  }
+}
+
+/**
+ * Exports a backup by writing it to a unique temporary file and opening
+ * the native share sheet so the user can save it to Files, email it, etc.
+ *
+ * Android uses the native share library because React Native's Share API
+ * reports the chooser as shared even when it is dismissed.
+ *
+ * Dismissed exports are removed immediately. Confirmed and unconfirmed
+ * handoffs are retained until the next app session because a share target
+ * may still be copying the file after the sheet has closed.
+ */
+export async function exportBackup(
+  backupData: BackupData,
+): Promise<BackupExportResult> {
+  await purgeExportedBackups();
+  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}-${uuid()}.json`;
   const destPath = `${RNFS.CachesDirectoryPath}/${filename}`;
   const json = JSON.stringify(backupData, null, 2);
   await RNFS.writeFile(destPath, json, 'utf8');
-  await Share.share({ url: `file://${destPath}`, title: filename });
+  currentSessionExportPaths.add(destPath);
+
+  const discardExport = async () => {
+    currentSessionExportPaths.delete(destPath);
+    await RNFS.unlink(destPath).catch(() => undefined);
+  };
+
+  try {
+    if (Platform.OS === 'android') {
+      const NativeShare = require('react-native-share')
+        .default as typeof import('react-native-share').default;
+      const result = await NativeShare.open({
+        url: `file://${destPath}`,
+        title: filename,
+        type: 'application/json',
+        failOnCancel: false,
+      });
+      if (result.success) {
+        return 'shared';
+      }
+      if (result.dismissedAction) {
+        await discardExport();
+        return 'dismissed';
+      }
+      return 'unconfirmed';
+    }
+
+    const result = await Share.share({
+      url: `file://${destPath}`,
+      title: filename,
+    });
+    if (result.action === Share.dismissedAction) {
+      await discardExport();
+      return 'dismissed';
+    }
+    if (result.action === Share.sharedAction) {
+      return 'shared';
+    }
+    return 'unconfirmed';
+  } catch (error) {
+    await discardExport();
+    throw error;
+  }
 }
