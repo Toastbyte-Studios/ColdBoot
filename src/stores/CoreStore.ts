@@ -115,6 +115,11 @@ export class CoreStore {
         power.batteryState === 'full' ||
         power.charging === true;
       runInAction(() => {
+        if (this.isCharging !== null && this.isCharging !== charging) {
+          this.lastBatterySample = null;
+          this.batteryEstimateMinutes = null;
+          this.batteryEstimateMeasured = false;
+        }
         this.batteryLevel = level;
         this.isCharging = charging;
         this.lowPowerMode =

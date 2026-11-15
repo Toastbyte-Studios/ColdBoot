@@ -80,4 +80,21 @@ describe('CoreStore battery estimate', () => {
     expect(core.batteryEstimateMinutes).toBeCloseTo(40, 5);
     expect(core.batteryEstimateMeasured).toBe(true);
   });
+
+  it('resets to an unmeasured runtime estimate when unplugged at the same level', async () => {
+    setBattery(0.5, 'charging');
+    await sample();
+
+    now.mockReturnValue(10 * 60_000);
+    setBattery(0.6, 'charging');
+    await sample();
+    expect(core.batteryEstimateMeasured).toBe(true);
+
+    now.mockReturnValue(11 * 60_000);
+    setBattery(0.6, 'unplugged');
+    await sample();
+
+    expect(core.batteryEstimateMinutes).toBe(288);
+    expect(core.batteryEstimateMeasured).toBe(false);
+  });
 });
