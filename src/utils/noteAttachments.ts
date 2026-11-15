@@ -6,8 +6,8 @@ import type { Note } from '../stores/NotesStore';
 export function attachmentUris(
   note: Pick<Note, 'photoUris' | 'audioUri'>,
 ): string[] {
-  const uris = [...(note.photoUris ?? [])];
-  if (note.audioUri) {
+  const uris = Array.isArray(note.photoUris) ? [...note.photoUris] : [];
+  if (typeof note.audioUri === 'string' && note.audioUri) {
     uris.push(note.audioUri);
   }
   return uris;
@@ -17,30 +17,61 @@ export function attachmentUris(
  * Where an attachment lives in this install's own storage, or `null` when
  * the URI points anywhere else.
  *
- * Photos (`utils/photoPicker`) and recordings (the recorder's default) are
- * both written to the app's documents directory. Only files there are ever
- * deleted: a URI that fell back to the picker's temporary file, or anything
- * a restored backup might name, is left alone.
+ * Only filenames produced by the app's photo picker and Voice Log are
+ * accepted. A URI that fell back to the picker's temporary file, an imported
+ * arbitrary path, or a backup JSON file is left alone.
  *
  * Notes store absolute paths, and on iOS the container part of that path can
  * differ from the current one after an update or reinstall. On iOS a path
  * whose last folder is `Documents` is therefore matched by file name.
  */
 export function resolveOwnedAttachmentPath(uri: string): string | null {
+  if (!isNoteAttachmentUri(uri)) {
+    return null;
+  }
   const path = uri.startsWith('file://') ? uri.slice('file://'.length) : uri;
   const documents = RNFS.DocumentDirectoryPath;
   const slash = path.lastIndexOf('/');
   const directory = path.slice(0, slash);
   const fileName = path.slice(slash + 1);
-  if (!fileName || fileName === '.' || fileName === '..') {
-    return null;
-  }
-  const otherContainer =
-    Platform.OS === 'ios' && directory.endsWith('/Documents');
-  if (directory === documents || otherContainer) {
+  if (directory === documents) {
     return `${documents}/${fileName}`;
   }
-  return null;
+  const otherContainer =
+    Platform.OS === 'ios' &&
+    /^\/var\/mobile\/Containers\/Data\/Application\/[^/]+\/Documents$/.test(
+      directory,
+    );
+  return otherContainer ? `${documents}/${fileName}` : null;
+}
+
+/**
+ * Whether a file URI names a file using one of ColdBoot's generated
+ * attachment filename formats. Used to validate attachment references in
+ * backups made on another device; it does not imply local file ownership.
+ */
+export function isNoteAttachmentUri(uri: string): boolean {
+  if (!uri || uri.includes('?') || uri.includes('#')) {
+    return false;
+  }
+  const path = uri.startsWith('file://') ? uri.slice('file://'.length) : uri;
+  if (!path.startsWith('/')) {
+    return false;
+  }
+  const fileName = path.slice(path.lastIndexOf('/') + 1);
+  return isOwnedAttachmentFileName(fileName);
+}
+
+function isOwnedAttachmentFileName(fileName: string): boolean {
+  return (
+    /^photo_\d+_[a-z0-9]{1,6}\.(?:jpg|jpeg|png|gif|webp|heic|heif)$/i.test(
+      fileName,
+    ) ||
+    /^sound_\d+(?:\.\d+)?\.(?:m4a|mp4)$/i.test(fileName) ||
+    /^voice-log_[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}\.(?:m4a|mp4|wav|aac|3gp)$/i.test(
+      fileName,
+    )
+  );
 }
 
 /**

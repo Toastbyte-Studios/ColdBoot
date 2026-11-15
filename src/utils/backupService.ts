@@ -10,6 +10,7 @@ import { z } from 'zod';
 import {
   attachmentUris,
   deleteAttachmentFiles,
+  isNoteAttachmentUri,
   resolveOwnedAttachmentPath,
 } from './noteAttachments';
 import type {
@@ -109,7 +110,7 @@ export interface BackupPreview {
 /**
  * Zod schema for parsing and validating a backup JSON object.
  *
- * New v2.0 fields use `.default()` so that v1.0 backup files
+ * Newer fields use `.default()` so that older backup files
  * (which omit those fields) are automatically backfilled with empty
  * arrays / null rather than being rejected.
  */
@@ -236,7 +237,7 @@ const BackupDataSchema = z.object({
     attachments: z
       .array(
         z.object({
-          uris: z.array(z.string().min(1)),
+          uris: z.array(z.string().min(1).refine(isNoteAttachmentUri)),
           contentBase64: z.string().regex(BASE64_PATTERN),
         }),
       )
@@ -339,11 +340,15 @@ export async function restoreNoteAttachments(
   attachments: BackupAttachment[],
 ): Promise<{ notes: Note[]; createdUris: string[] }> {
   const restoredUris = new Map<string, string>();
+  const referencedUris = new Set(notes.flatMap(attachmentUris));
   const createdUris: string[] = [];
   try {
     for (const attachment of attachments) {
       const pendingUris = attachment.uris.filter(
-        (uri) => !restoredUris.has(uri),
+        (uri) =>
+          referencedUris.has(uri) &&
+          isNoteAttachmentUri(uri) &&
+          !restoredUris.has(uri),
       );
       if (pendingUris.length === 0) {
         continue;
@@ -366,12 +371,13 @@ export async function restoreNoteAttachments(
   return {
     notes: notes.map((note) => ({
       ...note,
-      photoUris: (note.photoUris ?? []).map(
-        (uri) => restoredUris.get(uri) ?? uri,
-      ),
-      audioUri: note.audioUri
-        ? (restoredUris.get(note.audioUri) ?? note.audioUri)
-        : undefined,
+      photoUris: (Array.isArray(note.photoUris) ? note.photoUris : [])
+        .filter((uri): uri is string => typeof uri === 'string')
+        .map((uri) => restoredUris.get(uri) ?? uri),
+      audioUri:
+        typeof note.audioUri === 'string' && note.audioUri
+          ? (restoredUris.get(note.audioUri) ?? note.audioUri)
+          : undefined,
     })),
     createdUris,
   };

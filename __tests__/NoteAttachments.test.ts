@@ -38,27 +38,36 @@ beforeEach(() => {
 
 describe('resolveOwnedAttachmentPath', () => {
   it('accepts files in the documents directory, with or without file://', () => {
-    expect(resolveOwnedAttachmentPath(`file://${DOCS}/photo_1.jpg`)).toBe(
-      `${DOCS}/photo_1.jpg`,
-    );
-    expect(resolveOwnedAttachmentPath(`${DOCS}/sound_1.m4a`)).toBe(
-      `${DOCS}/sound_1.m4a`,
-    );
+    expect(
+      resolveOwnedAttachmentPath(`file://${DOCS}/photo_123_abc123.jpg`),
+    ).toBe(`${DOCS}/photo_123_abc123.jpg`);
+    expect(
+      resolveOwnedAttachmentPath(
+        `${DOCS}/voice-log_123e4567-e89b-42d3-a456-426614174000.m4a`,
+      ),
+    ).toBe(`${DOCS}/voice-log_123e4567-e89b-42d3-a456-426614174000.m4a`);
+    expect(
+      resolveOwnedAttachmentPath(`${DOCS}/sound_1763232000.1234.m4a`),
+    ).toBe(`${DOCS}/sound_1763232000.1234.m4a`);
   });
 
   it("maps another container's Documents folder to this one by file name", () => {
     expect(
       resolveOwnedAttachmentPath(
-        'file:///var/mobile/Containers/Data/Application/OLD-UUID/Documents/photo_1.jpg',
+        'file:///var/mobile/Containers/Data/Application/OLD-UUID/Documents/photo_123_abc123.jpg',
       ),
-    ).toBe(`${DOCS}/photo_1.jpg`);
+    ).toBe(`${DOCS}/photo_123_abc123.jpg`);
   });
 
-  it('refuses anything outside the app documents directory', () => {
+  it('refuses unrelated documents files and anything outside app storage', () => {
     for (const uri of [
       'file:///tmp/cache/picker/IMG_0001.jpg',
       'content://media/external/images/1',
       'ph://ABC-123',
+      `https://example.test/Documents/photo_123_abc123.jpg`,
+      `${DOCS}/coldboot-backup-2026-11-15.json`,
+      `${DOCS}/unrelated-photo.jpg`,
+      `${DOCS}/Documents/photo_123_abc123.jpg`,
       `${DOCS}/nested/photo_1.jpg`,
       `${DOCS}/`,
       `file://${DOCS}/..`,
@@ -72,18 +81,19 @@ describe('resolveOwnedAttachmentPath', () => {
 describe('deleteAttachmentFiles', () => {
   it('deletes owned files once each and ignores the rest', async () => {
     await deleteAttachmentFiles([
-      `file://${DOCS}/photo_1.jpg`,
-      `${DOCS}/photo_1.jpg`,
+      `file://${DOCS}/photo_123_abc123.jpg`,
+      `${DOCS}/photo_123_abc123.jpg`,
       'file:///tmp/cache/picker/IMG_0001.jpg',
+      `${DOCS}/coldboot-backup-2026-11-15.json`,
     ]);
 
-    expect(deletedPaths()).toEqual([`${DOCS}/photo_1.jpg`]);
+    expect(deletedPaths()).toEqual([`${DOCS}/photo_123_abc123.jpg`]);
   });
 
   it('does not reject when a file is already gone', async () => {
     unlink.mockRejectedValue(new Error('ENOENT'));
     await expect(
-      deleteAttachmentFiles([`${DOCS}/photo_1.jpg`]),
+      deleteAttachmentFiles([`${DOCS}/photo_123_abc123.jpg`]),
     ).resolves.toBeUndefined();
   });
 });
@@ -100,9 +110,9 @@ describe('attachmentUris', () => {
 describe('NotesStore attachment cleanup', () => {
   let store: NotesStore;
 
-  const photoA = `file://${DOCS}/photo_a.jpg`;
-  const photoB = `file://${DOCS}/photo_b.jpg`;
-  const audio = `${DOCS}/sound_1.m4a`;
+  const photoA = `file://${DOCS}/photo_123_abc123.jpg`;
+  const photoB = `file://${DOCS}/photo_456_def456.jpg`;
+  const audio = `${DOCS}/voice-log_123e4567-e89b-42d3-a456-426614174000.m4a`;
 
   beforeEach(async () => {
     store = new NotesStore();
@@ -131,8 +141,8 @@ describe('NotesStore attachment cleanup', () => {
 
     expect(store.notes.map((n) => n.id)).toEqual(['voice-note', 'plain-note']);
     expect(deletedPaths()).toEqual([
-      `${DOCS}/photo_a.jpg`,
-      `${DOCS}/photo_b.jpg`,
+      `${DOCS}/photo_123_abc123.jpg`,
+      `${DOCS}/photo_456_def456.jpg`,
     ]);
   });
 
@@ -152,7 +162,7 @@ describe('NotesStore attachment cleanup', () => {
   it('deletes a photo removed while editing, and keeps the ones that stay', async () => {
     await store.updateNoteContent('text-note', { photoUris: [photoB] });
 
-    expect(deletedPaths()).toEqual([`${DOCS}/photo_a.jpg`]);
+    expect(deletedPaths()).toEqual([`${DOCS}/photo_123_abc123.jpg`]);
   });
 
   it('leaves photos alone when an edit does not change them', async () => {
@@ -164,24 +174,26 @@ describe('NotesStore attachment cleanup', () => {
   it('keeps a file another note still points at', async () => {
     await store.importNotesData(
       ['General'],
-      [note('copy', { photoUris: [`${DOCS}/photo_a.jpg`] })],
+      [note('copy', { photoUris: [`${DOCS}/photo_123_abc123.jpg`] })],
       'merge',
     );
     unlink.mockClear();
 
     await store.deleteNote('text-note');
 
-    expect(deletedPaths()).toEqual([`${DOCS}/photo_b.jpg`]);
+    expect(deletedPaths()).toEqual([`${DOCS}/photo_456_def456.jpg`]);
   });
 
   it('keeps replaced files referenced through an equivalent URI', async () => {
     await store.importNotesData(
       ['General'],
-      [note('restored', { photoUris: [`${DOCS}/photo_a.jpg`] })],
+      [note('restored', { photoUris: [`${DOCS}/photo_123_abc123.jpg`] })],
       'replace',
     );
 
-    expect(deletedPaths()).toEqual([`${DOCS}/photo_b.jpg`, audio].sort());
+    expect(deletedPaths()).toEqual(
+      [`${DOCS}/photo_456_def456.jpg`, audio].sort(),
+    );
   });
 
   it('a replace restore deletes files the restored notes no longer use', async () => {
@@ -191,7 +203,23 @@ describe('NotesStore attachment cleanup', () => {
       'replace',
     );
 
-    expect(deletedPaths()).toEqual([`${DOCS}/photo_a.jpg`, audio].sort());
+    expect(deletedPaths()).toEqual(
+      [`${DOCS}/photo_123_abc123.jpg`, audio].sort(),
+    );
+  });
+
+  it('does not delete an imported reference to an unrelated Documents file', async () => {
+    const backupUri = `${DOCS}/coldboot-backup-2026-11-15.json`;
+    await store.importNotesData(
+      ['General'],
+      [note('imported', { photoUris: [backupUri] })],
+      'replace',
+    );
+    unlink.mockClear();
+
+    await store.deleteNote('imported');
+
+    expect(unlink).not.toHaveBeenCalled();
   });
 
   it('a merge restore deletes nothing', async () => {

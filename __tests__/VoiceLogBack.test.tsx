@@ -286,7 +286,11 @@ describe('Voice Log back', () => {
     await ReactTestRenderer.act(async () => finishStart('recording.m4a'));
     expect(mockStopRecorder).toHaveBeenCalledTimes(1);
     expect(mockCreateVoiceLog).toHaveBeenCalledWith(
-      expect.objectContaining({ audioUri: 'recording.m4a' }),
+      expect.objectContaining({
+        audioUri: expect.stringMatching(
+          /^file:\/\/\/tmp\/documents\/voice-log_.+\.m4a$/,
+        ),
+      }),
     );
     expect(title()).toBe('Voice Logs');
   });
