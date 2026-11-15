@@ -10,6 +10,7 @@
  *  - Offline / failure: may fall back to returning cached data if available
  */
 
+import { z } from 'zod';
 import { SQLiteDatabase } from '../types/database-types';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 
@@ -74,6 +75,14 @@ const MONTHLY_VARIABLES = [
 /** Cache is valid for 30 days in milliseconds. */
 export const CACHE_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 const TABLE_NAME = 'seasonal_outlook_cache_v2';
+const monthlyOutlookSchema = z.object({
+  month: z.string().regex(/^\d{4}-(0[1-9]|1[0-2])$/),
+  tempMeanC: z.number(),
+  precipMm: z.number(),
+  snowfallCm: z.number(),
+  windSpeedMeanKmh: z.number(),
+  shortwaveRadiationSum: z.number(),
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -392,12 +401,11 @@ export async function getCachedOutlook(
     }
     const row = result.rows.item(0) as { data: string };
     const cached = JSON.parse(row.data) as Partial<SeasonalOutlook> | null;
-    // Enough of a check that a truncated or old-format row reads as "no
-    // cache" (and is refetched) instead of reaching the screen.
     if (
       !cached ||
       typeof cached.fetchedAt !== 'string' ||
-      !Array.isArray(cached.months)
+      !Number.isFinite(new Date(cached.fetchedAt).getTime()) ||
+      !z.array(monthlyOutlookSchema).safeParse(cached.months).success
     ) {
       return null;
     }
