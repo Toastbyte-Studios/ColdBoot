@@ -165,6 +165,32 @@ describe('NotesStore attachment cleanup', () => {
     expect(deletedPaths()).toEqual([`${DOCS}/photo_123_abc123.jpg`]);
   });
 
+  it('preserves removed photos across a failed save retry', async () => {
+    const executeSql = jest
+      .fn()
+      .mockRejectedValueOnce(new Error('database write failed'));
+    executeSql.mockResolvedValue(undefined);
+    (
+      store as unknown as {
+        notesDb: { executeSql: jest.Mock } | null;
+      }
+    ).notesDb = { executeSql };
+    const consoleError = jest.spyOn(console, 'error').mockImplementation();
+
+    await expect(
+      store.updateNoteContent('text-note', { photoUris: [photoB] }),
+    ).rejects.toThrow('database write failed');
+
+    expect(store.notes[0].photoUris).toEqual([photoA, photoB]);
+    expect(unlink).not.toHaveBeenCalled();
+
+    await store.updateNoteContent('text-note', { photoUris: [photoB] });
+
+    expect(store.notes[0].photoUris).toEqual([photoB]);
+    expect(deletedPaths()).toEqual([`${DOCS}/photo_123_abc123.jpg`]);
+    consoleError.mockRestore();
+  });
+
   it('leaves photos alone when an edit does not change them', async () => {
     await store.updateNoteContent('text-note', { title: 'Renamed' });
 

@@ -365,24 +365,26 @@ export class NotesStore {
               (uri) => !params.photoUris?.includes(uri),
             )
           : [];
+      const updatedNote = { ...note };
+      if (params.title !== undefined) {
+        updatedNote.title = params.title;
+      }
+      if (params.text !== undefined) {
+        updatedNote.text = params.text;
+      }
+      if (params.category !== undefined) {
+        updatedNote.category = params.category;
+      }
+      if (params.sketchDataUri !== undefined) {
+        updatedNote.sketchDataUri = params.sketchDataUri;
+      }
+      if (params.photoUris !== undefined) {
+        updatedNote.photoUris = params.photoUris;
+      }
+      await this.updateNote(updatedNote);
       runInAction(() => {
-        if (params.title !== undefined) {
-          note.title = params.title;
-        }
-        if (params.text !== undefined) {
-          note.text = params.text;
-        }
-        if (params.category !== undefined) {
-          note.category = params.category;
-        }
-        if (params.sketchDataUri !== undefined) {
-          note.sketchDataUri = params.sketchDataUri;
-        }
-        if (params.photoUris !== undefined) {
-          note.photoUris = params.photoUris;
-        }
+        Object.assign(note, updatedNote);
       });
-      await this.updateNote(note);
       // Only once the note no longer points at them.
       await this.deleteUnreferencedFiles(removedPhotos);
     }
