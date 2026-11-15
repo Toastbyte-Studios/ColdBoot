@@ -96,6 +96,19 @@ describe('deleteAttachmentFiles', () => {
       deleteAttachmentFiles([`${DOCS}/photo_123_abc123.jpg`]),
     ).resolves.toBeUndefined();
   });
+
+  it('reports and retries non-missing-file cleanup failures', async () => {
+    const path = `${DOCS}/photo_123_abc123.jpg`;
+    unlink.mockRejectedValueOnce(
+      Object.assign(new Error('permission denied'), { code: 'EACCES' }),
+    );
+
+    await expect(deleteAttachmentFiles([path])).rejects.toThrow(path);
+    expect(deletedPaths()).toEqual([path]);
+
+    await expect(deleteAttachmentFiles([])).resolves.toBeUndefined();
+    expect(deletedPaths()).toEqual([path, path]);
+  });
 });
 
 describe('attachmentUris', () => {
