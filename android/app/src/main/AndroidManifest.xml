@@ -5,12 +5,17 @@
   <uses-permission
     android:name="android.permission.READ_EXTERNAL_STORAGE"
     android:maxSdkVersion="32" />
-  <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+  <!-- No READ_MEDIA_IMAGES: photos are chosen through the system photo
+       picker (react-native-image-picker), which needs no permission.
+       READ_EXTERNAL_STORAGE above stays, capped at API 32, because restore
+       reads backup files from Downloads on those versions. -->
 
   <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
-  <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
+  <!-- No ACCESS_BACKGROUND_LOCATION: trail recording keeps GPS alive with
+       the location foreground service below, which is started while the app
+       is on screen and so runs on the while-in-use grant. -->
 
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
   <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />

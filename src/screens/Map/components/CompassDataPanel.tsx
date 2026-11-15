@@ -10,14 +10,9 @@ type Props = {
     longitude: number;
     altitude: number | null;
   } | null;
-  locationName: string | null;
 };
 
-export default function CompassDataPanel({
-  heading,
-  coords,
-  locationName,
-}: Props) {
+export default function CompassDataPanel({ heading, coords }: Props) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
 
@@ -42,7 +37,6 @@ export default function CompassDataPanel({
           ? `${Math.round(coords.altitude * 3.28084)} ft`
           : '--',
     },
-    { label: 'Location', value: locationName ?? '--' },
   ];
 
   return (

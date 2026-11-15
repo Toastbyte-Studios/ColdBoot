@@ -5,6 +5,7 @@ import { NEIGHBORING_STATES } from '../data/neighboringStates';
 import { distanceMiles } from '../utils/distanceMiles';
 import { fetchWithTimeout } from '../utils/fetchWithTimeout';
 import { requestForegroundLocationPermission } from '../utils/locationPermission';
+import { RepeaterCacheSchema, RepeaterSchema } from '../utils/repeaterSchema';
 import { stateFromCoordinates } from '../utils/stateFromCoordinates';
 
 const CACHE_KEY = '@repeaterbook/cache';
@@ -241,7 +242,11 @@ export class RepeaterBookStore {
     try {
       const raw = await AsyncStorage.getItem(CACHE_KEY);
       if (!raw) return;
-      const cache: RepeaterCache = JSON.parse(raw);
+      // A cache written by an older build, or cut short, is treated as no
+      // cache: the next fetch replaces it.
+      const parsed = RepeaterCacheSchema.safeParse(JSON.parse(raw));
+      if (!parsed.success) return;
+      const cache: RepeaterCache = parsed.data;
       runInAction(() => {
         this.repeaters = cache.repeaters;
         this.queryLat = cache.queryLat;
@@ -261,7 +266,15 @@ export class RepeaterBookStore {
     try {
       const raw = await AsyncStorage.getItem(CUSTOM_KEY);
       if (!raw) return;
-      const entries: Repeater[] = JSON.parse(raw);
+      // These are the user's own entries, so keep every one that is still
+      // readable rather than dropping the list over one bad record.
+      const stored: unknown = JSON.parse(raw);
+      const entries: Repeater[] = (Array.isArray(stored) ? stored : []).flatMap(
+        (entry) => {
+          const parsed = RepeaterSchema.safeParse(entry);
+          return parsed.success ? [parsed.data] : [];
+        },
+      );
       runInAction(() => {
         this.customRepeaters = entries;
       });

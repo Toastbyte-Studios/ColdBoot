@@ -341,9 +341,51 @@ describe('SQLite cache helpers', () => {
   test('getCachedOutlook parses and returns cached JSON', async () => {
     const db = makeDb([{ data: JSON.stringify(sampleOutlook) }]);
     const result = await getCachedOutlook(db as SQLiteDatabase, 36.2, -115.1);
-    expect(result).not.toBeNull();
-    expect(result?.months).toHaveLength(2);
-    expect(result?.lat).toBe(36.2);
+    expect(result).toEqual(sampleOutlook);
+  });
+
+  test.each([
+    null,
+    {},
+    { ...sampleOutlook.months[0], month: null },
+    { ...sampleOutlook.months[0], month: '2024-13' },
+    { ...sampleOutlook.months[0], tempMeanC: '13' },
+    { ...sampleOutlook.months[0], precipMm: null },
+    { ...sampleOutlook.months[0], snowfallCm: null },
+    { ...sampleOutlook.months[0], windSpeedMeanKmh: null },
+    { ...sampleOutlook.months[0], shortwaveRadiationSum: null },
+  ])('getCachedOutlook rejects malformed monthly entry %#', async (entry) => {
+    const db = makeDb([
+      {
+        data: JSON.stringify({
+          ...sampleOutlook,
+          months: [sampleOutlook.months[0], entry],
+        }),
+      },
+    ]);
+
+    expect(
+      await getCachedOutlook(db as SQLiteDatabase, 36.2, -115.1),
+    ).toBeNull();
+  });
+
+  test('getCachedOutlook rejects an unparseable timestamp', async () => {
+    const db = makeDb([
+      { data: JSON.stringify({ ...sampleOutlook, fetchedAt: 'not-a-date' }) },
+    ]);
+
+    expect(
+      await getCachedOutlook(db as SQLiteDatabase, 36.2, -115.1),
+    ).toBeNull();
+  });
+
+  test('getCachedOutlook accepts an empty monthly array', async () => {
+    const outlook = { ...sampleOutlook, months: [] };
+    const db = makeDb([{ data: JSON.stringify(outlook) }]);
+
+    expect(await getCachedOutlook(db as SQLiteDatabase, 36.2, -115.1)).toEqual(
+      outlook,
+    );
   });
 
   test('getCachedOutlook returns null on executeSql error', async () => {
@@ -413,6 +455,25 @@ describe('WeatherOutlookStore', () => {
     expect(fetch).not.toHaveBeenCalled();
     expect(store.outlook).not.toBeNull();
     expect(store.isLoading).toBe(false);
+    expect(store.isStale).toBe(false);
+  });
+
+  test.each([
+    { ...sampleOutlook, fetchedAt: 'not-a-date' },
+    { ...sampleOutlook, months: [null] },
+  ])('loadOutlook refreshes an invalid cache %#', async (outlook) => {
+    const store = new WeatherOutlookStore();
+    const db = makeDb([{ data: JSON.stringify(outlook) }]);
+    await store.initDatabase(db as SQLiteDatabase);
+    global.fetch = jest.fn().mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ monthly: { time: ['2024-03-01'] } }),
+    });
+
+    await store.loadOutlook(36.2, -115.1);
+
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(store.outlook?.months[0].month).toBe('2024-03');
     expect(store.isStale).toBe(false);
   });
 

@@ -287,8 +287,12 @@ export const SettingsModal = observer(
           repeaterBookStore.customRepeaters,
           attachments,
         );
-        await exportBackup(backupData);
-        await settingsStore.setLastBackupAt(Date.now());
+        // Only a backup that left the app counts: dismissing the share sheet
+        // saves nothing, and "Last backed up" must not say otherwise.
+        const exportResult = await exportBackup(backupData);
+        if (exportResult === 'shared') {
+          await settingsStore.setLastBackupAt(Date.now());
+        }
       } catch (error) {
         Alert.alert(
           'Export Failed',
@@ -728,9 +732,10 @@ export const SettingsModal = observer(
                     : 'No backup yet'}
                 </RNText>
                 <RNText style={[styles.rowSubtitle, t.mutedText]}>
-                  Backups are unencrypted and include note photos and voice
-                  recordings. Older path-only backups cannot recover deleted
-                  files.
+                  Backups are unencrypted and include your notes, emergency
+                  contacts, GPS trails, photos and voice recordings. Older
+                  path-only backups cannot recover deleted attachments. Save
+                  backups somewhere only you can reach.
                 </RNText>
 
                 <AppButton
