@@ -42,7 +42,10 @@ let mockLibraryProps:
         center: { latitude: number; longitude: number };
         radiusMiles: number;
       }) => void;
-      onViewTrack?: (track: { id: string; name?: string }) => void;
+      onViewTrack?: (track: {
+        id: string;
+        name?: string;
+      }) => Promise<void> | void;
       onHideTrack?: () => void;
       onDeleteTrack?: (id: string) => Promise<void> | void;
       viewedTrackId?: string | null;
@@ -99,9 +102,21 @@ const mockTrackPoints: Record<string, object[]> = {
     { latitude: 36.21, longitude: -115.11, altitude: null, timestamp: 1 },
   ],
 };
+const mockTrackSummary = {
+  id: 'track-1',
+  name: 'Red Rock loop',
+  createdAt: '2026-10-20T00:00:00.000Z',
+  durationSeconds: 3600,
+  distanceMeters: 5000,
+};
 const mockTrackStore = {
-  tracks: [],
+  tracks: [mockTrackSummary],
   getTrackPoints: jest.fn(async (id: string) => mockTrackPoints[id] ?? []),
+  deleteTrack: jest.fn(async (id: string) => {
+    mockTrackStore.tracks = mockTrackStore.tracks.filter(
+      (track) => track.id !== id,
+    );
+  }),
 };
 
 const mockWaypointStore = {
@@ -721,6 +736,7 @@ describe('MapScreen viewed track', () => {
   beforeEach(() => {
     mockRouteParams = undefined;
     mockLibraryProps = undefined;
+    mockTrackStore.tracks = [mockTrackSummary];
   });
 
   const trackLine = (tree: ReactTestRenderer.ReactTestRenderer) =>
@@ -770,6 +786,58 @@ describe('MapScreen viewed track', () => {
 
     expect(trackLine(tree)).toBeUndefined();
     expect(clearButton(tree)).toBeUndefined();
+  });
+
+  it('does not draw a track deleted while its points are loading', async () => {
+    const tree = await renderScreen(true);
+    let resolvePoints!: (points: object[]) => void;
+    mockTrackStore.getTrackPoints.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePoints = resolve;
+        }),
+    );
+    let loadAttempt!: Promise<void>;
+
+    await ReactTestRenderer.act(async () => {
+      loadAttempt = mockLibraryProps?.onViewTrack?.(
+        mockTrackSummary,
+      ) as Promise<void>;
+    });
+    await ReactTestRenderer.act(async () => {
+      await mockLibraryProps?.onDeleteTrack?.('track-1');
+    });
+    await ReactTestRenderer.act(async () => {
+      resolvePoints(mockTrackPoints['track-1']);
+      await loadAttempt;
+    });
+
+    expect(trackLine(tree)).toBeUndefined();
+  });
+
+  it('ignores a point read when its track is no longer in the library', async () => {
+    const tree = await renderScreen(true);
+    let resolvePoints!: (points: object[]) => void;
+    mockTrackStore.getTrackPoints.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolvePoints = resolve;
+        }),
+    );
+    let loadAttempt!: Promise<void>;
+
+    await ReactTestRenderer.act(async () => {
+      loadAttempt = mockLibraryProps?.onViewTrack?.(
+        mockTrackSummary,
+      ) as Promise<void>;
+    });
+    mockTrackStore.tracks = [];
+    await ReactTestRenderer.act(async () => {
+      resolvePoints(mockTrackPoints['track-1']);
+      await loadAttempt;
+    });
+
+    expect(trackLine(tree)).toBeUndefined();
   });
 
   it('shows no label when no track is drawn', async () => {

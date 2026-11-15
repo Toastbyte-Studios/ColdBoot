@@ -310,6 +310,8 @@ export default observer(function MapScreen() {
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** The currently viewed saved track overlay (read-only polyline). */
   const [viewedTrack, setViewedTrack] = useState<Track | null>(null);
+  const viewRequestRef = useRef(0);
+  const pendingViewTrackIdRef = useRef<string | null>(null);
   /** Mirrors permissionStatus state so AppState callback can read it without deps. */
   const permissionStatusRef = useRef<LocationPermissionStatus>('undetermined');
   // ────────────────────────────────────────────────────────
@@ -759,6 +761,8 @@ export default observer(function MapScreen() {
       recordedPointsRef.current = [];
       recordingDistanceRef.current = 0;
       // Show the newly saved track on the map
+      viewRequestRef.current += 1;
+      pendingViewTrackIdRef.current = null;
       setViewedTrack(savedTrack);
     },
     [trackStore, recordingElapsed],
@@ -781,11 +785,11 @@ export default observer(function MapScreen() {
 
   // The library lists track summaries; a track's points are read from the
   // database only now, when it is opened.
-  const viewRequestRef = useRef(0);
   const handleViewTrack = useCallback(
     async (summary: TrackSummary) => {
       setLibrarySheetOpen(false);
       const request = ++viewRequestRef.current;
+      pendingViewTrackIdRef.current = summary.id;
       let points: TrackPoint[];
       try {
         points = await trackStore.getTrackPoints(summary.id);
@@ -795,6 +799,10 @@ export default observer(function MapScreen() {
       }
       // A later tap, or Hide, while this one was loading wins.
       if (request !== viewRequestRef.current) {
+        return;
+      }
+      pendingViewTrackIdRef.current = null;
+      if (!trackStore.tracks.some((track) => track.id === summary.id)) {
         return;
       }
       setViewedTrack({ ...summary, points });
@@ -813,17 +821,20 @@ export default observer(function MapScreen() {
 
   const handleHideTrack = useCallback(() => {
     viewRequestRef.current += 1;
+    pendingViewTrackIdRef.current = null;
     setViewedTrack(null);
   }, []);
 
   const handleDeleteTrack = useCallback(
     async (id: string) => {
-      await trackStore.deleteTrack(id);
-      if (viewedTrack?.id === id) {
-        setViewedTrack(null);
+      if (pendingViewTrackIdRef.current === id) {
+        viewRequestRef.current += 1;
+        pendingViewTrackIdRef.current = null;
       }
+      await trackStore.deleteTrack(id);
+      setViewedTrack((current) => (current?.id === id ? null : current));
     },
-    [trackStore, viewedTrack],
+    [trackStore],
   );
 
   /**
