@@ -2,6 +2,7 @@ import emergencyData from '../data/emergency.json';
 import healthData from '../data/health.json';
 import homePrepData from '../data/homePrep.json';
 import roadsideData from '../data/roadside.json';
+import scenarioCardsData from '../data/scenarioCards.json';
 import survivalData from '../data/survival.json';
 import toolsData from '../data/tools.json';
 import weatherData from '../data/weather.json';
@@ -31,4 +32,44 @@ export function referenceEntryMap(): ReadonlyMap<string, ReferenceEntryType> {
 /** The reference entry with this id, or null when no book has it. */
 export function findReferenceEntry(id: string): ReferenceEntryType | null {
   return referenceEntryMap().get(id) ?? null;
+}
+
+/** Each reference book's entries with the disclaimer its dataset carries. */
+const BOOKS: readonly {
+  entries: readonly Pick<ReferenceEntryType, 'id'>[];
+  disclaimer?: string;
+}[] = [
+  { entries: emergencyData.entries, ...emergencyData.metadata },
+  { entries: healthData.entries, ...healthData.metadata },
+  { entries: homePrepData.entries, ...homePrepData.metadata },
+  { entries: roadsideData.entries, ...roadsideData.metadata },
+  { entries: scenarioCardsData.entries, ...scenarioCardsData.metadata },
+  { entries: survivalData.entries, ...survivalData.metadata },
+  { entries: toolsData.entries, ...toolsData.metadata },
+  { entries: weatherData.entries, ...weatherData.metadata },
+];
+
+let disclaimerMap: Map<string, string> | null = null;
+
+/**
+ * The disclaimer of the book an entry belongs to, or null when the entry
+ * isn't in a book or its book has none.
+ *
+ * A category screen shows its book's disclaimer, but an entry is also opened
+ * straight from Search, Bookmarks and the "Continue" card, which skip that
+ * screen. Looking it up by entry id lets the entry carry it wherever it was
+ * opened from.
+ */
+export function findReferenceDisclaimer(id: string): string | null {
+  if (!disclaimerMap) {
+    disclaimerMap = new Map();
+    for (const book of BOOKS) {
+      const disclaimer = book.disclaimer?.trim();
+      if (!disclaimer) continue;
+      for (const entry of book.entries) {
+        disclaimerMap.set(entry.id, disclaimer);
+      }
+    }
+  }
+  return disclaimerMap.get(id) ?? null;
 }

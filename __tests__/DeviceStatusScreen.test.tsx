@@ -19,6 +19,7 @@ const mockStores = {
     isCharging: false,
     lowPowerMode: false,
     batteryEstimateMinutes: 130,
+    batteryEstimateMeasured: true,
     batteryTemperatureC: -2 as number | null,
     storageFree: 40 * GB,
     storageTotal: 128 * GB,

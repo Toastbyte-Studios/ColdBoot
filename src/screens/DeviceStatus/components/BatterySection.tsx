@@ -40,6 +40,7 @@ const BatterySection = observer(() => {
     core.batteryEstimateMinutes,
     charging,
     level,
+    core.batteryEstimateMeasured,
   );
   const pct = level == null ? null : Math.round(level * 100);
   const saverOff = core.lowPowerMode === false;
@@ -100,7 +101,11 @@ const BatterySection = observer(() => {
               : 'On battery'
         }
       />
-      <StatusRow label={estimate.label} value={estimate.value} />
+      <StatusRow
+        label={estimate.label}
+        value={estimate.value}
+        detail={estimate.detail}
+      />
       <StatusRow
         label={SAVER_NAME}
         value={

@@ -1,6 +1,7 @@
 import {
   accuracyTone,
   batteryEstimate,
+  ROUGH_ESTIMATE_LABEL,
   batteryTone,
   connectionSummary,
   formatMinutes,
@@ -78,22 +79,38 @@ describe('battery formatters', () => {
   });
 
   it('labels the estimate by charge state', () => {
-    expect(batteryEstimate(310, false, 0.6)).toEqual({
+    expect(batteryEstimate(310, false, 0.6, true)).toEqual({
       label: 'Time left',
       value: 'About 5 hr 10 min',
     });
-    expect(batteryEstimate(50, true, 0.6)).toEqual({
+    expect(batteryEstimate(50, true, 0.6, true)).toEqual({
       label: 'Time to full',
       value: 'About 50 min',
     });
-    expect(batteryEstimate(480, true, 1)).toEqual({
+    expect(batteryEstimate(480, true, 1, true)).toEqual({
       label: 'Charging',
       value: 'Full',
     });
-    expect(batteryEstimate(null, false, 0.6)).toEqual({
+    expect(batteryEstimate(null, false, 0.6, true)).toEqual({
       label: 'Time left',
       value: 'Calculating…',
     });
+  });
+
+  it('marks an estimate that is not based on this phone as a rough guide', () => {
+    expect(batteryEstimate(288, false, 0.6, false)).toEqual({
+      label: 'Time left',
+      value: 'About 4 hr 48 min',
+      detail: ROUGH_ESTIMATE_LABEL,
+    });
+    expect(batteryEstimate(48, true, 0.6, false)).toEqual({
+      label: 'Time to full',
+      value: 'About 48 min',
+      detail: ROUGH_ESTIMATE_LABEL,
+    });
+    // Nothing to qualify when there is no figure, or the battery is full.
+    expect(batteryEstimate(null, false, 0.6, false).detail).toBeUndefined();
+    expect(batteryEstimate(480, true, 1, false).detail).toBeUndefined();
   });
 });
 
