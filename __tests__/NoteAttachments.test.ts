@@ -247,6 +247,51 @@ describe('NotesStore attachment cleanup', () => {
     );
   });
 
+  it('collects replaced files from the database before notes finish loading', async () => {
+    const oldNote = {
+      photoUris: JSON.stringify([photoA, photoB]),
+      audioUri: audio,
+    };
+    const executeSql = jest.fn(async (sql: string) => {
+      if (sql === 'SELECT photoUris, audioUri FROM notes') {
+        return [
+          {
+            rows: {
+              length: 1,
+              item: () => oldNote,
+            },
+          },
+        ];
+      }
+      return [{ rows: { length: 0, item: () => ({}) } }];
+    });
+    (
+      store as unknown as {
+        notesDb: { executeSql: typeof executeSql } | null;
+        notes: Note[];
+      }
+    ).notesDb = { executeSql };
+    store.notes = [];
+
+    await store.importNotesData(['General'], [note('restored')], 'replace');
+
+    const selectIndex = executeSql.mock.calls.findIndex(
+      ([sql]) => sql === 'SELECT photoUris, audioUri FROM notes',
+    );
+    const deleteIndex = executeSql.mock.calls.findIndex(
+      ([sql]) => sql === 'DELETE FROM notes',
+    );
+    expect(selectIndex).toBeGreaterThan(-1);
+    expect(selectIndex).toBeLessThan(deleteIndex);
+    expect(deletedPaths()).toEqual(
+      [
+        `${DOCS}/photo_123_abc123.jpg`,
+        `${DOCS}/photo_456_def456.jpg`,
+        audio,
+      ].sort(),
+    );
+  });
+
   it('does not delete an imported reference to an unrelated Documents file', async () => {
     const backupUri = `${DOCS}/coldboot-backup-2026-11-15.json`;
     await store.importNotesData(

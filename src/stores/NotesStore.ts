@@ -946,7 +946,7 @@ export class NotesStore {
     mode: 'replace' | 'merge',
   ): Promise<void> {
     await this.initNotesDb();
-    const replacedFiles =
+    let replacedFiles =
       mode === 'replace' ? this.notes.flatMap(attachmentUris) : [];
     if (this.notesDb) {
       const noteSql =
@@ -956,6 +956,31 @@ export class NotesStore {
       try {
         await this.notesDb.executeSql('BEGIN TRANSACTION');
         if (mode === 'replace') {
+          const existingNotes = await this.notesDb.executeSql(
+            'SELECT photoUris, audioUri FROM notes',
+          );
+          replacedFiles = [];
+          const rows = existingNotes[0].rows;
+          for (let i = 0; i < rows.length; i++) {
+            const row = rows.item(i);
+            if (typeof row.photoUris === 'string') {
+              try {
+                const photoUris: unknown = JSON.parse(row.photoUris);
+                if (Array.isArray(photoUris)) {
+                  replacedFiles.push(
+                    ...photoUris.filter(
+                      (uri): uri is string => typeof uri === 'string',
+                    ),
+                  );
+                }
+              } catch {
+                // A malformed list does not prevent restoring other notes.
+              }
+            }
+            if (typeof row.audioUri === 'string') {
+              replacedFiles.push(row.audioUri);
+            }
+          }
           await this.notesDb.executeSql('DELETE FROM notes');
           await this.notesDb.executeSql('DELETE FROM categories');
         }
