@@ -21,9 +21,14 @@ for use in the ColdBoot app.
 
 Images licensed under [CC BY-SA 3.0](https://creativecommons.org/licenses/by-sa/3.0/) except where noted as Public Domain:
 
-> Knot diagrams by Cyrus Andiron and other Wikimedia Commons contributors,
-> licensed under CC BY-SA 3.0 (https://creativecommons.org/licenses/by-sa/3.0/).
-> Source: https://commons.wikimedia.org/
+> Knot photographs by Cyrus Andiron and WetCanvas, from Wikimedia Commons
+> (https://commons.wikimedia.org/), licensed under CC BY-SA 3.0
+> (https://creativecommons.org/licenses/by-sa/3.0/). Resized and converted
+> to WebP. The overhand knot photograph is in the public domain.
+
+CC BY-SA asks for the author's name and a note of any changes, so the app
+text names every author in the table above. Adding an image by someone new
+means adding their name there too.
 
 This attribution is displayed in the app's Settings screen under "Attributions".
 
