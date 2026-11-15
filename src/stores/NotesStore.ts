@@ -360,7 +360,9 @@ export class NotesStore {
     if (note) {
       const removedPhotos =
         params.photoUris !== undefined
-          ? note.photoUris.filter((uri) => !params.photoUris?.includes(uri))
+          ? (note.photoUris ?? []).filter(
+              (uri) => !params.photoUris?.includes(uri),
+            )
           : [];
       runInAction(() => {
         if (params.title !== undefined) {
