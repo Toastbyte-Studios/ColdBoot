@@ -604,7 +604,12 @@ export class NotesStore {
         photoUris: (() => {
           if (!r.photoUris) return [];
           try {
-            return JSON.parse(r.photoUris as string);
+            // Anything but a list of strings would break the note's photo
+            // strip, so a row that holds something else gets no photos.
+            const parsed: unknown = JSON.parse(r.photoUris as string);
+            return Array.isArray(parsed)
+              ? parsed.filter((uri): uri is string => typeof uri === 'string')
+              : [];
           } catch (e) {
             console.warn('Failed to parse photoUris for note:', r.id, e);
             return [];

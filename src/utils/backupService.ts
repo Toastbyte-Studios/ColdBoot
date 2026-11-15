@@ -6,6 +6,7 @@
 import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
 import { z } from 'zod';
+import { RepeaterSchema } from './repeaterSchema';
 import type {
   CommunicationPlan,
   EmergencyContact,
@@ -92,6 +93,88 @@ export interface BackupPreview {
 // ─── Zod schema ──────────────────────────────────────────────────────────────
 
 /**
+ * Record schemas for the arrays in a backup.
+ *
+ * A backup file is the one place the app takes whole records from outside
+ * itself, and restore writes them straight into SQLite and into the stores.
+ * A record of the wrong shape (a `photoUris` that isn't a list, a missing
+ * id) would be stored and then break the screen that renders it on every
+ * launch, so each record is checked here and a file with a bad one is
+ * rejected before anything is written.
+ *
+ * Optional fields accept `null` as well as being absent, and come out as
+ * `undefined` either way, so a file written by another tool or an older
+ * build isn't rejected over the difference.
+ */
+const optionalString = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? undefined);
+const optionalNumber = z
+  .number()
+  .nullish()
+  .transform((value) => value ?? undefined);
+/** SQLite hands booleans back as 0/1; accept either spelling. */
+const booleanLike = z
+  .union([z.boolean(), z.number()])
+  .transform((value) => Boolean(value));
+
+const NoteSchema = z.object({
+  id: z.string().min(1),
+  createdAt: z.number(),
+  latitude: optionalNumber,
+  longitude: optionalNumber,
+  category: z.string(),
+  type: z.enum(['text', 'sketch', 'voice']),
+  title: optionalString,
+  text: optionalString,
+  bookmarked: booleanLike.optional(),
+  sketchDataUri: optionalString,
+  // The files themselves aren't in a backup, so a missing or unreadable
+  // list is no loss: restore the note without attachments.
+  photoUris: z.array(z.string()).catch([]),
+  audioUri: optionalString,
+  transcription: optionalString,
+  duration: optionalNumber,
+});
+
+const ChecklistSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  createdAt: z.number(),
+  isDefault: booleanLike,
+});
+
+const ChecklistItemSchema = z.object({
+  id: z.string().min(1),
+  checklistId: z.string().min(1),
+  text: z.string(),
+  checked: booleanLike,
+  order: z.number().catch(0),
+});
+
+/** Inventory and pantry items share a shape. */
+const StockItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  category: z.string(),
+  quantity: z.number(),
+  unit: optionalString,
+  notes: optionalString,
+  expirationMonth: optionalNumber,
+  expirationYear: optionalNumber,
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+const BookmarkSchema = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  category: optionalString,
+  createdAt: optionalNumber,
+});
+
+/**
  * Zod schema for parsing and validating a backup JSON object.
  *
  * New v2.0 fields use `.default()` so that v1.0 backup files
@@ -108,15 +191,15 @@ const BackupDataSchema = z.object({
   backupDate: z.string(),
   createdAt: z.number(),
   data: z.object({
-    notes: z.array(z.any()),
+    notes: z.array(NoteSchema),
     noteCategories: z.array(z.string()),
-    checklists: z.array(z.any()),
-    checklistItems: z.array(z.any()),
-    inventoryItems: z.array(z.any()),
+    checklists: z.array(ChecklistSchema),
+    checklistItems: z.array(ChecklistItemSchema),
+    inventoryItems: z.array(StockItemSchema),
     inventoryCategories: z.array(z.string()),
-    pantryItems: z.array(z.any()),
+    pantryItems: z.array(StockItemSchema),
     pantryCategories: z.array(z.string()),
-    bookmarks: z.array(z.any()),
+    bookmarks: z.array(BookmarkSchema),
     settings: z.object({
       fontSize: z.enum(['small', 'medium', 'large']).catch('small'),
       themeMode: z.enum(['light', 'dark', 'system']).catch('system'),
@@ -195,29 +278,7 @@ const BackupDataSchema = z.object({
       })
       .nullable()
       .default(null),
-    customRepeaters: z
-      .array(
-        z.object({
-          id: z.string(),
-          callSign: z.string(),
-          frequency: z.string(),
-          offset: z.string(),
-          tone: z.string(),
-          mode: z.string(),
-          city: z.string(),
-          state: z.string(),
-          lat: z.number(),
-          lng: z.number(),
-          operationalStatus: z.string(),
-          use: z.string(),
-          notes: z.string(),
-          lastEdited: z.string(),
-          distance: z.number(),
-          emcomm: z.string(),
-          isCustom: z.boolean().optional(),
-        }),
-      )
-      .default([]),
+    customRepeaters: z.array(RepeaterSchema).default([]),
   }),
 });
 
@@ -285,11 +346,22 @@ export function createBackupData(
 export function validateBackup(json: unknown): json is BackupData {
   const result = BackupDataSchema.safeParse(json);
   if (!result.success) {
+    // Where the file went wrong, never what it contained: a backup holds
+    // notes and contacts, and those don't belong in a log.
+    console.warn(
+      'Backup rejected:',
+      result.error.issues
+        .slice(0, 5)
+        .map((issue) => `${issue.path.join('.')}: ${issue.code}`)
+        .join('; '),
+    );
     return false;
   }
   // Backfill any defaults that Zod may have added (e.g. v2.0 fields missing
   // from a v1.0 file) into the original object so callers get a complete value.
-  Object.assign(json as object, result.data);
+  // Typed, so the schema and `BackupData` can't drift apart unnoticed.
+  const parsed: BackupData = result.data;
+  Object.assign(json as object, parsed);
   return true;
 }
 

@@ -277,6 +277,137 @@ describe('BackupService', () => {
       };
       expect(validateBackup(bad)).toBe(false);
     });
+
+    describe('record shapes', () => {
+      let warn: jest.SpyInstance;
+
+      beforeEach(() => {
+        warn = jest.spyOn(console, 'warn').mockImplementation(() => {});
+      });
+
+      afterEach(() => {
+        warn.mockRestore();
+      });
+
+      /** SAMPLE_BACKUP with one array in `data` replaced. */
+      function withData(patch: Record<string, unknown>): unknown {
+        return JSON.parse(
+          JSON.stringify({
+            ...SAMPLE_BACKUP,
+            data: { ...SAMPLE_BACKUP.data, ...patch },
+          }),
+        );
+      }
+
+      const note = SAMPLE_BACKUP.data.notes[0];
+
+      it.each([
+        ['a note without an id', { notes: [{ ...note, id: undefined }] }],
+        ['a note with an empty id', { notes: [{ ...note, id: '' }] }],
+        ['a note of an unknown type', { notes: [{ ...note, type: 'video' }] }],
+        ['a note that is not an object', { notes: ['oops'] }],
+        [
+          'a checklist without a name',
+          { checklists: [{ id: 'cl-1', createdAt: 1, isDefault: false }] },
+        ],
+        [
+          'a checklist item without its checklist',
+          { checklistItems: [{ id: 'i-1', text: 'Water', checked: false }] },
+        ],
+        [
+          'an inventory item with a text quantity',
+          {
+            inventoryItems: [
+              {
+                id: 'inv-1',
+                name: 'Rope',
+                category: 'Tools',
+                quantity: 'two',
+                createdAt: 1,
+                updatedAt: 1,
+              },
+            ],
+          },
+        ],
+        [
+          'a pantry item without timestamps',
+          {
+            pantryItems: [
+              { id: 'p-1', name: 'Rice', category: 'Grains', quantity: 1 },
+            ],
+          },
+        ],
+        ['a bookmark without a title', { bookmarks: [{ id: 'b-1' }] }],
+      ])('rejects %s', (_label, patch) => {
+        expect(validateBackup(withData(patch))).toBe(false);
+      });
+
+      it('logs where a rejected file went wrong, not what it held', () => {
+        validateBackup(
+          withData({ notes: [{ ...note, id: undefined, text: 'my secret' }] }),
+        );
+
+        const logged = JSON.stringify(warn.mock.calls);
+        expect(logged).toContain('data.notes.0.id');
+        expect(logged).not.toContain('my secret');
+      });
+
+      it('restores a note with no photos when photoUris is not a list', () => {
+        const backup = withData({
+          notes: [{ ...note, photoUris: 'file:///a.jpg' }],
+        }) as BackupData;
+
+        expect(validateBackup(backup)).toBe(true);
+        expect(backup.data.notes[0].photoUris).toEqual([]);
+      });
+
+      it('accepts null for optional fields and reads it as absent', () => {
+        const backup = withData({
+          notes: [{ ...note, title: null, latitude: null, audioUri: null }],
+          inventoryItems: [
+            {
+              id: 'inv-1',
+              name: 'Rope',
+              category: 'Tools',
+              quantity: 2,
+              unit: null,
+              expirationYear: null,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+        }) as BackupData;
+
+        expect(validateBackup(backup)).toBe(true);
+        expect(backup.data.notes[0].title).toBeUndefined();
+        expect(backup.data.notes[0].latitude).toBeUndefined();
+        expect(backup.data.inventoryItems[0].unit).toBeUndefined();
+      });
+
+      it('accepts 0/1 where SQLite stored a boolean', () => {
+        const backup = withData({
+          checklists: [{ id: 'cl-1', name: 'Bag', createdAt: 1, isDefault: 1 }],
+          checklistItems: [
+            { id: 'i-1', checklistId: 'cl-1', text: 'Water', checked: 0 },
+          ],
+        }) as BackupData;
+
+        expect(validateBackup(backup)).toBe(true);
+        expect(backup.data.checklists[0].isDefault).toBe(true);
+        expect(backup.data.checklistItems[0].checked).toBe(false);
+        expect(backup.data.checklistItems[0].order).toBe(0);
+      });
+
+      it('drops fields it does not know from a record', () => {
+        const backup = withData({
+          bookmarks: [{ id: 'b-1', title: 'CPR', __proto_hack: { x: 1 } }],
+        }) as BackupData;
+
+        expect(validateBackup(backup)).toBe(true);
+        expect(backup.data.bookmarks[0]).not.toHaveProperty('__proto_hack');
+        expect(backup.data.bookmarks[0].title).toBe('CPR');
+      });
+    });
   });
 
   describe('createBackupPreview', () => {

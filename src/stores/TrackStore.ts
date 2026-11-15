@@ -1,5 +1,6 @@
 import { makeAutoObservable, runInAction } from 'mobx';
 import { v4 as uuidv4 } from 'uuid';
+import { z } from 'zod';
 import { SQLiteDatabase } from '../types/database-types';
 
 /**
@@ -36,14 +37,23 @@ export interface Track extends TrackSummary {
   points: TrackPoint[]; // stored as a JSON blob in SQLite
 }
 
+const TrackPointsSchema = z.array(
+  z.object({
+    latitude: z.number(),
+    longitude: z.number(),
+    altitude: z.number().nullable(),
+    timestamp: z.number(),
+  }),
+);
+
 /** `points` column → points. An unreadable column reads as an empty trail. */
-function parsePoints(raw: unknown): TrackPoint[] {
+function parseTrackPoints(raw: unknown): TrackPoint[] {
   if (typeof raw !== 'string') {
     return [];
   }
   try {
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as TrackPoint[]) : [];
+    const parsed = TrackPointsSchema.safeParse(JSON.parse(raw));
+    return parsed.success ? parsed.data : [];
   } catch {
     return [];
   }
@@ -156,7 +166,7 @@ export class TrackStore {
       [id],
     );
     return results.rows.length > 0
-      ? parsePoints(results.rows.item(0).points)
+      ? parseTrackPoints(results.rows.item(0).points)
       : [];
   }
 
@@ -190,7 +200,7 @@ export class TrackStore {
         createdAt: row.createdAt as string,
         durationSeconds: row.durationSeconds as number,
         distanceMeters: row.distanceMeters as number,
-        points: parsePoints(row.points),
+        points: parseTrackPoints(row.points),
       });
     }
     return all;

@@ -233,15 +233,22 @@ describe('TrackStore', () => {
         const { db } = database([
           row('cut-short', '[{"latitude":37.0,"longi'),
           row('not-a-list', '{"latitude":1}'),
+          row('wrong-shape', JSON.stringify([{ lat: 1, lng: 2 }])),
           row('not-text', null),
         ]);
         await store.initDatabase(db);
 
-        expect(store.tracks).toHaveLength(3);
-        for (const id of ['cut-short', 'not-a-list', 'not-text']) {
+        expect(store.tracks).toHaveLength(4);
+        for (const id of [
+          'cut-short',
+          'not-a-list',
+          'wrong-shape',
+          'not-text',
+        ]) {
           expect(await store.getTrackPoints(id)).toEqual([]);
         }
         expect((await store.getAllTracks()).map((t) => t.points)).toEqual([
+          [],
           [],
           [],
           [],
