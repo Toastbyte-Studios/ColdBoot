@@ -5,7 +5,9 @@
 
 import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
+import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
+import { RepeaterSchema } from './repeaterSchema';
 import type {
   CommunicationPlan,
   EmergencyContact,
@@ -29,10 +31,13 @@ import type { Waypoint } from '../stores/WaypointStore';
 export const BACKUP_VERSION = '2.0';
 export const BACKUP_FILE_PREFIX = 'coldboot-backup-';
 
+const currentSessionExportPaths = new Set<string>();
+
 /** All version strings that this app can read. */
 const SUPPORTED_BACKUP_VERSIONS = ['1.0', '2.0'] as const;
 
 export type RestoreMode = 'replace' | 'merge';
+export type BackupExportResult = 'shared' | 'dismissed' | 'unconfirmed';
 
 export interface BackupSettings {
   fontSize: FontSize;
@@ -92,6 +97,88 @@ export interface BackupPreview {
 // ─── Zod schema ──────────────────────────────────────────────────────────────
 
 /**
+ * Record schemas for the arrays in a backup.
+ *
+ * A backup file is the one place the app takes whole records from outside
+ * itself, and restore writes them straight into SQLite and into the stores.
+ * A record of the wrong shape (a `photoUris` that isn't a list, a missing
+ * id) would be stored and then break the screen that renders it on every
+ * launch, so each record is checked here and a file with a bad one is
+ * rejected before anything is written.
+ *
+ * Optional fields accept `null` as well as being absent, and come out as
+ * `undefined` either way, so a file written by another tool or an older
+ * build isn't rejected over the difference.
+ */
+const optionalString = z
+  .string()
+  .nullish()
+  .transform((value) => value ?? undefined);
+const optionalNumber = z
+  .number()
+  .nullish()
+  .transform((value) => value ?? undefined);
+/** SQLite hands booleans back as 0/1; accept either spelling. */
+const booleanLike = z
+  .union([z.boolean(), z.number()])
+  .transform((value) => Boolean(value));
+
+const NoteSchema = z.object({
+  id: z.string().min(1),
+  createdAt: z.number(),
+  latitude: optionalNumber,
+  longitude: optionalNumber,
+  category: z.string(),
+  type: z.enum(['text', 'sketch', 'voice']),
+  title: optionalString,
+  text: optionalString,
+  bookmarked: booleanLike.optional(),
+  sketchDataUri: optionalString,
+  // The files themselves aren't in a backup, so a missing or unreadable
+  // list is no loss: restore the note without attachments.
+  photoUris: z.array(z.string()).catch([]),
+  audioUri: optionalString,
+  transcription: optionalString,
+  duration: optionalNumber,
+});
+
+const ChecklistSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  createdAt: z.number(),
+  isDefault: booleanLike,
+});
+
+const ChecklistItemSchema = z.object({
+  id: z.string().min(1),
+  checklistId: z.string().min(1),
+  text: z.string(),
+  checked: booleanLike,
+  order: z.number().catch(0),
+});
+
+/** Inventory and pantry items share a shape. */
+const StockItemSchema = z.object({
+  id: z.string().min(1),
+  name: z.string(),
+  category: z.string(),
+  quantity: z.number(),
+  unit: optionalString,
+  notes: optionalString,
+  expirationMonth: optionalNumber,
+  expirationYear: optionalNumber,
+  createdAt: z.number(),
+  updatedAt: z.number(),
+});
+
+const BookmarkSchema = z.object({
+  id: z.string().min(1),
+  title: z.string(),
+  category: optionalString,
+  createdAt: optionalNumber,
+});
+
+/**
  * Zod schema for parsing and validating a backup JSON object.
  *
  * New v2.0 fields use `.default()` so that v1.0 backup files
@@ -108,15 +195,15 @@ const BackupDataSchema = z.object({
   backupDate: z.string(),
   createdAt: z.number(),
   data: z.object({
-    notes: z.array(z.any()),
+    notes: z.array(NoteSchema),
     noteCategories: z.array(z.string()),
-    checklists: z.array(z.any()),
-    checklistItems: z.array(z.any()),
-    inventoryItems: z.array(z.any()),
+    checklists: z.array(ChecklistSchema),
+    checklistItems: z.array(ChecklistItemSchema),
+    inventoryItems: z.array(StockItemSchema),
     inventoryCategories: z.array(z.string()),
-    pantryItems: z.array(z.any()),
+    pantryItems: z.array(StockItemSchema),
     pantryCategories: z.array(z.string()),
-    bookmarks: z.array(z.any()),
+    bookmarks: z.array(BookmarkSchema),
     settings: z.object({
       fontSize: z.enum(['small', 'medium', 'large']).catch('small'),
       themeMode: z.enum(['light', 'dark', 'system']).catch('system'),
@@ -195,29 +282,7 @@ const BackupDataSchema = z.object({
       })
       .nullable()
       .default(null),
-    customRepeaters: z
-      .array(
-        z.object({
-          id: z.string(),
-          callSign: z.string(),
-          frequency: z.string(),
-          offset: z.string(),
-          tone: z.string(),
-          mode: z.string(),
-          city: z.string(),
-          state: z.string(),
-          lat: z.number(),
-          lng: z.number(),
-          operationalStatus: z.string(),
-          use: z.string(),
-          notes: z.string(),
-          lastEdited: z.string(),
-          distance: z.number(),
-          emcomm: z.string(),
-          isCustom: z.boolean().optional(),
-        }),
-      )
-      .default([]),
+    customRepeaters: z.array(RepeaterSchema).default([]),
   }),
 });
 
@@ -285,11 +350,22 @@ export function createBackupData(
 export function validateBackup(json: unknown): json is BackupData {
   const result = BackupDataSchema.safeParse(json);
   if (!result.success) {
+    // Where the file went wrong, never what it contained: a backup holds
+    // notes and contacts, and those don't belong in a log.
+    console.warn(
+      'Backup rejected:',
+      result.error.issues
+        .slice(0, 5)
+        .map((issue) => `${issue.path.join('.')}: ${issue.code}`)
+        .join('; '),
+    );
     return false;
   }
   // Backfill any defaults that Zod may have added (e.g. v2.0 fields missing
   // from a v1.0 file) into the original object so callers get a complete value.
-  Object.assign(json as object, result.data);
+  // Typed, so the schema and `BackupData` can't drift apart unnoticed.
+  const parsed: BackupData = result.data;
+  Object.assign(json as object, parsed);
   return true;
 }
 
@@ -369,15 +445,94 @@ export async function readBackupFile(
 }
 
 /**
- * Exports a backup by writing it to a temporary file and opening
- * the native share sheet so the user can save it to Files, email it, etc.
- * Both iOS and Android share the file URI so the filename and extension
- * are preserved by all share targets.
+ * Deletes exported backup files from previous app sessions.
+ *
+ * A backup is plain JSON holding notes, emergency contacts and GPS trails.
+ * `exportBackup` has to write one to disk so the share sheet can hand it
+ * over. Files shared during the current session are kept because a recipient
+ * may still be copying them after the share sheet closes.
+ *
+ * Never throws: failing to tidy up must not block an export or startup.
  */
-export async function exportBackup(backupData: BackupData): Promise<void> {
-  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}.json`;
+export async function purgeExportedBackups(): Promise<void> {
+  try {
+    const files = await RNFS.readDir(RNFS.CachesDirectoryPath);
+    await Promise.all(
+      files
+        .filter(
+          (f) =>
+            f.name.startsWith(BACKUP_FILE_PREFIX) &&
+            f.name.endsWith('.json') &&
+            !f.isDirectory() &&
+            !currentSessionExportPaths.has(f.path),
+        )
+        .map((f) => RNFS.unlink(f.path).catch(() => undefined)),
+    );
+  } catch {
+    // The cache directory may not exist yet; there is nothing to remove.
+  }
+}
+
+/**
+ * Exports a backup by writing it to a unique temporary file and opening
+ * the native share sheet so the user can save it to Files, email it, etc.
+ *
+ * Android uses the native share library because React Native's Share API
+ * reports the chooser as shared even when it is dismissed.
+ *
+ * Dismissed exports are removed immediately. Confirmed and unconfirmed
+ * handoffs are retained until the next app session because a share target
+ * may still be copying the file after the sheet has closed.
+ */
+export async function exportBackup(
+  backupData: BackupData,
+): Promise<BackupExportResult> {
+  await purgeExportedBackups();
+  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}-${uuid()}.json`;
   const destPath = `${RNFS.CachesDirectoryPath}/${filename}`;
   const json = JSON.stringify(backupData, null, 2);
   await RNFS.writeFile(destPath, json, 'utf8');
-  await Share.share({ url: `file://${destPath}`, title: filename });
+  currentSessionExportPaths.add(destPath);
+
+  const discardExport = async () => {
+    currentSessionExportPaths.delete(destPath);
+    await RNFS.unlink(destPath).catch(() => undefined);
+  };
+
+  try {
+    if (Platform.OS === 'android') {
+      const NativeShare = require('react-native-share')
+        .default as typeof import('react-native-share').default;
+      const result = await NativeShare.open({
+        url: `file://${destPath}`,
+        title: filename,
+        type: 'application/json',
+        failOnCancel: false,
+      });
+      if (result.success) {
+        return 'shared';
+      }
+      if (result.dismissedAction) {
+        await discardExport();
+        return 'dismissed';
+      }
+      return 'unconfirmed';
+    }
+
+    const result = await Share.share({
+      url: `file://${destPath}`,
+      title: filename,
+    });
+    if (result.action === Share.dismissedAction) {
+      await discardExport();
+      return 'dismissed';
+    }
+    if (result.action === Share.sharedAction) {
+      return 'shared';
+    }
+    return 'unconfirmed';
+  } catch (error) {
+    await discardExport();
+    throw error;
+  }
 }
