@@ -47,12 +47,15 @@ import { withAlpha } from '../theme/colorUtils';
 import {
   BackupData,
   BackupPreview,
+  collectNoteAttachments,
   createBackupData,
   createBackupPreview,
   exportBackup,
   listBackupFiles,
   readBackupFile,
+  restoreNoteAttachments,
 } from '../utils/backupService';
+import { deleteAttachmentFiles } from '../utils/noteAttachments';
 import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
@@ -256,6 +259,7 @@ export const SettingsModal = observer(
       setIsExporting(true);
       try {
         const bookmarks = await getBookmarks();
+        const attachments = await collectNoteAttachments(coreStore.notes);
         const backupData = createBackupData(
           coreStore.notes,
           coreStore.categories,
@@ -281,6 +285,7 @@ export const SettingsModal = observer(
             ? emergencyPlanStore.communicationPlan
             : null,
           repeaterBookStore.customRepeaters,
+          attachments,
         );
         await exportBackup(backupData);
         await settingsStore.setLastBackupAt(Date.now());
@@ -346,11 +351,29 @@ export const SettingsModal = observer(
           }
 
           // Restore notes and categories
-          await coreStore.importNotesData(
-            data.noteCategories,
-            data.notes,
-            mode,
+          const notesToRestore =
+            mode === 'merge'
+              ? data.notes.filter(
+                  (note) =>
+                    !coreStore.notes.some(
+                      (existing) => existing.id === note.id,
+                    ),
+                )
+              : data.notes;
+          const restored = await restoreNoteAttachments(
+            notesToRestore,
+            data.attachments,
           );
+          try {
+            await coreStore.importNotesData(
+              data.noteCategories,
+              restored.notes,
+              mode,
+            );
+          } catch (error) {
+            await deleteAttachmentFiles(restored.createdUris);
+            throw error;
+          }
 
           // Restore checklists
           await checklistStore.importChecklistsData(
@@ -704,6 +727,11 @@ export const SettingsModal = observer(
                     ? `Last backed up: ${formatBackupDate(settingsStore.lastBackupAt)}`
                     : 'No backup yet'}
                 </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Backups are unencrypted and include note photos and voice
+                  recordings. Older path-only backups cannot recover deleted
+                  files.
+                </RNText>
 
                 <AppButton
                   label="Export Now"
@@ -801,6 +829,21 @@ export const SettingsModal = observer(
                           communication plans,{' '}
                           {backupPreview.customRepeaterCount} custom repeaters
                         </RNText>
+                        {selectedBackup?.data.attachments.length === 0 &&
+                          selectedBackup.data.notes.some(
+                            (note) =>
+                              note !== null &&
+                              typeof note === 'object' &&
+                              ((Array.isArray(note.photoUris) &&
+                                note.photoUris.length > 0) ||
+                                Boolean(note.audioUri)),
+                          ) && (
+                            <RNText style={[styles.previewText, t.mutedText]}>
+                              This backup stores attachment paths only. If a
+                              photo or recording is missing from this device,
+                              the backup cannot recover it.
+                            </RNText>
+                          )}
                         <View style={styles.restoreButtons}>
                           <AppButton
                             label="Replace"
