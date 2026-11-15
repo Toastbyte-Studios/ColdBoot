@@ -41,6 +41,7 @@ import { boundsToGeoJSON } from '../../../../navigation/utils/boundsToGeoJSON';
 import { formatBytes } from '../../../../navigation/utils/formatBytes';
 import { useSettingsStore } from '../../../../stores';
 import { useOfflineDownloadStore } from '../../../../stores/StoreContext';
+import { SPACING } from '../../../../theme/constants';
 import { createOfflineRegionWithSmartName } from './offlinePackNaming';
 
 const RETRY_TIMEOUT_MS = 15_000;
@@ -422,7 +423,10 @@ function DownloadConfirmScreen({
               style={styles.map}
               mapStyle={MAP_STYLE_URL}
               logo={false}
-              attribution={false}
+              // OpenStreetMap's licence asks for the credit on every map
+              // shown, previews included.
+              attribution
+              attributionPosition={{ bottom: SPACING.sm, right: SPACING.sm }}
               accessibilityLabel="Area to download. Pan and zoom to centre it."
               onRegionDidChange={(event) => {
                 const [longitude, latitude] = event.nativeEvent.center;
@@ -478,7 +482,8 @@ function DownloadConfirmScreen({
                 style={styles.map}
                 mapStyle={MAP_STYLE_URL}
                 logo={false}
-                attribution={false}
+                attribution
+                attributionPosition={{ bottom: SPACING.sm, right: SPACING.sm }}
               >
                 {bounds && (
                   <Camera

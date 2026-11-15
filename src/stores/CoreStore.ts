@@ -39,6 +39,13 @@ export class CoreStore {
   /** Battery temperature in °C; Android only, null on iOS or until sampled. */
   batteryTemperatureC: number | null = null;
   batteryEstimateMinutes: number | null = null;
+  /**
+   * Whether `batteryEstimateMinutes` comes from this phone's observed drain
+   * (or charge) rate. False while it is still the built-in baseline of 8
+   * hours from full, or 2 hours to charge, which says nothing about this
+   * device. Screens label the figure as a rough guide until this is true.
+   */
+  batteryEstimateMeasured: boolean = false;
   private lastBatterySample: { level: number; at: number } | null = null;
   private batteryQuickIv: ReturnType<typeof setInterval> | null = null;
   private batterySlowIv: ReturnType<typeof setInterval> | null = null;
@@ -75,6 +82,7 @@ export class CoreStore {
    * @param level - Current battery level (0-1)
    */
   private setChargingFallbackEstimate(level: number): void {
+    this.batteryEstimateMeasured = false;
     if (level >= 0.99) {
       // Battery is full or nearly full while charging
       // Show maximum runtime estimate (8 hours at 100%)
@@ -111,6 +119,11 @@ export class CoreStore {
         power.batteryState === 'full' ||
         power.charging === true;
       runInAction(() => {
+        if (this.isCharging !== null && this.isCharging !== charging) {
+          this.lastBatterySample = null;
+          this.batteryEstimateMinutes = null;
+          this.batteryEstimateMeasured = false;
+        }
         this.batteryLevel = level;
         this.isCharging = charging;
         this.lowPowerMode =
@@ -127,6 +140,7 @@ export class CoreStore {
             const minutesLeft = level / ratePerMin;
             runInAction(() => {
               this.batteryEstimateMinutes = minutesLeft;
+              this.batteryEstimateMeasured = true;
             });
           }
         } else if (dtMin > 0 && charging && dLevel < 0) {
@@ -136,6 +150,7 @@ export class CoreStore {
             const minutesToFull = (1.0 - level) / ratePerMin;
             runInAction(() => {
               this.batteryEstimateMinutes = minutesToFull;
+              this.batteryEstimateMeasured = true;
             });
           }
         } else if (charging) {
@@ -147,6 +162,7 @@ export class CoreStore {
           // Battery increased but not charging - clear estimate
           runInAction(() => {
             this.batteryEstimateMinutes = null;
+            this.batteryEstimateMeasured = false;
           });
         }
       } else {
@@ -159,6 +175,7 @@ export class CoreStore {
           // Baseline: 8 hours at 100% battery
           runInAction(() => {
             this.batteryEstimateMinutes = Math.round(level * 480);
+            this.batteryEstimateMeasured = false;
           });
         }
       }
@@ -198,6 +215,7 @@ export class CoreStore {
           // Fallback baseline 8h at 100%
           runInAction(() => {
             this.batteryEstimateMinutes = Math.round(this.batteryLevel! * 480);
+            this.batteryEstimateMeasured = false;
           });
         }
         this.clearBatteryIntervals();

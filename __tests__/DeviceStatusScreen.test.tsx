@@ -20,6 +20,7 @@ const mockStores = {
     lowPowerMode: false,
     batteryEstimateMinutes: 130,
     retainPreciseGps: jest.fn(() => jest.fn()),
+    batteryEstimateMeasured: true,
     batteryTemperatureC: -2 as number | null,
     storageFree: 40 * GB,
     storageTotal: 128 * GB,

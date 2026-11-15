@@ -138,7 +138,9 @@ function SeasonalOutlookScreen() {
   return (
     <StackScreen
       title="Seasonal Outlook"
-      note="Ensemble estimates, not a precise forecast."
+      // The credit is a condition of the data's licence (CC BY 4.0), so it
+      // sits with the page's note where it is always visible.
+      note="Ensemble estimates, not a precise forecast. Weather data by Open-Meteo.com (ECMWF SEAS5), licensed CC BY 4.0."
     >
       {/* Stale data warning */}
       {weatherStore.isStale && weatherStore.outlook && (

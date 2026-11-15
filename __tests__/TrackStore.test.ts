@@ -123,4 +123,43 @@ describe('TrackStore', () => {
       expect(store.tracks).toHaveLength(1);
     });
   });
+
+  describe('Loading from the database', () => {
+    function databaseWith(rows: Record<string, unknown>[]): SQLiteDatabase {
+      return {
+        executeSql: jest.fn(async (sql: string) => [
+          {
+            rows: {
+              length: sql.startsWith('SELECT') ? rows.length : 0,
+              item: (index: number) => rows[index],
+            },
+          },
+        ]),
+      };
+    }
+
+    const row = (id: string, points: unknown) => ({
+      id,
+      name: `Track ${id}`,
+      createdAt: '2026-11-14T00:00:00.000Z',
+      durationSeconds: 60,
+      distanceMeters: 100,
+      points,
+    });
+
+    it('skips a track whose points cannot be read and keeps the others', async () => {
+      await store.initDatabase(
+        databaseWith([
+          row('good', JSON.stringify(samplePoints)),
+          row('truncated', '[{"latitude":37.0,"longi'),
+          row('wrong-shape', JSON.stringify([{ lat: 1, lng: 2 }])),
+          row('not-text', null),
+          row('also-good', '[]'),
+        ]),
+      );
+
+      expect(store.tracks.map((t) => t.id)).toEqual(['good', 'also-good']);
+      expect(store.tracks[0].points).toEqual(samplePoints);
+    });
+  });
 });

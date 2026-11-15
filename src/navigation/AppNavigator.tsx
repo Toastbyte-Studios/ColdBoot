@@ -3,102 +3,36 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React, { JSX } from 'react';
 import BootSplash from 'react-native-bootsplash';
 import AppShell from '../components/AppShell';
-import CommunicationsModule from '../modules/Communications/CommunicationsModule';
-import CoreModule from '../modules/Core/CoreModule';
-import EarthModule from '../modules/Earth/EarthModule';
-import NavigationModule from '../modules/Navigation/NavigationModule';
-import PrepperModule from '../modules/Prepper/PrepperModule';
-import ReferenceModule from '../modules/Reference/ReferenceModule';
-import BarometricPressureScreen from '../screens/BarometricPressure/BarometricPressureScreen';
-import BarterEstimatorScreen from '../screens/BarterEstimator/BarterEstimatorScreen';
-import ChecklistEntryScreen from '../screens/Checklist/ChecklistEntryScreen';
-import ChecklistScreen from '../screens/Checklist/ChecklistScreen';
-import NewChecklistScreen from '../screens/Checklist/NewChecklistScreen';
-import ColdWeatherScreen from '../screens/ColdWeather/ColdWeatherScreen';
-import SearchScreen from '../screens/Common/SearchScreen';
-import DecibelMeterScreen from '../screens/DecibelMeter/DecibelMeterScreen';
-import DepletionCalculatorScreen from '../screens/DepletionCalculator/DepletionCalculatorScreen';
-import DeviceStatusScreen from '../screens/DeviceStatus/DeviceStatusScreen';
-import DigitalWhistleScreen from '../screens/DigitalWhistle/DigitalWhistleScreen';
-import CommunicationPlanScreen from '../screens/EmergencyPlan/CommunicationPlanScreen';
-import EditEmergencyContactScreen from '../screens/EmergencyPlan/EditEmergencyContactScreen';
-import EditRallyPointScreen from '../screens/EmergencyPlan/EditRallyPointScreen';
-import EmergencyContactsScreen from '../screens/EmergencyPlan/EmergencyContactsScreen';
-import EmergencyPlanScreen from '../screens/EmergencyPlan/EmergencyPlanScreen';
-import NewEmergencyContactScreen from '../screens/EmergencyPlan/NewEmergencyContactScreen';
-import NewRallyPointScreen from '../screens/EmergencyPlan/NewRallyPointScreen';
-import RallyPointsScreen from '../screens/EmergencyPlan/RallyPointsScreen';
-import FlashlightScreen from '../screens/Flashlight/FlashlightScreen';
-import NightvisionScreen from '../screens/Flashlight/NightvisionScreen';
-import GridReferenceScreen from '../screens/GridReference/GridReferenceScreen';
 import HomeScreen from '../screens/HomeScreen/HomeScreen';
-import EditInventoryItemScreen from '../screens/Inventory/EditInventoryItemScreen';
-import InventoryAllItemsScreen from '../screens/Inventory/InventoryAllItemsScreen';
-import InventoryCategoryScreen from '../screens/Inventory/InventoryCategoryScreen';
-import InventoryScreen from '../screens/Inventory/InventoryScreen';
-import ManageInventoryCategoriesScreen from '../screens/Inventory/ManageInventoryCategoriesScreen';
-import NewInventoryItemScreen from '../screens/Inventory/NewInventoryItemScreen';
-import LunarCyclesScreen from '../screens/LunarCycles/LunarCyclesScreen';
-import DownloadConfirmScreen, {
-  type DownloadAreaParams,
-} from '../screens/Map/components/offline/DownloadConfirmScreen';
-import MapScreen from '../screens/Map/MapScreen';
-import AlphaToMorseScreen from '../screens/MorseCode/AlphaToMorseScreen';
-import MorseCodeCheatSheet from '../screens/MorseCode/MorseCodeCheatSheet';
-import MorseCodeScreen from '../screens/MorseCode/MorseCodeScreen';
-import MorseToAlphaScreen from '../screens/MorseCode/MorseToAlphaScreen';
-import MorseTrainerLevelScreen from '../screens/MorseCode/MorseTrainerLevelScreen';
-import MorseTrainerScreen from '../screens/MorseCode/MorseTrainerScreen';
-import NatoPhoneticScreen from '../screens/MorseCode/NatoPhoneticScreen';
-import BookmarkedNotesScreen from '../screens/Notepad/BookmarkedNotesScreen';
-import EditNoteScreen from '../screens/Notepad/EditNoteScreen';
-import ManageCategoriesScreen from '../screens/Notepad/ManageCategoriesScreen';
-import NewNoteScreen from '../screens/Notepad/NewNoteScreen';
-import NotepadScreen from '../screens/Notepad/NotepadScreen';
-import RecentNotesScreen from '../screens/Notepad/RecentNotesScreen';
-import NoteCategoryScreen from '../screens/Notepad/Shared/NoteCategoryScreen';
-import NoteEntryScreen from '../screens/Notepad/Shared/NoteEntryScreen';
-import EditPantryItemScreen from '../screens/Pantry/EditPantryItemScreen';
-import ManagePantryCategoriesScreen from '../screens/Pantry/ManagePantryCategoriesScreen';
-import NewPantryItemScreen from '../screens/Pantry/NewPantryItemScreen';
-import PantryAllItemsScreen from '../screens/Pantry/PantryAllItemsScreen';
-import PantryCategoryScreen from '../screens/Pantry/PantryCategoryScreen';
-import PantryExpirationTrackerScreen from '../screens/Pantry/PantryExpirationTrackerScreen';
-import PantryScreen from '../screens/Pantry/PantryScreen';
-import RadioFrequenciesScreen from '../screens/RadioFrequencies/RadioFrequenciesScreen';
-import RadioFrequencyDetailScreen from '../screens/RadioFrequencies/RadioFrequencyDetailScreen';
-import BookmarkScreen from '../screens/Reference/BookmarkScreen';
-import EmergencyScreen from '../screens/Reference/EmergencyScreen';
-import HealthScreen from '../screens/Reference/HealthScreen';
-import HomePrepScreen from '../screens/Reference/HomePrepScreen';
-import RoadsideScreen from '../screens/Reference/RoadsideScreen';
-import CategoryScreen from '../screens/Reference/Shared/CategoryScreen';
-import EntryScreen from '../screens/Reference/Shared/EntryScreen';
-import SurvivalScreen from '../screens/Reference/SurvivalScreen';
-import ToolsAndKnotsScreen from '../screens/Reference/ToolsAndKnotsScreen';
-import WeatherScreen from '../screens/Reference/WeatherScreen';
-import AddCustomRepeaterScreen from '../screens/RepeaterBook/AddCustomRepeaterScreen';
-import RepeaterBookScreen from '../screens/RepeaterBook/RepeaterBookScreen';
-import RepeaterDetailScreen from '../screens/RepeaterBook/RepeaterDetailScreen';
-import ScenarioBookmarksScreen from '../screens/ScenarioCards/ScenarioBookmarksScreen';
-import ScenarioCardsScreen from '../screens/ScenarioCards/ScenarioCardsScreen';
-import ScenarioCategoryScreen from '../screens/ScenarioCards/ScenarioCategoryScreen';
-import ScenarioDetailScreen from '../screens/ScenarioCards/ScenarioDetailScreen';
-import SeasonalOutlookScreen from '../screens/SeasonalOutlook/SeasonalOutlookScreen';
-import GroundToAirSignalsScreen from '../screens/SignalMirror/GroundToAirSignalsScreen';
-import SkyEventsScreen from '../screens/SkyEvents/SkyEventsScreen';
-import StarMapScreen from '../screens/StarMap/StarMapScreen';
-import SunTimeScreen from '../screens/SunTime/SunTimeScreen';
-import ConversionCategoryScreen from '../screens/UnitConversion/ConversionCategoryScreen';
-import UnitConversionScreen from '../screens/UnitConversion/UnitConversionScreen';
-import VoiceLogScreen from '../screens/VoiceLog/VoiceLogScreen';
 import {
   NavigationHistoryProvider,
   useNavigationHistory,
 } from './NavigationHistoryContext';
 import { navigationRef } from './navigationRef';
+import type { DownloadAreaParams } from '../screens/Map/components/offline/DownloadConfirmScreen';
 
 const Stack = createNativeStackNavigator();
+
+/*
+ * Screens load on first use.
+ *
+ * Every route except Home is registered with `getComponent` and an inline
+ * `require`, not a top-level import with `component`. Importing all of them
+ * here made launch evaluate every screen's module (and everything each one
+ * imports: the map library, the reference data, the audio modules) before
+ * Home could draw. Now a screen's code runs the first time something
+ * navigates to it.
+ *
+ * To add a route, follow the same shape:
+ *
+ *   <Stack.Screen
+ *     name="MyTool"
+ *     getComponent={() => require('../screens/MyTool/MyToolScreen').default}
+ *   />
+ *
+ * The path must be a string literal: Metro resolves `require` at build time.
+ * Home stays a normal import because it is always the first screen.
+ */
 
 /**
  * NavigatorContent is the internal component that uses the NavigationHistory context.
@@ -135,19 +69,55 @@ function NavigatorContent(): JSX.Element {
         >
           <Stack.Screen name="Home" component={HomeScreen} />
           {/* Modules */}
-          <Stack.Screen name="CoreModule" component={CoreModule} />
-          <Stack.Screen name="NavigationModule" component={NavigationModule} />
-          <Stack.Screen name="ReferenceModule" component={ReferenceModule} />
+          <Stack.Screen
+            name="CoreModule"
+            getComponent={() => require('../modules/Core/CoreModule').default}
+          />
+          <Stack.Screen
+            name="NavigationModule"
+            getComponent={() =>
+              require('../modules/Navigation/NavigationModule').default
+            }
+          />
+          <Stack.Screen
+            name="ReferenceModule"
+            getComponent={() =>
+              require('../modules/Reference/ReferenceModule').default
+            }
+          />
           <Stack.Screen
             name="CommunicationsModule"
-            component={CommunicationsModule}
+            getComponent={() =>
+              require('../modules/Communications/CommunicationsModule').default
+            }
           />
-          <Stack.Screen name="PrepperModule" component={PrepperModule} />
-          <Stack.Screen name="EarthModule" component={EarthModule} />
+          <Stack.Screen
+            name="PrepperModule"
+            getComponent={() =>
+              require('../modules/Prepper/PrepperModule').default
+            }
+          />
+          <Stack.Screen
+            name="EarthModule"
+            getComponent={() => require('../modules/Earth/EarthModule').default}
+          />
           {/* Navigation Module Screens */}
-          <Stack.Screen name="MapScreen" component={MapScreen} />
-          <Stack.Screen name="StarMap" component={StarMapScreen} />
-          <Stack.Screen name="GridReference" component={GridReferenceScreen} />
+          <Stack.Screen
+            name="MapScreen"
+            getComponent={() => require('../screens/Map/MapScreen').default}
+          />
+          <Stack.Screen
+            name="StarMap"
+            getComponent={() =>
+              require('../screens/StarMap/StarMapScreen').default
+            }
+          />
+          <Stack.Screen
+            name="GridReference"
+            getComponent={() =>
+              require('../screens/GridReference/GridReferenceScreen').default
+            }
+          />
           <Stack.Screen
             name="DownloadArea"
             options={{
@@ -156,105 +126,264 @@ function NavigatorContent(): JSX.Element {
               gestureDirection: 'vertical',
             }}
           >
-            {({ navigation, route }) => (
-              <DownloadConfirmScreen
-                {...(route.params as DownloadAreaParams | undefined)}
-                onDismiss={() => navigation.goBack()}
-              />
-            )}
+            {({ navigation, route }) => {
+              // Loaded on first use, like the other screens; see `lazy`
+              // note above the navigator.
+              const DownloadConfirmScreen =
+                require('../screens/Map/components/offline/DownloadConfirmScreen').default;
+              return (
+                <DownloadConfirmScreen
+                  {...(route.params as DownloadAreaParams | undefined)}
+                  onDismiss={() => navigation.goBack()}
+                />
+              );
+            }}
           </Stack.Screen>
           {/* Shared */}
-          <Stack.Screen name="Search" component={SearchScreen} />
+          <Stack.Screen
+            name="Search"
+            getComponent={() =>
+              require('../screens/Common/SearchScreen').default
+            }
+          />
           {/* Communications Module */}
-          <Stack.Screen name="MorseCode" component={MorseCodeScreen} />
-          <Stack.Screen name="AlphaToMorse" component={AlphaToMorseScreen} />
-          <Stack.Screen name="MorseToAlpha" component={MorseToAlphaScreen} />
+          <Stack.Screen
+            name="MorseCode"
+            getComponent={() =>
+              require('../screens/MorseCode/MorseCodeScreen').default
+            }
+          />
+          <Stack.Screen
+            name="AlphaToMorse"
+            getComponent={() =>
+              require('../screens/MorseCode/AlphaToMorseScreen').default
+            }
+          />
+          <Stack.Screen
+            name="MorseToAlpha"
+            getComponent={() =>
+              require('../screens/MorseCode/MorseToAlphaScreen').default
+            }
+          />
           <Stack.Screen
             name="MorseCodeCheatSheet"
-            component={MorseCodeCheatSheet}
+            getComponent={() =>
+              require('../screens/MorseCode/MorseCodeCheatSheet').default
+            }
           />
-          <Stack.Screen name="MorseTrainer" component={MorseTrainerScreen} />
+          <Stack.Screen
+            name="MorseTrainer"
+            getComponent={() =>
+              require('../screens/MorseCode/MorseTrainerScreen').default
+            }
+          />
           <Stack.Screen
             name="MorseTrainerLevel"
-            component={MorseTrainerLevelScreen}
+            getComponent={() =>
+              require('../screens/MorseCode/MorseTrainerLevelScreen').default
+            }
           />
-          <Stack.Screen name="NatoPhonetic" component={NatoPhoneticScreen} />
+          <Stack.Screen
+            name="NatoPhonetic"
+            getComponent={() =>
+              require('../screens/MorseCode/NatoPhoneticScreen').default
+            }
+          />
           <Stack.Screen
             name="RadioFrequencies"
-            component={RadioFrequenciesScreen}
+            getComponent={() =>
+              require('../screens/RadioFrequencies/RadioFrequenciesScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="RadioFrequencyDetail"
-            component={RadioFrequencyDetailScreen}
+            getComponent={() =>
+              require('../screens/RadioFrequencies/RadioFrequencyDetailScreen')
+                .default
+            }
           />
-          <Stack.Screen name="RepeaterBook" component={RepeaterBookScreen} />
+          <Stack.Screen
+            name="RepeaterBook"
+            getComponent={() =>
+              require('../screens/RepeaterBook/RepeaterBookScreen').default
+            }
+          />
           <Stack.Screen
             name="RepeaterDetail"
-            component={RepeaterDetailScreen}
+            getComponent={() =>
+              require('../screens/RepeaterBook/RepeaterDetailScreen').default
+            }
           />
           <Stack.Screen
             name="AddCustomRepeater"
-            component={AddCustomRepeaterScreen}
+            getComponent={() =>
+              require('../screens/RepeaterBook/AddCustomRepeaterScreen').default
+            }
           />
-          <Stack.Screen name="DecibelMeter" component={DecibelMeterScreen} />
+          <Stack.Screen
+            name="DecibelMeter"
+            getComponent={() =>
+              require('../screens/DecibelMeter/DecibelMeterScreen').default
+            }
+          />
           <Stack.Screen
             name="DigitalWhistle"
-            component={DigitalWhistleScreen}
+            getComponent={() =>
+              require('../screens/DigitalWhistle/DigitalWhistleScreen').default
+            }
           />
           <Stack.Screen
             name="GroundToAirSignals"
-            component={GroundToAirSignalsScreen}
+            getComponent={() =>
+              require('../screens/SignalMirror/GroundToAirSignalsScreen')
+                .default
+            }
           />
           {/* Core Module */}
-          <Stack.Screen name="ColdWeather" component={ColdWeatherScreen} />
-          <Stack.Screen name="DeviceStatus" component={DeviceStatusScreen} />
-          <Stack.Screen name="Flashlight" component={FlashlightScreen} />
+          <Stack.Screen
+            name="ColdWeather"
+            getComponent={() =>
+              require('../screens/ColdWeather/ColdWeatherScreen').default
+            }
+          />
+          <Stack.Screen
+            name="DeviceStatus"
+            getComponent={() =>
+              require('../screens/DeviceStatus/DeviceStatusScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Flashlight"
+            getComponent={() =>
+              require('../screens/Flashlight/FlashlightScreen').default
+            }
+          />
           <Stack.Screen
             name="Nightvision"
-            component={NightvisionScreen}
+            getComponent={() =>
+              require('../screens/Flashlight/NightvisionScreen').default
+            }
             options={{ presentation: 'modal' }}
           />
-          <Stack.Screen name="VoiceLog" component={VoiceLogScreen} />
-          <Stack.Screen name="NewNote" component={NewNoteScreen} />
-          <Stack.Screen name="EditNote" component={EditNoteScreen} />
-          <Stack.Screen name="Notepad" component={NotepadScreen} />
-          <Stack.Screen name="NoteCategory" component={NoteCategoryScreen} />
-          <Stack.Screen name="NoteEntry" component={NoteEntryScreen} />
-          <Stack.Screen name="RecentNotes" component={RecentNotesScreen} />
+          <Stack.Screen
+            name="VoiceLog"
+            getComponent={() =>
+              require('../screens/VoiceLog/VoiceLogScreen').default
+            }
+          />
+          <Stack.Screen
+            name="NewNote"
+            getComponent={() =>
+              require('../screens/Notepad/NewNoteScreen').default
+            }
+          />
+          <Stack.Screen
+            name="EditNote"
+            getComponent={() =>
+              require('../screens/Notepad/EditNoteScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Notepad"
+            getComponent={() =>
+              require('../screens/Notepad/NotepadScreen').default
+            }
+          />
+          <Stack.Screen
+            name="NoteCategory"
+            getComponent={() =>
+              require('../screens/Notepad/Shared/NoteCategoryScreen').default
+            }
+          />
+          <Stack.Screen
+            name="NoteEntry"
+            getComponent={() =>
+              require('../screens/Notepad/Shared/NoteEntryScreen').default
+            }
+          />
+          <Stack.Screen
+            name="RecentNotes"
+            getComponent={() =>
+              require('../screens/Notepad/RecentNotesScreen').default
+            }
+          />
           <Stack.Screen
             name="BookmarkedNotes"
-            component={BookmarkedNotesScreen}
+            getComponent={() =>
+              require('../screens/Notepad/BookmarkedNotesScreen').default
+            }
           />
           <Stack.Screen
             name="ManageCategories"
-            component={ManageCategoriesScreen}
+            getComponent={() =>
+              require('../screens/Notepad/ManageCategoriesScreen').default
+            }
           />
-          <Stack.Screen name="Checklist" component={ChecklistScreen} />
-          <Stack.Screen name="NewChecklist" component={NewChecklistScreen} />
+          <Stack.Screen
+            name="Checklist"
+            getComponent={() =>
+              require('../screens/Checklist/ChecklistScreen').default
+            }
+          />
+          <Stack.Screen
+            name="NewChecklist"
+            getComponent={() =>
+              require('../screens/Checklist/NewChecklistScreen').default
+            }
+          />
           <Stack.Screen
             name="ChecklistEntry"
-            component={ChecklistEntryScreen}
+            getComponent={() =>
+              require('../screens/Checklist/ChecklistEntryScreen').default
+            }
           />
           {/* Earth Module */}
-          <Stack.Screen name="SunTime" component={SunTimeScreen} />
-          <Stack.Screen name="LunarCycles" component={LunarCyclesScreen} />
+          <Stack.Screen
+            name="SunTime"
+            getComponent={() =>
+              require('../screens/SunTime/SunTimeScreen').default
+            }
+          />
+          <Stack.Screen
+            name="LunarCycles"
+            getComponent={() =>
+              require('../screens/LunarCycles/LunarCyclesScreen').default
+            }
+          />
           <Stack.Screen
             name="BarometricPressure"
-            component={BarometricPressureScreen}
+            getComponent={() =>
+              require('../screens/BarometricPressure/BarometricPressureScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="SeasonalOutlook"
-            component={SeasonalOutlookScreen}
+            getComponent={() =>
+              require('../screens/SeasonalOutlook/SeasonalOutlookScreen')
+                .default
+            }
           />
-          <Stack.Screen name="SkyEvents" component={SkyEventsScreen} />
+          <Stack.Screen
+            name="SkyEvents"
+            getComponent={() =>
+              require('../screens/SkyEvents/SkyEventsScreen').default
+            }
+          />
           {/* Unit Conversion */}
           <Stack.Screen
             name="UnitConversion"
-            component={UnitConversionScreen}
+            getComponent={() =>
+              require('../screens/UnitConversion/UnitConversionScreen').default
+            }
           />
           <Stack.Screen
             name="ConversionCategory"
-            component={ConversionCategoryScreen}
+            getComponent={() =>
+              require('../screens/UnitConversion/ConversionCategoryScreen')
+                .default
+            }
             options={{
               presentation: 'modal',
               gestureEnabled: true,
@@ -262,107 +391,240 @@ function NavigatorContent(): JSX.Element {
             }}
           />
           {/* Inventory */}
-          <Stack.Screen name="Inventory" component={InventoryScreen} />
+          <Stack.Screen
+            name="Inventory"
+            getComponent={() =>
+              require('../screens/Inventory/InventoryScreen').default
+            }
+          />
           <Stack.Screen
             name="InventoryCategory"
-            component={InventoryCategoryScreen}
+            getComponent={() =>
+              require('../screens/Inventory/InventoryCategoryScreen').default
+            }
           />
           <Stack.Screen
             name="InventoryAllItems"
-            component={InventoryAllItemsScreen}
+            getComponent={() =>
+              require('../screens/Inventory/InventoryAllItemsScreen').default
+            }
           />
           <Stack.Screen
             name="ManageInventoryCategories"
-            component={ManageInventoryCategoriesScreen}
+            getComponent={() =>
+              require('../screens/Inventory/ManageInventoryCategoriesScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="NewInventoryItem"
-            component={NewInventoryItemScreen}
+            getComponent={() =>
+              require('../screens/Inventory/NewInventoryItemScreen').default
+            }
           />
           <Stack.Screen
             name="EditInventoryItem"
-            component={EditInventoryItemScreen}
+            getComponent={() =>
+              require('../screens/Inventory/EditInventoryItemScreen').default
+            }
           />
           {/* Pantry */}
-          <Stack.Screen name="Pantry" component={PantryScreen} />
+          <Stack.Screen
+            name="Pantry"
+            getComponent={() =>
+              require('../screens/Pantry/PantryScreen').default
+            }
+          />
           <Stack.Screen
             name="PantryCategory"
-            component={PantryCategoryScreen}
+            getComponent={() =>
+              require('../screens/Pantry/PantryCategoryScreen').default
+            }
           />
           <Stack.Screen
             name="PantryAllItems"
-            component={PantryAllItemsScreen}
+            getComponent={() =>
+              require('../screens/Pantry/PantryAllItemsScreen').default
+            }
           />
           <Stack.Screen
             name="PantryExpirationTracker"
-            component={PantryExpirationTrackerScreen}
+            getComponent={() =>
+              require('../screens/Pantry/PantryExpirationTrackerScreen').default
+            }
           />
           <Stack.Screen
             name="ManagePantryCategories"
-            component={ManagePantryCategoriesScreen}
+            getComponent={() =>
+              require('../screens/Pantry/ManagePantryCategoriesScreen').default
+            }
           />
-          <Stack.Screen name="NewPantryItem" component={NewPantryItemScreen} />
+          <Stack.Screen
+            name="NewPantryItem"
+            getComponent={() =>
+              require('../screens/Pantry/NewPantryItemScreen').default
+            }
+          />
           <Stack.Screen
             name="EditPantryItem"
-            component={EditPantryItemScreen}
+            getComponent={() =>
+              require('../screens/Pantry/EditPantryItemScreen').default
+            }
           />
           {/* Prepper Module */}
           <Stack.Screen
             name="DepletionCalculator"
-            component={DepletionCalculatorScreen}
+            getComponent={() =>
+              require('../screens/DepletionCalculator/DepletionCalculatorScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="BarterEstimator"
-            component={BarterEstimatorScreen}
+            getComponent={() =>
+              require('../screens/BarterEstimator/BarterEstimatorScreen')
+                .default
+            }
           />
           {/* Reference Module */}
-          <Stack.Screen name="Bookmark" component={BookmarkScreen} />
-          <Stack.Screen name="Category" component={CategoryScreen} />
-          <Stack.Screen name="Entry" component={EntryScreen} />
-          <Stack.Screen name="Health" component={HealthScreen} />
-          <Stack.Screen name="Survival" component={SurvivalScreen} />
-          <Stack.Screen name="Weather" component={WeatherScreen} />
-          <Stack.Screen name="ToolsAndKnots" component={ToolsAndKnotsScreen} />
-          <Stack.Screen name="Emergency" component={EmergencyScreen} />
-          <Stack.Screen name="Roadside" component={RoadsideScreen} />
-          <Stack.Screen name="HomePrep" component={HomePrepScreen} />
+          <Stack.Screen
+            name="Bookmark"
+            getComponent={() =>
+              require('../screens/Reference/BookmarkScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Category"
+            getComponent={() =>
+              require('../screens/Reference/Shared/CategoryScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Entry"
+            getComponent={() =>
+              require('../screens/Reference/Shared/EntryScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Health"
+            getComponent={() =>
+              require('../screens/Reference/HealthScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Survival"
+            getComponent={() =>
+              require('../screens/Reference/SurvivalScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Weather"
+            getComponent={() =>
+              require('../screens/Reference/WeatherScreen').default
+            }
+          />
+          <Stack.Screen
+            name="ToolsAndKnots"
+            getComponent={() =>
+              require('../screens/Reference/ToolsAndKnotsScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Emergency"
+            getComponent={() =>
+              require('../screens/Reference/EmergencyScreen').default
+            }
+          />
+          <Stack.Screen
+            name="Roadside"
+            getComponent={() =>
+              require('../screens/Reference/RoadsideScreen').default
+            }
+          />
+          <Stack.Screen
+            name="HomePrep"
+            getComponent={() =>
+              require('../screens/Reference/HomePrepScreen').default
+            }
+          />
           {/* Scenario Cards */}
-          <Stack.Screen name="ScenarioCards" component={ScenarioCardsScreen} />
+          <Stack.Screen
+            name="ScenarioCards"
+            getComponent={() =>
+              require('../screens/ScenarioCards/ScenarioCardsScreen').default
+            }
+          />
           <Stack.Screen
             name="ScenarioCategory"
-            component={ScenarioCategoryScreen}
+            getComponent={() =>
+              require('../screens/ScenarioCards/ScenarioCategoryScreen').default
+            }
           />
           <Stack.Screen
             name="ScenarioDetail"
-            component={ScenarioDetailScreen}
+            getComponent={() =>
+              require('../screens/ScenarioCards/ScenarioDetailScreen').default
+            }
           />
           <Stack.Screen
             name="ScenarioBookmarks"
-            component={ScenarioBookmarksScreen}
+            getComponent={() =>
+              require('../screens/ScenarioCards/ScenarioBookmarksScreen')
+                .default
+            }
           />
           {/* Emergency Planner */}
-          <Stack.Screen name="EmergencyPlan" component={EmergencyPlanScreen} />
+          <Stack.Screen
+            name="EmergencyPlan"
+            getComponent={() =>
+              require('../screens/EmergencyPlan/EmergencyPlanScreen').default
+            }
+          />
           <Stack.Screen
             name="EmergencyContacts"
-            component={EmergencyContactsScreen}
+            getComponent={() =>
+              require('../screens/EmergencyPlan/EmergencyContactsScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="NewEmergencyContact"
-            component={NewEmergencyContactScreen}
+            getComponent={() =>
+              require('../screens/EmergencyPlan/NewEmergencyContactScreen')
+                .default
+            }
           />
           <Stack.Screen
             name="EditEmergencyContact"
-            component={EditEmergencyContactScreen}
+            getComponent={() =>
+              require('../screens/EmergencyPlan/EditEmergencyContactScreen')
+                .default
+            }
           />
-          <Stack.Screen name="RallyPoints" component={RallyPointsScreen} />
-          <Stack.Screen name="NewRallyPoint" component={NewRallyPointScreen} />
+          <Stack.Screen
+            name="RallyPoints"
+            getComponent={() =>
+              require('../screens/EmergencyPlan/RallyPointsScreen').default
+            }
+          />
+          <Stack.Screen
+            name="NewRallyPoint"
+            getComponent={() =>
+              require('../screens/EmergencyPlan/NewRallyPointScreen').default
+            }
+          />
           <Stack.Screen
             name="EditRallyPoint"
-            component={EditRallyPointScreen}
+            getComponent={() =>
+              require('../screens/EmergencyPlan/EditRallyPointScreen').default
+            }
           />
           <Stack.Screen
             name="CommunicationPlan"
-            component={CommunicationPlanScreen}
+            getComponent={() =>
+              require('../screens/EmergencyPlan/CommunicationPlanScreen')
+                .default
+            }
           />
         </Stack.Navigator>
       </AppShell>
