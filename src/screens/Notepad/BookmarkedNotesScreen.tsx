@@ -4,11 +4,12 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import { useProgressiveList } from '../../hooks/useProgressiveList';
@@ -58,6 +59,18 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
     sortedNotes,
     settings.noteSortOrder,
   );
+  const renderNote = useCallback(
+    (note: (typeof sortedNotes)[number], _index: number, isLast: boolean) => (
+      <ModuleRow
+        title={note.title || '(Untitled)'}
+        icon="document-text-outline"
+        variant="tool"
+        showSeparator={!isLast}
+        onPress={() => navigation.navigate('NoteEntry', { note })}
+      />
+    ),
+    [navigation],
+  );
 
   return (
     <StackScreen title="Bookmarked Notes">
@@ -70,16 +83,7 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {visibleSortedNotes.map((note, index) => (
-            <ModuleRow
-              key={note.id}
-              title={note.title || '(Untitled)'}
-              icon="document-text-outline"
-              variant="tool"
-              showSeparator={index < visibleSortedNotes.length - 1}
-              onPress={() => navigation.navigate('NoteEntry', { note })}
-            />
-          ))}
+          <ProgressiveList items={visibleSortedNotes} renderItem={renderNote} />
         </GroupContainer>
       )}
     </StackScreen>

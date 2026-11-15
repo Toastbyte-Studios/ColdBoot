@@ -1,5 +1,6 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
+import ProgressiveList from '../src/components/ProgressiveList';
 import { useProgressiveList } from '../src/hooks/useProgressiveList';
 
 const range = (n: number) => Array.from({ length: n }, (_, i) => i);
@@ -146,5 +147,45 @@ describe('useProgressiveList', () => {
     });
 
     expect(frames.size).toBe(0);
+  });
+
+  it('only rerenders existing rows when their separator changes', async () => {
+    const renderCounts = new Map<number, number>();
+    const renderItem = (
+      item: { id: string; value: number },
+      _index: number,
+      isLast: boolean,
+    ) => {
+      renderCounts.set(item.value, (renderCounts.get(item.value) ?? 0) + 1);
+      return <>{`${item.value}:${isLast}`}</>;
+    };
+
+    function ListProbe({
+      items,
+    }: {
+      items: readonly { id: string; value: number }[];
+    }) {
+      const visible = useProgressiveList(items);
+      return <ProgressiveList items={visible} renderItem={renderItem} />;
+    }
+    const items = range(100).map((value) => ({
+      id: String(value),
+      value,
+    }));
+
+    await ReactTestRenderer.act(async () => {
+      ReactTestRenderer.create(<ListProbe items={items} />);
+    });
+    expect(renderCounts.size).toBe(30);
+    expect(renderCounts.get(0)).toBe(1);
+    expect(renderCounts.get(29)).toBe(1);
+
+    await nextFrame();
+    expect(renderCounts.size).toBe(90);
+    expect(renderCounts.get(0)).toBe(1);
+    expect(renderCounts.get(28)).toBe(1);
+    expect(renderCounts.get(29)).toBe(2);
+    expect(renderCounts.get(30)).toBe(1);
+    expect(renderCounts.get(89)).toBe(1);
   });
 });
