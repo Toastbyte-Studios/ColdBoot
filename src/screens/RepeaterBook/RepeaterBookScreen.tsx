@@ -56,7 +56,10 @@ const RepeaterBookScreen = observer((): JSX.Element => {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
   // Drawn a batch at a time: a metro area can list several hundred.
-  const visibleRepeaters = useProgressiveList(store.filteredRepeaters);
+  const visibleRepeaters = useProgressiveList(
+    store.filteredRepeaters,
+    JSON.stringify([store.selectedMode, store.onAirOnly, store.emergencyOnly]),
+  );
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
   useEffect(() => {

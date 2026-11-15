@@ -42,7 +42,7 @@ export default observer(function InventoryAllItemsScreen(): React.JSX.Element {
   const COLORS = useTheme();
   const allItems = inventory.allItemsSorted;
   // Drawn a batch at a time, so a long list doesn't hold up the screen.
-  const visibleAllItems = useProgressiveList(allItems);
+  const visibleAllItems = useProgressiveList(allItems, 'all-items');
 
   const handleItemPress = (item: InventoryItem) => {
     navigation.navigate('EditInventoryItem', { item });

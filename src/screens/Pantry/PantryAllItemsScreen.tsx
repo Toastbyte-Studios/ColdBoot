@@ -42,7 +42,7 @@ export default observer(function PantryAllItemsScreen(): React.JSX.Element {
   const COLORS = useTheme();
   const allItems = pantry.allItemsSorted;
   // Drawn a batch at a time, so a long list doesn't hold up the screen.
-  const visibleAllItems = useProgressiveList(allItems);
+  const visibleAllItems = useProgressiveList(allItems, 'all-items');
 
   const handleItemPress = (item: PantryItem) => {
     navigation.navigate('EditPantryItem', { item });

@@ -66,7 +66,10 @@ export default observer(function NoteCategoryScreen(): React.JSX.Element {
     [notes, settings.noteSortOrder],
   );
   // Drawn a batch at a time, so a long list doesn't hold up the screen.
-  const visibleSortedNotes = useProgressiveList(sortedNotes);
+  const visibleSortedNotes = useProgressiveList(
+    sortedNotes,
+    JSON.stringify([category, settings.noteSortOrder]),
+  );
 
   return (
     <StackScreen title={category}>

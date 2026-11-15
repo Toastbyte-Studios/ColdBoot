@@ -12,8 +12,14 @@ describe('useProgressiveList', () => {
   let cancel: jest.SpyInstance;
   let shown: readonly number[];
 
-  function Probe({ items }: { items: readonly number[] }) {
-    shown = useProgressiveList(items);
+  function Probe({
+    items,
+    resetKey,
+  }: {
+    items: readonly number[];
+    resetKey?: unknown;
+  }) {
+    shown = useProgressiveList(items, resetKey);
     return null;
   }
 
@@ -82,24 +88,53 @@ describe('useProgressiveList', () => {
     expect(frames.size).toBe(0);
   });
 
-  it('carries on when the list grows and copes when it shrinks', async () => {
+  it('preserves progress when the result genuinely grows', async () => {
     const tree = await mount(range(40));
     await nextFrame();
     expect(shown).toHaveLength(40);
 
-    const shorter = range(5);
     await ReactTestRenderer.act(async () => {
-      tree.update(<Probe items={shorter} />);
+      tree.update(<Probe items={range(100)} />);
     });
-    expect(shown).toBe(shorter);
-
-    await ReactTestRenderer.act(async () => {
-      tree.update(<Probe items={range(500)} />);
-    });
-    // Everything already shown stays; the new rows arrive in batches.
     expect(shown).toHaveLength(40);
+
     await nextFrame();
     expect(shown).toHaveLength(100);
+  });
+
+  it('restarts batching when the result is replaced', async () => {
+    const tree = await mount(range(200));
+    await nextFrame();
+    await nextFrame();
+    await nextFrame();
+    expect(shown).toHaveLength(200);
+
+    await ReactTestRenderer.act(async () => {
+      tree.update(<Probe items={range(1000).map((item) => item + 500)} />);
+    });
+    expect(shown).toHaveLength(30);
+
+    await nextFrame();
+    expect(shown).toHaveLength(90);
+  });
+
+  it('restarts batching when filters change and are cleared', async () => {
+    const items = range(200);
+    const tree = await mount(items);
+    await nextFrame();
+    await nextFrame();
+    await nextFrame();
+    expect(shown).toHaveLength(200);
+
+    await ReactTestRenderer.act(async () => {
+      tree.update(<Probe items={items.slice(0, 10)} resetKey="filtered" />);
+    });
+    expect(shown).toHaveLength(10);
+
+    await ReactTestRenderer.act(async () => {
+      tree.update(<Probe items={items} resetKey="all" />);
+    });
+    expect(shown).toHaveLength(30);
   });
 
   it('cancels a pending frame on unmount', async () => {

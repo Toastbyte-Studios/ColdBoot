@@ -68,7 +68,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
     [items],
   );
   // Drawn a batch at a time, so a long list doesn't hold up the screen.
-  const visibleSortedItems = useProgressiveList(sortedItems);
+  const visibleSortedItems = useProgressiveList(sortedItems, category);
 
   const handleAddItem = () => {
     if (!isValidCategory) {

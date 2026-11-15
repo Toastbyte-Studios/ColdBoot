@@ -45,7 +45,10 @@ export default observer(function RecentNotesScreen() {
     [core.recentNotesTop20, settings.noteSortOrder],
   );
   // Drawn a batch at a time, so a long list doesn't hold up the screen.
-  const visibleSortedNotes = useProgressiveList(sortedNotes);
+  const visibleSortedNotes = useProgressiveList(
+    sortedNotes,
+    settings.noteSortOrder,
+  );
 
   return (
     <StackScreen title="Recent Notes">
