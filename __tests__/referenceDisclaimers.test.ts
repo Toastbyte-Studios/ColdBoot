@@ -1,4 +1,5 @@
 import healthData from '../src/data/health.json';
+import scenarioCardsData from '../src/data/scenarioCards.json';
 import {
   ALL_REFERENCE_ENTRIES,
   findReferenceDisclaimer,
@@ -18,6 +19,18 @@ describe('findReferenceDisclaimer', () => {
     const missing = ALL_REFERENCE_ENTRIES.filter(
       (entry) => !findReferenceDisclaimer(entry.id),
     ).map((entry) => entry.id);
+
+    expect(missing).toEqual([]);
+  });
+
+  it('has the scenario disclaimer for every scenario card opened from Search', () => {
+    const missing = scenarioCardsData.entries
+      .filter(
+        (entry) =>
+          findReferenceDisclaimer(entry.id) !==
+          scenarioCardsData.metadata.disclaimer,
+      )
+      .map((entry) => entry.id);
 
     expect(missing).toEqual([]);
   });

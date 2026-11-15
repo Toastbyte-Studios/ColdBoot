@@ -2,6 +2,7 @@ import emergencyData from '../data/emergency.json';
 import healthData from '../data/health.json';
 import homePrepData from '../data/homePrep.json';
 import roadsideData from '../data/roadside.json';
+import scenarioCardsData from '../data/scenarioCards.json';
 import survivalData from '../data/survival.json';
 import toolsData from '../data/tools.json';
 import weatherData from '../data/weather.json';
@@ -35,13 +36,14 @@ export function findReferenceEntry(id: string): ReferenceEntryType | null {
 
 /** Each reference book's entries with the disclaimer its dataset carries. */
 const BOOKS: readonly {
-  entries: readonly ReferenceEntryType[];
+  entries: readonly Pick<ReferenceEntryType, 'id'>[];
   disclaimer?: string;
 }[] = [
   { entries: emergencyData.entries, ...emergencyData.metadata },
   { entries: healthData.entries, ...healthData.metadata },
   { entries: homePrepData.entries, ...homePrepData.metadata },
   { entries: roadsideData.entries, ...roadsideData.metadata },
+  { entries: scenarioCardsData.entries, ...scenarioCardsData.metadata },
   { entries: survivalData.entries, ...survivalData.metadata },
   { entries: toolsData.entries, ...toolsData.metadata },
   { entries: weatherData.entries, ...weatherData.metadata },
