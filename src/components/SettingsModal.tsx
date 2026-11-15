@@ -284,8 +284,8 @@ export const SettingsModal = observer(
         );
         // Only a backup that left the app counts: dismissing the share sheet
         // saves nothing, and "Last backed up" must not say otherwise.
-        const shared = await exportBackup(backupData);
-        if (shared) {
+        const exportResult = await exportBackup(backupData);
+        if (exportResult === 'shared') {
           await settingsStore.setLastBackupAt(Date.now());
         }
       } catch (error) {

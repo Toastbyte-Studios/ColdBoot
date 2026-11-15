@@ -2,14 +2,20 @@
  * @format
  */
 
-import { Share } from 'react-native';
+import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
+import NativeShare from 'react-native-share';
 import {
   BACKUP_VERSION,
   BackupData,
   exportBackup,
   purgeExportedBackups,
 } from '../src/utils/backupService';
+
+jest.mock('react-native-share', () => ({
+  __esModule: true,
+  default: { open: jest.fn() },
+}));
 
 const BACKUP: BackupData = {
   version: BACKUP_VERSION,
@@ -39,8 +45,6 @@ const BACKUP: BackupData = {
   },
 };
 
-const EXPORT_PATH = '/tmp/cache/coldboot-backup-2026-11-14.json';
-
 function cacheEntry(name: string, directory = false) {
   return {
     name,
@@ -52,12 +56,15 @@ function cacheEntry(name: string, directory = false) {
 const readDir = RNFS.readDir as jest.Mock;
 const unlink = RNFS.unlink as jest.Mock;
 const writeFile = RNFS.writeFile as jest.Mock;
+const nativeShareOpen = NativeShare.open as jest.Mock;
 
 describe('backup export', () => {
   let share: jest.SpyInstance;
+  const originalPlatformOS = Platform.OS;
 
   beforeEach(() => {
     jest.clearAllMocks();
+    Platform.OS = 'ios';
     readDir.mockResolvedValue([]);
     unlink.mockResolvedValue(undefined);
     share = jest.spyOn(Share, 'share');
@@ -65,6 +72,7 @@ describe('backup export', () => {
 
   afterEach(() => {
     share.mockRestore();
+    Platform.OS = originalPlatformOS;
   });
 
   describe('purgeExportedBackups', () => {
@@ -99,36 +107,42 @@ describe('backup export', () => {
   });
 
   describe('exportBackup', () => {
-    it('clears earlier exports, writes the file and reports a completed share', async () => {
+    it('clears stale exports and reports a completed iOS share', async () => {
       readDir.mockResolvedValue([
         cacheEntry('coldboot-backup-2026-10-01.json'),
       ]);
       share.mockResolvedValue({ action: Share.sharedAction });
 
-      await expect(exportBackup(BACKUP)).resolves.toBe(true);
+      await expect(exportBackup(BACKUP)).resolves.toBe('shared');
 
       expect(unlink).toHaveBeenCalledWith(
         '/tmp/cache/coldboot-backup-2026-10-01.json',
       );
+      const exportPath = writeFile.mock.calls[0][0];
+      expect(exportPath).toMatch(
+        /^\/tmp\/cache\/coldboot-backup-2026-11-14-[\w-]+\.json$/,
+      );
       expect(writeFile).toHaveBeenCalledWith(
-        EXPORT_PATH,
+        exportPath,
         expect.any(String),
         'utf8',
       );
       expect(share).toHaveBeenCalledWith({
-        url: `file://${EXPORT_PATH}`,
-        title: 'coldboot-backup-2026-11-14.json',
+        url: `file://${exportPath}`,
+        title: expect.stringMatching(
+          /^coldboot-backup-2026-11-14-[\w-]+\.json$/,
+        ),
       });
-      // Left for the next purge: a share target may still be copying it.
-      expect(unlink).not.toHaveBeenCalledWith(EXPORT_PATH);
+      expect(unlink).not.toHaveBeenCalledWith(exportPath);
+      expect(nativeShareOpen).not.toHaveBeenCalled();
     });
 
     it('reports a dismissed share sheet and removes the file at once', async () => {
       share.mockResolvedValue({ action: Share.dismissedAction });
 
-      await expect(exportBackup(BACKUP)).resolves.toBe(false);
+      await expect(exportBackup(BACKUP)).resolves.toBe('dismissed');
 
-      expect(unlink).toHaveBeenCalledWith(EXPORT_PATH);
+      expect(unlink).toHaveBeenCalledWith(writeFile.mock.calls[0][0]);
     });
 
     it('removes the file and rethrows when sharing fails', async () => {
@@ -136,7 +150,89 @@ describe('backup export', () => {
 
       await expect(exportBackup(BACKUP)).rejects.toThrow('share unavailable');
 
-      expect(unlink).toHaveBeenCalledWith(EXPORT_PATH);
+      expect(unlink).toHaveBeenCalledWith(writeFile.mock.calls[0][0]);
+    });
+
+    it('preserves earlier exports while a share target may still be copying', async () => {
+      const writtenPaths: string[] = [];
+      readDir.mockImplementation(async () =>
+        writtenPaths.map((path) =>
+          cacheEntry(path.substring(path.lastIndexOf('/') + 1)),
+        ),
+      );
+      writeFile.mockImplementation(async (path: string) => {
+        writtenPaths.push(path);
+      });
+
+      let finishFirstShare!: (result: { action: string }) => void;
+      const firstShare = new Promise<{ action: string }>((resolve) => {
+        finishFirstShare = resolve;
+      });
+      let notifyFirstShare!: () => void;
+      const firstShareStarted = new Promise<void>((resolve) => {
+        notifyFirstShare = resolve;
+      });
+      share
+        .mockImplementationOnce(() => {
+          notifyFirstShare();
+          return firstShare;
+        })
+        .mockResolvedValueOnce({ action: Share.sharedAction });
+
+      const firstExport = exportBackup(BACKUP);
+      await firstShareStarted;
+      const firstPath = writeFile.mock.calls[0][0];
+
+      await expect(exportBackup(BACKUP)).resolves.toBe('shared');
+      const secondPath = writeFile.mock.calls[1][0];
+
+      expect(secondPath).not.toBe(firstPath);
+      expect(unlink).not.toHaveBeenCalledWith(firstPath);
+
+      finishFirstShare({ action: Share.sharedAction });
+      await expect(firstExport).resolves.toBe('shared');
+    });
+
+    it('reports Android chooser cancellation and removes the file', async () => {
+      Platform.OS = 'android';
+      nativeShareOpen.mockResolvedValue({
+        success: false,
+        dismissedAction: true,
+        message: 'User did not share',
+      });
+
+      await expect(exportBackup(BACKUP)).resolves.toBe('dismissed');
+
+      const exportPath = writeFile.mock.calls[0][0];
+      expect(nativeShareOpen).toHaveBeenCalledWith({
+        url: `file://${exportPath}`,
+        title: expect.any(String),
+        type: 'application/json',
+        failOnCancel: false,
+      });
+      expect(unlink).toHaveBeenCalledWith(exportPath);
+      expect(share).not.toHaveBeenCalled();
+    });
+
+    it('reports an Android target selection as shared', async () => {
+      Platform.OS = 'android';
+      nativeShareOpen.mockResolvedValue({
+        success: true,
+        message: 'com.example.target',
+      });
+
+      await expect(exportBackup(BACKUP)).resolves.toBe('shared');
+
+      expect(unlink).not.toHaveBeenCalledWith(writeFile.mock.calls[0][0]);
+    });
+
+    it('does not treat an unconfirmed Android handoff as a completed backup', async () => {
+      Platform.OS = 'android';
+      nativeShareOpen.mockResolvedValue({ success: false, message: '' });
+
+      await expect(exportBackup(BACKUP)).resolves.toBe('unconfirmed');
+
+      expect(unlink).not.toHaveBeenCalledWith(writeFile.mock.calls[0][0]);
     });
   });
 });
