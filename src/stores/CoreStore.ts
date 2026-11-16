@@ -68,6 +68,10 @@ export class CoreStore {
   private gpsIv: ReturnType<typeof setInterval> | null = null;
   /** How often GPS is polled; Cold mode lengthens it. */
   gpsIntervalMs: number = GPS_INTERVAL_MS;
+  /** How many screens currently need full-accuracy fixes. */
+  private preciseGpsHolders = 0;
+  private gpsPollingGeneration = 0;
+  private gpsRequestGeneration = 0;
 
   /**
    * Sets a fallback battery estimate for charging devices.
@@ -286,32 +290,97 @@ export class CoreStore {
   };
 
   /**
-   * Attempts to retrieve the current GPS position using the Geolocation API.
+   * Asks for full-accuracy fixes for as long as a screen that shows the
+   * position itself is in front (Device Status, the Navigation module).
+   * Returns the function that gives the request up; see `gpsGetFix` for
+   * what the app does the rest of the time. Takes a precise fix at once so
+   * the screen doesn't open on a coarse one.
+   */
+  retainPreciseGps(): () => void {
+    this.preciseGpsHolders += 1;
+    if (this.preciseGpsHolders === 1 && this.gpsIv) {
+      this.gpsGetFix();
+    }
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      runInAction(() => {
+        this.preciseGpsHolders -= 1;
+      });
+    };
+  }
+
+  /**
+   * Takes one position fix and stores it in `lastFix`.
    *
-   * On success, updates `lastFix` with the position and clears any location error.
-   * On failure, sets `locationError` with the error message.
+   * This runs on a timer for as long as the app is open, and nearly
+   * everything that reads `lastFix` only needs to know roughly where the
+   * phone is: sun and moon times, the hemisphere, the Seasonal Outlook, the
+   * nearest repeater. So the routine poll asks for a low-power fix and
+   * accepts one as old as the poll interval, which lets the OS answer from
+   * what it already knows instead of powering the GPS receiver up every
+   * minute. Full accuracy is used only while a screen has asked for it
+   * through `retainPreciseGps`.
    *
-   * Uses high accuracy, a timeout of 15 seconds, and allows cached positions up to 5 seconds old.
+   * A low-power request can fail where there is no cell or Wi-Fi signal to
+   * place the phone by, which is exactly where this app is meant to work,
+   * so a failed one is retried at full accuracy before an error is shown.
    */
   private gpsGetFix = () => {
+    const requestGeneration = ++this.gpsRequestGeneration;
+    this.readPosition(
+      this.preciseGpsHolders > 0,
+      this.gpsPollingGeneration,
+      requestGeneration,
+    );
+  };
+
+  private readPosition(
+    precise: boolean,
+    pollingGeneration: number,
+    requestGeneration: number,
+  ): void {
     Geolocation.getCurrentPosition(
       (pos) => {
+        if (
+          pollingGeneration !== this.gpsPollingGeneration ||
+          requestGeneration !== this.gpsRequestGeneration
+        ) {
+          return;
+        }
         runInAction(() => {
           this.lastFix = pos;
           this.locationError = null;
         });
       },
       (err) => {
+        if (
+          pollingGeneration !== this.gpsPollingGeneration ||
+          requestGeneration !== this.gpsRequestGeneration
+        ) {
+          return;
+        }
+        const denied = err.code === LOCATION_PERMISSION_DENIED_CODE;
+        if (!precise && !denied) {
+          this.readPosition(true, pollingGeneration, requestGeneration);
+          return;
+        }
         runInAction(() => {
-          this.locationError =
-            err.code === LOCATION_PERMISSION_DENIED_CODE
-              ? LOCATION_PERMISSION_DENIED
-              : err.message;
+          this.locationError = denied
+            ? LOCATION_PERMISSION_DENIED
+            : err.message;
         });
       },
-      { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 },
+      precise
+        ? { enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 }
+        : {
+            enableHighAccuracy: false,
+            timeout: 15000,
+            maximumAge: this.gpsIntervalMs,
+          },
     );
-  };
+  }
 
   /**
    * Starts polling for GPS location updates.
@@ -325,6 +394,7 @@ export class CoreStore {
    * @returns {Promise<void>} Resolves when polling is started or an error is handled.
    */
   private async startGpsPolling(): Promise<void> {
+    const pollingGeneration = ++this.gpsPollingGeneration;
     if (Platform.OS === 'android' && this.locationRequestedThisForeground) {
       const [fineGranted, coarseGranted] = await Promise.all([
         PermissionsAndroid.check(
@@ -334,6 +404,7 @@ export class CoreStore {
           PermissionsAndroid.PERMISSIONS.ACCESS_COARSE_LOCATION,
         ),
       ]);
+      if (pollingGeneration !== this.gpsPollingGeneration) return;
       if (!fineGranted && !coarseGranted) {
         return;
       }
@@ -343,6 +414,7 @@ export class CoreStore {
     }
 
     const auth = await requestForegroundLocationPermission();
+    if (pollingGeneration !== this.gpsPollingGeneration) return;
     if (auth === 'granted') {
       runInAction(() => {
         this.locationError = null;
@@ -379,6 +451,7 @@ export class CoreStore {
    * @private
    */
   private stopGpsPolling() {
+    this.gpsPollingGeneration += 1;
     if (this.gpsIv) clearInterval(this.gpsIv);
     this.gpsIv = null;
   }
