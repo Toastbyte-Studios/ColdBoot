@@ -39,8 +39,10 @@
 	<string>This app uses the camera to take photos for your notes and for the flashlight.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Cold Boot uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>Cold Boot uses your location to show where you are on the map, keep recording a trail while the screen is locked, and show local sun and moon times and the seasonal weather outlook.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>We use your location to show the last GPS fix on the Device Status screen.</string>
+	<string>Cold Boot uses your location to show where you are on the map, keep recording a trail while the screen is locked, and show local sun and moon times and the seasonal weather outlook.</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>We need microphone access to record voice logs for emergency documentation.</string>
 	<key>NSMotionUsageDescription</key>
