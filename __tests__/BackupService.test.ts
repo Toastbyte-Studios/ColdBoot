@@ -2,13 +2,18 @@
  * @format
  */
 
+import RNFS from 'react-native-fs';
 import {
   BACKUP_VERSION,
   BackupData,
+  collectNoteAttachments,
   createBackupData,
   createBackupPreview,
+  restoreNoteAttachments,
   validateBackup,
 } from '../src/utils/backupService';
+
+const DOCS = '/tmp/documents';
 
 const SAMPLE_BACKUP: BackupData = {
   version: BACKUP_VERSION,
@@ -157,10 +162,18 @@ const SAMPLE_BACKUP: BackupData = {
         isCustom: true,
       },
     ],
+    attachments: [],
   },
 };
 
 describe('BackupService', () => {
+  beforeEach(() => {
+    (RNFS.readFile as jest.Mock).mockReset();
+    (RNFS.readFile as jest.Mock).mockResolvedValue('Y29udGVudA==');
+    (RNFS.writeFile as jest.Mock).mockReset();
+    (RNFS.writeFile as jest.Mock).mockResolvedValue(undefined);
+  });
+
   describe('validateBackup', () => {
     it('should return true for a valid backup object', () => {
       expect(validateBackup(SAMPLE_BACKUP)).toBe(true);
@@ -208,6 +221,8 @@ describe('BackupService', () => {
         .communicationPlan;
       delete (legacyBackup.data as Partial<typeof legacyBackup.data>)
         .customRepeaters;
+      delete (legacyBackup.data as Partial<typeof legacyBackup.data>)
+        .attachments;
 
       expect(validateBackup(legacyBackup)).toBe(true);
       expect(legacyBackup.data.waypoints).toEqual([]);
@@ -216,6 +231,7 @@ describe('BackupService', () => {
       expect(legacyBackup.data.rallyPoints).toEqual([]);
       expect(legacyBackup.data.communicationPlan).toBeNull();
       expect(legacyBackup.data.customRepeaters).toEqual([]);
+      expect(legacyBackup.data.attachments).toEqual([]);
     });
 
     it('should accept a backup without shortcuts in settings', () => {
@@ -274,6 +290,22 @@ describe('BackupService', () => {
       const bad = {
         ...SAMPLE_BACKUP,
         data: { ...SAMPLE_BACKUP.data, settings: undefined },
+      };
+      expect(validateBackup(bad)).toBe(false);
+    });
+
+    it('should reject malformed attachment contents', () => {
+      const bad = {
+        ...SAMPLE_BACKUP,
+        data: {
+          ...SAMPLE_BACKUP.data,
+          attachments: [
+            {
+              uris: [`file://${DOCS}/photo_123_abc123.jpg`],
+              contentBase64: 'bad',
+            },
+          ],
+        },
       };
       expect(validateBackup(bad)).toBe(false);
     });
@@ -530,6 +562,93 @@ describe('BackupService', () => {
         'nav_map',
         'core_voice_log',
       ]);
+    });
+  });
+
+  describe('note attachment backup', () => {
+    it('includes the contents of owned attachments once per local file', async () => {
+      const photoUri = `file://${DOCS}/photo_123_abc123.jpg`;
+      const backupAttachments = await collectNoteAttachments([
+        {
+          ...SAMPLE_BACKUP.data.notes[0],
+          photoUris: [
+            photoUri,
+            `${DOCS}/photo_123_abc123.jpg`,
+            `${DOCS}/coldboot-backup-2026-11-15.json`,
+          ],
+          audioUri: 'content://external/audio',
+        },
+      ]);
+
+      expect(backupAttachments).toEqual([
+        {
+          uris: [photoUri, `${DOCS}/photo_123_abc123.jpg`],
+          contentBase64: 'Y29udGVudA==',
+        },
+      ]);
+      expect(RNFS.readFile).toHaveBeenCalledTimes(1);
+      expect(RNFS.readFile).toHaveBeenCalledWith(
+        `${DOCS}/photo_123_abc123.jpg`,
+        'base64',
+      );
+    });
+
+    it('does not map attachment contents from unverified imported paths', async () => {
+      const backupUri = `${DOCS}/coldboot-backup-2026-11-15.json`;
+      const { notes, createdUris } = await restoreNoteAttachments(
+        [
+          {
+            ...SAMPLE_BACKUP.data.notes[0],
+            photoUris: [backupUri],
+          },
+        ],
+        [{ uris: [backupUri], contentBase64: 'YXR0YWNobWVudA==' }],
+      );
+
+      expect(createdUris).toEqual([]);
+      expect(notes[0].photoUris).toEqual([backupUri]);
+      expect(RNFS.writeFile).not.toHaveBeenCalled();
+    });
+
+    it('restores attachment contents to owned paths and rewrites note URIs', async () => {
+      const oldPhotoUri =
+        'file:///old/container/Documents/photo_123_abc123.jpg';
+      const oldAudioUri = `${DOCS}/voice-log_123e4567-e89b-42d3-a456-426614174000.m4a`;
+      const { notes, createdUris } = await restoreNoteAttachments(
+        [
+          {
+            ...SAMPLE_BACKUP.data.notes[0],
+            photoUris: [oldPhotoUri],
+            audioUri: oldAudioUri,
+          },
+        ],
+        [
+          { uris: [oldPhotoUri], contentBase64: 'cGhvdG8=' },
+          { uris: [oldAudioUri], contentBase64: 'YXVkaW8=' },
+        ],
+      );
+
+      expect(createdUris).toHaveLength(2);
+      expect(notes[0].photoUris).toEqual([createdUris[0]]);
+      expect(notes[0].audioUri).toBe(createdUris[1]);
+      expect(createdUris[0]).toMatch(
+        new RegExp(`^file://${DOCS}/note-attachment-.+\\.jpg$`),
+      );
+      expect(createdUris[1]).toMatch(
+        new RegExp(`^file://${DOCS}/note-attachment-.+\\.m4a$`),
+      );
+      expect(RNFS.writeFile).toHaveBeenNthCalledWith(
+        1,
+        createdUris[0].slice('file://'.length),
+        'cGhvdG8=',
+        'base64',
+      );
+      expect(RNFS.writeFile).toHaveBeenNthCalledWith(
+        2,
+        createdUris[1].slice('file://'.length),
+        'YXVkaW8=',
+        'base64',
+      );
     });
   });
 });

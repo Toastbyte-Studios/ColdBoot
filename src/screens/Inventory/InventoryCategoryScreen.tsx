@@ -1,13 +1,15 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useInventoryStore } from '../../stores';
 import { InventoryItem } from '../../stores/InventoryStore';
@@ -66,14 +68,27 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
       ),
     [items],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedItems = useProgressiveList(sortedItems, category);
 
   const handleAddItem = () => {
     navigation.navigate('NewInventoryItem', { category });
   };
 
-  const handleItemPress = (item: InventoryItem) => {
-    navigation.navigate('EditInventoryItem', { item });
-  };
+  const renderItem = useCallback(
+    (item: InventoryItem, _index: number, isLast: boolean) => (
+      <ModuleRow
+        title={item.name}
+        icon="cube-outline"
+        subtitle={formatItemSubtitle(item, category)}
+        value={formatItemQuantity(item)}
+        variant="tool"
+        showSeparator={!isLast}
+        onPress={() => navigation.navigate('EditInventoryItem', { item })}
+      />
+    ),
+    [category, navigation],
+  );
 
   return (
     <StackScreen
@@ -93,18 +108,7 @@ export default observer(function InventoryCategoryScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedItems.map((item, index) => (
-            <ModuleRow
-              key={item.id}
-              title={item.name}
-              icon="cube-outline"
-              subtitle={formatItemSubtitle(item, category)}
-              value={formatItemQuantity(item)}
-              variant="tool"
-              showSeparator={index < sortedItems.length - 1}
-              onPress={() => handleItemPress(item)}
-            />
-          ))}
+          <ProgressiveList items={visibleSortedItems} renderItem={renderItem} />
         </GroupContainer>
       )}
     </StackScreen>

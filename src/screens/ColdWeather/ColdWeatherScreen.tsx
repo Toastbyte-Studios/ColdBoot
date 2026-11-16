@@ -42,17 +42,24 @@ function formatMinutes(minutes: number): string {
   return mins === 0 ? `${hrs} hr` : `${hrs} hr ${mins} min`;
 }
 
-/** One line for the battery card: level, and charging or time left. */
+/**
+ * One line for the battery card: level, and charging or time left.
+ *
+ * `measured` is false while the time is still the store's fixed baseline
+ * rather than this phone's observed drain; the line then says so.
+ */
 export function batterySummary(
   level: number | null,
   charging: boolean | null,
   minutesLeft: number | null,
+  measured: boolean,
 ): string {
   if (level == null) return 'Checking battery…';
   const pct = `${Math.round(level * 100)}%`;
   if (charging) return `${pct} · charging`;
   if (minutesLeft == null) return pct;
-  return `${pct} · about ${formatMinutes(minutesLeft)} left`;
+  const time = `${pct} · about ${formatMinutes(minutesLeft)} left`;
+  return measured ? time : `${time} (rough guide)`;
 }
 
 /**
@@ -134,12 +141,14 @@ const ColdWeatherScreen = observer(() => {
               core.batteryLevel,
               core.isCharging,
               core.batteryEstimateMinutes,
+              core.batteryEstimateMeasured,
             )}`}
           >
             {batterySummary(
               core.batteryLevel,
               core.isCharging,
               core.batteryEstimateMinutes,
+              core.batteryEstimateMeasured,
             )}
           </Text>
           <Text style={[styles.batteryNote, { color: COLORS.MUTED }]}>

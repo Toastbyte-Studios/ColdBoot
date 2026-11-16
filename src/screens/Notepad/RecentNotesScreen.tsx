@@ -1,11 +1,13 @@
 import { observer } from 'mobx-react-lite';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import IconButton from '../../components/IconButton';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
@@ -43,6 +45,93 @@ export default observer(function RecentNotesScreen() {
     () => sortNotes(core.recentNotesTop20, settings.noteSortOrder),
     [core.recentNotesTop20, settings.noteSortOrder],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedNotes = useProgressiveList(
+    sortedNotes,
+    settings.noteSortOrder,
+  );
+  const rowStates = visibleSortedNotes.map((note) => expandedId === note.id);
+  const renderNote = useCallback(
+    (
+      note: (typeof sortedNotes)[number],
+      _index: number,
+      isLast: boolean,
+      state: unknown,
+    ) => {
+      const isExpanded = state === true;
+      return (
+        <Touchable
+          accessibilityRole="button"
+          accessibilityState={{ expanded: isExpanded }}
+          onPress={() =>
+            setExpandedId((current) => (current === note.id ? null : note.id))
+          }
+        >
+          <View
+            style={[
+              styles.itemRow,
+              { borderBottomColor: COLORS.SECONDARY_ACCENT },
+              isLast && styles.lastItemRow,
+            ]}
+          >
+            <Text
+              style={[styles.itemTitle, { color: COLORS.PRIMARY_DARK }]}
+              numberOfLines={1}
+              ellipsizeMode="tail"
+            >
+              {(note.title || '(Untitled)').slice(0, MAX_TITLE_LENGTH)}
+            </Text>
+            {isExpanded ? (
+              <Text style={[styles.itemBody, { color: COLORS.PRIMARY_DARK }]}>
+                {note.text || ''}
+              </Text>
+            ) : (
+              <Text
+                style={[styles.itemBody, { color: COLORS.PRIMARY_DARK }]}
+                numberOfLines={3}
+                ellipsizeMode="tail"
+              >
+                {note.text || ''}
+              </Text>
+            )}
+            {!isExpanded && note.text ? (
+              <Text style={[styles.moreHint, { color: COLORS.PRIMARY_DARK }]}>
+                Show more…
+              </Text>
+            ) : null}
+            <View style={styles.actionsRow}>
+              <Text style={[styles.itemMeta, { color: COLORS.PRIMARY_DARK }]}>
+                {formatDateTime(new Date(note.createdAt))} • {note.category}
+              </Text>
+              <IconButton
+                name="trash-outline"
+                size={18}
+                color={COLORS.PRIMARY_DARK}
+                accessibilityLabel="Delete note"
+                style={styles.noteButton}
+                onPress={(event) => {
+                  event.stopPropagation();
+                  Alert.alert(
+                    'Delete Note',
+                    'Are you sure you want to delete this note?',
+                    [
+                      { text: 'Cancel', style: 'cancel' },
+                      {
+                        text: 'Delete',
+                        style: 'destructive',
+                        onPress: () => core.deleteNote(note.id),
+                      },
+                    ],
+                  );
+                }}
+              />
+            </View>
+          </View>
+        </Touchable>
+      );
+    },
+    [COLORS, core],
+  );
 
   return (
     <StackScreen title="Recent Notes">
@@ -63,85 +152,11 @@ export default observer(function RecentNotesScreen() {
             },
           ]}
         >
-          {sortedNotes.map((note, index) => (
-            <Touchable
-              key={note.id}
-              accessibilityRole="button"
-              accessibilityState={{ expanded: expandedId === note.id }}
-              onPress={() =>
-                setExpandedId((current) =>
-                  current === note.id ? null : note.id,
-                )
-              }
-            >
-              <View
-                style={[
-                  styles.itemRow,
-                  { borderBottomColor: COLORS.SECONDARY_ACCENT },
-                  index === sortedNotes.length - 1 && styles.lastItemRow,
-                ]}
-              >
-                <Text
-                  style={[styles.itemTitle, { color: COLORS.PRIMARY_DARK }]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {(note.title || '(Untitled)').slice(0, MAX_TITLE_LENGTH)}
-                </Text>
-                {expandedId === note.id ? (
-                  <Text
-                    style={[styles.itemBody, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {note.text || ''}
-                  </Text>
-                ) : (
-                  <Text
-                    style={[styles.itemBody, { color: COLORS.PRIMARY_DARK }]}
-                    numberOfLines={3}
-                    ellipsizeMode="tail"
-                  >
-                    {note.text || ''}
-                  </Text>
-                )}
-                {expandedId !== note.id && note.text ? (
-                  <Text
-                    style={[styles.moreHint, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    Show more…
-                  </Text>
-                ) : null}
-                <View style={styles.actionsRow}>
-                  <Text
-                    style={[styles.itemMeta, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {formatDateTime(new Date(note.createdAt))} • {note.category}
-                  </Text>
-                  <IconButton
-                    name="trash-outline"
-                    size={18}
-                    color={COLORS.PRIMARY_DARK}
-                    accessibilityLabel="Delete note"
-                    style={styles.noteButton}
-                    onPress={(event) => {
-                      event.stopPropagation();
-                      Alert.alert(
-                        'Delete Note',
-                        'Are you sure you want to delete this note?',
-                        [
-                          { text: 'Cancel', style: 'cancel' },
-                          {
-                            text: 'Delete',
-                            style: 'destructive',
-                            onPress: () => core.deleteNote(note.id),
-                          },
-                        ],
-                      );
-                    }}
-                  />
-                </View>
-              </View>
-            </Touchable>
-          ))}
+          <ProgressiveList
+            items={visibleSortedNotes}
+            rowStates={rowStates}
+            renderItem={renderNote}
+          />
         </View>
       )}
     </StackScreen>

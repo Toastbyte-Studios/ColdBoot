@@ -47,12 +47,15 @@ import { withAlpha } from '../theme/colorUtils';
 import {
   BackupData,
   BackupPreview,
+  collectNoteAttachments,
   createBackupData,
   createBackupPreview,
   exportBackup,
   listBackupFiles,
   readBackupFile,
+  restoreNoteAttachments,
 } from '../utils/backupService';
+import { deleteAttachmentFiles } from '../utils/noteAttachments';
 import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
@@ -256,6 +259,7 @@ export const SettingsModal = observer(
       setIsExporting(true);
       try {
         const bookmarks = await getBookmarks();
+        const attachments = await collectNoteAttachments(coreStore.notes);
         const backupData = createBackupData(
           coreStore.notes,
           coreStore.categories,
@@ -282,9 +286,14 @@ export const SettingsModal = observer(
             ? emergencyPlanStore.communicationPlan
             : null,
           repeaterBookStore.customRepeaters,
+          attachments,
         );
-        await exportBackup(backupData);
-        await settingsStore.setLastBackupAt(Date.now());
+        // Only a backup that left the app counts: dismissing the share sheet
+        // saves nothing, and "Last backed up" must not say otherwise.
+        const exportResult = await exportBackup(backupData);
+        if (exportResult === 'shared') {
+          await settingsStore.setLastBackupAt(Date.now());
+        }
       } catch (error) {
         Alert.alert(
           'Export Failed',
@@ -347,11 +356,29 @@ export const SettingsModal = observer(
           }
 
           // Restore notes and categories
-          await coreStore.importNotesData(
-            data.noteCategories,
-            data.notes,
-            mode,
+          const notesToRestore =
+            mode === 'merge'
+              ? data.notes.filter(
+                  (note) =>
+                    !coreStore.notes.some(
+                      (existing) => existing.id === note.id,
+                    ),
+                )
+              : data.notes;
+          const restored = await restoreNoteAttachments(
+            notesToRestore,
+            data.attachments,
           );
+          try {
+            await coreStore.importNotesData(
+              data.noteCategories,
+              restored.notes,
+              mode,
+            );
+          } catch (error) {
+            await deleteAttachmentFiles(restored.createdUris);
+            throw error;
+          }
 
           // Restore checklists
           await checklistStore.importChecklistsData(
@@ -705,6 +732,12 @@ export const SettingsModal = observer(
                     ? `Last backed up: ${formatBackupDate(settingsStore.lastBackupAt)}`
                     : 'No backup yet'}
                 </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Backups are unencrypted and include your notes, emergency
+                  contacts, GPS trails, photos and voice recordings. Older
+                  path-only backups cannot recover deleted attachments. Save
+                  backups somewhere only you can reach.
+                </RNText>
 
                 <AppButton
                   label="Export Now"
@@ -802,6 +835,21 @@ export const SettingsModal = observer(
                           communication plans,{' '}
                           {backupPreview.customRepeaterCount} custom repeaters
                         </RNText>
+                        {selectedBackup?.data.attachments.length === 0 &&
+                          selectedBackup.data.notes.some(
+                            (note) =>
+                              note !== null &&
+                              typeof note === 'object' &&
+                              ((Array.isArray(note.photoUris) &&
+                                note.photoUris.length > 0) ||
+                                Boolean(note.audioUri)),
+                          ) && (
+                            <RNText style={[styles.previewText, t.mutedText]}>
+                              This backup stores attachment paths only. If a
+                              photo or recording is missing from this device,
+                              the backup cannot recover it.
+                            </RNText>
+                          )}
                         <View style={styles.restoreButtons}>
                           <AppButton
                             label="Replace"
@@ -875,11 +923,27 @@ export const SettingsModal = observer(
               {/* ── Attributions ───────────────────────────────────────── */}
               <GroupLabel>ATTRIBUTIONS</GroupLabel>
               <View style={[styles.group, t.groupThemed, styles.groupPadded]}>
+                {/* Each licence here requires its credit to be shown in
+                    the app. Knot authors are listed per image in
+                    src/assets/images/reference/knots/CREDITS.md; keep the
+                    two in step. */}
                 <RNText style={[styles.rowSubtitle, t.mutedText]}>
-                  Knot diagrams sourced from Wikimedia Commons contributors,
-                  licensed under CC BY-SA 3.0
-                  (https://creativecommons.org/licenses/by-sa/3.0/) except where
-                  noted as Public Domain.
+                  Knot photographs by Cyrus Andiron and WetCanvas, from
+                  Wikimedia Commons (https://commons.wikimedia.org/), licensed
+                  under CC BY-SA 3.0
+                  (https://creativecommons.org/licenses/by-sa/3.0/). Resized and
+                  converted to WebP. The overhand knot photograph is in the
+                  public domain.
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Maps © OpenMapTiles and © OpenStreetMap contributors
+                  (https://www.openstreetmap.org/copyright), served by
+                  OpenFreeMap.
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Seasonal Outlook weather data by Open-Meteo.com, from the
+                  ECMWF SEAS5 model, licensed under CC BY 4.0
+                  (https://creativecommons.org/licenses/by/4.0/).
                 </RNText>
               </View>
 

@@ -5,7 +5,14 @@
 
 import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
+import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
+import {
+  attachmentUris,
+  deleteAttachmentFiles,
+  isNoteAttachmentUri,
+  resolveOwnedAttachmentPath,
+} from './noteAttachments';
 import { RepeaterSchema } from './repeaterSchema';
 import type {
   CommunicationPlan,
@@ -27,13 +34,18 @@ import type {
 import type { Track } from '../stores/TrackStore';
 import type { Waypoint } from '../stores/WaypointStore';
 
-export const BACKUP_VERSION = '2.0';
+export const BACKUP_VERSION = '3.0';
 export const BACKUP_FILE_PREFIX = 'coldboot-backup-';
 
+const currentSessionExportPaths = new Set<string>();
+
 /** All version strings that this app can read. */
-const SUPPORTED_BACKUP_VERSIONS = ['1.0', '2.0'] as const;
+const SUPPORTED_BACKUP_VERSIONS = ['1.0', '2.0', '3.0'] as const;
+const BASE64_PATTERN =
+  /^(?:[A-Za-z0-9+/]{4})*(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?$/;
 
 export type RestoreMode = 'replace' | 'merge';
+export type BackupExportResult = 'shared' | 'dismissed' | 'unconfirmed';
 
 export interface BackupSettings {
   fontSize: FontSize;
@@ -41,6 +53,11 @@ export interface BackupSettings {
   noteSortOrder: NoteSortOrder;
   measurementSystem?: MeasurementSystem;
   shortcuts?: string[];
+}
+
+export interface BackupAttachment {
+  uris: string[];
+  contentBase64: string;
 }
 
 /**
@@ -68,6 +85,8 @@ export interface BackupData {
     rallyPoints: RallyPoint[];
     communicationPlan: CommunicationPlan | null;
     customRepeaters: Repeater[];
+    // v3.0 fields
+    attachments: BackupAttachment[];
   };
 }
 
@@ -177,7 +196,7 @@ const BookmarkSchema = z.object({
 /**
  * Zod schema for parsing and validating a backup JSON object.
  *
- * New v2.0 fields use `.default()` so that v1.0 backup files
+ * Newer fields use `.default()` so that older backup files
  * (which omit those fields) are automatically backfilled with empty
  * arrays / null rather than being rejected.
  */
@@ -279,6 +298,14 @@ const BackupDataSchema = z.object({
       .nullable()
       .default(null),
     customRepeaters: z.array(RepeaterSchema).default([]),
+    attachments: z
+      .array(
+        z.object({
+          uris: z.array(z.string().min(1).refine(isNoteAttachmentUri)),
+          contentBase64: z.string().regex(BASE64_PATTERN),
+        }),
+      )
+      .default([]),
   }),
 });
 
@@ -304,6 +331,7 @@ export function createBackupData(
   rallyPoints: RallyPoint[] = [],
   communicationPlan: CommunicationPlan | null = null,
   customRepeaters: Repeater[] = [],
+  attachments: BackupAttachment[] = [],
 ): BackupData {
   const now = new Date();
   // Use local time components so the date matches the user's local calendar day
@@ -330,7 +358,92 @@ export function createBackupData(
       rallyPoints,
       communicationPlan,
       customRepeaters,
+      attachments,
     },
+  };
+}
+
+/**
+ * Reads note attachments from app-owned storage for inclusion in a backup.
+ * Files outside Documents are omitted; unreadable owned files fail the export
+ * rather than silently producing a backup that appears complete.
+ */
+export async function collectNoteAttachments(
+  notes: Note[],
+): Promise<BackupAttachment[]> {
+  const files = new Map<string, { uris: Set<string>; contentBase64: string }>();
+  for (const note of notes) {
+    for (const uri of attachmentUris(note)) {
+      const path = resolveOwnedAttachmentPath(uri);
+      if (!path) {
+        continue;
+      }
+      const existing = files.get(path);
+      if (existing) {
+        existing.uris.add(uri);
+      } else {
+        files.set(path, {
+          uris: new Set([uri]),
+          contentBase64: await RNFS.readFile(path, 'base64'),
+        });
+      }
+    }
+  }
+  return [...files.values()].map(({ uris, contentBase64 }) => ({
+    uris: [...uris],
+    contentBase64,
+  }));
+}
+
+/**
+ * Materializes archived attachment contents in this install's Documents
+ * directory and updates the restored notes to point at the new local files.
+ */
+export async function restoreNoteAttachments(
+  notes: Note[],
+  attachments: BackupAttachment[],
+): Promise<{ notes: Note[]; createdUris: string[] }> {
+  const restoredUris = new Map<string, string>();
+  const referencedUris = new Set(notes.flatMap(attachmentUris));
+  const createdUris: string[] = [];
+  try {
+    for (const attachment of attachments) {
+      const pendingUris = attachment.uris.filter(
+        (uri) =>
+          referencedUris.has(uri) &&
+          isNoteAttachmentUri(uri) &&
+          !restoredUris.has(uri),
+      );
+      if (pendingUris.length === 0) {
+        continue;
+      }
+      const firstUri = pendingUris[0].split(/[?#]/, 1)[0];
+      const filename = firstUri.split('/').pop() ?? '';
+      const extension = filename.match(/\.[a-zA-Z0-9]{1,10}$/)?.[0] ?? '';
+      const path = `${RNFS.DocumentDirectoryPath}/note-attachment-${uuid()}${extension}`;
+      const localUri = `file://${path}`;
+      createdUris.push(localUri);
+      await RNFS.writeFile(path, attachment.contentBase64, 'base64');
+      for (const uri of pendingUris) {
+        restoredUris.set(uri, localUri);
+      }
+    }
+  } catch (error) {
+    await deleteAttachmentFiles(createdUris);
+    throw error;
+  }
+  return {
+    notes: notes.map((note) => ({
+      ...note,
+      photoUris: (Array.isArray(note.photoUris) ? note.photoUris : [])
+        .filter((uri): uri is string => typeof uri === 'string')
+        .map((uri) => restoredUris.get(uri) ?? uri),
+      audioUri:
+        typeof note.audioUri === 'string' && note.audioUri
+          ? (restoredUris.get(note.audioUri) ?? note.audioUri)
+          : undefined,
+    })),
+    createdUris,
   };
 }
 
@@ -441,15 +554,94 @@ export async function readBackupFile(
 }
 
 /**
- * Exports a backup by writing it to a temporary file and opening
- * the native share sheet so the user can save it to Files, email it, etc.
- * Both iOS and Android share the file URI so the filename and extension
- * are preserved by all share targets.
+ * Deletes exported backup files from previous app sessions.
+ *
+ * A backup is plain JSON holding notes, emergency contacts and GPS trails.
+ * `exportBackup` has to write one to disk so the share sheet can hand it
+ * over. Files shared during the current session are kept because a recipient
+ * may still be copying them after the share sheet closes.
+ *
+ * Never throws: failing to tidy up must not block an export or startup.
  */
-export async function exportBackup(backupData: BackupData): Promise<void> {
-  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}.json`;
+export async function purgeExportedBackups(): Promise<void> {
+  try {
+    const files = await RNFS.readDir(RNFS.CachesDirectoryPath);
+    await Promise.all(
+      files
+        .filter(
+          (f) =>
+            f.name.startsWith(BACKUP_FILE_PREFIX) &&
+            f.name.endsWith('.json') &&
+            !f.isDirectory() &&
+            !currentSessionExportPaths.has(f.path),
+        )
+        .map((f) => RNFS.unlink(f.path).catch(() => undefined)),
+    );
+  } catch {
+    // The cache directory may not exist yet; there is nothing to remove.
+  }
+}
+
+/**
+ * Exports a backup by writing it to a unique temporary file and opening
+ * the native share sheet so the user can save it to Files, email it, etc.
+ *
+ * Android uses the native share library because React Native's Share API
+ * reports the chooser as shared even when it is dismissed.
+ *
+ * Dismissed exports are removed immediately. Confirmed and unconfirmed
+ * handoffs are retained until the next app session because a share target
+ * may still be copying the file after the sheet has closed.
+ */
+export async function exportBackup(
+  backupData: BackupData,
+): Promise<BackupExportResult> {
+  await purgeExportedBackups();
+  const filename = `${BACKUP_FILE_PREFIX}${backupData.backupDate}-${uuid()}.json`;
   const destPath = `${RNFS.CachesDirectoryPath}/${filename}`;
   const json = JSON.stringify(backupData, null, 2);
   await RNFS.writeFile(destPath, json, 'utf8');
-  await Share.share({ url: `file://${destPath}`, title: filename });
+  currentSessionExportPaths.add(destPath);
+
+  const discardExport = async () => {
+    currentSessionExportPaths.delete(destPath);
+    await RNFS.unlink(destPath).catch(() => undefined);
+  };
+
+  try {
+    if (Platform.OS === 'android') {
+      const NativeShare = require('react-native-share')
+        .default as typeof import('react-native-share').default;
+      const result = await NativeShare.open({
+        url: `file://${destPath}`,
+        title: filename,
+        type: 'application/json',
+        failOnCancel: false,
+      });
+      if (result.success) {
+        return 'shared';
+      }
+      if (result.dismissedAction) {
+        await discardExport();
+        return 'dismissed';
+      }
+      return 'unconfirmed';
+    }
+
+    const result = await Share.share({
+      url: `file://${destPath}`,
+      title: filename,
+    });
+    if (result.action === Share.dismissedAction) {
+      await discardExport();
+      return 'dismissed';
+    }
+    if (result.action === Share.sharedAction) {
+      return 'shared';
+    }
+    return 'unconfirmed';
+  } catch (error) {
+    await discardExport();
+    throw error;
+  }
 }

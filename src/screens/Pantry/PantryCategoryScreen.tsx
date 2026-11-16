@@ -1,13 +1,15 @@
 import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, StyleSheet } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { usePantryStore } from '../../stores';
 import { PantryItem } from '../../stores/PantryStore';
@@ -66,6 +68,8 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
       ),
     [items],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedItems = useProgressiveList(sortedItems, category);
 
   const handleAddItem = () => {
     if (!isValidCategory) {
@@ -73,6 +77,21 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
     }
     navigation.navigate('NewPantryItem', { category });
   };
+
+  const renderItem = useCallback(
+    (item: PantryItem, _index: number, isLast: boolean) => (
+      <ModuleRow
+        title={item.name}
+        icon="restaurant-outline"
+        subtitle={formatItemSubtitle(item, category)}
+        value={formatItemQuantity(item)}
+        variant="tool"
+        showSeparator={!isLast}
+        onPress={() => navigation.navigate('EditPantryItem', { item })}
+      />
+    ),
+    [category, navigation],
+  );
 
   if (!isValidCategory) {
     return (
@@ -83,10 +102,6 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
       </StackScreen>
     );
   }
-
-  const handleItemPress = (item: PantryItem) => {
-    navigation.navigate('EditPantryItem', { item });
-  };
 
   return (
     <StackScreen
@@ -106,18 +121,7 @@ export default observer(function PantryCategoryScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedItems.map((item, index) => (
-            <ModuleRow
-              key={item.id}
-              title={item.name}
-              icon="restaurant-outline"
-              subtitle={formatItemSubtitle(item, category)}
-              value={formatItemQuantity(item)}
-              variant="tool"
-              showSeparator={index < sortedItems.length - 1}
-              onPress={() => handleItemPress(item)}
-            />
-          ))}
+          <ProgressiveList items={visibleSortedItems} renderItem={renderItem} />
         </GroupContainer>
       )}
     </StackScreen>

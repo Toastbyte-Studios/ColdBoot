@@ -4,13 +4,15 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { NoteSortSelector } from '../../components/NoteSortSelector';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore, useSettingsStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
@@ -52,6 +54,23 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
     () => sortNotes(bookmarkedNotes, settings.noteSortOrder),
     [bookmarkedNotes, settings.noteSortOrder],
   );
+  // Drawn a batch at a time, so a long list doesn't hold up the screen.
+  const visibleSortedNotes = useProgressiveList(
+    sortedNotes,
+    settings.noteSortOrder,
+  );
+  const renderNote = useCallback(
+    (note: (typeof sortedNotes)[number], _index: number, isLast: boolean) => (
+      <ModuleRow
+        title={note.title || '(Untitled)'}
+        icon="document-text-outline"
+        variant="tool"
+        showSeparator={!isLast}
+        onPress={() => navigation.navigate('NoteEntry', { note })}
+      />
+    ),
+    [navigation],
+  );
 
   return (
     <StackScreen title="Bookmarked Notes">
@@ -64,16 +83,7 @@ export default observer(function BookmarkedNotesScreen(): React.JSX.Element {
         </Text>
       ) : (
         <GroupContainer>
-          {sortedNotes.map((note, index) => (
-            <ModuleRow
-              key={note.id}
-              title={note.title || '(Untitled)'}
-              icon="document-text-outline"
-              variant="tool"
-              showSeparator={index < sortedNotes.length - 1}
-              onPress={() => navigation.navigate('NoteEntry', { note })}
-            />
-          ))}
+          <ProgressiveList items={visibleSortedNotes} renderItem={renderNote} />
         </GroupContainer>
       )}
     </StackScreen>

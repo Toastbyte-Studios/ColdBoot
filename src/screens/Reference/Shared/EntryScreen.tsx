@@ -30,6 +30,7 @@ import { ColorScheme } from '../../../theme/colors';
 import { PAPER } from '../../../theme/fixedSurfaces';
 import ReferenceEntryType from '../../../types/data-type';
 import { recordLastRead } from '../../../utils/lastReadEntry';
+import { findReferenceDisclaimer } from '../../../utils/referenceEntries';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -121,6 +122,9 @@ export default function EntryScreen(): JSX.Element {
     <StackScreen
       title={entry.title}
       subtitle={entry.category || undefined}
+      // The book's disclaimer, on the entry itself: Search, Bookmarks and
+      // "Continue" open an entry without passing its category screen.
+      note={findReferenceDisclaimer(entry.id) ?? undefined}
       trailing={
         <IconButton
           name={bookmarked ? 'bookmark' : 'bookmark-outline'}
