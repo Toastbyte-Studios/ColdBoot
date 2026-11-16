@@ -2,14 +2,14 @@ import React, { useMemo } from 'react';
 import { Alert, StyleSheet, Text, View } from 'react-native';
 import AppButton from '../../../../components/AppButton';
 import { useTheme } from '../../../../hooks/useTheme';
-import { Track } from '../../../../stores/TrackStore';
+import { TrackSummary } from '../../../../stores/TrackStore';
 import { formatDistance } from './waypointGeometry';
 import type { MeasurementSystem } from '../../../../stores/SettingsStore';
 
 interface TrackRowProps {
-  track: Track;
+  track: TrackSummary;
   measurementSystem: MeasurementSystem;
-  onView: (track: Track) => void;
+  onView: (track: TrackSummary) => void;
   onDelete: (id: string) => void;
   /** This track is the one drawn on the map; its button hides it instead. */
   isViewed?: boolean;

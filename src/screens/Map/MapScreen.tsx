@@ -57,7 +57,7 @@ import {
   useOfflineMapLibraryStore,
   useDevToolsStore,
 } from '../../stores/StoreContext';
-import { Track, TrackPoint } from '../../stores/TrackStore';
+import { Track, TrackPoint, TrackSummary } from '../../stores/TrackStore';
 import { FOOTER_HEIGHT, SPACING, TEXT_GUTTER } from '../../theme';
 import CompassDataPanel from './components/CompassDataPanel';
 import CompassRing from './components/CompassRing';
@@ -249,6 +249,8 @@ export default observer(function MapScreen() {
   const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** The currently viewed saved track overlay (read-only polyline). */
   const [viewedTrack, setViewedTrack] = useState<Track | null>(null);
+  const viewRequestRef = useRef(0);
+  const pendingViewTrackIdRef = useRef<string | null>(null);
   /** Mirrors permissionStatus state so AppState callback can read it without deps. */
   const permissionStatusRef = useRef<LocationPermissionStatus>('undetermined');
   // ────────────────────────────────────────────────────────
@@ -681,6 +683,8 @@ export default observer(function MapScreen() {
       recordedPointsRef.current = [];
       recordingDistanceRef.current = 0;
       // Show the newly saved track on the map
+      viewRequestRef.current += 1;
+      pendingViewTrackIdRef.current = null;
       setViewedTrack(savedTrack);
     },
     [trackStore, recordingElapsed],
@@ -701,35 +705,58 @@ export default observer(function MapScreen() {
     recordingDistanceRef.current = 0;
   }, []);
 
+  // The library lists track summaries; a track's points are read from the
+  // database only now, when it is opened.
   const handleViewTrack = useCallback(
-    (track: Track) => {
-      setViewedTrack(track);
+    async (summary: TrackSummary) => {
       setLibrarySheetOpen(false);
+      const request = ++viewRequestRef.current;
+      pendingViewTrackIdRef.current = summary.id;
+      let points: TrackPoint[];
+      try {
+        points = await trackStore.getTrackPoints(summary.id);
+      } catch (error) {
+        console.warn('MapScreen: could not load track points', error);
+        points = [];
+      }
+      // A later tap, or Hide, while this one was loading wins.
+      if (request !== viewRequestRef.current) {
+        return;
+      }
+      pendingViewTrackIdRef.current = null;
+      if (!trackStore.tracks.some((track) => track.id === summary.id)) {
+        return;
+      }
+      setViewedTrack({ ...summary, points });
       // Pan map to first point of track
-      if (track.points.length > 0) {
+      if (points.length > 0) {
         moveCamera({
-          center: [track.points[0].longitude, track.points[0].latitude],
+          center: [points[0].longitude, points[0].latitude],
           zoom: zoomFromDelta(DELTA.latitudeDelta),
           duration: MAP_ANIMATE_DURATION_MS,
           easing: 'fly',
         });
       }
     },
-    [moveCamera],
+    [moveCamera, trackStore],
   );
 
   const handleHideTrack = useCallback(() => {
+    viewRequestRef.current += 1;
+    pendingViewTrackIdRef.current = null;
     setViewedTrack(null);
   }, []);
 
   const handleDeleteTrack = useCallback(
     async (id: string) => {
-      await trackStore.deleteTrack(id);
-      if (viewedTrack?.id === id) {
-        setViewedTrack(null);
+      if (pendingViewTrackIdRef.current === id) {
+        viewRequestRef.current += 1;
+        pendingViewTrackIdRef.current = null;
       }
+      await trackStore.deleteTrack(id);
+      setViewedTrack((current) => (current?.id === id ? null : current));
     },
-    [trackStore, viewedTrack],
+    [trackStore],
   );
 
   /**
@@ -853,12 +880,16 @@ export default observer(function MapScreen() {
     outputRange: ['0deg', '360deg'],
   });
 
-  const viewedTrackCoords = viewedTrack
-    ? viewedTrack.points.map((p) => ({
-        latitude: p.latitude,
-        longitude: p.longitude,
-      }))
-    : [];
+  const viewedTrackCoords = useMemo(
+    () =>
+      viewedTrack
+        ? viewedTrack.points.map((p) => ({
+            latitude: p.latitude,
+            longitude: p.longitude,
+          }))
+        : [],
+    [viewedTrack],
+  );
 
   return (
     <ScreenBody>

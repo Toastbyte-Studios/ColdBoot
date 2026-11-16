@@ -29,7 +29,7 @@ import SegmentedControl from '../../../../components/SegmentedControl';
 import { TutorialSpotlightContext } from '../../../../components/TutorialSpotlightContext';
 import { useTheme } from '../../../../hooks/useTheme';
 import { useSettingsStore } from '../../../../stores/StoreContext';
-import { Track } from '../../../../stores/TrackStore';
+import { TrackSummary } from '../../../../stores/TrackStore';
 import { Waypoint } from '../../../../stores/WaypointStore';
 import AddWaypointForm from './AddWaypointForm';
 import MapsTab from './MapsTab';
@@ -65,7 +65,7 @@ export interface LibrarySheetProps {
   /** All saved waypoints. */
   waypoints: Waypoint[];
   /** All saved tracks. */
-  tracks?: Track[];
+  tracks?: TrackSummary[];
   /** Current GPS coords of the device (used for live distance/bearing in rows). */
   currentCoords: Coords | null;
   /** Whether the sheet is open (controlled by the map's Library button). */
@@ -101,7 +101,7 @@ export interface LibrarySheetProps {
   /** @deprecated No longer used — kept to satisfy stale TS cache. */
   onDismissActive?: () => void;
   /** Called when the user taps View on a saved track. */
-  onViewTrack?: (track: Track) => void;
+  onViewTrack?: (track: TrackSummary) => void;
   /** Called when the user taps Delete on a saved track. */
   onDeleteTrack?: (id: string) => void;
   /** The track drawn on the map, if any; its row offers Hide. */
