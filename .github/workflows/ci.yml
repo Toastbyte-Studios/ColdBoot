@@ -100,6 +100,22 @@ jobs:
 
       - name: Build Android debug APK
         run: |
+          set -euo pipefail
           cd android
-          ./gradlew assembleDebug --no-daemon \
-            -PgoogleMapsApiKey=MAPS_API_KEY_NOT_SET
+          build_log="$(mktemp)"
+          trap 'rm -f "$build_log"' EXIT
+          for attempt in 1 2 3; do
+            if ./gradlew assembleDebug --no-daemon \
+              -PgoogleMapsApiKey=MAPS_API_KEY_NOT_SET >"$build_log" 2>&1; then
+              cat "$build_log"
+              exit 0
+            else
+              status=$?
+            fi
+            cat "$build_log"
+            if ! grep -q 'status code 429' "$build_log" || [ "$attempt" -eq 3 ]; then
+              exit "$status"
+            fi
+            echo "Gradle dependency download was rate limited; retrying..."
+            sleep "$((attempt * 10))"
+          done
