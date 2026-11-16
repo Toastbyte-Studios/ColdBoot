@@ -166,6 +166,83 @@ describe('TrackStore', () => {
       expect(await store.getTrackPoints('imported')).toEqual([]);
     });
 
+    it('keeps the last duplicate ID during replace imports', async () => {
+      const earlier = {
+        id: 'duplicate',
+        name: 'Earlier',
+        createdAt: '2026-11-14T00:00:00.000Z',
+        durationSeconds: 60,
+        distanceMeters: 100,
+        points: samplePoints,
+      };
+      const later = {
+        ...earlier,
+        name: 'Later',
+        distanceMeters: 200,
+        points: samplePoints.slice(0, 1),
+      };
+
+      await store.importData([earlier, later], 'replace');
+
+      expect(store.tracks).toEqual([
+        {
+          id: 'duplicate',
+          name: 'Later',
+          createdAt: earlier.createdAt,
+          durationSeconds: 60,
+          distanceMeters: 200,
+        },
+      ]);
+      expect(await store.getTrackPoints('duplicate')).toEqual(later.points);
+      expect(await store.getAllTracks()).toHaveLength(1);
+    });
+
+    it('keeps the first duplicate ID during merge imports', async () => {
+      const existing = {
+        id: 'existing',
+        name: 'Existing',
+        createdAt: '2026-11-13T00:00:00.000Z',
+        durationSeconds: 30,
+        distanceMeters: 50,
+        points: samplePoints,
+      };
+      const firstDuplicate = {
+        id: 'duplicate',
+        name: 'First',
+        createdAt: '2026-11-14T00:00:00.000Z',
+        durationSeconds: 60,
+        distanceMeters: 100,
+        points: samplePoints,
+      };
+      const laterDuplicate = {
+        ...firstDuplicate,
+        name: 'Later',
+        distanceMeters: 200,
+        points: samplePoints.slice(0, 1),
+      };
+      await store.importData([existing], 'replace');
+
+      await store.importData(
+        [firstDuplicate, laterDuplicate, { ...existing, name: 'Incoming' }],
+        'merge',
+      );
+
+      expect(store.tracks).toHaveLength(2);
+      expect(
+        store.tracks.find((track) => track.id === 'duplicate'),
+      ).toMatchObject({
+        name: 'First',
+        distanceMeters: 100,
+      });
+      expect(store.tracks.find((track) => track.id === 'existing')?.name).toBe(
+        'Existing',
+      );
+      expect(await store.getTrackPoints('duplicate')).toEqual(
+        firstDuplicate.points,
+      );
+      expect(await store.getTrackPoints('existing')).toEqual(existing.points);
+    });
+
     describe('with a database', () => {
       type Row = Record<string, unknown>;
 

@@ -252,6 +252,20 @@ export class TrackStore {
    * In merge mode only tracks whose IDs do not already exist are inserted.
    */
   async importData(tracks: Track[], mode: 'replace' | 'merge'): Promise<void> {
+    const seenIds = new Set(
+      mode === 'merge' ? this.tracks.map((track) => track.id) : [],
+    );
+    const incomingById = new Map<string, Track>();
+    for (const track of tracks) {
+      if (mode === 'replace') {
+        incomingById.set(track.id, track);
+      } else if (!seenIds.has(track.id)) {
+        seenIds.add(track.id);
+        incomingById.set(track.id, track);
+      }
+    }
+    const incoming = [...incomingById.values()];
+
     if (this.trackDb) {
       try {
         await this.trackDb.executeSql('BEGIN TRANSACTION');
@@ -262,7 +276,7 @@ export class TrackStore {
           mode === 'replace'
             ? 'INSERT OR REPLACE INTO tracks (id, name, createdAt, durationSeconds, distanceMeters, points) VALUES (?, ?, ?, ?, ?, ?)'
             : 'INSERT OR IGNORE INTO tracks (id, name, createdAt, durationSeconds, distanceMeters, points) VALUES (?, ?, ?, ?, ?, ?)';
-        for (const t of tracks) {
+        for (const t of incoming) {
           await this.trackDb.executeSql(sql, [
             t.id,
             t.name,
@@ -278,11 +292,6 @@ export class TrackStore {
         throw error;
       }
     }
-    const existingIds = new Set(this.tracks.map((t) => t.id));
-    const incoming =
-      mode === 'replace'
-        ? tracks
-        : tracks.filter((t) => !existingIds.has(t.id));
     if (!this.trackDb) {
       if (mode === 'replace') {
         this.memoryPoints.clear();
