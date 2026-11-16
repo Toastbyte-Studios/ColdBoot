@@ -18,11 +18,13 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../../components/AppButton';
 import AppSwitch from '../../components/AppSwitch';
 import IconButton from '../../components/IconButton';
+import ProgressiveList from '../../components/ProgressiveList';
 import { Text } from '../../components/ScaledText';
 import SelectMenu from '../../components/SelectMenu';
 import StackScreen from '../../components/StackScreen';
 import Touchable from '../../components/Touchable';
 import radioFrequenciesData from '../../data/radioFrequencies.json';
+import { useProgressiveList } from '../../hooks/useProgressiveList';
 import { useTheme } from '../../hooks/useTheme';
 import { Repeater } from '../../stores/RepeaterBookStore';
 import { useRepeaterBookStore } from '../../stores/StoreContext';
@@ -54,6 +56,11 @@ const RepeaterBookScreen = observer((): JSX.Element => {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useRepeaterBookStore();
+  // Drawn a batch at a time: a metro area can list several hundred.
+  const visibleRepeaters = useProgressiveList(
+    store.filteredRepeaters,
+    JSON.stringify([store.selectedMode, store.onAirOnly, store.emergencyOnly]),
+  );
   const [disclaimerVisible, setDisclaimerVisible] = useState(false);
 
   useEffect(() => {
@@ -87,9 +94,12 @@ const RepeaterBookScreen = observer((): JSX.Element => {
     setDisclaimerVisible(false);
   }, []);
 
-  const handleRepeaterPress = (repeater: Repeater) => {
-    navigation.navigate('RepeaterDetail', { repeater });
-  };
+  const handleRepeaterPress = useCallback(
+    (repeater: Repeater) => {
+      navigation.navigate('RepeaterDetail', { repeater });
+    },
+    [navigation],
+  );
 
   const formatLastUpdated = (iso: string): string => {
     try {
@@ -105,6 +115,93 @@ const RepeaterBookScreen = observer((): JSX.Element => {
       return iso;
     }
   };
+
+  const renderRepeater = useCallback(
+    (repeater: Repeater) => (
+      <Touchable
+        onPress={() => handleRepeaterPress(repeater)}
+        accessibilityRole="button"
+        style={[styles.row, cardSurface(COLORS)]}
+      >
+        <View
+          style={[
+            styles.statusDot,
+            {
+              backgroundColor:
+                repeater.operationalStatus === 'On-air'
+                  ? COLORS.SUCCESS
+                  : COLORS.BRAND,
+            },
+          ]}
+        />
+
+        <View style={styles.rowBody}>
+          <View style={styles.rowTop}>
+            <Text style={[styles.callSign, { color: COLORS.PRIMARY_DARK }]}>
+              {repeater.callSign}
+            </Text>
+            <Text style={[styles.distance, { color: COLORS.PRIMARY_DARK }]}>
+              {repeater.distance} mi
+            </Text>
+          </View>
+
+          <View style={styles.rowMeta}>
+            <Text style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}>
+              {repeater.frequency} MHz
+            </Text>
+            {repeater.offset ? (
+              <Text style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}>
+                {' '}
+                · {repeater.offset}
+              </Text>
+            ) : null}
+            {repeater.tone ? (
+              <Text style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}>
+                {' '}
+                · PL {repeater.tone}
+              </Text>
+            ) : null}
+          </View>
+
+          <View style={styles.rowBottom}>
+            <View style={[styles.modeBadge, { borderColor: COLORS.ACCENT }]}>
+              <Text style={[styles.modeText, { color: COLORS.ACCENT }]}>
+                {repeater.mode}
+              </Text>
+            </View>
+            {repeater.isCustom && (
+              <View
+                style={[styles.customBadge, { borderColor: COLORS.SUCCESS }]}
+              >
+                <Text
+                  style={[styles.customBadgeText, { color: COLORS.SUCCESS }]}
+                >
+                  Custom
+                </Text>
+              </View>
+            )}
+            {repeater.emcomm ? (
+              <View style={[styles.emcommBadge, { borderColor: COLORS.ERROR }]}>
+                <Ionicons
+                  name="warning-outline"
+                  size={11}
+                  color={COLORS.ERROR}
+                />
+                <Text style={[styles.emcommText, { color: COLORS.ERROR }]}>
+                  {repeater.emcomm}
+                </Text>
+              </View>
+            ) : null}
+            <Text style={[styles.locationText, { color: COLORS.PRIMARY_DARK }]}>
+              {repeater.city}
+              {repeater.state ? `, ${repeater.state}` : ''}
+            </Text>
+          </View>
+        </View>
+      </Touchable>
+    ),
+    [COLORS, handleRepeaterPress],
+  );
 
   return (
     <StackScreen
@@ -239,107 +336,7 @@ const RepeaterBookScreen = observer((): JSX.Element => {
         )}
 
         {/* Repeater list */}
-        {store.filteredRepeaters.map((repeater, index) => (
-          <Touchable
-            key={repeater.id || index}
-            onPress={() => handleRepeaterPress(repeater)}
-            accessibilityRole="button"
-            style={[styles.row, cardSurface(COLORS)]}
-          >
-            {/* Operational status dot */}
-            <View
-              style={[
-                styles.statusDot,
-                {
-                  backgroundColor:
-                    repeater.operationalStatus === 'On-air'
-                      ? COLORS.SUCCESS
-                      : COLORS.BRAND,
-                },
-              ]}
-            />
-
-            <View style={styles.rowBody}>
-              <View style={styles.rowTop}>
-                <Text style={[styles.callSign, { color: COLORS.PRIMARY_DARK }]}>
-                  {repeater.callSign}
-                </Text>
-                <Text style={[styles.distance, { color: COLORS.PRIMARY_DARK }]}>
-                  {repeater.distance} mi
-                </Text>
-              </View>
-
-              <View style={styles.rowMeta}>
-                <Text style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}>
-                  {repeater.frequency} MHz
-                </Text>
-                {repeater.offset ? (
-                  <Text
-                    style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {' '}
-                    · {repeater.offset}
-                  </Text>
-                ) : null}
-                {repeater.tone ? (
-                  <Text
-                    style={[styles.metaText, { color: COLORS.PRIMARY_DARK }]}
-                  >
-                    {' '}
-                    · PL {repeater.tone}
-                  </Text>
-                ) : null}
-              </View>
-
-              <View style={styles.rowBottom}>
-                <View
-                  style={[styles.modeBadge, { borderColor: COLORS.ACCENT }]}
-                >
-                  <Text style={[styles.modeText, { color: COLORS.ACCENT }]}>
-                    {repeater.mode}
-                  </Text>
-                </View>
-                {repeater.isCustom && (
-                  <View
-                    style={[
-                      styles.customBadge,
-                      { borderColor: COLORS.SUCCESS },
-                    ]}
-                  >
-                    <Text
-                      style={[
-                        styles.customBadgeText,
-                        { color: COLORS.SUCCESS },
-                      ]}
-                    >
-                      Custom
-                    </Text>
-                  </View>
-                )}
-                {repeater.emcomm ? (
-                  <View
-                    style={[styles.emcommBadge, { borderColor: COLORS.ERROR }]}
-                  >
-                    <Ionicons
-                      name="warning-outline"
-                      size={11}
-                      color={COLORS.ERROR}
-                    />
-                    <Text style={[styles.emcommText, { color: COLORS.ERROR }]}>
-                      {repeater.emcomm}
-                    </Text>
-                  </View>
-                ) : null}
-                <Text
-                  style={[styles.locationText, { color: COLORS.PRIMARY_DARK }]}
-                >
-                  {repeater.city}
-                  {repeater.state ? `, ${repeater.state}` : ''}
-                </Text>
-              </View>
-            </View>
-          </Touchable>
-        ))}
+        <ProgressiveList items={visibleRepeaters} renderItem={renderRepeater} />
 
         {/* Background refresh indicator */}
         {store.isLoading && store.repeaters.length > 0 && (
