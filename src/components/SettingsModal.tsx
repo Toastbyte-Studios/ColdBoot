@@ -47,12 +47,15 @@ import { withAlpha } from '../theme/colorUtils';
 import {
   BackupData,
   BackupPreview,
+  collectNoteAttachments,
   createBackupData,
   createBackupPreview,
   exportBackup,
   listBackupFiles,
   readBackupFile,
+  restoreNoteAttachments,
 } from '../utils/backupService';
+import { deleteAttachmentFiles } from '../utils/noteAttachments';
 import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
@@ -256,6 +259,7 @@ export const SettingsModal = observer(
       setIsExporting(true);
       try {
         const bookmarks = await getBookmarks();
+        const attachments = await collectNoteAttachments(coreStore.notes);
         const backupData = createBackupData(
           coreStore.notes,
           coreStore.categories,
@@ -281,6 +285,7 @@ export const SettingsModal = observer(
             ? emergencyPlanStore.communicationPlan
             : null,
           repeaterBookStore.customRepeaters,
+          attachments,
         );
         // Only a backup that left the app counts: dismissing the share sheet
         // saves nothing, and "Last backed up" must not say otherwise.
@@ -350,11 +355,29 @@ export const SettingsModal = observer(
           }
 
           // Restore notes and categories
-          await coreStore.importNotesData(
-            data.noteCategories,
-            data.notes,
-            mode,
+          const notesToRestore =
+            mode === 'merge'
+              ? data.notes.filter(
+                  (note) =>
+                    !coreStore.notes.some(
+                      (existing) => existing.id === note.id,
+                    ),
+                )
+              : data.notes;
+          const restored = await restoreNoteAttachments(
+            notesToRestore,
+            data.attachments,
           );
+          try {
+            await coreStore.importNotesData(
+              data.noteCategories,
+              restored.notes,
+              mode,
+            );
+          } catch (error) {
+            await deleteAttachmentFiles(restored.createdUris);
+            throw error;
+          }
 
           // Restore checklists
           await checklistStore.importChecklistsData(
@@ -709,9 +732,10 @@ export const SettingsModal = observer(
                     : 'No backup yet'}
                 </RNText>
                 <RNText style={[styles.rowSubtitle, t.mutedText]}>
-                  A backup is an unencrypted file containing your notes,
-                  emergency contacts and GPS trails. Photos and voice recordings
-                  are not included. Save it somewhere only you can reach.
+                  Backups are unencrypted and include your notes, emergency
+                  contacts, GPS trails, photos and voice recordings. Older
+                  path-only backups cannot recover deleted attachments. Save
+                  backups somewhere only you can reach.
                 </RNText>
 
                 <AppButton
@@ -810,6 +834,21 @@ export const SettingsModal = observer(
                           communication plans,{' '}
                           {backupPreview.customRepeaterCount} custom repeaters
                         </RNText>
+                        {selectedBackup?.data.attachments.length === 0 &&
+                          selectedBackup.data.notes.some(
+                            (note) =>
+                              note !== null &&
+                              typeof note === 'object' &&
+                              ((Array.isArray(note.photoUris) &&
+                                note.photoUris.length > 0) ||
+                                Boolean(note.audioUri)),
+                          ) && (
+                            <RNText style={[styles.previewText, t.mutedText]}>
+                              This backup stores attachment paths only. If a
+                              photo or recording is missing from this device,
+                              the backup cannot recover it.
+                            </RNText>
+                          )}
                         <View style={styles.restoreButtons}>
                           <AppButton
                             label="Replace"

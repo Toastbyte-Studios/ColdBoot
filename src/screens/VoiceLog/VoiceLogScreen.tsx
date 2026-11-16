@@ -15,12 +15,14 @@ import {
   Platform,
   PermissionsAndroid,
 } from 'react-native';
+import RNFS from 'react-native-fs';
 import {
   useSoundRecorder,
   // AudioEncoderAndroidType,
 } from 'react-native-nitro-sound';
 import Sound from 'react-native-sound';
 import Icon from 'react-native-vector-icons/Ionicons';
+import { v4 as uuidv4 } from 'uuid';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
@@ -30,6 +32,7 @@ import { useNotesStore } from '../../stores';
 import { SCREEN_GUTTER } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
 import { normalizeMeteringLevel, smoothLevel } from '../../utils/audioLevel';
+import { deleteAttachmentFiles } from '../../utils/noteAttachments';
 import EmptyState from './components/EmptyState';
 import InfoBox from './components/InfoBox';
 import RecordingControls from './components/RecordingControls';
@@ -117,12 +120,27 @@ export default observer(function VoiceLogScreen() {
         // Haptic feedback
         Vibration.vibrate(200);
 
+        const sourcePath = audioUri.startsWith('file://')
+          ? audioUri.slice('file://'.length)
+          : audioUri;
+        const sourceExtension =
+          sourcePath.match(/\.(m4a|mp4|wav|aac|3gp)$/i)?.[1].toLowerCase() ??
+          (Platform.OS === 'ios' ? 'm4a' : 'mp4');
+        const recordingPath = `${RNFS.DocumentDirectoryPath}/voice-log_${uuidv4()}.${sourceExtension}`;
+        await RNFS.copyFile(sourcePath, recordingPath);
+
         // Save voice log
-        await core.createVoiceLog({
-          audioUri: audioUri,
-          duration: duration,
-          transcription: undefined, // Transcription not implemented yet
-        });
+        const recordingUri = `file://${recordingPath}`;
+        try {
+          await core.createVoiceLog({
+            audioUri: recordingUri,
+            duration: duration,
+            transcription: undefined, // Transcription not implemented yet
+          });
+        } catch (error) {
+          await deleteAttachmentFiles([recordingUri]);
+          throw error;
+        }
 
         // Back to the Voice Logs menu, not out of the tool: the three views
         // here are local state, so goBack() used to leave for the Core module.

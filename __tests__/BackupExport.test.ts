@@ -42,6 +42,7 @@ const BACKUP: BackupData = {
     rallyPoints: [],
     communicationPlan: null,
     customRepeaters: [],
+    attachments: [],
   },
 };
 
