@@ -186,6 +186,18 @@ const StockItemSchema = z.object({
   updatedAt: z.number(),
 });
 
+/**
+ * Pantry items add product facts. All optional, so backups written before
+ * these fields existed restore unchanged.
+ */
+const PantryItemSchema = StockItemSchema.extend({
+  barcode: optionalString,
+  brand: optionalString,
+  servingSize: optionalString,
+  caloriesPerServing: optionalNumber,
+  servingsPerUnit: optionalNumber,
+});
+
 const BookmarkSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
@@ -216,7 +228,7 @@ const BackupDataSchema = z.object({
     checklistItems: z.array(ChecklistItemSchema),
     inventoryItems: z.array(StockItemSchema),
     inventoryCategories: z.array(z.string()),
-    pantryItems: z.array(StockItemSchema),
+    pantryItems: z.array(PantryItemSchema),
     pantryCategories: z.array(z.string()),
     bookmarks: z.array(BookmarkSchema),
     settings: z.object({

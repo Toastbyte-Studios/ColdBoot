@@ -1,6 +1,7 @@
 import { makeAutoObservable, runInAction, computed } from 'mobx';
 import { SQLiteDatabase } from '../types/database-types';
 import { SQLiteStatic } from '../types/database-types';
+import { normalizeBarcode } from '../utils/barcode';
 import {
   Migration,
   getTableColumns,
@@ -77,7 +78,85 @@ const PANTRY_MIGRATIONS: Migration[] = [
       }
     },
   },
+  {
+    id: 4,
+    description:
+      'Add product details (barcode, brand, serving, calories) to pantry_items',
+    run: async (db) => {
+      const columns = await getTableColumns(db, 'pantry_items');
+      const added: [string, string][] = [
+        ['barcode', 'TEXT'],
+        ['brand', 'TEXT'],
+        ['servingSize', 'TEXT'],
+        ['caloriesPerServing', 'REAL'],
+        ['servingsPerUnit', 'REAL'],
+      ];
+      for (const [name, type] of added) {
+        if (!columns.has(name)) {
+          await db.executeSql(
+            `ALTER TABLE pantry_items ADD COLUMN ${name} ${type}`,
+          );
+        }
+      }
+      await db.executeSql(
+        'CREATE INDEX IF NOT EXISTS idx_pantry_items_barcode ON pantry_items (barcode)',
+      );
+    },
+  },
 ];
+
+/** Every column of `pantry_items`, in the order the INSERTs bind them. */
+const ITEM_COLUMNS = [
+  'id',
+  'name',
+  'category',
+  'quantity',
+  'unit',
+  'notes',
+  'expirationMonth',
+  'expirationYear',
+  'barcode',
+  'brand',
+  'servingSize',
+  'caloriesPerServing',
+  'servingsPerUnit',
+  'createdAt',
+  'updatedAt',
+] as const;
+
+const ITEM_PLACEHOLDERS = ITEM_COLUMNS.map(() => '?').join(', ');
+
+/** Values for {@link ITEM_COLUMNS}; absent optional fields bind as NULL. */
+function itemRowValues(item: PantryItem): (string | number | null)[] {
+  return [
+    item.id,
+    item.name,
+    item.category,
+    item.quantity,
+    item.unit ?? null,
+    item.notes ?? null,
+    item.expirationMonth ?? null,
+    item.expirationYear ?? null,
+    item.barcode ?? null,
+    item.brand ?? null,
+    item.servingSize ?? null,
+    item.caloriesPerServing ?? null,
+    item.servingsPerUnit ?? null,
+    item.createdAt,
+    item.updatedAt,
+  ];
+}
+
+/** A SQLite value that may be NULL, as `undefined`. */
+function optionalText(value: unknown): string | undefined {
+  return typeof value === 'string' && value !== '' ? value : undefined;
+}
+
+function optionalNumber(value: unknown): number | undefined {
+  return typeof value === 'number' && Number.isFinite(value)
+    ? value
+    : undefined;
+}
 
 /**
  * Represents a single pantry item (food item).
@@ -91,8 +170,85 @@ export interface PantryItem {
   notes?: string;
   expirationMonth?: number; // 1-12
   expirationYear?: number; // e.g., 2024, 2025
+  /** Canonical retail barcode (see `utils/barcode`), e.g. "0036000291452". */
+  barcode?: string;
+  brand?: string;
+  /** As printed on the label, e.g. "1/2 cup (130 g)". */
+  servingSize?: string;
+  caloriesPerServing?: number;
+  /** Servings in one unit of `quantity` (one can, one bag). */
+  servingsPerUnit?: number;
   createdAt: number; // epoch ms
   updatedAt: number; // epoch ms
+}
+
+/** The optional product facts a pantry item can carry. */
+export type PantryItemDetails = Pick<
+  PantryItem,
+  'barcode' | 'brand' | 'servingSize' | 'caloriesPerServing' | 'servingsPerUnit'
+>;
+
+/**
+ * Calories in one unit of the item (one can), or `null` when the label
+ * facts needed to work it out are missing.
+ */
+export function caloriesPerUnit(item: PantryItem): number | null {
+  if (
+    item.caloriesPerServing === undefined ||
+    item.servingsPerUnit === undefined
+  ) {
+    return null;
+  }
+  return item.caloriesPerServing * item.servingsPerUnit;
+}
+
+/**
+ * Checks and tidies product details before they are stored. Text is trimmed
+ * (empty becomes absent) and the barcode is put in canonical form. Keys that
+ * are not present in `details` stay absent, so a partial update leaves the
+ * other fields alone.
+ */
+function cleanDetails(details: PantryItemDetails): PantryItemDetails {
+  const cleaned: PantryItemDetails = {};
+  if ('barcode' in details) {
+    const raw = details.barcode?.trim();
+    if (raw) {
+      const barcode = normalizeBarcode(raw);
+      if (!barcode) {
+        throw new Error('Barcode is not a valid UPC or EAN code');
+      }
+      cleaned.barcode = barcode;
+    } else {
+      cleaned.barcode = undefined;
+    }
+  }
+  if ('brand' in details) {
+    cleaned.brand = details.brand?.trim() || undefined;
+  }
+  if ('servingSize' in details) {
+    cleaned.servingSize = details.servingSize?.trim() || undefined;
+  }
+  if ('caloriesPerServing' in details) {
+    const calories = details.caloriesPerServing;
+    if (
+      calories !== undefined &&
+      !(Number.isFinite(calories) && calories >= 0)
+    ) {
+      throw new Error('Calories per serving must be 0 or greater');
+    }
+    cleaned.caloriesPerServing = calories;
+  }
+  if ('servingsPerUnit' in details) {
+    const servings = details.servingsPerUnit;
+    if (
+      servings !== undefined &&
+      !(Number.isFinite(servings) && servings > 0)
+    ) {
+      throw new Error('Servings per unit must be greater than 0');
+    }
+    cleaned.servingsPerUnit = servings;
+  }
+  return cleaned;
 }
 
 /**
@@ -257,6 +413,20 @@ export class PantryStore {
    */
   getCategoryItemCount(categoryName: string): number {
     return this.items.filter((item) => item.category === categoryName).length;
+  }
+
+  /**
+   * Items saved with this barcode, oldest first. Any spelling of the code
+   * matches (UPC-A or EAN-13, with or without spaces); an invalid code
+   * matches nothing. More than one item can share a barcode, e.g. the same
+   * product bought at different times with different expiry dates.
+   */
+  findByBarcode(raw: string): PantryItem[] {
+    const barcode = normalizeBarcode(raw);
+    if (!barcode) return [];
+    return this.items
+      .filter((item) => item.barcode === barcode)
+      .sort((a, b) => a.createdAt - b.createdAt);
   }
 
   /**
@@ -442,6 +612,11 @@ export class PantryStore {
               (row.expirationMonth as number | undefined) || undefined,
             expirationYear:
               (row.expirationYear as number | undefined) || undefined,
+            barcode: optionalText(row.barcode),
+            brand: optionalText(row.brand),
+            servingSize: optionalText(row.servingSize),
+            caloriesPerServing: optionalNumber(row.caloriesPerServing),
+            servingsPerUnit: optionalNumber(row.servingsPerUnit),
             createdAt: row.createdAt as number,
             updatedAt: row.updatedAt as number,
           });
@@ -553,6 +728,9 @@ export class PantryStore {
 
   /**
    * Creates a new pantry item.
+   *
+   * @param details - Optional product facts (barcode, brand, label serving
+   *   and calories). Throws if the barcode or a number is invalid.
    */
   async createItem(
     name: string,
@@ -562,6 +740,7 @@ export class PantryStore {
     notes?: string,
     expirationMonth?: number,
     expirationYear?: number,
+    details: PantryItemDetails = {},
   ): Promise<PantryItem> {
     const trimmedName = name.trim();
     if (!trimmedName) {
@@ -588,6 +767,8 @@ export class PantryStore {
       }
     }
 
+    const cleanedDetails = cleanDetails(details);
+
     const now = Date.now();
     const item: PantryItem = {
       id: this.generateId(),
@@ -598,6 +779,7 @@ export class PantryStore {
       notes: notes?.trim() || undefined,
       expirationMonth,
       expirationYear,
+      ...cleanedDetails,
       createdAt: now,
       updatedAt: now,
     };
@@ -605,19 +787,8 @@ export class PantryStore {
     if (this.pantryDb) {
       try {
         await this.pantryDb.executeSql(
-          'INSERT INTO pantry_items (id, name, category, quantity, unit, notes, expirationMonth, expirationYear, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [
-            item.id,
-            item.name,
-            item.category,
-            item.quantity,
-            item.unit || null,
-            item.notes || null,
-            item.expirationMonth || null,
-            item.expirationYear || null,
-            item.createdAt,
-            item.updatedAt,
-          ],
+          `INSERT INTO pantry_items (${ITEM_COLUMNS.join(', ')}) VALUES (${ITEM_PLACEHOLDERS})`,
+          itemRowValues(item),
         );
       } catch (error) {
         console.error('Failed to create pantry item:', error);
@@ -668,16 +839,31 @@ export class PantryStore {
       }
     }
 
+    const detailKeys = [
+      'barcode',
+      'brand',
+      'servingSize',
+      'caloriesPerServing',
+      'servingsPerUnit',
+    ] as const;
+    const detailUpdates: PantryItemDetails = {};
+    for (const key of detailKeys) {
+      if (key in updates) {
+        Object.assign(detailUpdates, { [key]: updates[key] });
+      }
+    }
+
     const updatedItem: PantryItem = {
       ...item,
       ...updates,
+      ...cleanDetails(detailUpdates),
       updatedAt: Date.now(),
     };
 
     if (this.pantryDb) {
       try {
         await this.pantryDb.executeSql(
-          'UPDATE pantry_items SET name = ?, category = ?, quantity = ?, unit = ?, notes = ?, expirationMonth = ?, expirationYear = ?, updatedAt = ? WHERE id = ?',
+          'UPDATE pantry_items SET name = ?, category = ?, quantity = ?, unit = ?, notes = ?, expirationMonth = ?, expirationYear = ?, barcode = ?, brand = ?, servingSize = ?, caloriesPerServing = ?, servingsPerUnit = ?, updatedAt = ? WHERE id = ?',
           [
             updatedItem.name,
             updatedItem.category,
@@ -686,6 +872,11 @@ export class PantryStore {
             updatedItem.notes || null,
             updatedItem.expirationMonth || null,
             updatedItem.expirationYear || null,
+            updatedItem.barcode ?? null,
+            updatedItem.brand ?? null,
+            updatedItem.servingSize ?? null,
+            updatedItem.caloriesPerServing ?? null,
+            updatedItem.servingsPerUnit ?? null,
             updatedItem.updatedAt,
             id,
           ],
@@ -744,10 +935,9 @@ export class PantryStore {
     mode: 'replace' | 'merge',
   ): Promise<void> {
     if (this.pantryDb) {
-      const itemSql =
-        mode === 'replace'
-          ? 'INSERT OR REPLACE INTO pantry_items (id, name, category, quantity, unit, notes, expirationMonth, expirationYear, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)'
-          : 'INSERT OR IGNORE INTO pantry_items (id, name, category, quantity, unit, notes, expirationMonth, expirationYear, createdAt, updatedAt) VALUES (?,?,?,?,?,?,?,?,?,?)';
+      const verb =
+        mode === 'replace' ? 'INSERT OR REPLACE' : 'INSERT OR IGNORE';
+      const itemSql = `${verb} INTO pantry_items (${ITEM_COLUMNS.join(', ')}) VALUES (${ITEM_PLACEHOLDERS})`;
       try {
         await this.pantryDb.executeSql('BEGIN TRANSACTION');
         if (mode === 'replace') {
@@ -761,18 +951,7 @@ export class PantryStore {
           );
         }
         for (const item of items) {
-          await this.pantryDb.executeSql(itemSql, [
-            item.id,
-            item.name,
-            item.category,
-            item.quantity,
-            item.unit ?? null,
-            item.notes ?? null,
-            item.expirationMonth ?? null,
-            item.expirationYear ?? null,
-            item.createdAt,
-            item.updatedAt,
-          ]);
+          await this.pantryDb.executeSql(itemSql, itemRowValues(item));
         }
         await this.pantryDb.executeSql('COMMIT');
       } catch (error) {

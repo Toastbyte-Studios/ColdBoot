@@ -20,6 +20,9 @@ let mockItem:
       quantity: number;
       unit?: string;
       notes?: string;
+      barcode?: string;
+      caloriesPerServing?: number;
+      servingsPerUnit?: number;
     }
   | undefined = {
   id: 'beans',
@@ -95,7 +98,11 @@ jest.mock('../src/screens/Shared/Prepper', () => {
       </>
     ),
     ExpirationDatePicker: () => <MockText>Expiration</MockText>,
-    FormButtonRow: () => <MockText>Buttons</MockText>,
+    FormButtonRow: ({ onSave }: { onSave: () => void }) => (
+      <MockText testID="save-button" onPress={onSave}>
+        Buttons
+      </MockText>
+    ),
     DeleteButton: () => <MockText>Delete</MockText>,
   };
 });
@@ -154,5 +161,48 @@ describe('EditPantryItemScreen', () => {
       'Item not found',
     );
     expect(() => tree.root.findByType(KeyboardAvoidingView)).toThrow();
+  });
+
+  it('prefills label details and saves changes to them', async () => {
+    mockItem = {
+      ...mockItem!,
+      barcode: '0036000291452',
+      caloriesPerServing: 110,
+      servingsPerUnit: 3.5,
+    };
+    const alertSpy = jest
+      .spyOn(require('react-native').Alert, 'alert')
+      .mockImplementation(() => {});
+
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(<EditPantryItemScreen />);
+    });
+    const field = (label: string) =>
+      tree.root.findByProps({ accessibilityLabel: label });
+
+    expect(field('Barcode').props.value).toBe('0036000291452');
+    expect(field('Calories per serving').props.value).toBe('110');
+    expect(field('Servings per unit').props.value).toBe('3.5');
+    expect(field('Brand').props.value).toBe('');
+
+    ReactTestRenderer.act(() => {
+      field('Brand').props.onChangeText('Store brand');
+      field('Calories per serving').props.onChangeText('');
+    });
+    await ReactTestRenderer.act(async () => {
+      await tree.root.findByProps({ testID: 'save-button' }).props.onPress();
+    });
+
+    expect(mockUpdateItem).toHaveBeenCalledWith(
+      'beans',
+      expect.objectContaining({
+        brand: 'Store brand',
+        barcode: '0036000291452',
+        caloriesPerServing: undefined,
+        servingsPerUnit: 3.5,
+      }),
+    );
+    alertSpy.mockRestore();
   });
 });

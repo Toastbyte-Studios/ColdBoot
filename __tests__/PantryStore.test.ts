@@ -11,7 +11,7 @@ jest.mock('react-native-sqlite-storage', () => {
 // Silence the expected "SQLite not available" warning in tests
 jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-import { PantryStore } from '../src/stores/PantryStore';
+import { PantryStore, caloriesPerUnit } from '../src/stores/PantryStore';
 import { PantryItem } from '../src/stores/PantryStore';
 
 describe('PantryStore', () => {
@@ -138,6 +138,247 @@ describe('PantryStore', () => {
       await expect(store.deleteItem('non-existent-id')).rejects.toThrow(
         'Item not found',
       );
+    });
+  });
+
+  describe('Product details', () => {
+    beforeEach(async () => {
+      await store.initDatabase();
+    });
+
+    it('stores product details and puts the barcode in canonical form', async () => {
+      const item = await store.createItem(
+        'Black Beans',
+        'Canned Goods',
+        6,
+        'cans',
+        undefined,
+        undefined,
+        undefined,
+        {
+          barcode: ' 036000291452 ',
+          brand: '  Bush’s ',
+          servingSize: '1/2 cup (130 g)',
+          caloriesPerServing: 110,
+          servingsPerUnit: 3.5,
+        },
+      );
+      expect(item).toMatchObject({
+        barcode: '0036000291452',
+        brand: 'Bush’s',
+        servingSize: '1/2 cup (130 g)',
+        caloriesPerServing: 110,
+        servingsPerUnit: 3.5,
+      });
+    });
+
+    it('leaves details absent when none are given', async () => {
+      const item = await store.createItem('Rice', 'Dry Goods', 5, 'lbs');
+      expect(item.barcode).toBeUndefined();
+      expect(item.caloriesPerServing).toBeUndefined();
+    });
+
+    it('treats blank text details as absent', async () => {
+      const item = await store.createItem(
+        'Rice',
+        'Dry Goods',
+        5,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { barcode: '   ', brand: '', servingSize: ' ' },
+      );
+      expect(item.barcode).toBeUndefined();
+      expect(item.brand).toBeUndefined();
+      expect(item.servingSize).toBeUndefined();
+    });
+
+    it('rejects an invalid barcode', async () => {
+      await expect(
+        store.createItem(
+          'Beans',
+          'Canned Goods',
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { barcode: '036000291453' },
+        ),
+      ).rejects.toThrow('Barcode is not a valid UPC or EAN code');
+      expect(store.items).toHaveLength(0);
+    });
+
+    it('rejects negative calories and non-positive servings', async () => {
+      const create = (details: Parameters<PantryStore['createItem']>[7]) =>
+        store.createItem(
+          'Beans',
+          'Canned Goods',
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          details,
+        );
+      await expect(create({ caloriesPerServing: -1 })).rejects.toThrow(
+        'Calories per serving must be 0 or greater',
+      );
+      await expect(create({ caloriesPerServing: NaN })).rejects.toThrow(
+        'Calories per serving must be 0 or greater',
+      );
+      await expect(create({ servingsPerUnit: 0 })).rejects.toThrow(
+        'Servings per unit must be greater than 0',
+      );
+    });
+
+    it('accepts zero calories (water, tea)', async () => {
+      const item = await store.createItem(
+        'Bottled Water',
+        'Dry Goods',
+        24,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { caloriesPerServing: 0, servingsPerUnit: 1 },
+      );
+      expect(item.caloriesPerServing).toBe(0);
+    });
+
+    it('updates one detail without touching the others', async () => {
+      const item = await store.createItem(
+        'Beans',
+        'Canned Goods',
+        1,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { barcode: '036000291452', caloriesPerServing: 110 },
+      );
+      await store.updateItem(item.id, { brand: 'Store brand' });
+      expect(store.items[0]).toMatchObject({
+        barcode: '0036000291452',
+        brand: 'Store brand',
+        caloriesPerServing: 110,
+      });
+    });
+
+    it('clears a detail when it is set to undefined', async () => {
+      const item = await store.createItem(
+        'Beans',
+        'Canned Goods',
+        1,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        { barcode: '036000291452', caloriesPerServing: 110 },
+      );
+      await store.updateItem(item.id, {
+        barcode: undefined,
+        caloriesPerServing: undefined,
+      });
+      expect(store.items[0].barcode).toBeUndefined();
+      expect(store.items[0].caloriesPerServing).toBeUndefined();
+    });
+
+    it('validates details on update and keeps the item unchanged', async () => {
+      const item = await store.createItem('Beans', 'Canned Goods', 1);
+      await expect(
+        store.updateItem(item.id, { barcode: 'not a code' }),
+      ).rejects.toThrow('Barcode is not a valid UPC or EAN code');
+      await expect(
+        store.updateItem(item.id, { servingsPerUnit: -2 }),
+      ).rejects.toThrow('Servings per unit must be greater than 0');
+      expect(store.items[0].barcode).toBeUndefined();
+      expect(store.items[0].servingsPerUnit).toBeUndefined();
+    });
+
+    describe('findByBarcode', () => {
+      it('finds an item whichever way the code is spelled', async () => {
+        await store.createItem(
+          'Beans',
+          'Canned Goods',
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { barcode: '036000291452' },
+        );
+        expect(store.findByBarcode('036000291452')).toHaveLength(1);
+        expect(store.findByBarcode('0036000291452')).toHaveLength(1);
+        expect(store.findByBarcode('00036000291452')).toHaveLength(1);
+      });
+
+      it('returns every item sharing the barcode, oldest first', async () => {
+        const nowSpy = jest.spyOn(Date, 'now');
+        nowSpy.mockReturnValue(2000);
+        await store.createItem(
+          'Beans (newer)',
+          'Canned Goods',
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { barcode: '036000291452' },
+        );
+        nowSpy.mockReturnValue(1000);
+        await store.createItem(
+          'Beans (older)',
+          'Canned Goods',
+          1,
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          { barcode: '036000291452' },
+        );
+        nowSpy.mockRestore();
+        expect(
+          store.findByBarcode('036000291452').map((item) => item.name),
+        ).toEqual(['Beans (older)', 'Beans (newer)']);
+      });
+
+      it('matches nothing for an unknown or invalid code', async () => {
+        await store.createItem('Rice', 'Dry Goods', 1);
+        expect(store.findByBarcode('4006381333931')).toEqual([]);
+        expect(store.findByBarcode('')).toEqual([]);
+        expect(store.findByBarcode('garbage')).toEqual([]);
+      });
+    });
+
+    describe('caloriesPerUnit', () => {
+      const base: PantryItem = {
+        id: 'x',
+        name: 'Beans',
+        category: 'Canned Goods',
+        quantity: 2,
+        createdAt: 0,
+        updatedAt: 0,
+      };
+
+      it('multiplies calories per serving by servings per unit', () => {
+        expect(
+          caloriesPerUnit({
+            ...base,
+            caloriesPerServing: 110,
+            servingsPerUnit: 3.5,
+          }),
+        ).toBe(385);
+      });
+
+      it('is null when either label fact is missing', () => {
+        expect(caloriesPerUnit(base)).toBeNull();
+        expect(
+          caloriesPerUnit({ ...base, caloriesPerServing: 110 }),
+        ).toBeNull();
+        expect(caloriesPerUnit({ ...base, servingsPerUnit: 3 })).toBeNull();
+      });
     });
   });
 
