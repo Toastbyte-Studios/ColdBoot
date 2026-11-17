@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import { ActionSheetIOS, Text } from 'react-native';
+import { ActionSheetIOS, ScrollView, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import PantryScanScreen from '../src/screens/Pantry/PantryScanScreen';
 import { PantryStore } from '../src/stores/PantryStore';
@@ -33,6 +33,10 @@ jest.mock('../src/stores', () => ({
 
 jest.mock('../src/hooks/useTheme', () => ({
   useTheme: () => require('../src/theme/colors').LIGHT_COLORS,
+}));
+
+jest.mock('../src/hooks/useFooterClearance', () => ({
+  useFooterClearance: () => 100,
 }));
 
 jest.mock('../src/navigation/ScreenHeaderContext', () => ({
@@ -140,9 +144,27 @@ describe('PantryScanScreen', () => {
   }
 
   it('titles the app bar and runs the camera while shown', () => {
-    render();
+    const tree = render();
     expect(mockScreenHeader).toHaveBeenCalledWith({ title: 'Scan to Pantry' });
     expect(mockCameraActive).toBe(true);
+    const camera = tree.root.findByProps({ testID: 'scan-camera-frame' });
+    expect(
+      tree.root.findByType(ScrollView).findAllByProps({
+        testID: 'scan-camera-frame',
+      }),
+    ).toHaveLength(0);
+
+    const frame = tree.root.findAll(
+      (node) => typeof node.props.onLayout === 'function',
+    )[0];
+    ReactTestRenderer.act(() => {
+      frame.props.onLayout({
+        nativeEvent: { layout: { height: 350 } },
+      });
+    });
+    expect(camera.props.style).toEqual(
+      expect.arrayContaining([expect.objectContaining({ height: 96 })]),
+    );
   });
 
   it('adds one to an item already in the pantry', async () => {
@@ -219,12 +241,13 @@ describe('PantryScanScreen', () => {
       'Remove from list',
       'Cancel',
     ]);
-    choose(1);
+    await ReactTestRenderer.act(async () => choose(1));
 
     expect(mockNavigate).toHaveBeenCalledWith('NewPantryItem', {
       category: 'Dry Goods',
       barcode: '4006381333931',
       quantity: 2,
+      onSaved: expect.any(Function),
     });
   });
 
@@ -236,7 +259,7 @@ describe('PantryScanScreen', () => {
       tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
     );
     const [, choose] = actionSheet.mock.calls[0];
-    ReactTestRenderer.act(() => choose(4));
+    await ReactTestRenderer.act(async () => choose(4));
 
     expect(screenText(tree)).not.toContain('New barcode');
   });
@@ -244,10 +267,16 @@ describe('PantryScanScreen', () => {
   it('shows an added barcode as its new item', async () => {
     const tree = render();
     await scan(['4006381333931']);
+    ReactTestRenderer.act(() =>
+      tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
+    );
+    const [, choose] = actionSheet.mock.calls[0];
+    await ReactTestRenderer.act(async () => choose(1));
 
     // What Add Pantry Item does when the user saves.
+    let item!: Awaited<ReturnType<PantryStore['createItem']>>;
     await ReactTestRenderer.act(async () => {
-      await mockStore.createItem(
+      item = await mockStore.createItem(
         'Muesli',
         'Dry Goods',
         1,
@@ -258,6 +287,8 @@ describe('PantryScanScreen', () => {
         { barcode: '4006381333931' },
       );
     });
+    const onSaved = mockNavigate.mock.calls[0][1].onSaved;
+    ReactTestRenderer.act(() => onSaved(item, item.quantity));
 
     expect(screenText(tree)).toEqual(
       expect.arrayContaining(['Muesli', '+1 this session']),
@@ -290,11 +321,117 @@ describe('PantryScanScreen', () => {
       tree.root.findByProps({ title: 'Black Beans' }).props.onPress(),
     );
     const [, choose] = actionSheet.mock.calls[0];
-    choose(1);
+    await ReactTestRenderer.act(async () => choose(1));
 
     expect(mockNavigate).toHaveBeenCalledWith('EditPantryItem', {
       item: expect.objectContaining({ name: 'Black Beans' }),
     });
+  });
+
+  it('ignores scans while a row action sheet is open', async () => {
+    const item = await addBeans(2);
+    const tree = render();
+    await scan(['0036000291452']);
+
+    ReactTestRenderer.act(() =>
+      tree.root.findByProps({ title: 'Black Beans' }).props.onPress(),
+    );
+    later();
+    await scan(['0036000291452']);
+    const [, choose] = actionSheet.mock.calls[0];
+    await ReactTestRenderer.act(async () => choose(1));
+
+    expect(mockStore.items.find((i) => i.id === item.id)!.quantity).toBe(3);
+    expect(screenText(tree)).toContain('+1 this session');
+    expect(mockNavigate).toHaveBeenCalledWith(
+      'EditPantryItem',
+      expect.objectContaining({
+        item: expect.objectContaining({ quantity: 3 }),
+      }),
+    );
+  });
+
+  it('keeps new scans separate after an item barcode changes', async () => {
+    const item = await addBeans(2);
+    const tree = render();
+    await scan(['0036000291452']);
+    await ReactTestRenderer.act(async () =>
+      mockStore.updateItem(item.id, { barcode: '4006381333931' }),
+    );
+    later();
+    await scan(['0036000291452']);
+
+    expect(screenText(tree)).toEqual(
+      expect.arrayContaining([
+        'Black Beans',
+        '+1 this session',
+        'New barcode',
+        '0036000291452, scanned 1×. Tap to add.',
+      ]),
+    );
+    expect(mockStore.items.find((i) => i.id === item.id)!.quantity).toBe(3);
+  });
+
+  it('binds a replacement item after the scanned item is deleted', async () => {
+    const item = await addBeans(2);
+    const tree = render();
+    await scan(['0036000291452']);
+    await ReactTestRenderer.act(async () => mockStore.deleteItem(item.id));
+    later();
+    await scan(['0036000291452']);
+    ReactTestRenderer.act(() =>
+      tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
+    );
+    const [, choose] = actionSheet.mock.calls[0];
+    await ReactTestRenderer.act(async () => choose(1));
+    const onSaved = mockNavigate.mock.calls[0][1].onSaved;
+    const replacement = await mockStore.createItem(
+      'Replacement Beans',
+      'Dry Goods',
+      2,
+      'cans',
+      undefined,
+      undefined,
+      undefined,
+      { barcode: '036000291452' },
+    );
+    ReactTestRenderer.act(() => onSaved(replacement, replacement.quantity));
+
+    expect(screenText(tree)).toEqual(
+      expect.arrayContaining(['Replacement Beans', '+2 this session']),
+    );
+    expect(screenText(tree)).not.toContain('New barcode');
+  });
+
+  it('reconciles an added barcode with the quantity the form saved', async () => {
+    const tree = render();
+    await scan(['4006381333931']);
+    later();
+    await scan(['4006381333931']);
+    later();
+    await scan(['4006381333931']);
+    ReactTestRenderer.act(() =>
+      tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
+    );
+    const [, choose] = actionSheet.mock.calls[0];
+    await ReactTestRenderer.act(async () => choose(1));
+    const onSaved = mockNavigate.mock.calls[0][1].onSaved;
+    const item = await mockStore.createItem(
+      'Muesli',
+      'Dry Goods',
+      1,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      { barcode: '4006381333931' },
+    );
+    ReactTestRenderer.act(() => onSaved(item, item.quantity));
+
+    expect(screenText(tree)).toEqual(
+      expect.arrayContaining(['Muesli', '+1 this session']),
+    );
+    expect(screenText(tree)).not.toContain('+3 this session');
   });
 
   it('puts the newest lot first when several items share a barcode', async () => {

@@ -6,7 +6,9 @@ import {
   RESCAN_GAP_MS,
   ScanEntry,
   ScanGate,
+  reconcileAddedItem,
   recordScan,
+  scanEntryKey,
   undoScan,
 } from '../src/screens/Pantry/scan/pantryScanSession';
 
@@ -69,15 +71,43 @@ describe('recordScan', () => {
     ]);
   });
 
-  it('keeps an earlier item when a later scan has none', () => {
+  it('keeps unmatched scans separate from earlier counted items', () => {
     const entries: ScanEntry[] = [
       { barcode: 'a', count: 1, itemId: 'item-a', lastScannedAt: 1 },
     ];
-    expect(recordScan(entries, 'a', undefined, 2)[0].itemId).toBe('item-a');
+    expect(recordScan(entries, 'a', undefined, 2)).toEqual([
+      { barcode: 'a', count: 1, lastScannedAt: 2 },
+      { barcode: 'a', count: 1, itemId: 'item-a', lastScannedAt: 1 },
+    ]);
   });
 
   it('records an unknown code without an item', () => {
     expect(recordScan([], 'x', undefined, 1)[0].itemId).toBeUndefined();
+  });
+
+  it('gives counted and unmatched entries distinct keys', () => {
+    expect(scanEntryKey({ barcode: 'a', count: 1, lastScannedAt: 1 })).not.toBe(
+      scanEntryKey({
+        barcode: 'a',
+        count: 1,
+        itemId: 'item-a',
+        lastScannedAt: 1,
+      }),
+    );
+  });
+});
+
+describe('reconcileAddedItem', () => {
+  const pending: ScanEntry[] = [{ barcode: 'a', count: 3, lastScannedAt: 1 }];
+
+  it('uses the quantity actually saved', () => {
+    expect(reconcileAddedItem(pending, 'a', 'item-a', 1)).toEqual([
+      { barcode: 'a', count: 1, itemId: 'item-a', lastScannedAt: 1 },
+    ]);
+  });
+
+  it('removes a zero-quantity saved entry', () => {
+    expect(reconcileAddedItem(pending, 'a', 'item-a', 0)).toEqual([]);
   });
 });
 
@@ -97,5 +127,16 @@ describe('undoScan', () => {
 
   it('leaves the list alone for an unknown code', () => {
     expect(undoScan(entries, 'zzz')).toEqual(entries);
+  });
+
+  it('only takes back units from the matching item association', () => {
+    const mixed: ScanEntry[] = [
+      { barcode: 'a', count: 1, itemId: 'item-a', lastScannedAt: 1 },
+      { barcode: 'a', count: 2, lastScannedAt: 2 },
+    ];
+    expect(undoScan(mixed, 'a', undefined)).toEqual([
+      mixed[0],
+      { ...mixed[1], count: 1 },
+    ]);
   });
 });

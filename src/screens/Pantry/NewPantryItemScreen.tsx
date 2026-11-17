@@ -18,6 +18,7 @@ import {
   withDetailsField,
 } from './pantryDetailsDraft';
 import { PantryDetailsFields } from './PantryDetailsFields';
+import type { PantryItem } from '../../stores/PantryStore';
 
 type NewPantryItemRouteProp = RouteProp<
   {
@@ -27,6 +28,8 @@ type NewPantryItemRouteProp = RouteProp<
       barcode?: string;
       /** From the scan screen: how many times the code was scanned. */
       quantity?: number;
+      /** Reconciles the scan session with the quantity the form saved. */
+      onSaved?: (item: PantryItem, quantity: number) => void;
     };
   },
   'NewPantryItem'
@@ -52,7 +55,12 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const pantry = usePantryStore();
 
-  const { category, barcode, quantity: scannedQuantity } = route.params || {};
+  const {
+    category,
+    barcode,
+    quantity: scannedQuantity,
+    onSaved,
+  } = route.params || {};
   const [name, setName] = useState<string>('');
   const [quantity, setQuantity] = useState<string>(
     String(scannedQuantity ?? 1),
@@ -91,7 +99,7 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
     }
 
     try {
-      await pantry.createItem(
+      const item = await pantry.createItem(
         trimmedName,
         category,
         quantityNum,
@@ -101,6 +109,7 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
         expirationYear,
         parsedDetails.details,
       );
+      onSaved?.(item, item.quantity);
       Alert.alert('Success', 'Item added successfully', [
         {
           text: 'OK',

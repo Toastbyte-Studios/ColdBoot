@@ -5,35 +5,46 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ActionSheetIOS,
   Alert,
   AppState,
   Platform,
+  ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import InfoBlock from '../../components/InfoBlock';
 import ModuleRow from '../../components/ModuleRow';
-import PinnedHeaderScreen from '../../components/PinnedHeaderScreen';
+import ScreenBody from '../../components/ScreenBody';
 import SectionEyebrow from '../../components/SectionEyebrow';
+import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useScreenHeader } from '../../navigation/ScreenHeaderContext';
 import { usePantryStore } from '../../stores';
-import { RADIUS, SPACING } from '../../theme';
+import {
+  RADIUS,
+  ROW_MIN_HEIGHT,
+  SCREEN_GUTTER,
+  SCREEN_INSET,
+  SPACING,
+} from '../../theme';
 import { normalizeBarcode } from '../../utils/barcode';
 import { PantryScanCamera } from './scan/PantryScanCamera';
 import {
   ScanEntry,
   ScanGate,
+  reconcileAddedItem,
   recordScan,
+  scanEntryKey,
   undoScan,
 } from './scan/pantryScanSession';
 import type { PantryItem } from '../../stores/PantryStore';
 
 const CAMERA_HEIGHT = 240;
+const MIN_CAMERA_HEIGHT = 96;
 
 /**
  * False once the app goes to the background, so the camera stops. Any other
@@ -69,8 +80,8 @@ function quantityLabel(item: PantryItem): string {
  *
  * Everything happens on the phone: no product lookup yet.
  *
- * Keeps its own frame (`PinnedHeaderScreen`, not `StackScreen`) so the
- * camera stays in place while the list of scans scrolls beneath it.
+ * Keeps the camera outside the scrolling list so the preview stays in place
+ * while the list of scans scrolls beneath it.
  * Scanning is iOS-only for now; see `PantryScanCamera`.
  */
 export default observer(function PantryScanScreen() {
@@ -80,54 +91,94 @@ export default observer(function PantryScanScreen() {
   const pantry = usePantryStore();
   const isFocused = useIsFocused();
   const appActive = useAppActive();
+  const footerClearance = useFooterClearance();
 
   const [entries, setEntries] = useState<ScanEntry[]>([]);
   const [gate] = useState(() => new ScanGate());
+  const entriesRef = useRef(entries);
+  const pausedRef = useRef(false);
+  const pendingAdjustments = useRef(new Set<Promise<void>>());
+  const [frameHeight, setFrameHeight] = useState(0);
+  const [headerDetailsHeight, setHeaderDetailsHeight] = useState(0);
+
+  const updateEntries = useCallback(
+    (update: (current: ScanEntry[]) => ScanEntry[]) => {
+      const next = update(entriesRef.current);
+      entriesRef.current = next;
+      setEntries(next);
+    },
+    [],
+  );
+
+  const settleAdjustments = useCallback(async () => {
+    await Promise.all([...pendingAdjustments.current]);
+  }, []);
+
+  useEffect(() => {
+    updateEntries((current) =>
+      current.filter(
+        (entry) =>
+          !entry.itemId ||
+          pantry.items.some((item) => item.id === entry.itemId),
+      ),
+    );
+  }, [pantry.items, updateEntries]);
 
   const handleCodes = useCallback(
     (values: string[]) => {
       const now = Date.now();
       for (const value of values) {
         const barcode = normalizeBarcode(value);
-        if (!barcode || !gate.accept(barcode, now)) continue;
+        if (!barcode) continue;
+        const accepted = gate.accept(barcode, now);
+        if (pausedRef.current || !accepted) continue;
 
         const matches = pantry.findByBarcode(barcode);
         // Newest first: a fresh purchase belongs with the latest lot.
         const item = matches[matches.length - 1];
-        setEntries((current) => recordScan(current, barcode, item?.id, now));
+        updateEntries((current) => recordScan(current, barcode, item?.id, now));
         if (item) {
-          pantry.adjustQuantity(item.id, 1).catch((error: Error) => {
-            setEntries((current) => undoScan(current, barcode));
-            Alert.alert('Not added', error.message);
-          });
+          const adjustment = pantry
+            .adjustQuantity(item.id, 1)
+            .then(() => undefined)
+            .catch((error: Error) => {
+              updateEntries((current) => undoScan(current, barcode, item.id));
+              Alert.alert('Not added', error.message);
+            });
+          pendingAdjustments.current.add(adjustment);
+          adjustment.then(() => pendingAdjustments.current.delete(adjustment));
         }
       }
     },
-    [gate, pantry],
+    [gate, pantry, updateEntries],
   );
 
-  /** The item an entry's units went to, or the one added from it since. */
+  /** The item whose units this session entry actually changed. */
   const itemFor = (entry: ScanEntry): PantryItem | undefined => {
-    if (entry.itemId) {
-      return pantry.items.find((item) => item.id === entry.itemId);
-    }
-    const matches = pantry.findByBarcode(entry.barcode);
-    return matches[matches.length - 1];
+    return entry.itemId
+      ? pantry.items.find((item) => item.id === entry.itemId)
+      : undefined;
   };
 
-  const takeOneBack = (entry: ScanEntry, item: PantryItem) => {
-    pantry
-      .adjustQuantity(item.id, -1)
-      .then(() => setEntries((current) => undoScan(current, entry.barcode)))
-      .catch((error: Error) => Alert.alert('Not changed', error.message));
+  const takeOneBack = async (entry: ScanEntry, item: PantryItem) => {
+    try {
+      await pantry.adjustQuantity(item.id, -1);
+      updateEntries((current) =>
+        undoScan(current, entry.barcode, entry.itemId),
+      );
+    } catch (error) {
+      Alert.alert('Not changed', (error as Error).message);
+    }
   };
 
   const forget = (entry: ScanEntry) =>
-    setEntries((current) =>
-      current.filter((other) => other.barcode !== entry.barcode),
+    updateEntries((current) =>
+      current.filter((other) => scanEntryKey(other) !== scanEntryKey(entry)),
     );
 
   const showCountedActions = (entry: ScanEntry, item: PantryItem) => {
+    const key = scanEntryKey(entry);
+    pausedRef.current = true;
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: item.name,
@@ -135,15 +186,31 @@ export default observer(function PantryScanScreen() {
         destructiveButtonIndex: 0,
         cancelButtonIndex: 2,
       },
-      (index) => {
-        if (index === 0) takeOneBack(entry, item);
-        if (index === 1) navigation.navigate('EditPantryItem', { item });
+      async (index) => {
+        try {
+          await settleAdjustments();
+          const latestEntry = entriesRef.current.find(
+            (current) => scanEntryKey(current) === key,
+          );
+          const latestItem = latestEntry?.itemId
+            ? pantry.items.find((current) => current.id === latestEntry.itemId)
+            : undefined;
+          if (!latestEntry || !latestItem) return;
+          if (index === 0) await takeOneBack(latestEntry, latestItem);
+          if (index === 1) {
+            navigation.navigate('EditPantryItem', { item: latestItem });
+          }
+        } finally {
+          pausedRef.current = false;
+        }
       },
     );
   };
 
   const showNewCodeActions = (entry: ScanEntry) => {
+    const key = scanEntryKey(entry);
     const categories = pantry.categories;
+    pausedRef.current = true;
     ActionSheetIOS.showActionSheetWithOptions(
       {
         title: 'Add to which category?',
@@ -152,43 +219,62 @@ export default observer(function PantryScanScreen() {
         destructiveButtonIndex: categories.length,
         cancelButtonIndex: categories.length + 1,
       },
-      (index) => {
-        if (index < categories.length) {
-          navigation.navigate('NewPantryItem', {
-            category: categories[index],
-            barcode: entry.barcode,
-            quantity: entry.count,
-          });
-        } else if (index === categories.length) {
-          forget(entry);
+      async (index) => {
+        try {
+          await settleAdjustments();
+          const latestEntry = entriesRef.current.find(
+            (current) => scanEntryKey(current) === key,
+          );
+          if (!latestEntry) return;
+          if (index >= 0 && index < categories.length) {
+            navigation.navigate('NewPantryItem', {
+              category: categories[index],
+              barcode: latestEntry.barcode,
+              quantity: latestEntry.count,
+              onSaved: (item: PantryItem, quantity: number) => {
+                updateEntries((current) =>
+                  reconcileAddedItem(
+                    current,
+                    latestEntry.barcode,
+                    item.id,
+                    quantity,
+                  ),
+                );
+              },
+            });
+          } else if (index === categories.length) {
+            forget(latestEntry);
+          }
+        } finally {
+          pausedRef.current = false;
         }
       },
     );
   };
 
-  const header = (
-    <View style={styles.header}>
-      <View
-        style={[
-          styles.camera,
-          { backgroundColor: COLORS.SURFACE_CONTAINER_HIGH },
-        ]}
-        testID="scan-camera-frame"
-      >
-        {Platform.OS === 'ios' ? (
-          <PantryScanCamera
-            isActive={isFocused && appActive}
-            onCodes={handleCodes}
-          />
-        ) : (
-          <View style={styles.unavailable}>
-            <InfoBlock inline title="Not on Android yet">
-              Barcode scanning is coming to Android. Add items by hand from a
-              pantry category for now.
-            </InfoBlock>
-          </View>
-        )}
-      </View>
+  const cameraHeight =
+    frameHeight > 0
+      ? Math.max(
+          MIN_CAMERA_HEIGHT,
+          Math.min(
+            CAMERA_HEIGHT,
+            frameHeight -
+              SPACING.sm -
+              SPACING.md -
+              headerDetailsHeight -
+              footerClearance -
+              2.5 * ROW_MIN_HEIGHT,
+          ),
+        )
+      : CAMERA_HEIGHT;
+
+  const headerDetails = (
+    <View
+      style={styles.headerDetails}
+      onLayout={(event) =>
+        setHeaderDetailsHeight(event.nativeEvent.layout.height)
+      }
+    >
       {entries.length === 0 ? (
         <InfoBlock tone="tip">
           Hold a barcode inside the frame. Items already in your pantry go up by
@@ -201,54 +287,110 @@ export default observer(function PantryScanScreen() {
   );
 
   return (
-    <PinnedHeaderScreen header={header}>
-      {entries.length > 0 && (
-        <GroupContainer>
-          {entries.map((entry, index) => {
-            const item = itemFor(entry);
-            const isLast = index === entries.length - 1;
-            if (item) {
-              return (
-                <ModuleRow
-                  key={entry.barcode}
-                  variant="tool"
-                  icon="checkmark-circle-outline"
-                  iconColor={COLORS.SUCCESS}
-                  title={item.name}
-                  subtitle={`+${entry.count} this session`}
-                  value={quantityLabel(item)}
-                  showSeparator={!isLast}
-                  onPress={() => showCountedActions(entry, item)}
-                />
-              );
-            }
-            return (
-              <ModuleRow
-                key={entry.barcode}
-                variant="tool"
-                icon="add-circle-outline"
-                iconColor={COLORS.ACCENT}
-                title="New barcode"
-                subtitle={`${entry.barcode}, scanned ${entry.count}×. Tap to add.`}
-                showSeparator={!isLast}
-                onPress={() => showNewCodeActions(entry)}
+    <ScreenBody>
+      <View
+        style={[styles.layout, Platform.OS === 'android' && styles.bleed]}
+        onLayout={(event) => setFrameHeight(event.nativeEvent.layout.height)}
+      >
+        <View style={styles.header}>
+          <View
+            style={[
+              styles.camera,
+              { backgroundColor: COLORS.SURFACE_CONTAINER_HIGH },
+              { height: cameraHeight },
+            ]}
+            testID="scan-camera-frame"
+          >
+            {Platform.OS === 'ios' ? (
+              <PantryScanCamera
+                isActive={isFocused && appActive}
+                onCodes={handleCodes}
               />
-            );
-          })}
-        </GroupContainer>
-      )}
-    </PinnedHeaderScreen>
+            ) : (
+              <View style={styles.unavailable}>
+                <InfoBlock inline title="Not on Android yet">
+                  Barcode scanning is coming to Android. Add items by hand from
+                  a pantry category for now.
+                </InfoBlock>
+              </View>
+            )}
+          </View>
+          {headerDetails}
+        </View>
+        <ScrollView
+          style={styles.list}
+          contentContainerStyle={{ paddingBottom: footerClearance }}
+        >
+          <View style={styles.gutter}>
+            {entries.length > 0 && (
+              <GroupContainer>
+                {entries.map((entry, index) => {
+                  const item = itemFor(entry);
+                  const isLast = index === entries.length - 1;
+                  if (item) {
+                    return (
+                      <ModuleRow
+                        key={scanEntryKey(entry)}
+                        variant="tool"
+                        icon="checkmark-circle-outline"
+                        iconColor={COLORS.SUCCESS}
+                        title={item.name}
+                        subtitle={`+${entry.count} this session`}
+                        value={quantityLabel(item)}
+                        showSeparator={!isLast}
+                        onPress={() => showCountedActions(entry, item)}
+                      />
+                    );
+                  }
+                  return (
+                    <ModuleRow
+                      key={scanEntryKey(entry)}
+                      variant="tool"
+                      icon="add-circle-outline"
+                      iconColor={COLORS.ACCENT}
+                      title="New barcode"
+                      subtitle={`${entry.barcode}, scanned ${entry.count}×. Tap to add.`}
+                      showSeparator={!isLast}
+                      onPress={() => showNewCodeActions(entry)}
+                    />
+                  );
+                })}
+              </GroupContainer>
+            )}
+          </View>
+        </ScrollView>
+      </View>
+    </ScreenBody>
   );
 });
 
 const styles = StyleSheet.create({
+  layout: {
+    flex: 1,
+    width: '100%',
+    alignSelf: 'stretch',
+  },
+  bleed: {
+    width: 'auto',
+    marginHorizontal: -SCREEN_INSET,
+  },
   header: {
+    paddingTop: SPACING.sm,
+    paddingHorizontal: Platform.OS === 'android' ? 0 : SCREEN_GUTTER,
     gap: SPACING.md,
   },
+  headerDetails: {
+    minHeight: 1,
+  },
+  gutter: {
+    paddingHorizontal: Platform.OS === 'android' ? 0 : SCREEN_GUTTER,
+  },
   camera: {
-    height: CAMERA_HEIGHT,
     borderRadius: RADIUS.card,
     overflow: 'hidden',
+  },
+  list: {
+    flex: 1,
   },
   unavailable: {
     flex: 1,

@@ -15,6 +15,7 @@ let mockRouteParams: {
   category: string;
   barcode?: string;
   quantity?: number;
+  onSaved?: jest.Mock;
 } = { category: 'Dry Goods' };
 
 jest.mock('@react-navigation/native', () => ({
@@ -272,6 +273,34 @@ describe('NewPantryItemScreen', () => {
       undefined,
       expect.objectContaining({ barcode: '4006381333931' }),
     );
+    alertSpy.mockRestore();
+  });
+
+  it('returns the saved item and accepted quantity to the scan session', async () => {
+    const onSaved = jest.fn();
+    const savedItem = { id: 'muesli', quantity: 1 };
+    mockRouteParams = {
+      category: 'Dry Goods',
+      barcode: '4006381333931',
+      quantity: 3,
+      onSaved,
+    };
+    mockCreateItem.mockResolvedValue(savedItem);
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(<NewPantryItemScreen />);
+    });
+    ReactTestRenderer.act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Item name' })
+        .props.onChangeText('Muesli');
+    });
+    await ReactTestRenderer.act(async () => {
+      await tree.root.findByProps({ testID: 'save-state' }).props.onPress();
+    });
+
+    expect(onSaved).toHaveBeenCalledWith(savedItem, 1);
     alertSpy.mockRestore();
   });
 });

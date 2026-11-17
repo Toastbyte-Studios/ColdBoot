@@ -50,8 +50,9 @@ export interface ScanEntry {
 }
 
 /**
- * The session with one more scan of `barcode`, most recent first. `itemId`
- * is the item that received the unit, or `undefined` for an unknown code.
+ * The session with one more scan of `barcode`, most recent first. Scans for
+ * the same barcode remain separate when one has an item and the other does
+ * not.
  */
 export function recordScan(
   entries: ScanEntry[],
@@ -59,23 +60,64 @@ export function recordScan(
   itemId: string | undefined,
   now: number,
 ): ScanEntry[] {
-  const existing = entries.find((entry) => entry.barcode === barcode);
-  const others = entries.filter((entry) => entry.barcode !== barcode);
+  const existing = entries.find(
+    (entry) => entry.barcode === barcode && entry.itemId === itemId,
+  );
+  const others = entries.filter(
+    (entry) => entry.barcode !== barcode || entry.itemId !== itemId,
+  );
   return [
     {
       barcode,
       count: (existing?.count ?? 0) + 1,
-      itemId: itemId ?? existing?.itemId,
+      itemId,
       lastScannedAt: now,
     },
     ...others,
   ];
 }
 
+/** A stable key for the barcode/item association represented by an entry. */
+export function scanEntryKey(entry: ScanEntry): string {
+  return JSON.stringify([entry.barcode, entry.itemId ?? null]);
+}
+
+/**
+ * Binds an unknown barcode entry to the item actually saved by the add form.
+ * The saved quantity, rather than the original scan count, becomes undoable.
+ */
+export function reconcileAddedItem(
+  entries: ScanEntry[],
+  barcode: string,
+  itemId: string,
+  quantity: number,
+): ScanEntry[] {
+  const pending = entries.find(
+    (entry) => entry.barcode === barcode && entry.itemId === undefined,
+  );
+  if (!pending) return entries;
+
+  const others = entries.filter((entry) => entry !== pending);
+  if (quantity <= 0) return others;
+
+  return [
+    {
+      ...pending,
+      count: quantity,
+      itemId,
+    },
+    ...others,
+  ];
+}
+
 /** The session with one scan of `barcode` taken back; drops it at zero. */
-export function undoScan(entries: ScanEntry[], barcode: string): ScanEntry[] {
+export function undoScan(
+  entries: ScanEntry[],
+  barcode: string,
+  itemId?: string,
+): ScanEntry[] {
   return entries.flatMap((entry) => {
-    if (entry.barcode !== barcode) return [entry];
+    if (entry.barcode !== barcode || entry.itemId !== itemId) return [entry];
     return entry.count > 1 ? [{ ...entry, count: entry.count - 1 }] : [];
   });
 }

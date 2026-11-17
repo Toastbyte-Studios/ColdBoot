@@ -226,4 +226,16 @@ describe('PantryStore SQL', () => {
     ]);
     expect(store.items.find((i) => i.id === 'legacy')!.quantity).toBe(8);
   });
+
+  it('serializes item edits with quantity adjustments', async () => {
+    await Promise.all([
+      store.adjustQuantity('legacy', 1),
+      store.updateItem('legacy', { name: 'Brown Rice' }),
+    ]);
+
+    expect(store.items.find((i) => i.id === 'legacy')).toMatchObject({
+      name: 'Brown Rice',
+      quantity: 6,
+    });
+  });
 });
