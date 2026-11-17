@@ -215,4 +215,27 @@ describe('PantryStore SQL', () => {
       servingsPerUnit: 3.5,
     });
   });
+
+  it('counts quick quantity changes that each wait on the database', async () => {
+    // 'legacy' starts at 5. Each write awaits the fake database, so without
+    // queueing all three would read 5 and write 6.
+    await Promise.all([
+      store.adjustQuantity('legacy', 1),
+      store.adjustQuantity('legacy', 1),
+      store.adjustQuantity('legacy', 1),
+    ]);
+    expect(store.items.find((i) => i.id === 'legacy')!.quantity).toBe(8);
+  });
+
+  it('serializes item edits with quantity adjustments', async () => {
+    await Promise.all([
+      store.adjustQuantity('legacy', 1),
+      store.updateItem('legacy', { name: 'Brown Rice' }),
+    ]);
+
+    expect(store.items.find((i) => i.id === 'legacy')).toMatchObject({
+      name: 'Brown Rice',
+      quantity: 6,
+    });
+  });
 });

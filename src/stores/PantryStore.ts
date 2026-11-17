@@ -259,13 +259,16 @@ export class PantryStore {
   pantryDb: SQLiteDatabase | null = null;
   items: PantryItem[] = [];
   categories: string[] = [];
+  /** Serialises pantry item updates so concurrent edits don't overwrite. */
+  private quantityQueue: Promise<unknown> = Promise.resolve();
 
   constructor() {
-    makeAutoObservable(
+    makeAutoObservable<this, 'quantityQueue'>(
       this,
       {
         itemsByCategory: computed,
         itemsSortedByExpiration: false,
+        quantityQueue: false,
       },
       { autoBind: true },
     );
@@ -804,9 +807,43 @@ export class PantryStore {
   }
 
   /**
+   * Adds `delta` to an item's quantity (negative to take away), never going
+   * below zero. Calls run one after another, each reading the quantity the
+   * previous one left, so two scans in quick succession both count even
+   * though each write waits on the database.
+   *
+   * @returns The new quantity.
+   */
+  adjustQuantity(id: string, delta: number): Promise<number> {
+    return this.enqueueItemUpdate(async () => {
+      const item = this.items.find((i) => i.id === id);
+      if (!item) {
+        throw new Error('Item not found');
+      }
+      const quantity = Math.max(0, item.quantity + delta);
+      await this.updateItemNow(id, { quantity });
+      return quantity;
+    });
+  }
+
+  /**
    * Updates an existing pantry item.
    */
-  async updateItem(
+  updateItem(
+    id: string,
+    updates: Partial<Omit<PantryItem, 'id' | 'createdAt'>>,
+  ): Promise<void> {
+    return this.enqueueItemUpdate(() => this.updateItemNow(id, updates));
+  }
+
+  private enqueueItemUpdate<T>(operation: () => Promise<T>): Promise<T> {
+    const run = this.quantityQueue.then(operation);
+    // A failed update mustn't block the ones queued after it.
+    this.quantityQueue = run.catch(() => undefined);
+    return run;
+  }
+
+  private async updateItemNow(
     id: string,
     updates: Partial<Omit<PantryItem, 'id' | 'createdAt'>>,
   ): Promise<void> {

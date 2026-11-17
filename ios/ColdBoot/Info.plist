@@ -36,7 +36,7 @@
 		<true/>
 	</dict>
 	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera to take photos for your notes and for the flashlight.</string>
+	<string>ColdBoot uses the camera to take photos for your notes, for the flashlight, and to scan barcodes into your pantry. Scanning happens on this phone.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Cold Boot uses your contacts to let you quickly add emergency contacts to your emergency plan.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
