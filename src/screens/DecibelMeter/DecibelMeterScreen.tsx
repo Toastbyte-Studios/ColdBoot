@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import AppButton from '../../components/AppButton';
 import IconButton from '../../components/IconButton';
+import InfoBlock from '../../components/InfoBlock';
 import ReferenceTable from '../../components/ReferenceTable';
 import { Text } from '../../components/ScaledText';
 import SectionEyebrow from '../../components/SectionEyebrow';
@@ -370,10 +371,10 @@ const DecibelMeterScreenImpl = () => {
       <View style={styles.section}>
         <SectionEyebrow>How loud is that?</SectionEyebrow>
         <ReferenceTable rows={REFERENCE_ROWS} />
-        <Text style={[styles.footnote, { color: COLORS.MUTED }]}>
+        <InfoBlock icon="library-outline" style={styles.footnote}>
           Times are NIOSH's daily limit at each level before hearing protection
           is needed. Levels from the CDC.
-        </Text>
+        </InfoBlock>
       </View>
 
       {/* Calibration */}
@@ -500,10 +501,9 @@ const styles = StyleSheet.create({
     lineHeight: 18,
   },
   footnote: {
-    fontSize: 12,
-    lineHeight: 16,
-    marginTop: SPACING.sm,
-    marginHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    // The section supplies the space below.
+    marginTop: SPACING.md,
+    marginBottom: 0,
   },
   calibrationRow: {
     flexDirection: 'row',

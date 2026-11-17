@@ -1,11 +1,12 @@
 import React from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import InfoBlock from '../../components/InfoBlock';
 import { Text } from '../../components/ScaledText';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
-import { SCREEN_GUTTER, SPACING, TEXT_GUTTER } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { cardSurface } from '../../theme/cardSurface';
 import {
   AIR_ACKNOWLEDGEMENT,
@@ -31,9 +32,6 @@ const isAndroid = Platform.OS === 'android';
  * @returns A React element rendering the Ground-to-Air Signals reference screen.
  */
 export default function GroundToAirSignalsScreen() {
-  const COLORS = useTheme();
-  const groundTone = isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND;
-
   return (
     <StackScreen
       title="Ground-to-Air Signals"
@@ -45,24 +43,22 @@ export default function GroundToAirSignalsScreen() {
       ))}
 
       <SectionEyebrow style={styles.eyebrow}>Older code</SectionEyebrow>
-      <Text style={[styles.prose, { color: groundTone }]}>
+      <InfoBlock tone="caution">
         Still printed on many survival cards, but not part of today's
         international code, so a pilot may not know them. In this older code X
         meant "unable to proceed"; today it means you need medical help.
-      </Text>
+      </InfoBlock>
       {OLDER_GROUND_SIGNALS.map((signal) => (
         <SignalCard key={signal.symbol} signal={signal} />
       ))}
 
       <SectionEyebrow style={styles.eyebrow}>Reply from the air</SectionEyebrow>
-      <Text style={[styles.prose, { color: groundTone }]}>
-        {AIR_ACKNOWLEDGEMENT}
-      </Text>
+      <InfoBlock icon="airplane-outline">{AIR_ACKNOWLEDGEMENT}</InfoBlock>
 
-      <Text style={[styles.prose, styles.tip, { color: groundTone }]}>
-        Tip: pair ground signals with audio signals (whistle, Morse code) and
+      <InfoBlock tone="tip" title="Tip">
+        Pair ground signals with audio signals (whistle, Morse code) and
         movement at regular intervals to increase detectability.
-      </Text>
+      </InfoBlock>
     </StackScreen>
   );
 }
@@ -149,14 +145,5 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: SPACING.xs,
     gap: SPACING.xs + 2,
-  },
-  prose: {
-    fontSize: 13,
-    lineHeight: 19,
-    marginBottom: SPACING.md,
-    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-  },
-  tip: {
-    marginTop: SPACING.sm,
   },
 });

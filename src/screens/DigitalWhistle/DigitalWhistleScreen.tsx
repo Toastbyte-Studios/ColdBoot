@@ -163,6 +163,7 @@ export default function DigitalWhistleScreen() {
   return (
     <StackScreen
       title="Digital Whistle"
+      noteTone="caution"
       note="Placeholder tones for now. Hold the phone away from your ears before starting a continuous whistle."
     >
       <SectionEyebrow>Normal whistle</SectionEyebrow>

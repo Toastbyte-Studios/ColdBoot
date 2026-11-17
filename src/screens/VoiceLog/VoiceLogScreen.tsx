@@ -24,17 +24,17 @@ import Sound from 'react-native-sound';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { v4 as uuidv4 } from 'uuid';
 import GroupContainer from '../../components/GroupContainer';
+import InfoBlock from '../../components/InfoBlock';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
-import { SCREEN_GUTTER } from '../../theme';
+import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
 import { normalizeMeteringLevel, smoothLevel } from '../../utils/audioLevel';
 import { deleteAttachmentFiles } from '../../utils/noteAttachments';
 import EmptyState from './components/EmptyState';
-import InfoBox from './components/InfoBox';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
 
@@ -446,9 +446,13 @@ export default observer(function VoiceLogScreen() {
             onStopRecording={handleStopRecording}
           />
 
-          <InfoBox icon="time-outline">
+          <InfoBlock
+            inline
+            icon="time-outline"
+            title="Saved with each recording"
+            style={styles.metadata}
+          >
             <View>
-              <Text style={styles.featuresTitle}>Auto-captured metadata:</Text>
               <View style={styles.featureRow}>
                 <Icon
                   name="time-outline"
@@ -464,11 +468,11 @@ export default observer(function VoiceLogScreen() {
                   color={COLORS.PRIMARY_DARK}
                 />
                 <Text style={styles.featureText}>
-                  GPS Location (if available)
+                  GPS location (if available)
                 </Text>
               </View>
             </View>
-          </InfoBox>
+          </InfoBlock>
         </View>
       </StackScreen>
     );
@@ -509,16 +513,14 @@ const makeStyles = (COLORS: ColorScheme) =>
       // StackScreen's Android content is full-bleed; cards carry the gutter.
       paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     },
-    featuresTitle: {
-      fontSize: 14,
-      fontWeight: 'bold',
-      color: COLORS.PRIMARY_DARK,
-      marginBottom: 12,
+    metadata: {
+      marginTop: SPACING.lg,
+      marginBottom: 40,
     },
     featureRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      marginBottom: 8,
+      marginTop: SPACING.xs + 2,
     },
     featureText: {
       fontSize: 14,
