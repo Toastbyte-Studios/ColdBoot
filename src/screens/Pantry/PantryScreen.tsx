@@ -5,6 +5,7 @@ import {
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
 import React from 'react';
+import { Platform } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
@@ -16,6 +17,7 @@ import { usePantryStore } from '../../stores';
  *
  * @remarks
  * Presents a dashboard of pantry-related actions and routes:
+ * - **Scan Barcodes** (iOS) → navigates to the `PantryScan` screen
  * - **View All** → navigates to the `PantryAllItems` screen showing all items alphabetically
  * - **Manage Categories** → navigates to the `ManagePantryCategories` screen
  * - **Pantry Categories** → listed as rows in one grouped list that navigate to category-specific screens
@@ -40,6 +42,14 @@ export default observer(function PantryScreen() {
       title="Pantry"
       actions={
         <>
+          {Platform.OS === 'ios' && (
+            <IconButton
+              name="barcode-outline"
+              size={22}
+              accessibilityLabel="Scan Barcodes"
+              onPress={() => navigation.navigate('PantryScan')}
+            />
+          )}
           <IconButton
             name="list-outline"
             size={22}

@@ -11,12 +11,18 @@ const mockGoBack = jest.fn();
 const mockCreateItem = jest.fn();
 const mockStackScreen = jest.fn();
 
+let mockRouteParams: {
+  category: string;
+  barcode?: string;
+  quantity?: number;
+} = { category: 'Dry Goods' };
+
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     goBack: mockGoBack,
   }),
   useRoute: () => ({
-    params: { category: 'Dry Goods' },
+    params: mockRouteParams,
   }),
 }));
 
@@ -60,9 +66,11 @@ jest.mock('../src/screens/Shared/Prepper', () => {
       <MockTextInput {...props} />
     ),
     QuantityUnitRow: ({
+      quantity,
       onQuantityChange,
       onUnitChange,
     }: {
+      quantity: string;
       onQuantityChange: (value: string) => void;
       onUnitChange: (value: string) => void;
     }) => (
@@ -70,7 +78,7 @@ jest.mock('../src/screens/Shared/Prepper', () => {
         <MockTextInput
           testID="quantity-input"
           onChangeText={onQuantityChange}
-          value="1"
+          value={quantity}
         />
         <MockTextInput testID="unit-input" onChangeText={onUnitChange} />
       </>
@@ -96,6 +104,7 @@ jest.mock('../src/components/ScaledText', () => ({
 
 describe('NewPantryItemScreen', () => {
   beforeEach(() => {
+    mockRouteParams = { category: 'Dry Goods' };
     mockGoBack.mockReset();
     mockCreateItem.mockReset();
     mockStackScreen.mockReset();
@@ -223,5 +232,46 @@ describe('NewPantryItemScreen', () => {
         'Calories per serving must be a number',
       );
     });
+  });
+
+  it('fills in the barcode and count from the scan screen', async () => {
+    mockRouteParams = {
+      category: 'Dry Goods',
+      barcode: '4006381333931',
+      quantity: 3,
+    };
+    const alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(<NewPantryItemScreen />);
+    });
+
+    expect(
+      tree.root.findByProps({ accessibilityLabel: 'Barcode' }).props.value,
+    ).toBe('4006381333931');
+    expect(
+      tree.root.findByProps({ testID: 'quantity-input' }).props.value,
+    ).toBe('3');
+
+    ReactTestRenderer.act(() => {
+      tree.root
+        .findByProps({ accessibilityLabel: 'Item name' })
+        .props.onChangeText('Muesli');
+    });
+    await ReactTestRenderer.act(async () => {
+      await tree.root.findByProps({ testID: 'save-state' }).props.onPress();
+    });
+
+    expect(mockCreateItem).toHaveBeenCalledWith(
+      'Muesli',
+      'Dry Goods',
+      3,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      expect.objectContaining({ barcode: '4006381333931' }),
+    );
+    alertSpy.mockRestore();
   });
 });

@@ -382,6 +382,42 @@ describe('PantryStore', () => {
     });
   });
 
+  describe('adjustQuantity', () => {
+    beforeEach(async () => {
+      await store.initDatabase();
+    });
+
+    it('adds to the quantity and returns the new value', async () => {
+      const item = await store.createItem('Beans', 'Canned Goods', 2);
+      await expect(store.adjustQuantity(item.id, 1)).resolves.toBe(3);
+      expect(store.items[0].quantity).toBe(3);
+    });
+
+    it('never goes below zero', async () => {
+      const item = await store.createItem('Beans', 'Canned Goods', 1);
+      await expect(store.adjustQuantity(item.id, -5)).resolves.toBe(0);
+      expect(store.items[0].quantity).toBe(0);
+    });
+
+    it('counts every one of several quick calls', async () => {
+      const item = await store.createItem('Beans', 'Canned Goods', 0);
+      await Promise.all([
+        store.adjustQuantity(item.id, 1),
+        store.adjustQuantity(item.id, 1),
+        store.adjustQuantity(item.id, 1),
+      ]);
+      expect(store.items[0].quantity).toBe(3);
+    });
+
+    it('rejects an unknown item without blocking later calls', async () => {
+      const item = await store.createItem('Beans', 'Canned Goods', 0);
+      await expect(store.adjustQuantity('missing', 1)).rejects.toThrow(
+        'Item not found',
+      );
+      await expect(store.adjustQuantity(item.id, 1)).resolves.toBe(1);
+    });
+  });
+
   describe('Computed Properties', () => {
     beforeEach(async () => {
       await store.initDatabase();

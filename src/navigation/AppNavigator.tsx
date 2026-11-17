@@ -460,6 +460,12 @@ function NavigatorContent(): JSX.Element {
             }
           />
           <Stack.Screen
+            name="PantryScan"
+            getComponent={() =>
+              require('../screens/Pantry/PantryScanScreen').default
+            }
+          />
+          <Stack.Screen
             name="NewPantryItem"
             getComponent={() =>
               require('../screens/Pantry/NewPantryItemScreen').default

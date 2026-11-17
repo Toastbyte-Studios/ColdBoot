@@ -259,13 +259,16 @@ export class PantryStore {
   pantryDb: SQLiteDatabase | null = null;
   items: PantryItem[] = [];
   categories: string[] = [];
+  /** Serialises {@link adjustQuantity} so quick scans don't lose a count. */
+  private quantityQueue: Promise<unknown> = Promise.resolve();
 
   constructor() {
-    makeAutoObservable(
+    makeAutoObservable<this, 'quantityQueue'>(
       this,
       {
         itemsByCategory: computed,
         itemsSortedByExpiration: false,
+        quantityQueue: false,
       },
       { autoBind: true },
     );
@@ -806,6 +809,29 @@ export class PantryStore {
   /**
    * Updates an existing pantry item.
    */
+  /**
+   * Adds `delta` to an item's quantity (negative to take away), never going
+   * below zero. Calls run one after another, each reading the quantity the
+   * previous one left, so two scans in quick succession both count even
+   * though each write waits on the database.
+   *
+   * @returns The new quantity.
+   */
+  adjustQuantity(id: string, delta: number): Promise<number> {
+    const run = this.quantityQueue.then(async () => {
+      const item = this.items.find((i) => i.id === id);
+      if (!item) {
+        throw new Error('Item not found');
+      }
+      const quantity = Math.max(0, item.quantity + delta);
+      await this.updateItem(id, { quantity });
+      return quantity;
+    });
+    // A failed adjustment mustn't block the ones queued after it.
+    this.quantityQueue = run.catch(() => undefined);
+    return run;
+  }
+
   async updateItem(
     id: string,
     updates: Partial<Omit<PantryItem, 'id' | 'createdAt'>>,

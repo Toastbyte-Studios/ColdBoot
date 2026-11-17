@@ -20,7 +20,15 @@ import {
 import { PantryDetailsFields } from './PantryDetailsFields';
 
 type NewPantryItemRouteProp = RouteProp<
-  { NewPantryItem: { category: string } },
+  {
+    NewPantryItem: {
+      category: string;
+      /** From the scan screen: the code to save on the item. */
+      barcode?: string;
+      /** From the scan screen: how many times the code was scanned. */
+      quantity?: number;
+    };
+  },
   'NewPantryItem'
 >;
 
@@ -35,6 +43,8 @@ type NewPantryItemRouteProp = RouteProp<
  * - Set expiration date (optional, month and year)
  * - Add label details (optional): brand, barcode, serving size, calories
  *
+ * Opened from the scan screen, the barcode and quantity arrive filled in.
+ *
  * @returns {React.JSX.Element} The rendered new pantry item screen component.
  */
 export default observer(function NewPantryItemScreen(): React.JSX.Element {
@@ -42,14 +52,19 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   const navigation = useNavigation();
   const pantry = usePantryStore();
 
-  const { category } = route.params || {};
+  const { category, barcode, quantity: scannedQuantity } = route.params || {};
   const [name, setName] = useState<string>('');
-  const [quantity, setQuantity] = useState<string>('1');
+  const [quantity, setQuantity] = useState<string>(
+    String(scannedQuantity ?? 1),
+  );
   const [unit, setUnit] = useState<string>('');
   const [notes, setNotes] = useState<string>('');
   const [expirationMonth, setExpirationMonth] = useState<number | undefined>();
   const [expirationYear, setExpirationYear] = useState<number | undefined>();
-  const [details, setDetails] = useState(EMPTY_DETAILS_DRAFT);
+  const [details, setDetails] = useState(() => ({
+    ...EMPTY_DETAILS_DRAFT,
+    barcode: barcode ?? '',
+  }));
 
   const handleSave = async () => {
     const trimmedName = name.trim();
