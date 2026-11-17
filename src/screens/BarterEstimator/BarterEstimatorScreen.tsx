@@ -2,6 +2,7 @@ import { observer } from 'mobx-react-lite';
 import React, { JSX } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
+import InfoBlock from '../../components/InfoBlock';
 import { Text } from '../../components/ScaledText';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
@@ -200,14 +201,14 @@ export default observer(function BarterEstimatorScreen(): JSX.Element {
           <SectionEyebrow style={styles.eyebrow}>
             How scores work
           </SectionEyebrow>
-          <Text style={styles.infoText}>
+          <InfoBlock icon="calculator-outline">
             Each item category earns a weighted score based on post-crisis
             desirability. Dry goods and canned goods score high; frozen items
             score low since freezers fail quickly without power. Categories
             above {Math.round(SURPLUS_THRESHOLD * 100)}% of your total score are
             surplus; categories below {Math.round(SCARCITY_THRESHOLD * 100)}%
             are scarce.
-          </Text>
+          </InfoBlock>
         </>
       )}
     </StackScreen>
@@ -252,12 +253,6 @@ function makeStyles(COLORS: ReturnType<typeof useTheme>) {
       fontSize: 15,
       fontWeight: '600',
       color: COLORS.ACCENT,
-    },
-    infoText: {
-      fontSize: 12,
-      color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND,
-      lineHeight: 18,
-      paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     },
     // Row styles (shared for CategoryRow components)
     row: {

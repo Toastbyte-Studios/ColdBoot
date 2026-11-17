@@ -1,10 +1,9 @@
 import React, { PropsWithChildren } from 'react';
 import { Platform, ScrollView, StyleSheet } from 'react-native';
 import { useFooterClearance } from '../hooks/useFooterClearance';
-import { useTheme } from '../hooks/useTheme';
 import { useScreenHeader } from '../navigation/ScreenHeaderContext';
-import { SCREEN_GUTTER, SCREEN_INSET, SPACING, TEXT_GUTTER } from '../theme';
-import { Text } from './ScaledText';
+import { SCREEN_GUTTER, SCREEN_INSET, SPACING } from '../theme';
+import InfoBlock, { InfoBlockTone } from './InfoBlock';
 import ScreenBody from './ScreenBody';
 import ScreenToolbar from './ScreenToolbar';
 
@@ -33,11 +32,13 @@ type Props = PropsWithChildren<{
     typeof ScrollView
   >['keyboardShouldPersistTaps'];
   /**
-   * Supporting copy shown between the header and the content, such as a
-   * dataset's disclaimer. Quiet muted text: it qualifies the content below,
-   * it does not compete with it.
+   * Supporting copy shown between the header and the content: how to use the
+   * tool, what a dataset is, a disclaimer. Drawn as an `InfoBlock` so it reads
+   * as guidance rather than as part of the content below.
    */
   note?: string;
+  /** The note's `InfoBlock` tone. Defaults to `info`. */
+  noteTone?: InfoBlockTone;
 }>;
 
 /**
@@ -54,6 +55,9 @@ type Props = PropsWithChildren<{
  * Children are laid out in the content column. On iOS that column carries the
  * screen gutter; on Android it is full-bleed, so anything that is not a list
  * (a card, a paragraph) should apply its own `SCREEN_GUTTER` there.
+ *
+ * Explanatory copy belongs in `note` (or an `InfoBlock` further down the
+ * page), not in a bare paragraph on the screen ground.
  */
 export default function StackScreen({
   title,
@@ -62,9 +66,9 @@ export default function StackScreen({
   actions,
   keyboardShouldPersistTaps,
   note,
+  noteTone,
   children,
 }: Props) {
-  const COLORS = useTheme();
   const footerClearance = useFooterClearance();
   useScreenHeader({ title, subtitle });
 
@@ -80,16 +84,7 @@ export default function StackScreen({
       >
         <ScreenToolbar actions={actions} trailing={trailing} />
 
-        {note ? (
-          <Text
-            style={[
-              styles.note,
-              { color: isAndroid ? COLORS.MUTED : COLORS.MUTED_ON_GROUND },
-            ]}
-          >
-            {note}
-          </Text>
-        ) : null}
+        {note ? <InfoBlock tone={noteTone}>{note}</InfoBlock> : null}
 
         {children}
       </ScrollView>
@@ -113,11 +108,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: isAndroid ? 0 : SCREEN_GUTTER,
     // The title now lives in the app bar; leave a little air under it.
     paddingTop: SPACING.sm,
-  },
-  note: {
-    fontSize: 13.5,
-    lineHeight: 19,
-    paddingHorizontal: isAndroid ? TEXT_GUTTER : 0,
-    marginBottom: SPACING.lg,
   },
 });
