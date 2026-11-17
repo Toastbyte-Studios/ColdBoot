@@ -17,6 +17,12 @@ import {
   ExpirationDatePicker,
 } from '../Shared/Prepper';
 import { FormCard } from '../Shared/Prepper/FormCard';
+import {
+  detailsDraftFromItem,
+  parseDetailsDraft,
+  withDetailsField,
+} from './pantryDetailsDraft';
+import { PantryDetailsFields } from './PantryDetailsFields';
 
 const isAndroid = Platform.OS === 'android';
 
@@ -34,6 +40,7 @@ type EditPantryItemRouteProp = RouteProp<
  * - Change unit
  * - Modify notes
  * - Set expiration date (optional, month and year)
+ * - Edit label details (optional): brand, barcode, serving size, calories
  * - Delete the item
  *
  * @returns {React.JSX.Element} The rendered edit pantry item screen component.
@@ -57,6 +64,7 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
   const [expirationYear, setExpirationYear] = useState<number | undefined>(
     item?.expirationYear,
   );
+  const [details, setDetails] = useState(() => detailsDraftFromItem(item));
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -71,6 +79,12 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
       return;
     }
 
+    const parsedDetails = parseDetailsDraft(details);
+    if (!parsedDetails.ok) {
+      Alert.alert('Error', parsedDetails.error);
+      return;
+    }
+
     try {
       await pantry.updateItem(item.id, {
         name: trimmedName,
@@ -79,6 +93,7 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
         notes: notes.trim() || undefined,
         expirationMonth,
         expirationYear,
+        ...parsedDetails.details,
       });
       Alert.alert('Success', 'Item updated successfully', [
         {
@@ -158,6 +173,13 @@ export default observer(function EditPantryItemScreen(): React.JSX.Element {
           year={expirationYear}
           onMonthChange={setExpirationMonth}
           onYearChange={setExpirationYear}
+        />
+
+        <PantryDetailsFields
+          draft={details}
+          onChangeField={(key, value) =>
+            setDetails((current) => withDetailsField(current, key, value))
+          }
         />
 
         <FormTextArea

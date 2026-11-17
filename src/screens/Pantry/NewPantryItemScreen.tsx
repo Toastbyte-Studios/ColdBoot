@@ -12,6 +12,12 @@ import {
   ExpirationDatePicker,
 } from '../Shared/Prepper';
 import { FormCard } from '../Shared/Prepper/FormCard';
+import {
+  EMPTY_DETAILS_DRAFT,
+  parseDetailsDraft,
+  withDetailsField,
+} from './pantryDetailsDraft';
+import { PantryDetailsFields } from './PantryDetailsFields';
 
 type NewPantryItemRouteProp = RouteProp<
   { NewPantryItem: { category: string } },
@@ -27,6 +33,7 @@ type NewPantryItemRouteProp = RouteProp<
  * - Specify unit (optional, e.g., "pieces", "lbs", "gallons")
  * - Add notes (optional)
  * - Set expiration date (optional, month and year)
+ * - Add label details (optional): brand, barcode, serving size, calories
  *
  * @returns {React.JSX.Element} The rendered new pantry item screen component.
  */
@@ -42,6 +49,7 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   const [notes, setNotes] = useState<string>('');
   const [expirationMonth, setExpirationMonth] = useState<number | undefined>();
   const [expirationYear, setExpirationYear] = useState<number | undefined>();
+  const [details, setDetails] = useState(EMPTY_DETAILS_DRAFT);
 
   const handleSave = async () => {
     const trimmedName = name.trim();
@@ -61,6 +69,12 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
       return;
     }
 
+    const parsedDetails = parseDetailsDraft(details);
+    if (!parsedDetails.ok) {
+      Alert.alert('Error', parsedDetails.error);
+      return;
+    }
+
     try {
       await pantry.createItem(
         trimmedName,
@@ -70,6 +84,7 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
         notes.trim() || undefined,
         expirationMonth,
         expirationYear,
+        parsedDetails.details,
       );
       Alert.alert('Success', 'Item added successfully', [
         {
@@ -110,6 +125,13 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
           year={expirationYear}
           onMonthChange={setExpirationMonth}
           onYearChange={setExpirationYear}
+        />
+
+        <PantryDetailsFields
+          draft={details}
+          onChangeField={(key, value) =>
+            setDetails((current) => withDetailsField(current, key, value))
+          }
         />
 
         <FormTextArea

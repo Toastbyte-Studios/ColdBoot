@@ -7,6 +7,7 @@ import { Platform, Share } from 'react-native';
 import RNFS from 'react-native-fs';
 import { v4 as uuid } from 'uuid';
 import { z } from 'zod';
+import { normalizeBarcode } from './barcode';
 import {
   attachmentUris,
   deleteAttachmentFiles,
@@ -186,6 +187,37 @@ const StockItemSchema = z.object({
   updatedAt: z.number(),
 });
 
+/**
+ * Pantry items add product facts. All optional, so backups written before
+ * these fields existed restore unchanged.
+ */
+const PantryItemSchema = StockItemSchema.extend({
+  barcode: z
+    .string()
+    .nullish()
+    .transform((value, ctx) => {
+      if (value == null || value.trim() === '') return undefined;
+      const normalized = normalizeBarcode(value);
+      if (normalized === null) {
+        ctx.addIssue({ code: 'custom', message: 'Invalid barcode' });
+        return z.NEVER;
+      }
+      return normalized;
+    }),
+  brand: optionalString,
+  servingSize: optionalString,
+  caloriesPerServing: z
+    .number()
+    .nonnegative()
+    .nullish()
+    .transform((value) => value ?? undefined),
+  servingsPerUnit: z
+    .number()
+    .positive()
+    .nullish()
+    .transform((value) => value ?? undefined),
+});
+
 const BookmarkSchema = z.object({
   id: z.string().min(1),
   title: z.string(),
@@ -216,7 +248,7 @@ const BackupDataSchema = z.object({
     checklistItems: z.array(ChecklistItemSchema),
     inventoryItems: z.array(StockItemSchema),
     inventoryCategories: z.array(z.string()),
-    pantryItems: z.array(StockItemSchema),
+    pantryItems: z.array(PantryItemSchema),
     pantryCategories: z.array(z.string()),
     bookmarks: z.array(BookmarkSchema),
     settings: z.object({

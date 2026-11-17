@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { KeyboardAvoidingView, TextInput } from 'react-native';
+import { Alert, KeyboardAvoidingView, TextInput } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import NewPantryItemScreen from '../src/screens/Pantry/NewPantryItemScreen';
 
@@ -90,6 +90,10 @@ jest.mock('../src/screens/Shared/Prepper', () => {
   };
 });
 
+jest.mock('../src/components/ScaledText', () => ({
+  Text: require('react-native').Text,
+}));
+
 describe('NewPantryItemScreen', () => {
   beforeEach(() => {
     mockGoBack.mockReset();
@@ -141,5 +145,83 @@ describe('NewPantryItemScreen', () => {
     expect(
       tree.root.findByProps({ testID: 'pantry-item-form-card' }),
     ).toBeTruthy();
+  });
+
+  describe('label details', () => {
+    let alertSpy: jest.SpyInstance;
+
+    beforeEach(() => {
+      alertSpy = jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      alertSpy.mockRestore();
+    });
+
+    function render() {
+      let tree!: ReactTestRenderer.ReactTestRenderer;
+      ReactTestRenderer.act(() => {
+        tree = ReactTestRenderer.create(<NewPantryItemScreen />);
+      });
+      const type = (label: string, value: string) =>
+        ReactTestRenderer.act(() => {
+          tree.root
+            .findByProps({ accessibilityLabel: label })
+            .props.onChangeText(value);
+        });
+      const save = () =>
+        ReactTestRenderer.act(async () => {
+          await tree.root.findByProps({ testID: 'save-state' }).props.onPress();
+        });
+      return { tree, type, save };
+    }
+
+    it('shows the label detail fields', () => {
+      const { tree } = render();
+      expect(
+        tree.root.findByProps({ testID: 'pantry-details-fields' }),
+      ).toBeTruthy();
+    });
+
+    it('passes label details to the store', async () => {
+      const { type, save } = render();
+      type('Item name', 'Black Beans');
+      type('Brand', 'Store brand');
+      type('Barcode', '036000291452');
+      type('Serving size', '1/2 cup');
+      type('Calories per serving', '110');
+      type('Servings per unit', '3,5');
+      await save();
+
+      expect(mockCreateItem).toHaveBeenCalledWith(
+        'Black Beans',
+        'Dry Goods',
+        1,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          brand: 'Store brand',
+          barcode: '036000291452',
+          servingSize: '1/2 cup',
+          caloriesPerServing: 110,
+          servingsPerUnit: 3.5,
+        },
+      );
+    });
+
+    it('does not save when calories are not a number', async () => {
+      const { type, save } = render();
+      type('Item name', 'Black Beans');
+      type('Calories per serving', 'lots');
+      await save();
+
+      expect(mockCreateItem).not.toHaveBeenCalled();
+      expect(alertSpy).toHaveBeenCalledWith(
+        'Error',
+        'Calories per serving must be a number',
+      );
+    });
   });
 });

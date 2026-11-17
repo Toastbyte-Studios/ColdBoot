@@ -396,6 +396,19 @@ describe('BackupService', () => {
       it('accepts null for optional fields and reads it as absent', () => {
         const backup = withData({
           notes: [{ ...note, title: null, latitude: null, audioUri: null }],
+          pantryItems: [
+            {
+              id: 'pan-1',
+              name: 'Beans',
+              category: 'Canned',
+              quantity: 1,
+              barcode: null,
+              caloriesPerServing: null,
+              servingsPerUnit: null,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
           inventoryItems: [
             {
               id: 'inv-1',
@@ -414,6 +427,103 @@ describe('BackupService', () => {
         expect(backup.data.notes[0].title).toBeUndefined();
         expect(backup.data.notes[0].latitude).toBeUndefined();
         expect(backup.data.inventoryItems[0].unit).toBeUndefined();
+        expect(backup.data.pantryItems[0].barcode).toBeUndefined();
+        expect(backup.data.pantryItems[0].caloriesPerServing).toBeUndefined();
+        expect(backup.data.pantryItems[0].servingsPerUnit).toBeUndefined();
+      });
+
+      it('normalizes pantry barcodes through a restore', () => {
+        const backup = withData({
+          pantryItems: [
+            {
+              id: 'pan-2',
+              name: 'Black Beans',
+              category: 'Canned',
+              quantity: 6,
+              barcode: '036000291452',
+              brand: 'Store brand',
+              servingSize: '1/2 cup',
+              caloriesPerServing: 110,
+              servingsPerUnit: 3.5,
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+        }) as BackupData;
+
+        expect(validateBackup(backup)).toBe(true);
+        expect(backup.data.pantryItems[0]).toMatchObject({
+          barcode: '0036000291452',
+          brand: 'Store brand',
+          servingSize: '1/2 cup',
+          caloriesPerServing: 110,
+          servingsPerUnit: 3.5,
+        });
+      });
+
+      it.each(['036000291453', 'not-a-barcode'])(
+        'rejects invalid pantry barcode %s',
+        (barcode) => {
+          expect(
+            validateBackup(
+              withData({
+                pantryItems: [
+                  {
+                    id: 'pan-2',
+                    name: 'Beans',
+                    category: 'Canned',
+                    quantity: 1,
+                    barcode,
+                    createdAt: 1,
+                    updatedAt: 1,
+                  },
+                ],
+              }),
+            ),
+          ).toBe(false);
+        },
+      );
+
+      it('rejects pantry calories that are not a number', () => {
+        const backup = withData({
+          pantryItems: [
+            {
+              id: 'pan-2',
+              name: 'Beans',
+              category: 'Canned',
+              quantity: 1,
+              caloriesPerServing: '110',
+              createdAt: 1,
+              updatedAt: 1,
+            },
+          ],
+        });
+
+        expect(validateBackup(backup)).toBe(false);
+      });
+
+      it.each([
+        ['negative calories', { caloriesPerServing: -1 }],
+        ['zero servings', { servingsPerUnit: 0 }],
+        ['negative servings', { servingsPerUnit: -1 }],
+      ])('rejects pantry items with %s', (_label, details) => {
+        expect(
+          validateBackup(
+            withData({
+              pantryItems: [
+                {
+                  id: 'pan-2',
+                  name: 'Beans',
+                  category: 'Canned',
+                  quantity: 1,
+                  ...details,
+                  createdAt: 1,
+                  updatedAt: 1,
+                },
+              ],
+            }),
+          ),
+        ).toBe(false);
       });
 
       it('accepts 0/1 where SQLite stored a boolean', () => {
