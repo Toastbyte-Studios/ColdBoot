@@ -5,6 +5,7 @@
  * test can "show" the screen a barcode.
  */
 
+import { observable, runInAction } from 'mobx';
 import React from 'react';
 import { ActionSheetIOS, ScrollView, Text } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
@@ -26,9 +27,44 @@ jest.mock('@react-navigation/native', () => ({
   useIsFocused: () => true,
 }));
 
+const mockSettings = {
+  themeMode: 'light',
+  fontScale: 1,
+  productLookup: false,
+};
+/** Observable, like CoreStore's, so the screen re-renders when it changes. */
+const mockCore = observable({
+  netInfo: null as {
+    isConnected: boolean | null;
+    isInternetReachable?: boolean | null;
+  } | null,
+});
+
+/** NetInfo reports a new connection state. */
+async function setNetInfo(netInfo: typeof mockCore.netInfo) {
+  await ReactTestRenderer.act(async () => {
+    runInAction(() => {
+      mockCore.netInfo = netInfo;
+    });
+  });
+}
+
 jest.mock('../src/stores', () => ({
   usePantryStore: () => mockStore,
-  useSettingsStore: () => ({ themeMode: 'light', fontScale: 1 }),
+  useSettingsStore: () => mockSettings,
+  useCoreStore: () => mockCore,
+}));
+
+const mockLookup = jest.fn();
+jest.mock('../src/services/productLookup', () => ({
+  ...jest.requireActual('../src/services/productLookup'),
+  lookupProduct: (barcode: string) => mockLookup(barcode),
+  // No spacing between lookups in tests.
+  LookupQueue: class {
+    run<T>(task: () => Promise<T>) {
+      return task();
+    }
+  },
 }));
 
 jest.mock('../src/hooks/useTheme', () => ({
@@ -122,6 +158,10 @@ describe('PantryScanScreen', () => {
     mockStore = new PantryStore();
     // In-memory mode loads the default categories.
     await mockStore.initDatabase();
+    // Lookups have their own suite below.
+    mockSettings.productLookup = false;
+    await setNetInfo(null);
+    mockLookup.mockReset();
   });
 
   afterEach(() => {
@@ -447,5 +487,180 @@ describe('PantryScanScreen', () => {
       mockStore.items.find((i) => i.id === id)!.quantity;
     expect(quantity(older.id)).toBe(2);
     expect(quantity(newer.id)).toBe(6);
+  });
+
+  describe('product lookup', () => {
+    const found = {
+      status: 'found',
+      product: {
+        name: 'Black Beans',
+        brand: 'Store Brand',
+        servingSize: '1/2 cup (130 g)',
+        caloriesPerServing: 110,
+        servingsPerUnit: 3.5,
+      },
+    };
+
+    beforeEach(() => {
+      mockSettings.productLookup = true;
+    });
+
+    it('looks up a new barcode once and shows what it found', async () => {
+      mockLookup.mockResolvedValue(found);
+      const tree = render();
+
+      await scan(['036000291452']);
+      later();
+      await scan(['036000291452']);
+
+      expect(mockLookup).toHaveBeenCalledTimes(1);
+      expect(mockLookup).toHaveBeenCalledWith('0036000291452');
+      expect(screenText(tree)).toEqual(
+        expect.arrayContaining([
+          'Black Beans',
+          'Store Brand · 110 kcal/serving · scanned 2×. Tap to add.',
+        ]),
+      );
+    });
+
+    it('does not look up a barcode already in the pantry', async () => {
+      await addBeans(2);
+      render();
+      await scan(['036000291452']);
+      expect(mockLookup).not.toHaveBeenCalled();
+    });
+
+    it('shows a lookup in progress', async () => {
+      mockLookup.mockReturnValue(new Promise(() => {}));
+      const tree = render();
+      await scan(['036000291452']);
+      expect(screenText(tree)).toContain('Looking up…');
+    });
+
+    it('adds a found product straight to the chosen category', async () => {
+      mockLookup.mockResolvedValue(found);
+      const tree = render();
+      await scan(['036000291452']);
+      later();
+      await scan(['036000291452']);
+
+      ReactTestRenderer.act(() =>
+        tree.root.findByProps({ title: 'Black Beans' }).props.onPress(),
+      );
+      const [options, choose] = actionSheet.mock.calls[0];
+      expect(options.title).toBe('Add “Black Beans” to which category?');
+      await ReactTestRenderer.act(async () => choose(0));
+
+      expect(mockNavigate).not.toHaveBeenCalled();
+      expect(mockStore.items).toEqual([
+        expect.objectContaining({
+          name: 'Black Beans',
+          category: 'Canned Goods',
+          quantity: 2,
+          barcode: '0036000291452',
+          brand: 'Store Brand',
+          servingSize: '1/2 cup (130 g)',
+          caloriesPerServing: 110,
+          servingsPerUnit: 3.5,
+        }),
+      ]);
+      expect(screenText(tree)).toEqual(
+        expect.arrayContaining(['Black Beans', '+2 this session', '2']),
+      );
+
+      // The next can of it now counts against the new item.
+      later();
+      await scan(['036000291452']);
+      expect(mockStore.items[0].quantity).toBe(3);
+    });
+
+    it('opens the form with what was found when there is no name', async () => {
+      mockLookup.mockResolvedValue({
+        status: 'found',
+        product: { brand: 'Store Brand', caloriesPerServing: 110 },
+      });
+      const tree = render();
+      await scan(['036000291452']);
+
+      ReactTestRenderer.act(() =>
+        tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
+      );
+      const [, choose] = actionSheet.mock.calls[0];
+      await ReactTestRenderer.act(async () => choose(1));
+
+      expect(mockNavigate).toHaveBeenCalledWith(
+        'NewPantryItem',
+        expect.objectContaining({
+          category: 'Dry Goods',
+          barcode: '0036000291452',
+          quantity: 1,
+          product: { brand: 'Store Brand', caloriesPerServing: 110 },
+        }),
+      );
+    });
+
+    it('says when a product is not listed and opens an empty form', async () => {
+      mockLookup.mockResolvedValue({ status: 'not-found' });
+      const tree = render();
+      await scan(['036000291452']);
+
+      expect(screenText(tree)).toContain(
+        '0036000291452, scanned 1×. Not in Open Food Facts. Tap to add.',
+      );
+      ReactTestRenderer.act(() =>
+        tree.root.findByProps({ title: 'New barcode' }).props.onPress(),
+      );
+      const [, choose] = actionSheet.mock.calls[0];
+      await ReactTestRenderer.act(async () => choose(0));
+      expect(mockNavigate).toHaveBeenCalledWith(
+        'NewPantryItem',
+        expect.objectContaining({ product: undefined }),
+      );
+    });
+
+    it('waits for a connection, then looks up', async () => {
+      await setNetInfo({ isConnected: false });
+      mockLookup.mockResolvedValue(found);
+      const tree = render();
+      await scan(['036000291452']);
+
+      expect(mockLookup).not.toHaveBeenCalled();
+      expect(screenText(tree)).toContain(
+        '0036000291452, scanned 1×. Will look it up when online. Tap to add.',
+      );
+
+      await setNetInfo({ isConnected: true, isInternetReachable: true });
+
+      expect(mockLookup).toHaveBeenCalledTimes(1);
+      expect(screenText(tree)).toContain('Black Beans');
+    });
+
+    it('tries again after a failed lookup once back online', async () => {
+      mockLookup.mockRejectedValueOnce(new Error('timeout'));
+      mockLookup.mockResolvedValueOnce(found);
+      await setNetInfo({ isConnected: true, isInternetReachable: true });
+      const tree = render();
+      await scan(['036000291452']);
+      expect(screenText(tree)).toContain(
+        '0036000291452, scanned 1×. Will look it up when online. Tap to add.',
+      );
+
+      await setNetInfo({ isConnected: false });
+      await setNetInfo({ isConnected: true, isInternetReachable: true });
+
+      expect(mockLookup).toHaveBeenCalledTimes(2);
+      expect(screenText(tree)).toContain('Black Beans');
+    });
+
+    it('stays on the phone when lookups are turned off', async () => {
+      mockSettings.productLookup = false;
+      const tree = render();
+      await scan(['036000291452']);
+
+      expect(mockLookup).not.toHaveBeenCalled();
+      expect(screenText(tree)).toContain(
+        '0036000291452, scanned 1×. Tap to add.',
+      );
+    });
   });
 });

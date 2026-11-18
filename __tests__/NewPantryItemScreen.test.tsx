@@ -15,6 +15,13 @@ let mockRouteParams: {
   category: string;
   barcode?: string;
   quantity?: number;
+  product?: {
+    name?: string;
+    brand?: string;
+    servingSize?: string;
+    caloriesPerServing?: number;
+    servingsPerUnit?: number;
+  };
   onSaved?: jest.Mock;
 } = { category: 'Dry Goods' };
 
@@ -302,5 +309,32 @@ describe('NewPantryItemScreen', () => {
 
     expect(onSaved).toHaveBeenCalledWith(savedItem, 1);
     alertSpy.mockRestore();
+  });
+
+  it('fills in what a product lookup found', () => {
+    mockRouteParams = {
+      category: 'Dry Goods',
+      barcode: '4006381333931',
+      quantity: 1,
+      product: {
+        name: 'Muesli',
+        brand: 'Store Brand',
+        servingSize: '45 g',
+        caloriesPerServing: 170,
+        servingsPerUnit: 11.1,
+      },
+    };
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(<NewPantryItemScreen />);
+    });
+    const value = (label: string) =>
+      tree.root.findByProps({ accessibilityLabel: label }).props.value;
+
+    expect(value('Item name')).toBe('Muesli');
+    expect(value('Brand')).toBe('Store Brand');
+    expect(value('Serving size')).toBe('45 g');
+    expect(value('Calories per serving')).toBe('170');
+    expect(value('Servings per unit')).toBe('11.1');
   });
 });

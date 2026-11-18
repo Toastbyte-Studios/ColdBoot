@@ -202,7 +202,11 @@ that way, and add an entry here if you knowingly leave one behind.
 
 ## What NOT to Do
 
-- Do not make network requests — this app is fully offline
+- Do not add network requests beyond the online features listed in the
+  Privacy section of `components/HelpModal` (maps, naming an offline map,
+  Seasonal Outlook, repeaters, pantry product lookup). Each of those keeps
+  working offline. A new one needs a reason, an entry in Privacy, and a
+  credit in Settings > Attributions if its licence asks for one
 - Do not use `useTheme()` inside containers or non-component utility code; use the `COLORS` constant
 - Do not recreate service/repo/store instances on each render — use `useMemo` in containers
 - Do not add `makeObservable` manual decorators; use `makeAutoObservable`

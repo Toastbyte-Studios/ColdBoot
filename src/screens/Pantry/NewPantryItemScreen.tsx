@@ -18,6 +18,7 @@ import {
   withDetailsField,
 } from './pantryDetailsDraft';
 import { PantryDetailsFields } from './PantryDetailsFields';
+import type { ProductInfo } from '../../services/productLookup';
 import type { PantryItem } from '../../stores/PantryStore';
 
 type NewPantryItemRouteProp = RouteProp<
@@ -28,6 +29,8 @@ type NewPantryItemRouteProp = RouteProp<
       barcode?: string;
       /** From the scan screen: how many times the code was scanned. */
       quantity?: number;
+      /** From the scan screen: what a product lookup found, if anything. */
+      product?: ProductInfo;
       /** Reconciles the scan session with the quantity the form saved. */
       onSaved?: (item: PantryItem, quantity: number) => void;
     };
@@ -46,7 +49,8 @@ type NewPantryItemRouteProp = RouteProp<
  * - Set expiration date (optional, month and year)
  * - Add label details (optional): brand, barcode, serving size, calories
  *
- * Opened from the scan screen, the barcode and quantity arrive filled in.
+ * Opened from the scan screen, the barcode and quantity arrive filled in,
+ * with anything a product lookup found.
  *
  * @returns {React.JSX.Element} The rendered new pantry item screen component.
  */
@@ -59,9 +63,10 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
     category,
     barcode,
     quantity: scannedQuantity,
+    product,
     onSaved,
   } = route.params || {};
-  const [name, setName] = useState<string>('');
+  const [name, setName] = useState<string>(product?.name ?? '');
   const [quantity, setQuantity] = useState<string>(
     String(scannedQuantity ?? 1),
   );
@@ -72,6 +77,10 @@ export default observer(function NewPantryItemScreen(): React.JSX.Element {
   const [details, setDetails] = useState(() => ({
     ...EMPTY_DETAILS_DRAFT,
     barcode: barcode ?? '',
+    brand: product?.brand ?? '',
+    servingSize: product?.servingSize ?? '',
+    caloriesPerServing: product?.caloriesPerServing?.toString() ?? '',
+    servingsPerUnit: product?.servingsPerUnit?.toString() ?? '',
   }));
 
   const handleSave = async () => {
