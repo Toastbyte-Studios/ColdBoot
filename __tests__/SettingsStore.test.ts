@@ -289,6 +289,36 @@ describe('SettingsStore', () => {
     });
   });
 
+  describe('setProductLookup', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('looks up products by default', () => {
+      expect(settingsStore.productLookup).toBe(true);
+    });
+
+    it('turns lookups off and saves the choice', async () => {
+      await settingsStore.setProductLookup(false);
+
+      expect(settingsStore.productLookup).toBe(false);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('productLookup', ?)",
+        ['false'],
+      );
+    });
+
+    it('remembers the choice across launches', async () => {
+      await settingsStore.setProductLookup(false);
+
+      const relaunched = new SettingsStore();
+      await relaunched.initSettingsDb(mockDb);
+      await relaunched.loadSettings(mockDb);
+
+      expect(relaunched.productLookup).toBe(false);
+    });
+  });
+
   describe('setColdMode', () => {
     beforeEach(async () => {
       await settingsStore.initSettingsDb(mockDb);

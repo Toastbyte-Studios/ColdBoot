@@ -99,7 +99,8 @@ function splitLinks(text: string): TextPart[] {
 // calls: OpenFreeMap (map tiles), OpenStreetMap Nominatim (one lookup to
 // name an offline map when a download starts; never automatic),
 // Open-Meteo (Seasonal Outlook, rounded to about 11 km in
-// weatherOutlookService) and RepeaterBook (by US state only). Adding a
+// weatherOutlookService), RepeaterBook (by US state only) and Open Food
+// Facts (the barcode only, from services/productLookup). Adding a
 // permission or a network call means updating that section too.
 //
 // The privacy and terms URLs point at /coldboot/ pages that must be live
@@ -142,9 +143,9 @@ function buildHelpGroups(): HelpGroup[] {
           content: [
             'ColdBoot has no accounts, ads, analytics or tracking. Toastbyte Studios does not collect, receive or sell your personal data.',
             'Your notes, checklists, inventory, plans, voice logs, GPS trails and settings are stored only on this device. Backups are files you export and keep; we never see them.',
-            'The app asks for a permission only when a feature needs it: location for the map, GPS trails and location-based tools (in the background only while a trail is recording), camera for the flashlight and note photos, photo library for attaching photos to notes, microphone for Voice Log and the Decibel Meter, contacts for adding emergency contacts, and motion sensors for the barometer. You can change these at any time in your device settings.',
+            'The app asks for a permission only when a feature needs it: location for the map, GPS trails and location-based tools (in the background only while a trail is recording), camera for the flashlight, note photos and scanning barcodes into your pantry, photo library for attaching photos to notes, microphone for Voice Log and the Decibel Meter, contacts for adding emergency contacts, and motion sensors for the barometer. You can change these at any time in your device settings.',
             'A few features contact free public services when you use them, and send only what they need:',
-            '• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Naming an offline map: when you download a map, OpenStreetMap Nominatim receives the coordinates of its centre, once, to suggest a name for it.\n• Seasonal Outlook: Open-Meteo receives your approximate location, rounded to about 11 km.\n• Nearby repeaters: RepeaterBook receives only your US state.',
+            "• Maps and offline map downloads: OpenFreeMap receives the map areas you view or download.\n• Naming an offline map: when you download a map, OpenStreetMap Nominatim receives the coordinates of its centre, once, to suggest a name for it.\n• Seasonal Outlook: Open-Meteo receives your approximate location, rounded to about 11 km.\n• Nearby repeaters: RepeaterBook receives only your US state.\n• Scanning a barcode your pantry doesn't know: Open Food Facts receives only the barcode, to fill in the product's name and calories. Turn this off in Settings > Pantry.",
             'Like any website, these services also see your IP address, and they handle requests under their own privacy policies.',
             'Questions? Email support@toastbyte.studio. Full policy: https://toastbyte.studio/coldboot/privacy.',
           ].join('\n\n'),

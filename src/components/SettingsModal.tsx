@@ -725,6 +725,28 @@ export const SettingsModal = observer(
               </View>
 
               {/* ── Backup ─────────────────────────────────────────────── */}
+              <GroupLabel>PANTRY</GroupLabel>
+              <View style={[styles.group, t.groupThemed]}>
+                <View style={styles.toggleRow}>
+                  <View style={styles.toggleLabel}>
+                    <RNText style={[styles.rowTitle, t.primaryText]}>
+                      Look up new barcodes
+                    </RNText>
+                    <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                      Fills in name, brand and calories from Open Food Facts.
+                      Sends only the barcode. Off keeps scanning on this phone.
+                    </RNText>
+                  </View>
+                  <AppSwitch
+                    value={settingsStore.productLookup}
+                    onValueChange={(value) =>
+                      settingsStore.setProductLookup(value)
+                    }
+                    accessibilityLabel="Look up new barcodes online"
+                  />
+                </View>
+              </View>
+
               <GroupLabel>BACKUP &amp; RESTORE</GroupLabel>
               <View style={[styles.group, t.groupThemed, styles.groupPadded]}>
                 <RNText style={[styles.rowSubtitle, t.mutedText]}>
@@ -944,6 +966,12 @@ export const SettingsModal = observer(
                   Seasonal Outlook weather data by Open-Meteo.com, from the
                   ECMWF SEAS5 model, licensed under CC BY 4.0
                   (https://creativecommons.org/licenses/by/4.0/).
+                </RNText>
+                <RNText style={[styles.rowSubtitle, t.mutedText]}>
+                  Product details from Open Food Facts
+                  (https://world.openfoodfacts.org/), made available under the
+                  Open Database License
+                  (https://opendatacommons.org/licenses/odbl/1-0/).
                 </RNText>
               </View>
 

@@ -23,7 +23,7 @@ import SectionEyebrow from '../../components/SectionEyebrow';
 import { useFooterClearance } from '../../hooks/useFooterClearance';
 import { useTheme } from '../../hooks/useTheme';
 import { useScreenHeader } from '../../navigation/ScreenHeaderContext';
-import { usePantryStore } from '../../stores';
+import { useCoreStore, usePantryStore, useSettingsStore } from '../../stores';
 import {
   RADIUS,
   ROW_MIN_HEIGHT,
@@ -41,6 +41,8 @@ import {
   scanEntryKey,
   undoScan,
 } from './scan/pantryScanSession';
+import { LookupState, useProductLookups } from './scan/useProductLookups';
+import type { ProductInfo } from '../../services/productLookup';
 import type { PantryItem } from '../../stores/PantryStore';
 
 const CAMERA_HEIGHT = 240;
@@ -67,18 +69,65 @@ function quantityLabel(item: PantryItem): string {
   return item.unit ? `${item.quantity} ${item.unit}` : `${item.quantity}`;
 }
 
+/** Title and subtitle for a barcode the pantry doesn't have yet. */
+export function newCodeRowText(
+  entry: ScanEntry,
+  lookup: LookupState | undefined,
+): { title: string; subtitle: string } {
+  const scanned = `scanned ${entry.count}×`;
+  switch (lookup?.status) {
+    case 'pending':
+      return {
+        title: 'Looking up…',
+        subtitle: `${entry.barcode}, ${scanned}.`,
+      };
+    case 'found': {
+      const { name, brand, caloriesPerServing } = lookup.product;
+      const facts = [
+        brand,
+        caloriesPerServing !== undefined
+          ? `${caloriesPerServing} kcal/serving`
+          : undefined,
+        scanned,
+      ].filter(Boolean);
+      return {
+        title: name ?? 'New barcode',
+        subtitle: `${facts.join(' · ')}. Tap to add.`,
+      };
+    }
+    case 'not-found':
+      return {
+        title: 'New barcode',
+        subtitle: `${entry.barcode}, ${scanned}. Not in Open Food Facts. Tap to add.`,
+      };
+    case 'unavailable':
+      return {
+        title: 'New barcode',
+        subtitle: `${entry.barcode}, ${scanned}. Will look it up when online. Tap to add.`,
+      };
+    default:
+      return {
+        title: 'New barcode',
+        subtitle: `${entry.barcode}, ${scanned}. Tap to add.`,
+      };
+  }
+}
+
 /**
  * Scan barcodes to stock the pantry.
  *
  * @remarks
  * - A product already in the pantry goes up by one per scan. The same can
  *   held in view counts once; it has to leave the frame to count again.
- * - An unknown code waits in the list with its scan count. Tapping it picks
- *   a category and opens Add Pantry Item with the barcode and count filled
- *   in.
+ * - An unknown code waits in the list with its scan count, and (unless
+ *   turned off in Settings > Pantry) is looked up on Open Food Facts.
+ *   Tapping it picks a category. A product that was found is added at once,
+ *   with its name, brand and calories; otherwise Add Pantry Item opens with
+ *   the barcode, count and anything the lookup found filled in.
  * - Tapping a counted row offers to take one back or open the item.
  *
- * Everything happens on the phone: no product lookup yet.
+ * Scanning and matching happen on the phone. Only a lookup goes online, and
+ * it sends only the barcode (`services/productLookup`).
  *
  * Keeps the camera outside the scrolling list so the preview stays in place
  * while the list of scans scrolls beneath it.
@@ -89,6 +138,8 @@ export default observer(function PantryScanScreen() {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const pantry = usePantryStore();
+  const settings = useSettingsStore();
+  const core = useCoreStore();
   const isFocused = useIsFocused();
   const appActive = useAppActive();
   const footerClearance = useFooterClearance();
@@ -100,6 +151,17 @@ export default observer(function PantryScanScreen() {
   const pendingAdjustments = useRef(new Set<Promise<void>>());
   const [frameHeight, setFrameHeight] = useState(0);
   const [headerDetailsHeight, setHeaderDetailsHeight] = useState(0);
+
+  // Unknown connection state counts as online: try, and fall back to
+  // retrying when NetInfo reports the connection back.
+  const online =
+    core.netInfo?.isConnected !== false &&
+    core.netInfo?.isInternetReachable !== false;
+  const lookups = useProductLookups({
+    enabled: settings.productLookup,
+    online,
+  });
+  const requestLookup = lookups.request;
 
   const updateEntries = useCallback(
     (update: (current: ScanEntry[]) => ScanEntry[]) => {
@@ -147,10 +209,12 @@ export default observer(function PantryScanScreen() {
             });
           pendingAdjustments.current.add(adjustment);
           adjustment.then(() => pendingAdjustments.current.delete(adjustment));
+        } else {
+          requestLookup(barcode);
         }
       }
     },
-    [gate, pantry, updateEntries],
+    [gate, pantry, requestLookup, updateEntries],
   );
 
   /** The item whose units this session entry actually changed. */
@@ -207,13 +271,48 @@ export default observer(function PantryScanScreen() {
     );
   };
 
+  /** Adds a looked-up product straight to the pantry. */
+  const addFoundProduct = async (
+    entry: ScanEntry,
+    category: string,
+    product: ProductInfo & { name: string },
+  ) => {
+    try {
+      const item = await pantry.createItem(
+        product.name,
+        category,
+        entry.count,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        {
+          barcode: entry.barcode,
+          brand: product.brand,
+          servingSize: product.servingSize,
+          caloriesPerServing: product.caloriesPerServing,
+          servingsPerUnit: product.servingsPerUnit,
+        },
+      );
+      updateEntries((current) =>
+        reconcileAddedItem(current, entry.barcode, item.id, item.quantity),
+      );
+    } catch (error) {
+      Alert.alert('Not added', (error as Error).message);
+    }
+  };
+
   const showNewCodeActions = (entry: ScanEntry) => {
     const key = scanEntryKey(entry);
     const categories = pantry.categories;
+    const lookup = lookups.states[entry.barcode];
+    const found = lookup?.status === 'found' ? lookup.product : undefined;
     pausedRef.current = true;
     ActionSheetIOS.showActionSheetWithOptions(
       {
-        title: 'Add to which category?',
+        title: found?.name
+          ? `Add “${found.name}” to which category?`
+          : 'Add to which category?',
         message: `Barcode ${entry.barcode}`,
         options: [...categories, 'Remove from list', 'Cancel'],
         destructiveButtonIndex: categories.length,
@@ -227,10 +326,18 @@ export default observer(function PantryScanScreen() {
           );
           if (!latestEntry) return;
           if (index >= 0 && index < categories.length) {
+            if (found?.name) {
+              await addFoundProduct(latestEntry, categories[index], {
+                ...found,
+                name: found.name,
+              });
+              return;
+            }
             navigation.navigate('NewPantryItem', {
               category: categories[index],
               barcode: latestEntry.barcode,
               quantity: latestEntry.count,
+              product: found,
               onSaved: (item: PantryItem, quantity: number) => {
                 updateEntries((current) =>
                   reconcileAddedItem(
@@ -278,7 +385,10 @@ export default observer(function PantryScanScreen() {
       {entries.length === 0 ? (
         <InfoBlock tone="tip">
           Hold a barcode inside the frame. Items already in your pantry go up by
-          one each scan. New barcodes wait below until you add them.
+          one each scan. New barcodes wait below until you add them
+          {settings.productLookup
+            ? ', with their details looked up when you’re online.'
+            : '.'}
         </InfoBlock>
       ) : (
         <SectionEyebrow>Scanned</SectionEyebrow>
@@ -342,14 +452,20 @@ export default observer(function PantryScanScreen() {
                       />
                     );
                   }
+                  const lookup = lookups.states[entry.barcode];
+                  const text = newCodeRowText(entry, lookup);
                   return (
                     <ModuleRow
                       key={scanEntryKey(entry)}
                       variant="tool"
-                      icon="add-circle-outline"
+                      icon={
+                        lookup?.status === 'pending'
+                          ? 'search-outline'
+                          : 'add-circle-outline'
+                      }
                       iconColor={COLORS.ACCENT}
-                      title="New barcode"
-                      subtitle={`${entry.barcode}, scanned ${entry.count}×. Tap to add.`}
+                      title={text.title}
+                      subtitle={text.subtitle}
                       showSeparator={!isLast}
                       onPress={() => showNewCodeActions(entry)}
                     />

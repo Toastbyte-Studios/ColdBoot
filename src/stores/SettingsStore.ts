@@ -104,6 +104,12 @@ export class SettingsStore {
    * microphones differ by several dB. See `utils/soundLevel`.
    */
   soundMeterCalibration: number = 0;
+  /**
+   * When true, the Pantry scan screen looks up barcodes it doesn't know on
+   * Open Food Facts, sending only the barcode (`services/productLookup`).
+   * Turn off to keep scanning entirely on the phone.
+   */
+  productLookup: boolean = true;
   private settingsDb: SQLiteDatabase | null = null;
 
   constructor() {
@@ -224,6 +230,17 @@ export class SettingsStore {
   async setLastBackupAt(timestamp: number) {
     runInAction(() => {
       this.lastBackupAt = timestamp;
+    });
+    await this.persistSettings();
+  }
+
+  /**
+   * Sets whether the scan screen looks up unknown barcodes online.
+   * @param enabled - True to look up new barcodes on Open Food Facts.
+   */
+  async setProductLookup(enabled: boolean) {
+    runInAction(() => {
+      this.productLookup = enabled;
     });
     await this.persistSettings();
   }
@@ -400,6 +417,17 @@ export class SettingsStore {
         });
       }
 
+      // Load product lookup preference (on unless turned off)
+      const productLookupRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'productLookup'",
+      );
+      if (productLookupRes[0].rows.length > 0) {
+        const value = productLookupRes[0].rows.item(0).value;
+        runInAction(() => {
+          this.productLookup = value !== 'false';
+        });
+      }
+
       // Load trails overlay preference
       const showTrailsRes = await this.settingsDb.executeSql(
         "SELECT value FROM settings WHERE key = 'showTrails'",
@@ -500,6 +528,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('showTrails', ?)",
         [this.showTrails ? 'true' : 'false'],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('productLookup', ?)",
+        [this.productLookup ? 'true' : 'false'],
       );
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('coldMode', ?)",
