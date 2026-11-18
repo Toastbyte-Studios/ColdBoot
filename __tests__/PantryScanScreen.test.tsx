@@ -60,10 +60,13 @@ jest.mock('../src/services/productLookup', () => ({
   ...jest.requireActual('../src/services/productLookup'),
   lookupProduct: (barcode: string) => mockLookup(barcode),
   // No spacing between lookups in tests.
-  LookupQueue: class {
-    run<T>(task: () => Promise<T>) {
-      return task();
-    }
+  sharedLookupQueue: {
+    run<T>(task: () => Promise<T>, shouldRun: () => boolean = () => true) {
+      const { LookupCancelledError } = jest.requireActual(
+        '../src/services/productLookup',
+      );
+      return shouldRun() ? task() : Promise.reject(new LookupCancelledError());
+    },
   },
 }));
 

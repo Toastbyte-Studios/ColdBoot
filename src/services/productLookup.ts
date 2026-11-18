@@ -75,6 +75,14 @@ export class LookupUnavailableError extends Error {
   }
 }
 
+/** A queued lookup that was no longer wanted when its turn came. */
+export class LookupCancelledError extends Error {
+  constructor() {
+    super('Lookup cancelled');
+    this.name = 'LookupCancelledError';
+  }
+}
+
 /** Identifies ColdBoot, with the same contact as the map and repeater clients. */
 export function lookupUserAgent(): string {
   return `ColdBoot/${DeviceInfo.getVersion()} (${Platform.OS}; +https://toastbyte.studio; support@toastbyte.studio)`;
@@ -84,9 +92,12 @@ export function lookupUserAgent(): string {
 // Parsing
 // ---------------------------------------------------------------------------
 
-/** A number, or a string that is one (the API sends both). */
+/**
+ * A number, or a string that is one (the API sends both). A blank string is
+ * missing, not zero: `Number('')` is 0.
+ */
 const looseNumber = z
-  .union([z.number(), z.string()])
+  .union([z.number(), z.string().trim().min(1)])
   .transform((value) => (typeof value === 'number' ? value : Number(value)))
   .pipe(z.number().finite());
 
@@ -264,6 +275,10 @@ export async function lookupProduct(barcode: string): Promise<LookupResult> {
  * Runs lookups one at a time, starting each at least `spacingMs` after the
  * previous one started, so a quick run of new barcodes stays inside the
  * service's rate limit. The first one starts at once.
+ *
+ * A task can be withdrawn: `shouldRun` is checked when its turn comes and
+ * again after any wait. A withdrawn task rejects with
+ * {@link LookupCancelledError}, without waiting and without using up a slot.
  */
 export class LookupQueue {
   private tail: Promise<unknown> = Promise.resolve();
@@ -276,10 +291,12 @@ export class LookupQueue {
       new Promise((resolve) => setTimeout(resolve, ms)),
   ) {}
 
-  run<T>(task: () => Promise<T>): Promise<T> {
-    const result = this.tail.then(async () => {
+  run<T>(task: () => Promise<T>, shouldRun: () => boolean = () => true) {
+    const result = this.tail.then(async (): Promise<T> => {
+      if (!shouldRun()) throw new LookupCancelledError();
       const delay = this.lastStart + this.spacingMs - this.now();
       if (delay > 0) await this.wait(delay);
+      if (!shouldRun()) throw new LookupCancelledError();
       this.lastStart = this.now();
       return task();
     });
@@ -287,3 +304,9 @@ export class LookupQueue {
     return result;
   }
 }
+
+/**
+ * The one queue every scan screen uses, so the spacing holds across visits:
+ * closing and reopening the screen doesn't reset the rate-limit clock.
+ */
+export const sharedLookupQueue = new LookupQueue();

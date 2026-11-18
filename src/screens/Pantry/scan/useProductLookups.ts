@@ -1,9 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
+  LookupCancelledError,
   LookupQueue,
   LookupResult,
   ProductInfo,
   lookupProduct,
+  sharedLookupQueue,
 } from '../../../services/productLookup';
 
 /** Where the lookup for one barcode stands. */
@@ -13,7 +15,10 @@ export type LookupState =
   | { status: 'found'; product: ProductInfo }
   /** Open Food Facts doesn't list it. Not asked again this visit. */
   | { status: 'not-found' }
-  /** Offline or the service failed. Asked again when back online. */
+  /**
+   * Offline or the service failed. Asked again when the connection comes
+   * back, or when the barcode is scanned again while online.
+   */
   | { status: 'unavailable' };
 
 type Options = {
@@ -23,35 +28,41 @@ type Options = {
   online: boolean;
   /** Replaceable in tests. */
   lookup?: (barcode: string) => Promise<LookupResult>;
+  /** Defaults to the app-wide queue, so spacing holds across visits. */
   queue?: LookupQueue;
 };
-
-class Cancelled extends Error {}
 
 /**
  * Looks up barcodes the pantry doesn't know, for the scan screen.
  *
- * Each code is asked about once per visit. Requests go through a
- * {@link LookupQueue} to respect Open Food Facts' rate limit. A code seen
- * offline, or whose lookup failed, is marked `unavailable` and asked again
- * as soon as the connection is back. Requests still queued when the screen
- * closes are dropped.
+ * - Each code is asked about once per visit, through the shared
+ *   {@link LookupQueue} that keeps to Open Food Facts' rate limit.
+ * - A code seen offline, or whose lookup failed, is `unavailable` and asked
+ *   again when the connection comes back or the code is scanned again.
+ * - A lookup that fails just after a reconnect gets one immediate retry,
+ *   since the reconnect it would have waited for has already happened.
+ * - Queued lookups are withdrawn when the screen closes or lookups are
+ *   turned off (Settings opens over this screen), and forgotten so they
+ *   can be asked for again later.
  */
 export function useProductLookups({
   enabled,
   online,
   lookup = lookupProduct,
-  queue: givenQueue,
+  queue = sharedLookupQueue,
 }: Options) {
   const [states, setStates] = useState<Record<string, LookupState>>({});
-  const [queue] = useState(() => givenQueue ?? new LookupQueue());
 
-  // Read inside callbacks without making them change every render.
+  // Read inside callbacks and queued tasks, which outlive a render.
   const statesRef = useRef(states);
-  statesRef.current = states;
   const onlineRef = useRef(online);
   onlineRef.current = online;
+  const enabledRef = useRef(enabled);
+  enabledRef.current = enabled;
   const mounted = useRef(true);
+  /** Counts transitions to online, so a failed lookup can tell it missed one. */
+  const reconnects = useRef(0);
+
   useEffect(() => {
     mounted.current = true;
     return () => {
@@ -59,11 +70,24 @@ export function useProductLookups({
     };
   }, []);
 
-  const setState = useCallback((barcode: string, state: LookupState) => {
-    if (!mounted.current) return;
-    statesRef.current = { ...statesRef.current, [barcode]: state };
-    setStates(statesRef.current);
-  }, []);
+  const update = useCallback(
+    (change: (current: Record<string, LookupState>) => void) => {
+      if (!mounted.current) return;
+      const next = { ...statesRef.current };
+      change(next);
+      statesRef.current = next;
+      setStates(next);
+    },
+    [],
+  );
+
+  const setState = useCallback(
+    (barcode: string, state: LookupState) =>
+      update((next) => {
+        next[barcode] = state;
+      }),
+    [update],
+  );
 
   const start = useCallback(
     (barcode: string) => {
@@ -72,9 +96,11 @@ export function useProductLookups({
         return;
       }
       setState(barcode, { status: 'pending' });
+      const reconnectsAtStart = reconnects.current;
       queue
-        .run(() =>
-          mounted.current ? lookup(barcode) : Promise.reject(new Cancelled()),
+        .run(
+          () => lookup(barcode),
+          () => mounted.current && enabledRef.current,
         )
         .then((result) =>
           setState(
@@ -85,24 +111,50 @@ export function useProductLookups({
           ),
         )
         .catch((error: unknown) => {
-          if (!(error instanceof Cancelled)) {
+          if (error instanceof LookupCancelledError) {
+            // Withdrawn: forget it, so it can be asked for again.
+            update((next) => {
+              delete next[barcode];
+            });
+            return;
+          }
+          const reconnectedSince = reconnects.current !== reconnectsAtStart;
+          if (
+            reconnectedSince &&
+            onlineRef.current &&
+            mounted.current &&
+            enabledRef.current
+          ) {
+            start(barcode);
+          } else {
             setState(barcode, { status: 'unavailable' });
           }
         });
     },
-    [lookup, queue, setState],
+    [lookup, queue, setState, update],
   );
 
-  /** Asks about `barcode` unless it has been asked about already. */
+  /**
+   * Asks about `barcode`, unless it has been asked about already. One that
+   * couldn't be looked up is asked again.
+   */
   const request = useCallback(
     (barcode: string) => {
-      if (!enabled || statesRef.current[barcode]) return;
+      if (!enabled) return;
+      const state = statesRef.current[barcode];
+      if (state && state.status !== 'unavailable') return;
+      if (state && !onlineRef.current) return;
       start(barcode);
     },
     [enabled, start],
   );
 
-  // Back online: ask again about everything that couldn't be looked up.
+  useEffect(() => {
+    if (online) reconnects.current += 1;
+  }, [online]);
+
+  // Back online (or turned back on): ask again about everything that
+  // couldn't be looked up.
   useEffect(() => {
     if (!enabled || !online) return;
     for (const [barcode, state] of Object.entries(statesRef.current)) {

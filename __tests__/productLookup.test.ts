@@ -4,6 +4,7 @@
 
 import {
   LOOKUP_SPACING_MS,
+  LookupCancelledError,
   LookupQueue,
   LookupUnavailableError,
   PRODUCT_URL,
@@ -93,6 +94,21 @@ describe('productFromResponse', () => {
       caloriesPerServing: 110,
       servingsPerUnit: 3.4,
     });
+  });
+
+  it('reads a blank number as missing, not zero', () => {
+    const reply = {
+      ...beans,
+      product: {
+        ...beans.product,
+        product_quantity: ' ',
+        nutriments: { 'energy-kcal_serving': '', 'energy-kcal_100g': 85 },
+      },
+    };
+    const product = productFromResponse(reply);
+    // Falls back to 85 kcal/100 g × 130 g.
+    expect(product?.caloriesPerServing).toBe(111);
+    expect(product?.servingsPerUnit).toBeUndefined();
   });
 
   it('skips servings per unit when the units differ', () => {
@@ -252,6 +268,47 @@ describe('LookupQueue', () => {
     await queue.run(async () => undefined);
 
     expect(wait).not.toHaveBeenCalled();
+  });
+
+  it('skips a withdrawn task without waiting or using a slot', async () => {
+    let clock = 0;
+    const wait = jest.fn(async (ms: number) => {
+      clock += ms;
+    });
+    const queue = new LookupQueue(1000, () => clock, wait);
+    const task = jest.fn(async () => 'ran');
+
+    await queue.run(task);
+    await expect(queue.run(task, () => false)).rejects.toThrow(
+      LookupCancelledError,
+    );
+    expect(wait).not.toHaveBeenCalled();
+
+    // The next real task waits only for the first one's slot.
+    await queue.run(task);
+    expect(wait).toHaveBeenCalledTimes(1);
+    expect(wait).toHaveBeenCalledWith(1000);
+    expect(task).toHaveBeenCalledTimes(2);
+  });
+
+  it('withdraws a task that stops being wanted during its wait', async () => {
+    let clock = 0;
+    let wanted = true;
+    const queue = new LookupQueue(
+      1000,
+      () => clock,
+      async (ms) => {
+        clock += ms;
+        wanted = false;
+      },
+    );
+    const task = jest.fn(async () => undefined);
+
+    await queue.run(task);
+    await expect(queue.run(task, () => wanted)).rejects.toThrow(
+      LookupCancelledError,
+    );
+    expect(task).toHaveBeenCalledTimes(1);
   });
 
   it('keeps going after a task fails', async () => {
