@@ -34,7 +34,7 @@ const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
- * - Play and delete saved logs
+ * - Play, pause and seek saved logs (tap the waveform), and delete them
  *
  * @returns A React element rendering the Voice Log screen.
  */
@@ -133,8 +133,13 @@ export default observer(function VoiceLogScreen() {
               audioUri={log.audioUri}
               waveform={log.waveform}
               isNew={log.id === lastSavedId}
-              isPlaying={player.playingId === log.id}
+              playback={
+                player.playback?.id === log.id ? player.playback : undefined
+              }
               onPlay={() => log.audioUri && player.toggle(log.id, log.audioUri)}
+              onSeek={(fraction) =>
+                log.audioUri && player.seek(log.id, log.audioUri, fraction)
+              }
               onDelete={() => handleDelete(log.id)}
             />
           ))

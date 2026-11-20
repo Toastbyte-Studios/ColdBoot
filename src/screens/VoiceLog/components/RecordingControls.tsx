@@ -8,6 +8,7 @@ import { SPACING } from '../../../theme';
 import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
+import { formatClock } from '../../../utils/timeFormat';
 import Waveform from './Waveform';
 
 /**
@@ -34,13 +35,6 @@ type RecordingControlsProps = {
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
-
-/** `m:ss`, the way a recorder shows time. */
-export function formatClock(totalSeconds: number): string {
-  const seconds = Math.max(0, Math.floor(totalSeconds));
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
-}
 
 export default function RecordingControls({
   status,
