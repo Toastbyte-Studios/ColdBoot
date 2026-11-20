@@ -3,7 +3,12 @@
  */
 
 import { Platform } from 'react-native';
-import { normalizeMeteringLevel, smoothLevel } from '../src/utils/audioLevel';
+import {
+  addWaveformSample,
+  METERING_FULL_SCALE,
+  normalizeMeteringLevel,
+  WAVEFORM_BUCKET_MS,
+} from '../src/utils/audioLevel';
 
 describe('normalizeMeteringLevel', () => {
   const originalOS = Platform.OS;
@@ -64,23 +69,34 @@ describe('normalizeMeteringLevel', () => {
   });
 });
 
-describe('smoothLevel', () => {
-  test('rises quickly so speech registers straight away', () => {
-    expect(smoothLevel(0, 100)).toBeGreaterThan(50);
+describe('addWaveformSample', () => {
+  test('puts a reading in the bar for its position', () => {
+    const samples = addWaveformSample([], WAVEFORM_BUCKET_MS * 2 + 50, 40);
+    expect(samples).toEqual([0, 0, 40]);
   });
 
-  test('falls more slowly than it rises', () => {
-    const rise = smoothLevel(50, 100) - 50;
-    const fall = 50 - smoothLevel(50, 0);
-    expect(fall).toBeLessThan(rise);
+  test('keeps the loudest reading in a bar', () => {
+    let samples = addWaveformSample([], 10, 30);
+    samples = addWaveformSample(samples, 120, 60);
+    samples = addWaveformSample(samples, 180, 20);
+    expect(samples).toEqual([60]);
   });
 
-  test('converges on the target and stays put', () => {
-    let level = 0;
-    for (let i = 0; i < 40; i++) {
-      level = smoothLevel(level, 80);
-    }
-    expect(level).toBeCloseTo(80, 1);
-    expect(smoothLevel(80, 80)).toBeCloseTo(80, 5);
+  test('returns the same array when nothing changes', () => {
+    const samples = addWaveformSample([], 10, 50);
+    expect(addWaveformSample(samples, 20, 10)).toBe(samples);
+    expect(addWaveformSample(samples, -5, 10)).toBe(samples);
+    expect(addWaveformSample(samples, NaN, 10)).toBe(samples);
+    expect(addWaveformSample(samples, 20, NaN)).toBe(samples);
+  });
+
+  test('does not change the array it was given', () => {
+    const samples = [10];
+    addWaveformSample(samples, WAVEFORM_BUCKET_MS, 50);
+    expect(samples).toEqual([10]);
+  });
+
+  test('a full-scale reading is what the waveform scales to', () => {
+    expect(normalizeMeteringLevel(0)).toBeCloseTo(METERING_FULL_SCALE, 5);
   });
 });

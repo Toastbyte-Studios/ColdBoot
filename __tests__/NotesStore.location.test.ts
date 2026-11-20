@@ -35,6 +35,10 @@ jest.mock('react-native-sqlite-storage', () => {
   };
 });
 
+/** Lets the background location lookup after a voice log save finish. */
+const flushBackgroundWork = () =>
+  new Promise<void>((resolve) => setTimeout(resolve, 0));
+
 describe('NotesStore location capture', () => {
   let store: NotesStore;
   const geo = Geolocation as jest.Mocked<typeof Geolocation>;
@@ -90,14 +94,39 @@ describe('NotesStore location capture', () => {
     });
   });
 
-  it('createVoiceLog saves coordinates when location permission is granted', async () => {
-    mockPosition(30.3322, -81.6557);
+  it('createVoiceLog saves first, then adds coordinates when they arrive', async () => {
+    let deliverFix!: () => void;
+    geo.getCurrentPosition.mockImplementationOnce(
+      (success: (position: GeoPosition) => void) => {
+        deliverFix = () =>
+          success({
+            coords: {
+              latitude: 30.3322,
+              longitude: -81.6557,
+              accuracy: 5,
+              altitude: 0,
+              altitudeAccuracy: 5,
+              heading: 0,
+              speed: 0,
+            },
+            timestamp: Date.now(),
+          });
+      },
+    );
 
-    await store.createVoiceLog({
+    const saved = await store.createVoiceLog({
       audioUri: 'file:///voice-log.m4a',
       duration: 12,
       transcription: 'Voice log text',
     });
+
+    // Saved without waiting for the fix.
+    expect(saved.id).toBe(store.notes[0].id);
+    expect(store.notes[0].latitude).toBeUndefined();
+
+    await flushBackgroundWork();
+    deliverFix();
+    await flushBackgroundWork();
 
     expect(store.notes).toHaveLength(1);
     expect(store.notes[0]).toMatchObject({
@@ -136,6 +165,7 @@ describe('NotesStore location capture', () => {
       audioUri: 'file:///voice-log-denied.m4a',
       duration: 8,
     });
+    await flushBackgroundWork();
 
     expect(geo.getCurrentPosition).not.toHaveBeenCalled();
     expect(store.notes).toHaveLength(1);
@@ -147,5 +177,37 @@ describe('NotesStore location capture', () => {
     });
     expect(store.notes[0].latitude).toBeUndefined();
     expect(store.notes[0].longitude).toBeUndefined();
+  });
+
+  it('createVoiceLog does not bring back a log deleted before its fix arrived', async () => {
+    let deliverFix!: () => void;
+    geo.getCurrentPosition.mockImplementationOnce(
+      (success: (position: GeoPosition) => void) => {
+        deliverFix = () =>
+          success({
+            coords: {
+              latitude: 1,
+              longitude: 2,
+              accuracy: 5,
+              altitude: 0,
+              altitudeAccuracy: 5,
+              heading: 0,
+              speed: 0,
+            },
+            timestamp: Date.now(),
+          });
+      },
+    );
+
+    const saved = await store.createVoiceLog({
+      audioUri: 'file:///voice-log-deleted.m4a',
+      duration: 3,
+    });
+    await flushBackgroundWork();
+    await store.deleteNote(saved.id);
+    deliverFix();
+    await flushBackgroundWork();
+
+    expect(store.notes).toHaveLength(0);
   });
 });
