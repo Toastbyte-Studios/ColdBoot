@@ -10,9 +10,10 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useNotesStore } from '../../stores';
+import { useNotesStore, useSettingsStore } from '../../stores';
+import { VOICE_LOG_LENGTHS } from '../../stores/SettingsStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
-import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
+import { WAVEFORM_BARS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
@@ -21,18 +22,17 @@ import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
-const MAX_DURATION_MS = 12 * 1000;
 /** How much of the map "Show on map" frames around a log's location. */
 const MAP_RADIUS_MILES = 0.25;
-const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
 
 /**
  * Voice Log Screen
  *
  * One screen: the recorder on top, saved logs below, newest first.
  *
- * - One-tap recording with a live waveform that fills over the 12 seconds,
- *   stopping by itself at the limit
+ * - One-tap recording with a live waveform that fills as the time runs,
+ *   stopping by itself at the limit (12 s to 5 min, chosen on the recorder
+ *   card and kept in Settings)
  * - A saving state on the button; the new log then appears at the top of the
  *   list, marked as new
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
@@ -45,6 +45,8 @@ const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
  */
 export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
+  const settings = useSettingsStore();
+  const maxDurationMs = settings.voiceLogMaxSeconds * 1000;
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const player = useVoiceLogPlayer();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
@@ -59,8 +61,8 @@ export default observer(function VoiceLogScreen() {
   );
 
   const recorder = useVoiceRecorder({
-    maxDurationMs: MAX_DURATION_MS,
-    bucketMs: WAVEFORM_BUCKET_MS,
+    maxDurationMs,
+    bucketMs: maxDurationMs / WAVEFORM_BARS,
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
@@ -113,9 +115,11 @@ export default observer(function VoiceLogScreen() {
         <RecordingControls
           status={recorder.status}
           elapsedMs={recorder.elapsedMs}
-          maxDurationMs={MAX_DURATION_MS}
+          maxDurationMs={maxDurationMs}
           waveform={recorder.waveform}
-          waveformSlots={WAVEFORM_SLOTS}
+          waveformSlots={WAVEFORM_BARS}
+          lengthOptions={VOICE_LOG_LENGTHS}
+          onChangeMaxLength={settings.setVoiceLogMaxSeconds}
           disabled={busy || pendingLeave !== null}
           onStartRecording={recorder.start}
           onStopRecording={recorder.stop}

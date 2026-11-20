@@ -129,3 +129,16 @@ export function formatClock(totalSeconds: number): string {
   const minutes = Math.floor(seconds / 60);
   return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
 }
+
+/**
+ * A recording limit in words: "12 s", "30 s", "1 min", "2 min 30 s".
+ *
+ * @param totalSeconds - Whole seconds.
+ */
+export function formatLength(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.round(totalSeconds));
+  if (seconds < 60) return `${seconds} s`;
+  const minutes = Math.floor(seconds / 60);
+  const rest = seconds % 60;
+  return rest === 0 ? `${minutes} min` : `${minutes} min ${rest} s`;
+}
