@@ -16,7 +16,9 @@ import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BARS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
+import RecoveryNotice from './components/RecoveryNotice';
 import VoiceLogCard from './components/VoiceLogCard';
+import { useRecordingRecovery } from './useRecordingRecovery';
 import { useVoiceLogPlayer } from './useVoiceLogPlayer';
 import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
@@ -38,6 +40,8 @@ const MAP_RADIUS_MILES = 0.25;
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
+ * - Going to the background saves a recording in progress; one cut off by
+ *   the app closing is offered back on the next visit if its file plays
  * - Play, pause and seek saved logs (tap the waveform)
  * - Rename a log, see where it was recorded and open the Map there, delete
  *
@@ -59,6 +63,13 @@ export default observer(function VoiceLogScreen() {
       notes.createVoiceLog({ audioUri, duration, waveform }),
     [notes],
   );
+
+  // A recording cut off by the app closing, offered back once.
+  const recovered = useRecordingRecovery({
+    save: ({ audioUri, duration, createdAt }) =>
+      notes.createVoiceLog({ audioUri, duration, createdAt, locate: false }),
+    onSaved: setLastSavedId,
+  });
 
   const recorder = useVoiceRecorder({
     maxDurationMs,
@@ -112,6 +123,15 @@ export default observer(function VoiceLogScreen() {
   return (
     <StackScreen title="Voice Logs">
       <View style={styles.column}>
+        {recovered.recovery ? (
+          <RecoveryNotice
+            recovery={recovered.recovery}
+            busy={recovered.busy}
+            onSave={recovered.keep}
+            onDiscard={recovered.discard}
+            onDismiss={recovered.dismiss}
+          />
+        ) : null}
         <RecordingControls
           status={recorder.status}
           elapsedMs={recorder.elapsedMs}

@@ -1,8 +1,12 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import React from 'react';
+import { AppState } from 'react-native';
 import { Alert, Text as RNText } from 'react-native';
+import RNFS from 'react-native-fs';
 import ReactTestRenderer from 'react-test-renderer';
 import EmptyState from '../src/screens/VoiceLog/components/EmptyState';
 import RecordingControls from '../src/screens/VoiceLog/components/RecordingControls';
+import RecoveryNotice from '../src/screens/VoiceLog/components/RecoveryNotice';
 import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
 import Waveform from '../src/screens/VoiceLog/components/Waveform';
 import VoiceLogScreen from '../src/screens/VoiceLog/VoiceLogScreen';
@@ -130,6 +134,10 @@ jest.mock('../src/components/SectionEyebrow', () => {
 });
 
 const POP = { type: 'POP' };
+const storage = jest.mocked(AsyncStorage);
+/** The in-progress recording marker, as AsyncStorage holds it. */
+let mockMarker: string | null = null;
+let appStateListener: ((state: string) => void) | undefined;
 
 describe('Voice Log screen', () => {
   let tree!: ReactTestRenderer.ReactTestRenderer;
@@ -156,6 +164,23 @@ describe('Voice Log screen', () => {
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockCreateVoiceLog.mockReset().mockResolvedValue({ id: 'log-new' });
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
+    mockMarker = null;
+    storage.getItem.mockReset().mockImplementation(async () => mockMarker);
+    storage.setItem.mockReset().mockImplementation(async (_k, value) => {
+      mockMarker = value;
+    });
+    storage.removeItem.mockReset().mockImplementation(async () => {
+      mockMarker = null;
+    });
+    jest.mocked(RNFS.exists).mockReset().mockResolvedValue(false);
+    jest.mocked(RNFS.unlink).mockClear();
+    appStateListener = undefined;
+    jest
+      .spyOn(AppState, 'addEventListener')
+      .mockImplementation((_type, listener) => {
+        appStateListener = listener as (state: string) => void;
+        return { remove: jest.fn() } as never;
+      });
     await render();
   });
 
@@ -607,10 +632,16 @@ describe('Voice Log screen', () => {
       expect(cards[1].props.isNew).toBe(false);
     });
 
-    it('copies the recording to Documents before saving', async () => {
+    it('records straight into Documents and saves that file', async () => {
       await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      expect(path).toMatch(/^\/tmp\/documents\/voice-log_.+\.m4a$/);
       await ReactTestRenderer.act(async () =>
         controls().props.onStopRecording(),
+      );
+      expect(RNFS.copyFile).not.toHaveBeenCalled();
+      expect(mockCreateVoiceLog).toHaveBeenCalledWith(
+        expect.objectContaining({ audioUri: `file://${path}` }),
       );
       expect(mockCreateVoiceLog).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -849,6 +880,119 @@ describe('Voice Log screen', () => {
       );
       expect(controls().props.elapsedMs).toBe(0);
       expect(liveWaveform().props.samples).toHaveLength(0);
+    });
+  });
+
+  describe('when the app closes mid-recording', () => {
+    const marker = (path: string, startedAt = 1_700_000_000_000) =>
+      JSON.stringify({ path, startedAt });
+
+    it('marks the recording while it runs, and clears it once saved', async () => {
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(mockMarker).toBeNull();
+    });
+
+    it('clears the marker and deletes the file when saving fails', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockCreateVoiceLog.mockRejectedValue(new Error('db'));
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(mockMarker).toBeNull();
+      expect(RNFS.unlink).toHaveBeenCalledWith(path);
+    });
+
+    it('saves when the app goes to the background', async () => {
+      await startRecording();
+      await ReactTestRenderer.act(async () => appStateListener?.('inactive'));
+      expect(mockStopRecorder).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => appStateListener?.('background'));
+      expect(mockStopRecorder).toHaveBeenCalledTimes(1);
+      expect(mockCreateVoiceLog).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers back a cut-off recording that plays', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      // The probe loads the file.
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      const notice = tree.root.findByType(RecoveryNotice);
+      expect(notice.props.recovery).toMatchObject({
+        kind: 'recoverable',
+        durationSec: 8,
+      });
+      expect(mockSounds[0].release).toHaveBeenCalled();
+
+      await ReactTestRenderer.act(async () => notice.props.onSave());
+      expect(mockCreateVoiceLog).toHaveBeenCalledWith({
+        audioUri:
+          'file:///tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+        duration: 8,
+        createdAt: 1_700_000_000_000,
+        locate: false,
+      });
+      expect(mockMarker).toBeNull();
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+    });
+
+    it('discards a cut-off recording on request', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onDiscard(),
+      );
+      expect(RNFS.unlink).toHaveBeenCalledWith(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      expect(mockMarker).toBeNull();
+      expect(mockCreateVoiceLog).not.toHaveBeenCalled();
+    });
+
+    it('says so, and cleans up, when the file will not play', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () =>
+        mockLoads[0](new Error('no moov atom')),
+      );
+      const notice = tree.root.findByType(RecoveryNotice);
+      expect(notice.props.recovery.kind).toBe('lost');
+      expect(RNFS.unlink).toHaveBeenCalledWith(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      expect(mockMarker).toBeNull();
+      ReactTestRenderer.act(() => notice.props.onDismiss());
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+    });
+
+    it('quietly clears a marker whose file was never written', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      await render();
+      expect(mockMarker).toBeNull();
+      expect(mockSounds).toHaveLength(0);
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
     });
   });
 });

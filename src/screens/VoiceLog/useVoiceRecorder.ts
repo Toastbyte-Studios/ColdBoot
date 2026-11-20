@@ -2,25 +2,29 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AccessibilityInfo,
   Alert,
+  AppState,
   PermissionsAndroid,
   Platform,
   Vibration,
 } from 'react-native';
-import RNFS from 'react-native-fs';
 import { useSoundRecorder } from 'react-native-nitro-sound';
-import { v4 as uuidv4 } from 'uuid';
 import {
   addWaveformSample,
   normalizeMeteringLevel,
 } from '../../utils/audioLevel';
 import { deleteAttachmentFiles } from '../../utils/noteAttachments';
+import {
+  clearPendingRecording,
+  markRecordingStarted,
+  newRecordingPath,
+} from './pendingRecording';
 import type { RecordingStatus } from './components/RecordingControls';
 
 /** How often the recorder reports position and level, in seconds. */
 const RECORDER_UPDATE_SECONDS = 0.1;
 const NO_SAMPLES: readonly number[] = [];
 
-/** A finished recording, copied to permanent storage, ready to save. */
+/** A finished recording, in permanent storage, ready to save. */
 export type RecordedVoiceLog = {
   /** `file://` URI in the Documents directory. */
   audioUri: string;
@@ -82,8 +86,14 @@ async function requestAudioPermission(): Promise<boolean> {
 
 /**
  * Records a voice log: microphone permission, the recorder, the live
- * waveform, the auto-stop, and copying the finished file somewhere permanent
- * before handing it to `save`.
+ * waveform, the auto-stop, and handing the finished file to `save`.
+ *
+ * The file is written straight into Documents, and a marker
+ * (`pendingRecording`) is kept while recording, so a recording cut off by
+ * the app closing can be offered back on the next visit. Going to the
+ * background stops and saves: neither platform lets the app keep the
+ * microphone there (iOS has no audio background mode), and a backgrounded
+ * app is the one the OS kills.
  *
  * Start and stop are idempotent while one is in flight: a second tap, or a
  * Back press during a save, waits for the same promise instead of starting
@@ -162,7 +172,9 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
         // Whole seconds, at least one: a tap-and-release still made a file.
         const duration = Math.max(1, Math.round(elapsedMsRef.current / 1000));
         const recordedWaveform = waveformRef.current;
-        const audioUri = result || audioPathRef.current;
+        // The path it was asked to write to; the recorder reports the same
+        // file (as a URL on iOS).
+        const audioUri = audioPathRef.current || result;
         isRecordingRef.current = false;
 
         if (!audioUri) {
@@ -172,16 +184,9 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
 
         Vibration.vibrate(200);
 
-        // The recorder writes to the cache, which the OS may clear.
-        const sourcePath = audioUri.startsWith('file://')
+        const recordingPath = audioUri.startsWith('file://')
           ? audioUri.slice('file://'.length)
           : audioUri;
-        const sourceExtension =
-          sourcePath.match(/\.(m4a|mp4|wav|aac|3gp)$/i)?.[1].toLowerCase() ??
-          (Platform.OS === 'ios' ? 'm4a' : 'mp4');
-        const recordingPath = `${RNFS.DocumentDirectoryPath}/voice-log_${uuidv4()}.${sourceExtension}`;
-        await RNFS.copyFile(sourcePath, recordingPath);
-
         const recordingUri = `file://${recordingPath}`;
         let saved: { id: string } | undefined;
         try {
@@ -201,6 +206,10 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
         console.error('Failed to save voice log:', error);
         Alert.alert('Error', 'Failed to save voice log. Please try again.');
       } finally {
+        // Saved, or deleted after a failed save: either way it is settled.
+        if (audioPathRef.current) {
+          await clearPendingRecording(audioPathRef.current);
+        }
         // Every path that ends a recording resets the recorder.
         isRecordingRef.current = false;
         audioPathRef.current = null;
@@ -226,6 +235,7 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
     setStatus('starting');
     const starting = (async () => {
       let started = false;
+      let path: string | null = null;
       try {
         const hasPermission = await requestAudioPermission();
         if (!hasPermission) {
@@ -237,15 +247,20 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
         }
 
         resetLive();
-        // Library default path (the cache). The third argument turns on
-        // metering, which feeds the waveform.
-        const path = await startRecorder(undefined, undefined, true);
+        path = newRecordingPath();
+        await markRecordingStarted({ path, startedAt: Date.now() });
+        // The third argument turns on metering, which feeds the waveform.
+        await startRecorder(path, undefined, true);
         audioPathRef.current = path;
         isRecordingRef.current = true;
         started = true;
       } catch (error) {
         console.error('Failed to start recording:', error);
         Alert.alert('Error', 'Failed to start recording. Please try again.');
+        if (path) {
+          await deleteAttachmentFiles([`file://${path}`]);
+          await clearPendingRecording(path);
+        }
       } finally {
         startingRef.current = null;
         setStatus(started ? 'recording' : 'idle');
@@ -259,8 +274,22 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
     await stop();
   }, [stop]);
 
+  // Backgrounded mid-recording: save now, while the app still can.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (
+        state === 'background' &&
+        (isRecordingRef.current || startingRef.current)
+      ) {
+        settle();
+      }
+    });
+    return () => subscription.remove();
+  }, [settle]);
+
   // Unmounting mid-recording (the app closing the screen some other way)
-  // stops the recorder so the microphone is released.
+  // stops the recorder so the microphone is released. The marker stays, so
+  // the finished file is offered back on the next visit.
   useEffect(
     () => () => {
       if (
