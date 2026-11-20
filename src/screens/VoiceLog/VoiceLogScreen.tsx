@@ -48,8 +48,8 @@ export default observer(function VoiceLogScreen() {
   );
 
   const save = useCallback(
-    ({ audioUri, duration }: RecordedVoiceLog) =>
-      notes.createVoiceLog({ audioUri, duration }),
+    ({ audioUri, duration, waveform }: RecordedVoiceLog) =>
+      notes.createVoiceLog({ audioUri, duration, waveform }),
     [notes],
   );
 
@@ -131,6 +131,7 @@ export default observer(function VoiceLogScreen() {
               createdAt={log.createdAt}
               duration={log.duration}
               audioUri={log.audioUri}
+              waveform={log.waveform}
               isNew={log.id === lastSavedId}
               isPlaying={player.playingId === log.id}
               onPlay={() => log.audioUri && player.toggle(log.id, log.audioUri)}

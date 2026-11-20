@@ -2,9 +2,9 @@ import React from 'react';
 import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import EmptyState from '../src/screens/VoiceLog/components/EmptyState';
-import LiveWaveform from '../src/screens/VoiceLog/components/LiveWaveform';
 import RecordingControls from '../src/screens/VoiceLog/components/RecordingControls';
 import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
+import Waveform from '../src/screens/VoiceLog/components/Waveform';
 import VoiceLogScreen from '../src/screens/VoiceLog/VoiceLogScreen';
 
 type LeaveCallback = (event: { data: { action: { type: string } } }) => void;
@@ -27,6 +27,7 @@ type MockNote = {
   audioUri: string;
   title?: string;
   duration?: number;
+  waveform?: number[];
 };
 const FIRST_LOG: MockNote = {
   id: 'log-1',
@@ -140,6 +141,8 @@ describe('Voice Log screen', () => {
     tree.root.findByProps({ testID: 'screen-title' }).props.children;
   const controls = () => tree.root.findByType(RecordingControls);
   const card = () => tree.root.findByType(VoiceLogCard);
+  const liveWaveform = () =>
+    tree.root.findByType(RecordingControls).findByType(Waveform);
   const leave = () => mockPrevent?.onLeave({ data: { action: POP } });
 
   const startRecording = async () => {
@@ -353,6 +356,31 @@ describe('Voice Log screen', () => {
       );
     });
 
+    it('saves the waveform with the log, and the card draws it', async () => {
+      await startRecording();
+      ReactTestRenderer.act(() => {
+        mockOnRecord?.({ currentPosition: 100, currentMetering: -30 });
+        mockOnRecord?.({ currentPosition: 300, currentMetering: -60 });
+      });
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      const saved = mockCreateVoiceLog.mock.calls[0][0].waveform;
+      expect(saved).toHaveLength(2);
+
+      ReactTestRenderer.act(() => tree.unmount());
+      mockNotes.splice(0, mockNotes.length, {
+        ...FIRST_LOG,
+        waveform: [10, 60],
+      } as MockNote);
+      await render();
+      expect(card().findByType(Waveform).props.samples).toEqual([10, 60]);
+    });
+
+    it('draws no waveform for an older log without one', () => {
+      expect(card().findAllByType(Waveform)).toHaveLength(0);
+    });
+
     it('saves the recorded length in whole seconds', async () => {
       await startRecording();
       ReactTestRenderer.act(() =>
@@ -486,7 +514,7 @@ describe('Voice Log screen', () => {
         mockOnRecord?.({ currentPosition: 300, currentMetering: -60 });
       });
       expect(controls().props.elapsedMs).toBe(300);
-      const samples = tree.root.findByType(LiveWaveform).props.samples;
+      const samples = liveWaveform().props.samples;
       expect(samples).toHaveLength(2);
       expect(samples[0]).toBeGreaterThan(samples[1]);
 
@@ -494,7 +522,7 @@ describe('Voice Log screen', () => {
         controls().props.onStopRecording(),
       );
       expect(controls().props.elapsedMs).toBe(0);
-      expect(tree.root.findByType(LiveWaveform).props.samples).toHaveLength(0);
+      expect(liveWaveform().props.samples).toHaveLength(0);
     });
 
     it('stops by itself at 12 seconds', async () => {
@@ -513,7 +541,7 @@ describe('Voice Log screen', () => {
         mockOnRecord?.({ currentPosition: 500, currentMetering: -30 }),
       );
       expect(controls().props.elapsedMs).toBe(0);
-      expect(tree.root.findByType(LiveWaveform).props.samples).toHaveLength(0);
+      expect(liveWaveform().props.samples).toHaveLength(0);
     });
   });
 });

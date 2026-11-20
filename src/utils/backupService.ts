@@ -156,6 +156,8 @@ const NoteSchema = z.object({
   audioUri: optionalString,
   transcription: optionalString,
   duration: optionalNumber,
+  // Only drawn on the card; a malformed one is dropped, not the note.
+  waveform: z.array(z.number()).optional().catch(undefined),
 });
 
 const ChecklistSchema = z.object({

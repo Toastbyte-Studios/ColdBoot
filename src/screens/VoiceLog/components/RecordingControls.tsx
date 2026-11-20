@@ -8,7 +8,7 @@ import { SPACING } from '../../../theme';
 import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
-import LiveWaveform from './LiveWaveform';
+import Waveform from './Waveform';
 
 /**
  * Where the recorder is. `starting` covers the permission check and the
@@ -96,10 +96,11 @@ export default function RecordingControls({
               : `Up to ${maxSeconds}s`}
           </Text>
         </View>
-        <LiveWaveform
+        <Waveform
           samples={waveform}
           slots={waveformSlots}
           color={COLORS.ERROR}
+          testID="voice-log-waveform"
         />
       </View>
 
