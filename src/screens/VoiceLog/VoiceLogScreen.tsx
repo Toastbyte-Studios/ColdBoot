@@ -471,9 +471,10 @@ export default observer(function VoiceLogScreen() {
                 duration={lastSaved.duration}
                 audioUri={lastSaved.audioUri}
                 isPlaying={playingId === lastSaved.id}
-                onPlay={() =>
-                  handlePlayVoiceLog(lastSaved.id, lastSaved.audioUri!)
-                }
+                onPlay={() => {
+                  if (status !== 'idle') return;
+                  handlePlayVoiceLog(lastSaved.id, lastSaved.audioUri!);
+                }}
                 onDelete={() => handleDeleteVoiceLog(lastSaved.id)}
               />
             </View>
