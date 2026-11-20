@@ -12,6 +12,8 @@ type LeaveCallback = (event: { data: { action: { type: string } } }) => void;
 /** The latest arguments Voice Log passed to usePreventRemove. */
 let mockPrevent: { active: boolean; onLeave: LeaveCallback } | null = null;
 const mockDispatch = jest.fn();
+const mockNavigate = jest.fn();
+const mockRenameNote = jest.fn();
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
@@ -28,6 +30,8 @@ type MockNote = {
   title?: string;
   duration?: number;
   waveform?: number[];
+  latitude?: number;
+  longitude?: number;
 };
 const FIRST_LOG: MockNote = {
   id: 'log-1',
@@ -53,7 +57,7 @@ jest.mock('@react-navigation/native', () => ({
   usePreventRemove: (active: boolean, onLeave: LeaveCallback) => {
     mockPrevent = { active, onLeave };
   },
-  useNavigation: () => ({ dispatch: mockDispatch }),
+  useNavigation: () => ({ dispatch: mockDispatch, navigate: mockNavigate }),
 }));
 jest.mock('react-native-nitro-sound', () => ({
   useSoundRecorder: (options: { onRecord?: typeof mockOnRecord }) => {
@@ -86,6 +90,7 @@ jest.mock('../src/stores', () => ({
   useNotesStore: () => ({
     notes: mockNotes,
     deleteNote: mockDeleteNote,
+    renameNote: mockRenameNote,
     createVoiceLog: mockCreateVoiceLog,
   }),
 }));
@@ -137,6 +142,8 @@ describe('Voice Log screen', () => {
     mockSounds.length = 0;
     mockCurrentTime = 0;
     mockDispatch.mockReset();
+    mockNavigate.mockReset();
+    mockRenameNote.mockReset().mockResolvedValue(undefined);
     mockDeleteNote.mockReset();
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
@@ -413,6 +420,105 @@ describe('Voice Log screen', () => {
         }),
       );
       expect(mockSounds[0].setCurrentTime).toHaveBeenLastCalledWith(2);
+    });
+  });
+
+  describe('more menu', () => {
+    const menuActions = () =>
+      card()
+        .findByProps({ testID: 'voice-log-more' })
+        .parent!.props.actions.map((a: { id: string }) => a.id);
+    const choose = (id: string) =>
+      ReactTestRenderer.act(() =>
+        card()
+          .findByProps({ testID: 'voice-log-more' })
+          .parent!.props.onPressAction({ nativeEvent: { event: id } }),
+      );
+    const nameInput = () =>
+      card().findByProps({ accessibilityLabel: 'Voice log name' });
+    const press = async (label: string) => {
+      const button = card().find(
+        (n) => n.props.label === label && typeof n.props.onPress === 'function',
+      );
+      await ReactTestRenderer.act(async () => button.props.onPress());
+    };
+
+    const withLocation = async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockNotes.splice(0, 1, {
+        ...FIRST_LOG,
+        latitude: 34.0522,
+        longitude: -118.2437,
+      });
+      await render();
+    };
+
+    it('offers rename and delete, and the map only with a location', async () => {
+      expect(menuActions()).toEqual(['rename', 'delete']);
+      expect(
+        card().findAllByProps({ testID: 'voice-log-location' }),
+      ).toHaveLength(0);
+      await withLocation();
+      expect(menuActions()).toEqual(['rename', 'map', 'delete']);
+    });
+
+    it('shows where it was recorded, and opens the Map there', async () => {
+      await withLocation();
+      const location = card().findByProps({ testID: 'voice-log-location' });
+      expect(location.props.accessibilityLabel).toBe(
+        'Recorded at 34.05220° N, 118.24370° W',
+      );
+      ReactTestRenderer.act(() => location.props.onPress());
+      expect(mockNavigate).toHaveBeenCalledWith('MapScreen', {
+        center: { latitude: 34.0522, longitude: -118.2437 },
+        radiusMiles: 0.25,
+      });
+      choose('map');
+      expect(mockNavigate).toHaveBeenCalledTimes(2);
+    });
+
+    it('renames in place, trimming the name', async () => {
+      choose('rename');
+      expect(nameInput().props.value).toBe('Voice Log');
+      ReactTestRenderer.act(() =>
+        nameInput().props.onChangeText('  Creek crossing  '),
+      );
+      await press('Save');
+      expect(mockRenameNote).toHaveBeenCalledWith('log-1', 'Creek crossing');
+      expect(
+        card().findAllByProps({ accessibilityLabel: 'Voice log name' }),
+      ).toHaveLength(0);
+    });
+
+    it('keeps the old name when the new one is empty, or on cancel', async () => {
+      choose('rename');
+      ReactTestRenderer.act(() => nameInput().props.onChangeText('   '));
+      await press('Save');
+      choose('rename');
+      ReactTestRenderer.act(() => nameInput().props.onChangeText('Other'));
+      await press('Cancel');
+      expect(mockRenameNote).not.toHaveBeenCalled();
+    });
+
+    it('reports a failed rename and stays editing', async () => {
+      mockRenameNote.mockRejectedValue(new Error('db'));
+      choose('rename');
+      ReactTestRenderer.act(() => nameInput().props.onChangeText('New'));
+      await press('Save');
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Rename Failed',
+        'Could not rename this voice log. Please try again.',
+      );
+      expect(nameInput().props.value).toBe('New');
+    });
+
+    it('deletes from the menu, after asking', () => {
+      choose('delete');
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Delete Voice Log',
+        expect.any(String),
+        expect.any(Array),
+      );
     });
   });
 

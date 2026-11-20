@@ -358,6 +358,29 @@ export class NotesStore {
   }
 
   /**
+   * Renames a note. Writes only the title, by id, so it can't overwrite a
+   * location that `attachCurrentLocation` is adding at the same moment (a
+   * full-row write from before the fix arrived would).
+   *
+   * @param noteId - The note to rename.
+   * @param title - The new title, used as given.
+   */
+  async renameNote(noteId: string, title: string): Promise<void> {
+    const note = this.notes.find((n) => n.id === noteId);
+    if (!note) return;
+    await this.initNotesDb();
+    if (this.notesDb) {
+      await this.notesDb.executeSql('UPDATE notes SET title = ? WHERE id = ?', [
+        title,
+        noteId,
+      ]);
+    }
+    runInAction(() => {
+      note.title = title;
+    });
+  }
+
+  /**
    * Adds the current position to a note that has already been saved.
    *
    * Writes only the two columns, by id, so a note deleted while the fix was

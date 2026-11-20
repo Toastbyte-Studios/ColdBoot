@@ -11,14 +11,8 @@ export type StatusTone = 'good' | 'fair' | 'poor' | 'neutral';
 
 const METERS_PER_FOOT = 0.3048;
 
-/** "34.05220° N, 118.24370° W" */
-export function formatCoordinates(latitude: number, longitude: number): string {
-  const lat = `${Math.abs(latitude).toFixed(5)}° ${latitude >= 0 ? 'N' : 'S'}`;
-  const lng = `${Math.abs(longitude).toFixed(5)}° ${
-    longitude >= 0 ? 'E' : 'W'
-  }`;
-  return `${lat}, ${lng}`;
-}
+// Shared with Voice Log; kept here too so existing imports still work.
+export { formatCoordinates } from '../../utils/formatCoordinates';
 
 /** A length in metres, shown in the user's units: "±8 m" / "±26 ft". */
 export function formatMeters(

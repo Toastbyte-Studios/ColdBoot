@@ -145,4 +145,28 @@ describe('NotesStore voice logs', () => {
       });
     });
   });
+
+  describe('renameNote', () => {
+    it('writes only the title, by id', async () => {
+      mockNoteRows = [voiceRow()];
+      await store.loadNotes();
+      mockExecuteSql.mockClear();
+      await store.renameNote('v1', 'Camp water source');
+      expect(store.notes[0].title).toBe('Camp water source');
+      expect(mockExecuteSql).toHaveBeenCalledWith(
+        'UPDATE notes SET title = ? WHERE id = ?',
+        ['Camp water source', 'v1'],
+      );
+      expect(
+        mockExecuteSql.mock.calls.some(([q]) => q.startsWith('INSERT')),
+      ).toBe(false);
+    });
+
+    it('does nothing for a log that is gone', async () => {
+      await store.renameNote('missing', 'x');
+      expect(
+        mockExecuteSql.mock.calls.some(([q]) => q.startsWith('UPDATE')),
+      ).toBe(false);
+    });
+  });
 });

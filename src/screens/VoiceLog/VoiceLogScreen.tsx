@@ -1,5 +1,7 @@
 import {
   NavigationAction,
+  NavigationProp,
+  ParamListBase,
   useNavigation,
   usePreventRemove,
 } from '@react-navigation/native';
@@ -20,6 +22,8 @@ import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_MS = 12 * 1000;
+/** How much of the map "Show on map" frames around a log's location. */
+const MAP_RADIUS_MILES = 0.25;
 const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
 
 /**
@@ -34,13 +38,14 @@ const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
- * - Play, pause and seek saved logs (tap the waveform), and delete them
+ * - Play, pause and seek saved logs (tap the waveform)
+ * - Rename a log, see where it was recorded and open the Map there, delete
  *
  * @returns A React element rendering the Voice Log screen.
  */
 export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
-  const navigation = useNavigation();
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const player = useVoiceLogPlayer();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<NavigationAction | null>(
@@ -140,6 +145,19 @@ export default observer(function VoiceLogScreen() {
               onSeek={(fraction) =>
                 log.audioUri && player.seek(log.id, log.audioUri, fraction)
               }
+              latitude={log.latitude}
+              longitude={log.longitude}
+              onRename={(newTitle) => notes.renameNote(log.id, newTitle)}
+              onShowOnMap={() => {
+                if (log.latitude === undefined || log.longitude === undefined) {
+                  return;
+                }
+                player.stop();
+                navigation.navigate('MapScreen', {
+                  center: { latitude: log.latitude, longitude: log.longitude },
+                  radiusMiles: MAP_RADIUS_MILES,
+                });
+              }}
               onDelete={() => handleDelete(log.id)}
             />
           ))
