@@ -5,7 +5,7 @@ import {
   calorieText,
   calorieTotal,
   pantryHeroState,
-} from '../src/screens/Pantry/pantryHero';
+} from '../src/screens/Pantry/pantryUseFirst';
 import type { PantryItem } from '../src/stores/PantryStore';
 
 const item = (name: string, extra: Partial<PantryItem> = {}): PantryItem => ({
@@ -55,7 +55,7 @@ jest.mock('../src/components/ScaledText', () => ({
 }));
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
-describe('pantryHero', () => {
+describe('pantryUseFirst', () => {
   it('prompts an empty pantry', () => {
     expect(pantryHeroState([], daysLeft).headline).toBe('Stock your pantry');
   });
@@ -97,6 +97,18 @@ describe('pantryHero', () => {
     expect(later.detail).toBe('Expires Mar 2027. Nothing else is due sooner.');
   });
 
+  it('skips used-up items when picking what to use first', () => {
+    expect(
+      pantryHeroState(
+        [dated('Soup', { quantity: 0 }), dated('Rice')],
+        daysLeft,
+      ),
+    ).toMatchObject({ headline: 'Rice', expired: 1 });
+    expect(
+      pantryHeroState([dated('Rice', { quantity: 0 })], daysLeft).headline,
+    ).toBe('Stock your pantry');
+  });
+
   it('totals calories from items with label facts', () => {
     const labelled = item('Beans', {
       quantity: 4,
@@ -106,6 +118,10 @@ describe('pantryHero', () => {
     expect(calorieTotal([item('Salt')])).toBeNull();
     expect(calorieTotal([labelled])).toEqual({ total: 1540, partial: false });
     expect(calorieTotal([labelled, item('Salt')])?.partial).toBe(true);
+    // A used-up labelled item is still known, so the total isn't a floor.
+    expect(
+      calorieTotal([labelled, { ...labelled, id: 'empty', quantity: 0 }]),
+    ).toEqual({ total: 1540, partial: false });
   });
 
   it('formats calorie totals', () => {

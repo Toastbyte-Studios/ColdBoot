@@ -7,7 +7,7 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import ModuleHero from '../../components/ModuleHero';
 import { usePantryStore } from '../../stores';
-import { calorieText, calorieTotal, pantryHeroState } from './pantryHero';
+import { calorieText, calorieTotal, pantryHeroState } from './pantryUseFirst';
 
 /**
  * The Pantry's hero: the item to use first (expired food first, then what

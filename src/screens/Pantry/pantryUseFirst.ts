@@ -34,8 +34,8 @@ function monthText(item: PantryItem): string {
 
 /**
  * The Pantry hero's lead: the item to use first. Expired food outranks
- * food about to expire, which outranks the rest; undated items never lead.
- * An empty pantry, or one with no dates, gets a prompt instead.
+ * food about to expire, which outranks the rest; undated and used-up items
+ * never lead. An empty pantry, or one with no dates, gets a prompt instead.
  */
 export function pantryHeroState(
   items: PantryItem[],
@@ -52,7 +52,11 @@ export function pantryHeroState(
     (entry) => entry.days > 0 && entry.days <= 30,
   ).length;
 
-  if (items.length === 0) {
+  // Used-up items (quantity 0) stay in the list to restock, but there is
+  // nothing to eat first among them. The counts above keep them, matching
+  // the tracker and the expiry alerts.
+  const stocked = items.filter((item) => item.quantity > 0);
+  if (stocked.length === 0) {
     return {
       eyebrow: 'Pantry',
       headline: 'Stock your pantry',
@@ -62,7 +66,7 @@ export function pantryHeroState(
     };
   }
 
-  const first = dated[0];
+  const first = dated.find((entry) => entry.item.quantity > 0);
   if (!first) {
     return {
       eyebrow: 'Use first',
@@ -112,8 +116,9 @@ export function calorieTotal(items: PantryItem[]): CalorieTotal | null {
   let known = 0;
   for (const item of items) {
     const perUnit = caloriesPerUnit(item);
-    if (perUnit == null || !(item.quantity > 0)) continue;
-    total += perUnit * item.quantity;
+    if (perUnit == null) continue;
+    // A used-up item adds nothing, but its calories are still known.
+    total += perUnit * Math.max(0, item.quantity);
     known += 1;
   }
   if (known === 0) return null;
