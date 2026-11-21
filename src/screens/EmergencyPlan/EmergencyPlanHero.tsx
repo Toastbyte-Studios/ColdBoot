@@ -4,9 +4,10 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import ModuleHero from '../../components/ModuleHero';
+import { useLocalDate } from '../../hooks/useLocalDate';
 import { useTheme } from '../../hooks/useTheme';
 import { useEmergencyPlanStore } from '../../stores';
 import { namesText, planHeroState } from './planHero';
@@ -43,13 +44,9 @@ const EmergencyPlanHero = observer(() => {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const store = useEmergencyPlanStore();
-  const [now, setNow] = useState(() => Date.now());
-
-  // "Updated today" should still be true after midnight on return.
-  useEffect(
-    () => navigation.addListener('focus', () => setNow(Date.now())),
-    [navigation],
-  );
+  // "Updated today" must turn into "yesterday" at midnight, even with the
+  // screen left open.
+  const now = useLocalDate().getTime();
 
   const state = planHeroState({
     contacts: store.contacts,

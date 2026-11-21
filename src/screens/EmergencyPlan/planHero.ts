@@ -46,9 +46,26 @@ export type PlanHeroState = {
   next: PlanSection | null;
 };
 
-/** "today", "yesterday", "12 days ago", "7 months ago". */
+/** Local midnight at the start of the day that `at` falls on. */
+function startOfDay(at: number): number {
+  const date = new Date(at);
+  return new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+  ).getTime();
+}
+
+/**
+ * "today", "yesterday", "12 days ago", "7 months ago", counted in calendar
+ * days: something saved at 23:30 is "yesterday" at 00:20. Rounding absorbs
+ * the 23- and 25-hour days at daylight-saving changes.
+ */
 export function updatedText(at: number, now: number): string {
-  const days = Math.max(0, Math.floor((now - at) / DAY_MS));
+  const days = Math.max(
+    0,
+    Math.round((startOfDay(now) - startOfDay(at)) / DAY_MS),
+  );
   if (days === 0) return 'today';
   if (days === 1) return 'yesterday';
   if (days < 60) return `${days} days ago`;

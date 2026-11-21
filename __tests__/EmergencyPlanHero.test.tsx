@@ -26,7 +26,6 @@ const WRITTEN_PLAN: CommunicationPlan = {
 };
 
 const mockNavigate = jest.fn();
-const mockAddListener = jest.fn(() => () => {});
 const mockStore = {
   contacts: [] as { name: string; updatedAt: number }[],
   rallyPoints: [] as { name: string; updatedAt: number }[],
@@ -36,7 +35,7 @@ const mockStore = {
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: mockNavigate,
-    addListener: mockAddListener,
+    addListener: jest.fn(() => () => {}),
   }),
 }));
 jest.mock('../src/stores', () => ({
@@ -135,6 +134,13 @@ describe('planHero', () => {
     );
     expect(updatedText(NOW, NOW)).toBe('today');
     expect(updatedText(NOW - DAY, NOW)).toBe('yesterday');
+    // Calendar days, not 24-hour periods.
+    expect(
+      updatedText(
+        new Date(2026, 10, 20, 23, 30).getTime(),
+        new Date(2026, 10, 21, 0, 20).getTime(),
+      ),
+    ).toBe('yesterday');
   });
 });
 
