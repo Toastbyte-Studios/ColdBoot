@@ -148,11 +148,12 @@ export default observer(function VoiceLogScreen() {
               latitude={log.latitude}
               longitude={log.longitude}
               onRename={(newTitle) => notes.renameNote(log.id, newTitle)}
-              onShowOnMap={() => {
+              onShowOnMap={async () => {
                 if (log.latitude === undefined || log.longitude === undefined) {
                   return;
                 }
                 player.stop();
+                await recorder.settle();
                 navigation.navigate('MapScreen', {
                   center: { latitude: log.latitude, longitude: log.longitude },
                   radiusMiles: MAP_RADIUS_MILES,
