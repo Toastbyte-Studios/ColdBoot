@@ -133,7 +133,10 @@ export default observer(function VoiceLogScreen() {
               audioUri={log.audioUri}
               isNew={log.id === lastSavedId}
               isPlaying={player.playingId === log.id}
-              onPlay={() => log.audioUri && player.toggle(log.id, log.audioUri)}
+              onPlay={() => {
+                if (recorder.status !== 'idle') return;
+                if (log.audioUri) player.toggle(log.id, log.audioUri);
+              }}
               onDelete={() => handleDelete(log.id)}
             />
           ))

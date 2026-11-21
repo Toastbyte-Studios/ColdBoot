@@ -304,12 +304,16 @@ describe('Voice Log screen', () => {
       });
       expect(controls().props.status).toBe('saving');
       expect(controls().props.disabled).toBe(true);
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       expect(
         tree.root.findAllByProps({ testID: 'voice-log-busy' }),
       ).not.toHaveLength(0);
 
       await ReactTestRenderer.act(async () => finishSave({ id: 'log-1' }));
       expect(controls().props.status).toBe('idle');
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(1);
       expect(
         tree.root.findAllByProps({ testID: 'voice-log-busy' }),
       ).toHaveLength(0);
@@ -434,6 +438,9 @@ describe('Voice Log screen', () => {
         }),
       );
       ReactTestRenderer.act(() => controls().props.onStartRecording());
+      expect(controls().props.status).toBe('starting');
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       ReactTestRenderer.act(() => leave());
       expect(mockStopRecorder).not.toHaveBeenCalled();
 
@@ -467,14 +474,12 @@ describe('Voice Log screen', () => {
       expect(mockDispatch).toHaveBeenCalledWith(POP);
     });
 
-    it('stops playback when leaving mid-recording', async () => {
+    it('does not start playback while recording', async () => {
       await startRecording();
-      ReactTestRenderer.act(() => {
-        card().props.onPlay();
-        mockLoads[0]();
-      });
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       await ReactTestRenderer.act(async () => leave());
-      expect(mockSounds[0].stop).toHaveBeenCalledTimes(1);
+      expect(mockSounds).toHaveLength(0);
     });
   });
 
