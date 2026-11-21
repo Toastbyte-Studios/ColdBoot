@@ -9,8 +9,10 @@ import { Platform } from 'react-native';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { usePantryStore } from '../../stores';
+import PantryHero from './PantryHero';
 
 /**
  * Pantry landing screen.
@@ -20,6 +22,7 @@ import { usePantryStore } from '../../stores';
  * - **Scan Barcodes** (iOS) → navigates to the `PantryScan` screen
  * - **View All** → navigates to the `PantryAllItems` screen showing all items alphabetically
  * - **Manage Categories** → navigates to the `ManagePantryCategories` screen
+ * - **Hero** → the item to use first, expiry counts and calories on hand (see `PantryHero`)
  * - **Pantry Categories** → listed as rows in one grouped list that navigate to category-specific screens
  *
  * Uses React Navigation to perform screen transitions from row taps.
@@ -71,6 +74,8 @@ export default observer(function PantryScreen() {
         </>
       }
     >
+      <PantryHero />
+      <SectionEyebrow>Categories</SectionEyebrow>
       <GroupContainer>
         {pantry.categories.map((cat, index, all) => (
           <ModuleRow
