@@ -146,7 +146,6 @@ export default function VoiceLogCard({
           onPress={onDelete}
         />
       </View>
-
       {showStrip ? (
         <View style={styles.playbackRow}>
           <Pressable

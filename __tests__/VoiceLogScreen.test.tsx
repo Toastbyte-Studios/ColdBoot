@@ -1,6 +1,10 @@
 import React from 'react';
 import { Alert, Text as RNText } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
+import {
+  ShortcutNavigationProvider,
+  useShortcutNavigation,
+} from '../src/navigation/ShortcutNavigationContext';
 import EmptyState from '../src/screens/VoiceLog/components/EmptyState';
 import RecordingControls from '../src/screens/VoiceLog/components/RecordingControls';
 import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
@@ -12,6 +16,9 @@ type LeaveCallback = (event: { data: { action: { type: string } } }) => void;
 /** The latest arguments Voice Log passed to usePreventRemove. */
 let mockPrevent: { active: boolean; onLeave: LeaveCallback } | null = null;
 const mockDispatch = jest.fn();
+const mockShortcutDestination = jest.fn();
+let mockShortcutNavigate: (departure: () => void) => void;
+let mockFocused = true;
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
@@ -50,6 +57,12 @@ const mockSounds: {
 let mockCurrentTime = 0;
 
 jest.mock('@react-navigation/native', () => ({
+  useFocusEffect: (effect: () => void | (() => void)) => {
+    require('react').useEffect(
+      () => (mockFocused ? effect() : undefined),
+      [effect, mockFocused],
+    );
+  },
   usePreventRemove: (active: boolean, onLeave: LeaveCallback) => {
     mockPrevent = { active, onLeave };
   },
@@ -121,12 +134,22 @@ jest.mock('../src/components/SectionEyebrow', () => {
 
 const POP = { type: 'POP' };
 
+function ShortcutHarness() {
+  mockShortcutNavigate = useShortcutNavigation().navigate;
+  return null;
+}
+
 describe('Voice Log screen', () => {
   let tree!: ReactTestRenderer.ReactTestRenderer;
 
   const render = async () => {
     await ReactTestRenderer.act(async () => {
-      tree = ReactTestRenderer.create(<VoiceLogScreen />);
+      tree = ReactTestRenderer.create(
+        <ShortcutNavigationProvider>
+          <VoiceLogScreen />
+          <ShortcutHarness />
+        </ShortcutNavigationProvider>,
+      );
     });
   };
 
@@ -137,6 +160,8 @@ describe('Voice Log screen', () => {
     mockSounds.length = 0;
     mockCurrentTime = 0;
     mockDispatch.mockReset();
+    mockShortcutDestination.mockReset();
+    mockFocused = true;
     mockDeleteNote.mockReset();
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
@@ -459,12 +484,16 @@ describe('Voice Log screen', () => {
       });
       expect(controls().props.status).toBe('saving');
       expect(controls().props.disabled).toBe(true);
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       expect(
         tree.root.findAllByProps({ testID: 'voice-log-busy' }),
       ).not.toHaveLength(0);
 
       await ReactTestRenderer.act(async () => finishSave({ id: 'log-1' }));
       expect(controls().props.status).toBe('idle');
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(1);
       expect(
         tree.root.findAllByProps({ testID: 'voice-log-busy' }),
       ).toHaveLength(0);
@@ -564,6 +593,83 @@ describe('Voice Log screen', () => {
   });
 
   describe('leaving', () => {
+    it('navigates immediately when idle or the screen is not focused', async () => {
+      ReactTestRenderer.act(() =>
+        mockShortcutNavigate(mockShortcutDestination),
+      );
+      expect(mockShortcutDestination).toHaveBeenCalledTimes(1);
+
+      ReactTestRenderer.act(() => tree.unmount());
+      mockFocused = false;
+      await render();
+      await startRecording();
+      ReactTestRenderer.act(() =>
+        mockShortcutNavigate(mockShortcutDestination),
+      );
+      expect(mockShortcutDestination).toHaveBeenCalledTimes(2);
+    });
+
+    it('saves before shortcut navigation and ignores repeated departures', async () => {
+      let finishSave!: (note: { id: string }) => void;
+      mockCreateVoiceLog.mockReturnValue(
+        new Promise((resolve) => {
+          finishSave = resolve;
+        }),
+      );
+      await startRecording();
+      ReactTestRenderer.act(() => {
+        mockShortcutNavigate(mockShortcutDestination);
+        mockShortcutNavigate(mockShortcutDestination);
+        leave();
+      });
+      await ReactTestRenderer.act(async () => {});
+      expect(mockStopRecorder).toHaveBeenCalledTimes(1);
+      expect(mockShortcutDestination).not.toHaveBeenCalled();
+      expect(mockDispatch).not.toHaveBeenCalled();
+
+      await ReactTestRenderer.act(async () => finishSave({ id: 'log-new' }));
+      expect(mockShortcutDestination).toHaveBeenCalledTimes(1);
+      expect(mockDispatch).not.toHaveBeenCalled();
+    });
+
+    it('waits for a pending start before shortcut navigation', async () => {
+      let finishStart!: (path: string) => void;
+      mockStartRecorder.mockReturnValue(
+        new Promise<string>((resolve) => {
+          finishStart = resolve;
+        }),
+      );
+      ReactTestRenderer.act(() => controls().props.onStartRecording());
+      ReactTestRenderer.act(() =>
+        mockShortcutNavigate(mockShortcutDestination),
+      );
+      expect(mockShortcutDestination).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => finishStart('recording.m4a'));
+      expect(mockCreateVoiceLog).toHaveBeenCalledTimes(1);
+      expect(mockShortcutDestination).toHaveBeenCalledTimes(1);
+    });
+
+    it('waits for a save in progress before shortcut navigation even on failure', async () => {
+      let failSave!: (error: Error) => void;
+      mockCreateVoiceLog.mockReturnValue(
+        new Promise((_, reject) => {
+          failSave = reject;
+        }),
+      );
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      await startRecording();
+      await ReactTestRenderer.act(async () => {
+        controls().props.onStopRecording();
+      });
+      ReactTestRenderer.act(() =>
+        mockShortcutNavigate(mockShortcutDestination),
+      );
+      expect(mockShortcutDestination).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => failSave(new Error('failed')));
+      expect(Alert.alert).toHaveBeenCalled();
+      expect(mockShortcutDestination).toHaveBeenCalledTimes(1);
+    });
+
     it('only holds the screen while the recorder is busy', async () => {
       expect(mockPrevent?.active).toBe(false);
       await startRecording();
@@ -614,6 +720,9 @@ describe('Voice Log screen', () => {
         }),
       );
       ReactTestRenderer.act(() => controls().props.onStartRecording());
+      expect(controls().props.status).toBe('starting');
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       ReactTestRenderer.act(() => leave());
       expect(mockStopRecorder).not.toHaveBeenCalled();
 
@@ -647,14 +756,12 @@ describe('Voice Log screen', () => {
       expect(mockDispatch).toHaveBeenCalledWith(POP);
     });
 
-    it('stops playback when leaving mid-recording', async () => {
+    it('does not start playback while recording', async () => {
       await startRecording();
-      ReactTestRenderer.act(() => {
-        card().props.onPlay();
-        mockLoads[0]();
-      });
+      ReactTestRenderer.act(() => card().props.onPlay());
+      expect(mockSounds).toHaveLength(0);
       await ReactTestRenderer.act(async () => leave());
-      expect(mockSounds[0].stop).toHaveBeenCalledTimes(1);
+      expect(mockSounds).toHaveLength(0);
     });
   });
 

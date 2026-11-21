@@ -139,7 +139,6 @@ export function useVoiceLogPlayer(): VoiceLogPlayer {
       halt();
       const version = versionRef.current;
       update({ id, state: 'loading', positionSec: 0, durationSec: 0 });
-
       try {
         const sound = new Sound(audioUri, '', (error) => {
           if (versionRef.current !== version) {

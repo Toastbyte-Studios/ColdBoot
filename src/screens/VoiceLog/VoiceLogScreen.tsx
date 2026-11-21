@@ -1,13 +1,14 @@
 import {
-  NavigationAction,
+  useFocusEffect,
   useNavigation,
   usePreventRemove,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
+import { useShortcutNavigation } from '../../navigation/ShortcutNavigationContext';
 import { type Note, useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
@@ -21,7 +22,6 @@ const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_MS = 12 * 1000;
 const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
-
 type SavedVoiceLogCardProps = {
   log: Note;
   isNew: boolean;
@@ -88,48 +88,88 @@ export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
   const navigation = useNavigation();
   const player = useVoiceLogPlayer();
-  const { playback, toggle, seek, stop, release } = player;
+  const { playback, toggle, seek, release } = player;
+  const stopPlayback = player.stop;
+  const shortcutNavigation = useShortcutNavigation();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [pendingLeave, setPendingLeave] = useState<NavigationAction | null>(
-    null,
-  );
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
+  const pendingLeaveRef = useRef(false);
 
   const save = useCallback(
     ({ audioUri, duration, waveform }: RecordedVoiceLog) =>
       notes.createVoiceLog({ audioUri, duration, waveform }),
     [notes],
   );
-
   const recorder = useVoiceRecorder({
     maxDurationMs: MAX_DURATION_MS,
     bucketMs: WAVEFORM_BUCKET_MS,
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
-    onWillStart: stop,
+    onWillStart: stopPlayback,
   });
+  const settleRecorder = recorder.settle;
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
   // dispatching it from the save callback would be blocked a second time.
-  usePreventRemove(recorder.status !== 'idle', ({ data }) => {
-    if (pendingLeave) return;
-    stop();
-    setPendingLeave(data.action);
-    recorder.settle();
-  });
+  const deferLeave = useCallback(
+    (leave: () => void) => {
+      if (pendingLeaveRef.current) return;
+      pendingLeaveRef.current = true;
+      stopPlayback();
+      setPendingLeave(() => leave);
+      settleRecorder();
+    },
+    [stopPlayback, settleRecorder],
+  );
+
+  usePreventRemove(recorder.status !== 'idle', ({ data }) =>
+    deferLeave(() => navigation.dispatch(data.action)),
+  );
+
+  useFocusEffect(
+    useCallback(
+      () =>
+        shortcutNavigation.register((leave) => {
+          if (recorder.status === 'idle' && !pendingLeaveRef.current) {
+            return false;
+          }
+          deferLeave(leave);
+          return true;
+        }),
+      [deferLeave, recorder.status, shortcutNavigation],
+    ),
+  );
 
   useEffect(() => {
     if (pendingLeave && recorder.status === 'idle') {
       setPendingLeave(null);
-      navigation.dispatch(pendingLeave);
+      pendingLeaveRef.current = false;
+      pendingLeave();
     }
-  }, [navigation, pendingLeave, recorder.status]);
+  }, [pendingLeave, recorder.status]);
 
   const voiceLogs = notes.notes.filter(
     (note) => note.category === 'Voice Logs',
   );
   const busy = recorder.status === 'starting' || recorder.status === 'saving';
+
+  const handleToggle = useCallback(
+    (id: string, audioUri: string) => {
+      if (recorder.status !== 'idle' || pendingLeave !== null) return;
+      toggle(id, audioUri);
+    },
+    [pendingLeave, recorder.status, toggle],
+  );
+
+  const handleSeek = useCallback(
+    (id: string, audioUri: string, fraction: number) => {
+      if (recorder.status !== 'idle' || pendingLeave !== null) return;
+      seek(id, audioUri, fraction);
+    },
+    [pendingLeave, recorder.status, seek],
+  );
 
   const handleDelete = useCallback(
     (noteId: string) => {
@@ -180,8 +220,8 @@ export default observer(function VoiceLogScreen() {
               log={log}
               isNew={log.id === lastSavedId}
               playback={playback?.id === log.id ? playback : undefined}
-              onToggle={toggle}
-              onSeek={seek}
+              onToggle={handleToggle}
+              onSeek={handleSeek}
               onDelete={handleDelete}
             />
           ))

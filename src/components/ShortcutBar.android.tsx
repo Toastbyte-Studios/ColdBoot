@@ -9,6 +9,7 @@ import { useVisibleNotificationCount } from '../hooks/useAllNotifications';
 import { useRippleColor } from '../hooks/useRippleColor';
 import { useTheme } from '../hooks/useTheme';
 import { navigationRef } from '../navigation/navigationRef';
+import { useShortcutNavigation } from '../navigation/ShortcutNavigationContext';
 import { useSettingsStore, useSignalingStore } from '../stores';
 import { DEFAULT_SHORTCUTS, resolveShortcutIds } from '../stores/SettingsStore';
 import { FOOTER_HEIGHT } from '../theme';
@@ -49,6 +50,7 @@ const ShortcutBar = observer(
     const insets = useSafeAreaInsets();
     const rippleColor = useRippleColor();
     const navigation = useNavigation<{ navigate: (route: string) => void }>();
+    const shortcutNavigation = useShortcutNavigation();
     const notificationCount = useVisibleNotificationCount();
     const settingsStore = useSettingsStore();
     const signalingStore = useSignalingStore();
@@ -125,7 +127,12 @@ const ShortcutBar = observer(
 
       onAlertsClose();
       if (item.route) {
-        navigation.navigate(item.route);
+        const route = item.route;
+        if (route === currentRoute) {
+          navigation.navigate(route);
+        } else {
+          shortcutNavigation.navigate(() => navigation.navigate(route));
+        }
       }
     };
 
