@@ -790,6 +790,25 @@ export class NotesStore {
     });
   }
 
+  /** Checks persisted audio references without waiting for the notes list to load. */
+  async hasSavedAudioAttachment(path: string): Promise<boolean> {
+    if (!this.notesDb) throw new Error('Notes database is unavailable');
+    const target = resolveOwnedAttachmentPath(path) ?? path;
+    const matches = (uri: unknown) =>
+      typeof uri === 'string' &&
+      (resolveOwnedAttachmentPath(uri) ?? uri.replace(/^file:\/\//, '')) ===
+        target;
+    if (this.notes.some((note) => matches(note.audioUri))) return true;
+    const result = await this.notesDb.executeSql(
+      'SELECT audioUri FROM notes WHERE audioUri IS NOT NULL',
+    );
+    const rows = result[0].rows;
+    for (let i = 0; i < rows.length; i++) {
+      if (matches(rows.item(i).audioUri)) return true;
+    }
+    return false;
+  }
+
   /**
    * Persists a note object into the local notes database. If a note with the same ID already exists,
    * it will be replaced. Initializes the database if it hasn't been initialized yet.

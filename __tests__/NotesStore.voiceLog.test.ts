@@ -3,6 +3,7 @@
  * Tests for how NotesStore stores voice logs' extra fields.
  */
 
+import RNFS from 'react-native-fs';
 import { NotesStore } from '../src/stores/NotesStore';
 
 jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -17,7 +18,11 @@ type Row = Record<string, unknown>;
 /** Rows `SELECT * FROM notes` returns. */
 let mockNoteRows: Row[] = [];
 const mockExecuteSql = jest.fn((query: string, _params?: unknown[]) => {
-  const rows = query.startsWith('SELECT * FROM notes') ? mockNoteRows : [];
+  const rows =
+    query.startsWith('SELECT * FROM notes') ||
+    query.startsWith('SELECT audioUri FROM notes')
+      ? mockNoteRows
+      : [];
   return Promise.resolve([
     {
       rows: {
@@ -82,6 +87,43 @@ describe('NotesStore voice logs', () => {
     mockExecuteSql.mockClear();
     mockNoteRows = [];
     store = new NotesStore();
+  });
+
+  describe('saved audio references', () => {
+    const path = `${RNFS.DocumentDirectoryPath}/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a`;
+
+    it.each([path, `file://${path}`])(
+      'finds a persisted reference before notes are loaded: %s',
+      async (audioUri) => {
+        mockNoteRows = [voiceRow({ audioUri, category: 'General' })];
+        await store.initNotesDb();
+        expect(store.notes).toHaveLength(0);
+        await expect(store.hasSavedAudioAttachment(path)).resolves.toBe(true);
+      },
+    );
+
+    it('does not match another file', async () => {
+      mockNoteRows = [voiceRow({ audioUri: 'file:///other.m4a' })];
+      await store.initNotesDb();
+      await expect(store.hasSavedAudioAttachment(path)).resolves.toBe(false);
+    });
+
+    it('matches an iOS reference from an earlier app container', async () => {
+      const fileName = path.slice(path.lastIndexOf('/') + 1);
+      mockNoteRows = [
+        voiceRow({
+          audioUri: `file:///var/mobile/Containers/Data/Application/old/Documents/${fileName}`,
+        }),
+      ];
+      await store.initNotesDb();
+      await expect(store.hasSavedAudioAttachment(path)).resolves.toBe(true);
+    });
+
+    it('fails safely when the database is unavailable', async () => {
+      await expect(store.hasSavedAudioAttachment(path)).rejects.toThrow(
+        'Notes database is unavailable',
+      );
+    });
   });
 
   describe('waveform', () => {

@@ -10,7 +10,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useNotesStore, useSettingsStore } from '../../stores';
+import { useNotesStore, useSettingsStore, useStores } from '../../stores';
 import { VOICE_LOG_LENGTHS } from '../../stores/SettingsStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BARS } from '../../utils/audioLevel';
@@ -49,6 +49,7 @@ const MAP_RADIUS_MILES = 0.25;
  */
 export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
+  const rootStore = useStores();
   const settings = useSettingsStore();
   const maxDurationMs = settings.voiceLogMaxSeconds * 1000;
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
@@ -66,6 +67,10 @@ export default observer(function VoiceLogScreen() {
 
   // A recording cut off by the app closing, offered back once.
   const recovered = useRecordingRecovery({
+    isSaved: async (path) => {
+      await rootStore.startupPromise;
+      return notes.hasSavedAudioAttachment(path);
+    },
     save: ({ audioUri, duration, createdAt }) =>
       notes.createVoiceLog({ audioUri, duration, createdAt, locate: false }),
     onSaved: setLastSavedId,

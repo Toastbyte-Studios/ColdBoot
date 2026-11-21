@@ -19,6 +19,8 @@ export type Recovery =
   | { kind: 'lost'; startedAt: number };
 
 type Options = {
+  /** Checks whether a saved note already owns this recording. */
+  isSaved: (path: string) => Promise<boolean>;
   /** Saves the recovered file as a log, recorded at `startedAt`. */
   save: (recording: {
     audioUri: string;
@@ -56,18 +58,30 @@ function probe(audioUri: string): Promise<number | null> {
  * Log opens. If its file plays, it is offered back (save or discard); if not,
  * it is deleted and the user is told it couldn't be recovered.
  */
-export function useRecordingRecovery({ save, onSaved }: Options) {
+export function useRecordingRecovery({ isSaved, save, onSaved }: Options) {
   const [recovery, setRecovery] = useState<Recovery | null>(null);
   const [busy, setBusy] = useState(false);
   const pendingRef = useRef<PendingRecording | null>(null);
-  const optionsRef = useRef({ save, onSaved });
-  optionsRef.current = { save, onSaved };
+  const optionsRef = useRef({ isSaved, save, onSaved });
+  optionsRef.current = { isSaved, save, onSaved };
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const pending = await readPendingRecording();
       if (!pending || cancelled) return;
+      let alreadySaved: boolean;
+      try {
+        alreadySaved = await optionsRef.current.isSaved(pending.path);
+      } catch (error) {
+        console.warn('Could not check the pending voice log:', error);
+        return;
+      }
+      if (cancelled) return;
+      if (alreadySaved) {
+        await clearPendingRecording(pending.path);
+        return;
+      }
       const audioUri = `file://${pending.path}`;
       const exists = await RNFS.exists(pending.path).catch(() => false);
       if (!exists) {
