@@ -91,7 +91,19 @@ export async function cleanUpOrphanedRecordings({
     }
   }
 
-  if (result.failed === 0) {
+  const hasDeferredRecordings = entries.some((entry) => {
+    if (
+      !entry.isFile() ||
+      !isRecordingFileName(entry.name) ||
+      referencedFileNames.has(entry.name) ||
+      keepPaths.has(entry.path)
+    ) {
+      return false;
+    }
+    const modified = entry.mtime ? new Date(entry.mtime).getTime() : NaN;
+    return isFinite(modified) && now - modified < RECORDING_CLEANUP_MIN_AGE_MS;
+  });
+  if (result.failed === 0 && !hasDeferredRecordings) {
     await AsyncStorage.setItem(
       RECORDING_CLEANUP_KEY,
       new Date(now).toISOString(),
