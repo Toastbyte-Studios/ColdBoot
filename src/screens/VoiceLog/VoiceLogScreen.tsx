@@ -1,13 +1,14 @@
 import {
-  NavigationAction,
+  useFocusEffect,
   useNavigation,
   usePreventRemove,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
+import { useShortcutNavigation } from '../../navigation/ShortcutNavigationContext';
 import { useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
@@ -42,10 +43,10 @@ export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
   const navigation = useNavigation();
   const player = useVoiceLogPlayer();
+  const shortcutNavigation = useShortcutNavigation();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [pendingLeave, setPendingLeave] = useState<NavigationAction | null>(
-    null,
-  );
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
+  const pendingLeaveRef = useRef(false);
 
   const save = useCallback(
     ({ audioUri, duration }: RecordedVoiceLog) =>
@@ -61,23 +62,48 @@ export default observer(function VoiceLogScreen() {
     // Playback would be picked up by the microphone.
     onWillStart: player.stop,
   });
+  const stopPlayback = player.stop;
+  const settleRecorder = recorder.settle;
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
   // dispatching it from the save callback would be blocked a second time.
-  usePreventRemove(recorder.status !== 'idle', ({ data }) => {
-    if (pendingLeave) return;
-    player.stop();
-    setPendingLeave(data.action);
-    recorder.settle();
-  });
+  const deferLeave = useCallback(
+    (leave: () => void) => {
+      if (pendingLeaveRef.current) return;
+      pendingLeaveRef.current = true;
+      stopPlayback();
+      setPendingLeave(() => leave);
+      settleRecorder();
+    },
+    [stopPlayback, settleRecorder],
+  );
+
+  usePreventRemove(recorder.status !== 'idle', ({ data }) =>
+    deferLeave(() => navigation.dispatch(data.action)),
+  );
+
+  useFocusEffect(
+    useCallback(
+      () =>
+        shortcutNavigation.register((leave) => {
+          if (recorder.status === 'idle' && !pendingLeaveRef.current) {
+            return false;
+          }
+          deferLeave(leave);
+          return true;
+        }),
+      [deferLeave, recorder.status, shortcutNavigation],
+    ),
+  );
 
   useEffect(() => {
     if (pendingLeave && recorder.status === 'idle') {
       setPendingLeave(null);
-      navigation.dispatch(pendingLeave);
+      pendingLeaveRef.current = false;
+      pendingLeave();
     }
-  }, [navigation, pendingLeave, recorder.status]);
+  }, [pendingLeave, recorder.status]);
 
   const voiceLogs = notes.notes.filter(
     (note) => note.category === 'Voice Logs',
@@ -134,7 +160,7 @@ export default observer(function VoiceLogScreen() {
               isNew={log.id === lastSavedId}
               isPlaying={player.playingId === log.id}
               onPlay={() => {
-                if (recorder.status !== 'idle') return;
+                if (recorder.status !== 'idle' || pendingLeave !== null) return;
                 if (log.audioUri) player.toggle(log.id, log.audioUri);
               }}
               onDelete={() => handleDelete(log.id)}

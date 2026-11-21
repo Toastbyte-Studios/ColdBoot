@@ -3,12 +3,18 @@ import { Modal, StyleSheet, View } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
 import AlertsSheet from '../src/components/AlertsSheet';
 import ShortcutBar from '../src/components/ShortcutBar';
+import AndroidShortcutBar from '../src/components/ShortcutBar.android';
+import {
+  ShortcutNavigationProvider,
+  useShortcutNavigation,
+} from '../src/navigation/ShortcutNavigationContext';
 import { FOOTER_HEIGHT, SCREEN_INSET } from '../src/theme';
 
 const mockNavigate = jest.fn();
 const mockOnAlertsPress = jest.fn();
 const mockOnAlertsClose = jest.fn();
 const mockSetFlashlightMode = jest.fn();
+const mockGuard = jest.fn();
 
 let mockNotificationCount = 3;
 let mockCurrentRouteName = 'Home';
@@ -76,6 +82,12 @@ jest.mock('../src/navigation/navigationRef', () => ({
     addListener: () => jest.fn(),
   },
 }));
+
+function GuardRegistration() {
+  const { register } = useShortcutNavigation();
+  React.useEffect(() => register(mockGuard), [register]);
+  return null;
+}
 
 describe('ShortcutBar', () => {
   beforeEach(() => {
@@ -149,6 +161,42 @@ describe('ShortcutBar', () => {
 
     expect(mockOnAlertsClose).toHaveBeenCalledTimes(1);
     expect(mockNavigate).toHaveBeenCalledWith('MapScreen');
+  });
+
+  it.each([
+    ['iOS', ShortcutBar],
+    ['Android', AndroidShortcutBar],
+  ])('routes %s shortcut navigation through the guard', (_platform, Bar) => {
+    mockCurrentRouteName = 'VoiceLog';
+    mockGuard.mockReturnValue(true);
+    let tree!: ReactTestRenderer.ReactTestRenderer;
+    ReactTestRenderer.act(() => {
+      tree = ReactTestRenderer.create(
+        <ShortcutNavigationProvider>
+          <GuardRegistration />
+          <Bar
+            onAlertsPress={mockOnAlertsPress}
+            onAlertsClose={mockOnAlertsClose}
+            alertsActive={false}
+          />
+        </ShortcutNavigationProvider>,
+      );
+    });
+    ReactTestRenderer.act(() =>
+      tree.root.findByProps({ accessibilityLabel: 'Map' }).props.onPress(),
+    );
+    expect(mockGuard).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).not.toHaveBeenCalled();
+    ReactTestRenderer.act(() => mockGuard.mock.calls[0][0]());
+    expect(mockNavigate).toHaveBeenCalledWith('MapScreen');
+    ReactTestRenderer.act(() =>
+      tree.root
+        .findByProps({ accessibilityLabel: 'Voice Log' })
+        .props.onPress(),
+    );
+    expect(mockGuard).toHaveBeenCalledTimes(1);
+    expect(mockNavigate).toHaveBeenCalledWith('VoiceLog');
+    ReactTestRenderer.act(() => tree.unmount());
   });
 
   it('opens alerts from the Alerts button', () => {
@@ -307,6 +355,32 @@ describe('ShortcutBar', () => {
       });
       expect(mockOnAlertsClose).toHaveBeenCalledTimes(1);
       expect(mockNavigate).toHaveBeenCalledWith('MapScreen');
+    });
+
+    it('uses the same guard for shortcuts inside Alerts', () => {
+      mockCurrentRouteName = 'VoiceLog';
+      mockGuard.mockReturnValue(true);
+      let tree!: ReactTestRenderer.ReactTestRenderer;
+      ReactTestRenderer.act(() => {
+        tree = ReactTestRenderer.create(
+          <ShortcutNavigationProvider>
+            <GuardRegistration />
+            <AlertsSheet visible onClose={mockOnAlertsClose} />
+          </ShortcutNavigationProvider>,
+        );
+      });
+      ReactTestRenderer.act(() =>
+        tree.root
+          .findByType(Modal)
+          .findByProps({ accessibilityLabel: 'Map' })
+          .props.onPress(),
+      );
+      expect(mockOnAlertsClose).toHaveBeenCalledTimes(1);
+      expect(mockGuard).toHaveBeenCalledTimes(1);
+      expect(mockNavigate).not.toHaveBeenCalled();
+      ReactTestRenderer.act(() => mockGuard.mock.calls[0][0]());
+      expect(mockNavigate).toHaveBeenCalledWith('MapScreen');
+      ReactTestRenderer.act(() => tree.unmount());
     });
 
     it('still dismisses from the backdrop and modal close request', () => {

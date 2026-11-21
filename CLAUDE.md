@@ -143,7 +143,7 @@ export default MyScreen;
 - All routes are defined in `src/navigation/AppNavigator.tsx` (native stack, headers hidden by default)
 - Route names use PascalCase matching their screen filename (e.g., `"DepletionCalculator"`)
 - Navigate via `useNavigation()` hook inside components
-- A screen that must finish work before it goes (Voice Log saving a recording in progress) uses `usePreventRemove` while that work runs, holds the blocked action, and dispatches it from an effect once the screen is no longer preventing removal. Dispatching from the callback itself is blocked again
+- A screen that must finish work before it goes (Voice Log saving a recording in progress) uses `usePreventRemove` while that work runs, holds the blocked action, and dispatches it from an effect once the screen is no longer preventing removal. Dispatching from the callback itself is blocked again. Forward shortcut navigation does not remove the screen, so register a focused guard with `ShortcutNavigationContext` as well
 - Register new routes in `AppNavigator.tsx` and add the tool entry to the relevant `*_TOOLS` constant in `constants.ts`
 
 ### New Features / Tools
