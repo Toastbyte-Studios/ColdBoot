@@ -25,6 +25,7 @@ import {
 } from '../navigation/NavigationHistoryContext';
 import canGoBack, { goBack } from '../navigation/navigationRef';
 import { ScreenHeaderProvider } from '../navigation/ScreenHeaderContext';
+import { ShortcutNavigationProvider } from '../navigation/ShortcutNavigationContext';
 import { useAppBarHeader } from '../navigation/useAppBarHeader';
 import AlertsSheet from './AlertsSheet';
 import AppBar from './AppBar';
@@ -91,9 +92,11 @@ const FULL_SCREEN_ROUTES = new Set(['Search']);
  */
 export default function AppShell(props: Props) {
   return (
-    <ScreenHeaderProvider>
-      <AppShellBody {...props} />
-    </ScreenHeaderProvider>
+    <ShortcutNavigationProvider>
+      <ScreenHeaderProvider>
+        <AppShellBody {...props} />
+      </ScreenHeaderProvider>
+    </ShortcutNavigationProvider>
   );
 }
 

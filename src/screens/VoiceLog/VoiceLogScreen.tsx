@@ -1,399 +1,116 @@
-import { usePreventRemove } from '@react-navigation/native';
+import {
+  useFocusEffect,
+  useNavigation,
+  usePreventRemove,
+} from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-} from 'react';
-import {
-  AccessibilityInfo,
-  StyleSheet,
-  View,
-  Alert,
-  Vibration,
-  Platform,
-  PermissionsAndroid,
-} from 'react-native';
-import RNFS from 'react-native-fs';
-import {
-  useSoundRecorder,
-  // AudioEncoderAndroidType,
-} from 'react-native-nitro-sound';
-import Sound from 'react-native-sound';
-import Icon from 'react-native-vector-icons/Ionicons';
-import { v4 as uuidv4 } from 'uuid';
-import GroupContainer from '../../components/GroupContainer';
-import InfoBlock from '../../components/InfoBlock';
-import ModuleRow from '../../components/ModuleRow';
-import { Text } from '../../components/ScaledText';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useTheme } from '../../hooks/useTheme';
+import { useShortcutNavigation } from '../../navigation/ShortcutNavigationContext';
 import { useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
-import { ColorScheme } from '../../theme/colors';
-import {
-  addWaveformSample,
-  normalizeMeteringLevel,
-  WAVEFORM_BUCKET_MS,
-} from '../../utils/audioLevel';
-import { deleteAttachmentFiles } from '../../utils/noteAttachments';
+import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
-import RecordingControls, {
-  RecordingStatus,
-} from './components/RecordingControls';
+import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
+import { useVoiceLogPlayer } from './useVoiceLogPlayer';
+import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
-const MAX_DURATION_SECONDS = 12;
-const MAX_DURATION_MS = MAX_DURATION_SECONDS * 1000;
+const MAX_DURATION_MS = 12 * 1000;
 const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
-/** How often the recorder reports position and level, in seconds. */
-const RECORDER_UPDATE_SECONDS = 0.1;
-const NO_SAMPLES: readonly number[] = [];
 
 /**
  * Voice Log Screen
  *
- * Allows users to record short voice notes (max 12 seconds) with automatic metadata capture
- * or view and manage previously recorded voice logs.
+ * One screen: the recorder on top, saved logs below, newest first.
  *
- * Features:
- * - One-tap recording with a live waveform that fills over the 12 seconds
- * - Auto-stop at 12-second limit
- * - A saving state on the button, then the new log right below it
- * - Haptic feedback on completion
- * - Automatic timestamp and location capture
- * - View, play, and delete saved voice logs
- * - Voice logs are stored separately from regular notes
+ * - One-tap recording with a live waveform that fills over the 12 seconds,
+ *   stopping by itself at the limit
+ * - A saving state on the button; the new log then appears at the top of the
+ *   list, marked as new
+ * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
+ *   saves first, then leaves
+ * - Timestamp saved at once; GPS location added when a fix arrives
+ * - Play and delete saved logs
  *
  * @returns A React element rendering the Voice Log screen.
  */
 export default observer(function VoiceLogScreen() {
-  const COLORS = useTheme();
-  const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
-  const core = useNotesStore();
-  const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
-  const [status, setStatus] = useState<RecordingStatus>('idle');
-  const [elapsedMs, setElapsedMs] = useState(0);
-  const [waveform, setWaveform] = useState<readonly number[]>(NO_SAMPLES);
+  const notes = useNotesStore();
+  const navigation = useNavigation();
+  const player = useVoiceLogPlayer();
+  const shortcutNavigation = useShortcutNavigation();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
-  const [playingId, setPlayingId] = useState<string | null>(null);
-  const soundRef = useRef<Sound | null>(null);
-  const playingIdRef = useRef<string | null>(null);
-  const playbackVersionRef = useRef(0);
-  const stopRecorderRef = useRef<(() => Promise<string | undefined>) | null>(
-    null,
+  const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
+  const pendingLeaveRef = useRef(false);
+
+  const save = useCallback(
+    ({ audioUri, duration, waveform }: RecordedVoiceLog) =>
+      notes.createVoiceLog({ audioUri, duration, waveform }),
+    [notes],
   );
-  const isRecordingRef = useRef(false);
-  const audioPathRef = useRef<string | null>(null);
-  const elapsedMsRef = useRef(0);
-  const startingRef = useRef<Promise<void> | null>(null);
-  const stoppingRef = useRef<Promise<void> | null>(null);
-  const goingBackRef = useRef(false);
-  const handleStopRecordingRef = useRef<(() => Promise<void>) | null>(null);
 
-  // Stabilize handleStopRecording function reference using useCallback
-  const handleStopRecording = useCallback((): Promise<void> => {
-    if (stoppingRef.current) return stoppingRef.current;
-    if (!isRecordingRef.current) return Promise.resolve();
-
-    setStatus('saving');
-    const stopping = (async () => {
-      try {
-        // Stop recording first - wrap in try/catch in case recorder isn't active
-        let result: string | undefined;
-        try {
-          result = await stopRecorderRef.current?.();
-        } catch (error) {
-          console.warn('Error stopping recorder:', error);
-          result = audioPathRef.current || undefined;
-        }
-
-        // Whole seconds, at least one: a tap-and-release still made a file.
-        const duration = Math.max(1, Math.round(elapsedMsRef.current / 1000));
-        const audioUri = result || audioPathRef.current;
-        isRecordingRef.current = false;
-
-        // Validate audio path before changing state
-        if (!audioUri) {
-          Alert.alert('Error', 'Failed to record audio. Please try again.');
-          return;
-        }
-
-        // Haptic feedback
-        Vibration.vibrate(200);
-
-        const sourcePath = audioUri.startsWith('file://')
-          ? audioUri.slice('file://'.length)
-          : audioUri;
-        const sourceExtension =
-          sourcePath.match(/\.(m4a|mp4|wav|aac|3gp)$/i)?.[1].toLowerCase() ??
-          (Platform.OS === 'ios' ? 'm4a' : 'mp4');
-        const recordingPath = `${RNFS.DocumentDirectoryPath}/voice-log_${uuidv4()}.${sourceExtension}`;
-        await RNFS.copyFile(sourcePath, recordingPath);
-
-        // Save voice log
-        const recordingUri = `file://${recordingPath}`;
-        let saved: { id: string } | undefined;
-        try {
-          saved = await core.createVoiceLog({
-            audioUri: recordingUri,
-            duration: duration,
-            transcription: undefined, // Transcription not implemented yet
-          });
-        } catch (error) {
-          await deleteAttachmentFiles([recordingUri]);
-          throw error;
-        }
-
-        // Stay on Record: the new log is shown under the button, ready to
-        // play or to record the next one. (Saving used to jump to the menu
-        // and raise an alert on top of it.)
-        if (saved) setLastSavedId(saved.id);
-        AccessibilityInfo.announceForAccessibility('Voice log saved');
-      } catch (error) {
-        console.error('Failed to save voice log:', error);
-        Alert.alert('Error', 'Failed to save voice log. Please try again.');
-      } finally {
-        // Every path that ends a recording resets the recorder.
-        isRecordingRef.current = false;
-        audioPathRef.current = null;
-        elapsedMsRef.current = 0;
-        setElapsedMs(0);
-        setWaveform(NO_SAMPLES);
-        setStatus('idle');
-        stoppingRef.current = null;
-      }
-    })();
-    stoppingRef.current = stopping;
-    return stopping;
-  }, [core]);
-
-  // Store handleStopRecording in ref for use in callback
-  useEffect(() => {
-    handleStopRecordingRef.current = handleStopRecording;
-  }, [handleStopRecording]);
-
-  // Initialize sound recorder
-  // The library registers onRecord once, on mount, so it must only touch
-  // refs and state setters: anything else it closes over goes stale.
-  const { startRecorder, stopRecorder } = useSoundRecorder({
-    subscriptionDuration: RECORDER_UPDATE_SECONDS,
-    onRecord: (e) => {
-      if (!isRecordingRef.current || stoppingRef.current) return;
-      const position = Math.min(e.currentPosition, MAX_DURATION_MS);
-      elapsedMsRef.current = position;
-      setElapsedMs(position);
-      const level = normalizeMeteringLevel(e.currentMetering);
-      setWaveform((previous) =>
-        // The last update can land exactly on the limit; that's one bucket
-        // past the strip, so it goes in the final bar.
-        addWaveformSample(
-          previous,
-          Math.min(position, MAX_DURATION_MS - 1),
-          level,
-        ),
-      );
-
-      // Auto-stop at max duration - use ref to avoid stale closure
-      if (position >= MAX_DURATION_MS && handleStopRecordingRef.current) {
-        handleStopRecordingRef.current();
-      }
-    },
-  });
-
-  // Store stopRecorder in ref for cleanup
-  useEffect(() => {
-    stopRecorderRef.current = stopRecorder;
-  }, [stopRecorder]);
-
-  const stopPlayback = useCallback(() => {
-    playbackVersionRef.current += 1;
-    playingIdRef.current = null;
-    const sound = soundRef.current;
-    soundRef.current = null;
-    if (sound) {
-      sound.stop(() => sound.release());
-    }
-  }, []);
-
-  // Cleanup on unmount only (empty dependency array)
-  useEffect(() => {
-    return () => {
-      // Stop active recording if component unmounts
-      if (
-        isRecordingRef.current &&
-        !stoppingRef.current &&
-        stopRecorderRef.current
-      ) {
-        stopRecorderRef.current().catch((err) => {
-          console.warn('Error stopping recorder on unmount:', err);
-        });
-      }
-
-      stopPlayback();
-    };
-  }, [stopPlayback]);
-
-  // Record and Saved Voice Logs are steps inside this screen, not screens of
-  // their own, so going back (the swipe, Android's system Back, iOS's edge
-  // swipe) returns to the Voice Log menu instead of leaving the tool. A
-  // recording in progress is stopped and saved, as the stop button would;
-  // playback stops.
-  const handleBack = async () => {
-    if (goingBackRef.current) return;
-    goingBackRef.current = true;
-    stopPlayback();
-    setPlayingId(null);
-    await startingRef.current;
-    await handleStopRecordingRef.current?.();
-    setMode('select');
-    goingBackRef.current = false;
-  };
-
-  usePreventRemove(mode !== 'select', handleBack);
-
-  const requestAudioPermission = async (): Promise<boolean> => {
-    if (Platform.OS === 'ios') {
-      return true; // iOS permissions handled by Info.plist
-    }
-
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
-        {
-          title: 'Audio Recording Permission',
-          message:
-            'This app needs access to your microphone to record voice logs.',
-          buttonNeutral: 'Ask Me Later',
-          buttonNegative: 'Cancel',
-          buttonPositive: 'OK',
-        },
-      );
-      return granted === PermissionsAndroid.RESULTS.GRANTED;
-    } catch (error) {
-      console.error('Permission request error:', error);
-      return false;
-    }
-  };
-
-  const handleStartRecording = () => {
-    if (
-      startingRef.current ||
-      stoppingRef.current ||
-      goingBackRef.current ||
-      isRecordingRef.current
-    )
-      return;
-
+  const recorder = useVoiceRecorder({
+    maxDurationMs: MAX_DURATION_MS,
+    bucketMs: WAVEFORM_BUCKET_MS,
+    save,
+    onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
-    stopPlayback();
-    setPlayingId(null);
-    setStatus('starting');
-    const starting = (async () => {
-      let started = false;
-      try {
-        // Request permission on Android
-        const hasPermission = await requestAudioPermission();
-        if (!hasPermission) {
-          Alert.alert(
-            'Permission Required',
-            'Microphone permission is required to record audio.',
-          );
-          return;
-        }
+    onWillStart: player.stop,
+  });
+  const stopPlayback = player.stop;
+  const settleRecorder = recorder.settle;
 
-        elapsedMsRef.current = 0;
-        setElapsedMs(0);
-        setWaveform(NO_SAMPLES);
+  // Leaving mid-recording saves the recording first. The leave is held until
+  // the recorder is idle again (and so no longer preventing removal);
+  // dispatching it from the save callback would be blocked a second time.
+  const deferLeave = useCallback(
+    (leave: () => void) => {
+      if (pendingLeaveRef.current) return;
+      pendingLeaveRef.current = true;
+      stopPlayback();
+      setPendingLeave(() => leave);
+      settleRecorder();
+    },
+    [stopPlayback, settleRecorder],
+  );
 
-        // Start recording - library uses default writable cache directory
-        // Third argument enables metering, which feeds the waveform.
-        const path = await startRecorder(undefined, undefined, true);
+  usePreventRemove(recorder.status !== 'idle', ({ data }) =>
+    deferLeave(() => navigation.dispatch(data.action)),
+  );
 
-        audioPathRef.current = path;
-        isRecordingRef.current = true;
-        started = true;
-      } catch (error) {
-        console.error('Failed to start recording:', error);
-        Alert.alert('Error', 'Failed to start recording. Please try again.');
-      } finally {
-        startingRef.current = null;
-        setStatus(started ? 'recording' : 'idle');
-      }
-    })();
-    startingRef.current = starting;
-  };
-
-  // Get only voice logs from notes
-  const voiceLogs = core.notes.filter((note) => note.category === 'Voice Logs');
-  const lastSaved = lastSavedId
-    ? voiceLogs.find((log) => log.id === lastSavedId)
-    : undefined;
-
-  const handlePlayVoiceLog = (noteId: string, audioUri: string) => {
-    if (goingBackRef.current) return;
-    try {
-      // Stop any currently playing sound
-      if (playingIdRef.current) {
-        stopPlayback();
-        setPlayingId(null);
-        return;
-      }
-
-      // Start playing new sound
-      const version = ++playbackVersionRef.current;
-      playingIdRef.current = noteId;
-      setPlayingId(noteId);
-
-      // Load audio file
-      const sound = new Sound(audioUri, '', (error) => {
-        if (playbackVersionRef.current !== version) {
-          sound.release();
-          return;
-        }
-        if (error) {
-          console.error('Failed to load sound:', error);
-          Alert.alert('Error', 'Failed to load audio file.');
-          sound.release();
-          playingIdRef.current = null;
-          setPlayingId(null);
-          return;
-        }
-
-        // Play the sound
-        soundRef.current = sound;
-        sound.play((success) => {
-          if (playbackVersionRef.current !== version) return;
-          playingIdRef.current = null;
-          if (success) {
-            setPlayingId(null);
-          } else {
-            console.error('Failed to play sound');
-            Alert.alert('Error', 'Failed to play audio.');
-            setPlayingId(null);
+  useFocusEffect(
+    useCallback(
+      () =>
+        shortcutNavigation.register((leave) => {
+          if (recorder.status === 'idle' && !pendingLeaveRef.current) {
+            return false;
           }
+          deferLeave(leave);
+          return true;
+        }),
+      [deferLeave, recorder.status, shortcutNavigation],
+    ),
+  );
 
-          // Release sound resources after playback completes
-          sound.release();
-          if (soundRef.current === sound) {
-            soundRef.current = null;
-          }
-        });
-      });
-    } catch (error) {
-      console.error('Error playing voice log:', error);
-      Alert.alert('Error', 'Failed to play voice log.');
-      playingIdRef.current = null;
-      setPlayingId(null);
+  useEffect(() => {
+    if (pendingLeave && recorder.status === 'idle') {
+      setPendingLeave(null);
+      pendingLeaveRef.current = false;
+      pendingLeave();
     }
-  };
+  }, [pendingLeave, recorder.status]);
 
-  const handleDeleteVoiceLog = (noteId: string) => {
+  const voiceLogs = notes.notes.filter(
+    (note) => note.category === 'Voice Logs',
+  );
+  const busy = recorder.status === 'starting' || recorder.status === 'saving';
+
+  const handleDelete = (noteId: string) => {
     Alert.alert(
       'Delete Voice Log',
       'Are you sure you want to delete this voice log?',
@@ -403,124 +120,34 @@ export default observer(function VoiceLogScreen() {
           text: 'Delete',
           style: 'destructive',
           onPress: () => {
-            // Stop playing if this is the currently playing log
-            if (playingIdRef.current === noteId) {
-              stopPlayback();
-              setPlayingId(null);
-            }
-            core.deleteNote(noteId);
+            player.release(noteId);
+            notes.deleteNote(noteId);
           },
         },
       ],
     );
   };
 
-  // Mode: Select recording or viewing
-  if (mode === 'select') {
-    return (
-      <StackScreen title="Voice Logs">
-        <GroupContainer>
-          <ModuleRow
-            title="Record voice log"
-            subtitle="Create a new voice note"
-            icon="mic-outline"
-            variant="tool"
-            onPress={() => {
-              setLastSavedId(null);
-              setMode('record');
-            }}
-          />
-          <ModuleRow
-            title="View voice logs"
-            subtitle={`${voiceLogs.length} saved ${voiceLogs.length === 1 ? 'log' : 'logs'}`}
-            icon="list-outline"
-            variant="tool"
-            showSeparator={false}
-            onPress={() => setMode('view')}
-          />
-        </GroupContainer>
-      </StackScreen>
-    );
-  }
-
-  // Mode: Record
-  if (mode === 'record') {
-    return (
-      <StackScreen
-        title="Record Voice Log"
-        note={`Tap to record a voice note. Maximum duration: ${MAX_DURATION_SECONDS} seconds.`}
-      >
-        <View style={styles.column}>
-          <RecordingControls
-            status={status}
-            elapsedMs={elapsedMs}
-            maxDurationMs={MAX_DURATION_MS}
-            waveform={waveform}
-            waveformSlots={WAVEFORM_SLOTS}
-            disabled={status === 'starting' || status === 'saving'}
-            onStartRecording={handleStartRecording}
-            onStopRecording={handleStopRecording}
-          />
-
-          {lastSaved && (
-            <View style={styles.justSaved}>
-              <SectionEyebrow inline>Just saved</SectionEyebrow>
-              <VoiceLogCard
-                title={lastSaved.title}
-                createdAt={lastSaved.createdAt}
-                duration={lastSaved.duration}
-                audioUri={lastSaved.audioUri}
-                isPlaying={playingId === lastSaved.id}
-                onPlay={() => {
-                  if (status !== 'idle') return;
-                  handlePlayVoiceLog(lastSaved.id, lastSaved.audioUri!);
-                }}
-                onDelete={() => handleDeleteVoiceLog(lastSaved.id)}
-              />
-            </View>
-          )}
-
-          <InfoBlock
-            inline
-            icon="time-outline"
-            title="Saved with each recording"
-            style={styles.metadata}
-          >
-            <View>
-              <View style={styles.featureRow}>
-                <Icon
-                  name="time-outline"
-                  size={16}
-                  color={COLORS.PRIMARY_DARK}
-                />
-                <Text style={styles.featureText}>Timestamp</Text>
-              </View>
-              <View style={styles.featureRow}>
-                <Icon
-                  name="location-outline"
-                  size={16}
-                  color={COLORS.PRIMARY_DARK}
-                />
-                <Text style={styles.featureText}>
-                  GPS location (if available)
-                </Text>
-              </View>
-            </View>
-          </InfoBlock>
-        </View>
-      </StackScreen>
-    );
-  }
-
-  // Mode: View
   return (
-    <StackScreen title="Saved Voice Logs">
+    <StackScreen title="Voice Logs">
       <View style={styles.column}>
+        <RecordingControls
+          status={recorder.status}
+          elapsedMs={recorder.elapsedMs}
+          maxDurationMs={MAX_DURATION_MS}
+          waveform={recorder.waveform}
+          waveformSlots={WAVEFORM_SLOTS}
+          disabled={busy || pendingLeave !== null}
+          onStartRecording={recorder.start}
+          onStopRecording={recorder.stop}
+        />
+
+        <SectionEyebrow inline>Saved logs</SectionEyebrow>
         {voiceLogs.length === 0 ? (
           <EmptyState
             icon="mic-off-outline"
             title="No voice logs yet"
-            subtitle="Record your first voice log to get started"
+            subtitle="Your recordings will appear here"
           />
         ) : (
           voiceLogs.map((log) => (
@@ -530,9 +157,14 @@ export default observer(function VoiceLogScreen() {
               createdAt={log.createdAt}
               duration={log.duration}
               audioUri={log.audioUri}
-              isPlaying={playingId === log.id}
-              onPlay={() => handlePlayVoiceLog(log.id, log.audioUri!)}
-              onDelete={() => handleDeleteVoiceLog(log.id)}
+              waveform={log.waveform}
+              isNew={log.id === lastSavedId}
+              isPlaying={player.playingId === log.id}
+              onPlay={() => {
+                if (recorder.status !== 'idle' || pendingLeave !== null) return;
+                if (log.audioUri) player.toggle(log.id, log.audioUri);
+              }}
+              onDelete={() => handleDelete(log.id)}
             />
           ))
         )}
@@ -541,27 +173,10 @@ export default observer(function VoiceLogScreen() {
   );
 });
 
-const makeStyles = (COLORS: ColorScheme) =>
-  StyleSheet.create({
-    column: {
-      // StackScreen's Android content is full-bleed; cards carry the gutter.
-      paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
-    },
-    justSaved: {
-      marginBottom: SPACING.sm,
-    },
-    metadata: {
-      marginTop: SPACING.sm,
-      marginBottom: 40,
-    },
-    featureRow: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      marginTop: SPACING.xs + 2,
-    },
-    featureText: {
-      fontSize: 14,
-      color: COLORS.PRIMARY_DARK,
-      marginLeft: 8,
-    },
-  });
+const styles = StyleSheet.create({
+  column: {
+    // StackScreen's Android content is full-bleed; cards carry the gutter.
+    paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
+    paddingBottom: SPACING.xl,
+  },
+});

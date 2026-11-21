@@ -7,12 +7,17 @@ import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
 import { formatDateTime } from '../../../utils/timeFormat';
+import Waveform from './Waveform';
 
 type VoiceLogCardProps = {
   title?: string;
   createdAt: number;
   duration?: number;
   audioUri?: string;
+  /** Levels saved with the recording. Older logs have none. */
+  waveform?: readonly number[];
+  /** Just recorded: outlined so it's easy to spot at the top of the list. */
+  isNew?: boolean;
   isPlaying: boolean;
   onPlay: () => void;
   onDelete: () => void;
@@ -23,6 +28,8 @@ export default function VoiceLogCard({
   createdAt,
   duration,
   audioUri,
+  waveform,
+  isNew,
   isPlaying,
   onPlay,
   onDelete,
@@ -39,6 +46,7 @@ export default function VoiceLogCard({
       style={[
         styles.container,
         cardSurface(COLORS),
+        isNew && styles.isNew,
         isPlaying && {
           backgroundColor: COLORS.ACCENT,
           borderColor: COLORS.ACCENT,
@@ -47,7 +55,12 @@ export default function VoiceLogCard({
     >
       <View style={styles.content}>
         <View style={styles.info}>
-          <Text style={[styles.title, onPlaying]}>{title || 'Voice Log'}</Text>
+          <Text style={[styles.title, onPlaying]}>
+            {title || 'Voice Log'}
+            {isNew && !isPlaying ? (
+              <Text style={styles.newTag}> · New</Text>
+            ) : null}
+          </Text>
           <Text style={[styles.time, onPlaying]}>
             {formatDateTime(new Date(createdAt))}
           </Text>
@@ -89,6 +102,15 @@ export default function VoiceLogCard({
           />
         </View>
       </View>
+      {waveform && waveform.length > 0 ? (
+        <View style={styles.waveform}>
+          <Waveform
+            samples={waveform}
+            height={28}
+            color={isPlaying ? accentForeground : COLORS.SECONDARY_ACCENT}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -98,6 +120,10 @@ const makeStyles = (COLORS: ColorScheme) =>
     container: {
       marginBottom: 12,
       overflow: 'hidden',
+    },
+    isNew: {
+      borderColor: COLORS.ACCENT,
+      borderWidth: 2,
     },
     content: {
       flexDirection: 'row',
@@ -113,6 +139,9 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontWeight: '600',
       color: COLORS.PRIMARY_DARK,
       marginBottom: 4,
+    },
+    newTag: {
+      color: COLORS.PRIMARY_DARK,
     },
     time: {
       fontSize: 12,
@@ -142,6 +171,10 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 12,
       color: COLORS.SECONDARY_ACCENT,
       fontWeight: '600',
+    },
+    waveform: {
+      paddingHorizontal: 12,
+      paddingBottom: 12,
     },
     actions: {
       flexDirection: 'row',

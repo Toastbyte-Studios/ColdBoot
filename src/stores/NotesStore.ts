@@ -2,6 +2,7 @@ import { makeAutoObservable, runInAction, computed, comparer } from 'mobx';
 import Geolocation from 'react-native-geolocation-service';
 import { SQLiteDatabase } from '../types/database-types';
 import { SQLiteStatic } from '../types/database-types';
+import { parseStoredWaveform, serializeWaveform } from '../utils/audioLevel';
 import {
   Migration,
   getTableColumns,
@@ -46,7 +47,8 @@ const NOTE_MIGRATIONS: Migration[] = [
           'photoUris TEXT,' +
           'audioUri TEXT,' +
           'transcription TEXT,' +
-          'duration REAL' +
+          'duration REAL,' +
+          'waveform TEXT' +
           ')',
       );
     },
@@ -130,7 +132,47 @@ const NOTE_MIGRATIONS: Migration[] = [
       await db.executeSql('DROP TABLE notes_old');
     },
   },
+  {
+    id: 5,
+    description: "Add notes.waveform for a voice log's recorded levels",
+    run: async (db) => {
+      const columns = await getTableColumns(db, 'notes');
+      if (!columns.has('waveform')) {
+        await db.executeSql('ALTER TABLE notes ADD COLUMN waveform TEXT');
+      }
+    },
+  },
 ];
+
+/** Every notes column, in the order `noteRowValues` gives them. */
+const NOTE_COLUMNS =
+  'id, createdAt, latitude, longitude, category, type, title, text, ' +
+  'bookmarked, sketchDataUri, photoUris, audioUri, transcription, duration, ' +
+  'waveform';
+const NOTE_PLACEHOLDERS = NOTE_COLUMNS.split(',')
+  .map(() => '?')
+  .join(',');
+
+/** A note as the values for an INSERT into `NOTE_COLUMNS`. */
+function noteRowValues(note: Note): (string | number | null)[] {
+  return [
+    note.id,
+    note.createdAt,
+    note.latitude ?? null,
+    note.longitude ?? null,
+    note.category,
+    note.type,
+    note.title ?? null,
+    note.text ?? null,
+    note.bookmarked ? 1 : 0,
+    note.sketchDataUri ?? null,
+    JSON.stringify(note.photoUris ?? []),
+    note.audioUri ?? null,
+    note.transcription ?? null,
+    note.duration ?? null,
+    serializeWaveform(note.waveform),
+  ];
+}
 
 export type NoteInputType = 'text' | 'sketch' | 'voice';
 // NoteCategory is now a string since categories are dynamic
@@ -152,6 +194,8 @@ export interface Note {
   audioUri?: string; // for voice logs
   transcription?: string; // for voice logs
   duration?: number; // recording duration in seconds for voice logs
+  /** A voice log's levels, one per bar (see `utils/audioLevel`). */
+  waveform?: number[];
 }
 
 export class NotesStore {
@@ -269,6 +313,7 @@ export class NotesStore {
     audioUri: string;
     duration: number;
     transcription?: string;
+    waveform?: readonly number[];
   }): Promise<Note> {
     const now = Date.now();
     const timeStr = formatTime(new Date(now));
@@ -286,6 +331,9 @@ export class NotesStore {
       audioUri: params.audioUri,
       transcription: params.transcription,
       duration: params.duration,
+      ...(params.waveform && params.waveform.length > 0
+        ? { waveform: params.waveform.map((level) => Math.round(level)) }
+        : {}),
     };
 
     runInAction(() => {
@@ -702,6 +750,7 @@ export class NotesStore {
         transcription:
           (r.transcription as string | null | undefined) ?? undefined,
         duration: (r.duration as number | null | undefined) ?? undefined,
+        waveform: parseStoredWaveform(r.waveform),
       });
     }
     runInAction(() => {
@@ -721,23 +770,8 @@ export class NotesStore {
       await this.initNotesDb();
       if (!this.notesDb) return;
       await this.notesDb.executeSql(
-        'INSERT OR REPLACE INTO notes (id, createdAt, latitude, longitude, category, type, title, text, bookmarked, sketchDataUri, photoUris, audioUri, transcription, duration) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-        [
-          note.id,
-          note.createdAt,
-          note.latitude ?? null,
-          note.longitude ?? null,
-          note.category,
-          note.type,
-          note.title ?? null,
-          note.text ?? null,
-          note.bookmarked ? 1 : 0,
-          note.sketchDataUri ?? null,
-          JSON.stringify(note.photoUris ?? []),
-          note.audioUri ?? null,
-          note.transcription ?? null,
-          note.duration ?? null,
-        ],
+        `INSERT OR REPLACE INTO notes (${NOTE_COLUMNS}) VALUES (${NOTE_PLACEHOLDERS})`,
+        noteRowValues(note),
       );
     } catch (error) {
       console.error('Failed to persist note:', error);
@@ -989,10 +1023,7 @@ export class NotesStore {
     let replacedFiles =
       mode === 'replace' ? this.notes.flatMap(attachmentUris) : [];
     if (this.notesDb) {
-      const noteSql =
-        mode === 'replace'
-          ? 'INSERT OR REPLACE INTO notes (id, createdAt, latitude, longitude, category, type, title, text, bookmarked, sketchDataUri, photoUris, audioUri, transcription, duration) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)'
-          : 'INSERT OR IGNORE INTO notes (id, createdAt, latitude, longitude, category, type, title, text, bookmarked, sketchDataUri, photoUris, audioUri, transcription, duration) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)';
+      const noteSql = `INSERT OR ${mode === 'replace' ? 'REPLACE' : 'IGNORE'} INTO notes (${NOTE_COLUMNS}) VALUES (${NOTE_PLACEHOLDERS})`;
       try {
         await this.notesDb.executeSql('BEGIN TRANSACTION');
         if (mode === 'replace') {
@@ -1031,22 +1062,7 @@ export class NotesStore {
           );
         }
         for (const note of notes) {
-          await this.notesDb.executeSql(noteSql, [
-            note.id,
-            note.createdAt,
-            note.latitude ?? null,
-            note.longitude ?? null,
-            note.category,
-            note.type,
-            note.title ?? null,
-            note.text ?? null,
-            note.bookmarked ? 1 : 0,
-            note.sketchDataUri ?? null,
-            JSON.stringify(note.photoUris ?? []),
-            note.audioUri ?? null,
-            note.transcription ?? null,
-            note.duration ?? null,
-          ]);
+          await this.notesDb.executeSql(noteSql, noteRowValues(note));
         }
         await this.notesDb.executeSql('COMMIT');
       } catch (error) {
