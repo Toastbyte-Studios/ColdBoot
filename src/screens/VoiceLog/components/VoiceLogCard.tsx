@@ -128,7 +128,7 @@ const makeStyles = (COLORS: ColorScheme) =>
       marginBottom: 4,
     },
     newTag: {
-      color: COLORS.ACCENT,
+      color: COLORS.PRIMARY_DARK,
     },
     time: {
       fontSize: 12,
