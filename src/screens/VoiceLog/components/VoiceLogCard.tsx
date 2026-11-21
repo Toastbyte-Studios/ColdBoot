@@ -7,12 +7,15 @@ import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
 import { formatDateTime } from '../../../utils/timeFormat';
+import Waveform from './Waveform';
 
 type VoiceLogCardProps = {
   title?: string;
   createdAt: number;
   duration?: number;
   audioUri?: string;
+  /** Levels saved with the recording. Older logs have none. */
+  waveform?: readonly number[];
   /** Just recorded: outlined so it's easy to spot at the top of the list. */
   isNew?: boolean;
   isPlaying: boolean;
@@ -25,6 +28,7 @@ export default function VoiceLogCard({
   createdAt,
   duration,
   audioUri,
+  waveform,
   isNew,
   isPlaying,
   onPlay,
@@ -98,6 +102,15 @@ export default function VoiceLogCard({
           />
         </View>
       </View>
+      {waveform && waveform.length > 0 ? (
+        <View style={styles.waveform}>
+          <Waveform
+            samples={waveform}
+            height={28}
+            color={isPlaying ? accentForeground : COLORS.SECONDARY_ACCENT}
+          />
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -158,6 +171,10 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 12,
       color: COLORS.SECONDARY_ACCENT,
       fontWeight: '600',
+    },
+    waveform: {
+      paddingHorizontal: 12,
+      paddingBottom: 12,
     },
     actions: {
       flexDirection: 'row',
