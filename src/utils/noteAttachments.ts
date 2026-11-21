@@ -79,9 +79,13 @@ function isOwnedAttachmentFileName(fileName: string): boolean {
 /**
  * Deletes attachment files from the app's storage. URIs outside it are
  * skipped, and a file that is already gone is not an error. Other failures
- * remain queued for the next cleanup attempt and are reported to the caller.
+ * remain queued for the next cleanup attempt and are reported to the caller,
+ * unless the caller retains ownership and opts out of retries.
  */
-export async function deleteAttachmentFiles(uris: string[]): Promise<void> {
+export async function deleteAttachmentFiles(
+  uris: string[],
+  options: { queueFailures?: boolean } = {},
+): Promise<void> {
   const paths = new Set<string>();
   for (const uri of uris) {
     const path = resolveOwnedAttachmentPath(uri);
@@ -89,7 +93,10 @@ export async function deleteAttachmentFiles(uris: string[]): Promise<void> {
       paths.add(path);
     }
   }
-  const pathsToDelete = new Set([...pendingAttachmentPaths, ...paths]);
+  const pathsToDelete =
+    options.queueFailures === false
+      ? paths
+      : new Set([...pendingAttachmentPaths, ...paths]);
   const failures = await Promise.all(
     [...pathsToDelete].map(async (path) => {
       try {
@@ -101,7 +108,11 @@ export async function deleteAttachmentFiles(uris: string[]): Promise<void> {
           pendingAttachmentPaths.delete(path);
           return null;
         }
-        pendingAttachmentPaths.add(path);
+        if (options.queueFailures === false) {
+          pendingAttachmentPaths.delete(path);
+        } else {
+          pendingAttachmentPaths.add(path);
+        }
         return { path, error };
       }
     }),

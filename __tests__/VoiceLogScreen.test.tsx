@@ -10,6 +10,7 @@ import RecoveryNotice from '../src/screens/VoiceLog/components/RecoveryNotice';
 import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
 import Waveform from '../src/screens/VoiceLog/components/Waveform';
 import VoiceLogScreen from '../src/screens/VoiceLog/VoiceLogScreen';
+import { deleteAttachmentFiles } from '../src/utils/noteAttachments';
 
 type LeaveCallback = (event: { data: { action: { type: string } } }) => void;
 
@@ -969,6 +970,77 @@ describe('Voice Log screen', () => {
       );
       expect(mockMarker).toBeNull();
       expect(RNFS.unlink).toHaveBeenCalledWith(path);
+    });
+
+    it('keeps the marker until failed-save cleanup completes', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockCreateVoiceLog.mockRejectedValueOnce(new Error('db'));
+      let finishDelete!: () => void;
+      jest.mocked(RNFS.unlink).mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishDelete = resolve;
+          }),
+      );
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      await ReactTestRenderer.act(async () => {
+        controls().props.onStopRecording();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      await ReactTestRenderer.act(async () => finishDelete());
+      expect(mockMarker).toBeNull();
+    });
+
+    it('keeps the marker and file recoverable when save and deletion fail', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockCreateVoiceLog.mockRejectedValueOnce(new Error('db'));
+      jest.mocked(RNFS.unlink).mockRejectedValueOnce(new Error('disk'));
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      expect(RNFS.unlink).toHaveBeenCalledWith(path);
+      expect(controls().props.status).toBe('idle');
+      expect(Alert.alert).toHaveBeenCalledWith(
+        'Error',
+        'Failed to save voice log. Please try again.',
+      );
+
+      jest.mocked(RNFS.unlink).mockClear();
+      await deleteAttachmentFiles(['file:///tmp/documents/photo_123_abc.jpg']);
+      expect(RNFS.unlink).toHaveBeenCalledTimes(1);
+      expect(RNFS.unlink).not.toHaveBeenCalledWith(path);
+
+      ReactTestRenderer.act(() => tree.unmount());
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      const notice = tree.root.findByType(RecoveryNotice);
+      expect(notice.props.recovery.kind).toBe('recoverable');
+      await ReactTestRenderer.act(async () => notice.props.onSave());
+      expect(mockCreateVoiceLog).toHaveBeenLastCalledWith(
+        expect.objectContaining({ audioUri: `file://${path}`, locate: false }),
+      );
+      expect(mockMarker).toBeNull();
+    });
+
+    it('keeps the marker when starting and deletion both fail', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockStartRecorder.mockRejectedValueOnce(new Error('recorder'));
+      jest.mocked(RNFS.unlink).mockRejectedValueOnce(new Error('disk'));
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      expect(controls().props.status).toBe('idle');
+      jest.mocked(RNFS.unlink).mockClear();
+      await deleteAttachmentFiles(['file:///tmp/documents/photo_123_abc.jpg']);
+      expect(RNFS.unlink).not.toHaveBeenCalledWith(path);
     });
 
     it('saves when the app goes to the background', async () => {

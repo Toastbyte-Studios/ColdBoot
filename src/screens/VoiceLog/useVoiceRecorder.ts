@@ -196,20 +196,22 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
             waveform: recordedWaveform,
           });
         } catch (error) {
-          await deleteAttachmentFiles([recordingUri]);
+          await deleteAttachmentFiles([recordingUri], { queueFailures: false });
+          if (audioPathRef.current) {
+            await clearPendingRecording(audioPathRef.current);
+          }
           throw error;
         }
 
+        if (audioPathRef.current) {
+          await clearPendingRecording(audioPathRef.current);
+        }
         if (saved) optionsRef.current.onSaved?.(saved.id);
         AccessibilityInfo.announceForAccessibility('Voice log saved');
       } catch (error) {
         console.error('Failed to save voice log:', error);
         Alert.alert('Error', 'Failed to save voice log. Please try again.');
       } finally {
-        // Saved, or deleted after a failed save: either way it is settled.
-        if (audioPathRef.current) {
-          await clearPendingRecording(audioPathRef.current);
-        }
         // Every path that ends a recording resets the recorder.
         isRecordingRef.current = false;
         audioPathRef.current = null;
@@ -258,8 +260,17 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
         console.error('Failed to start recording:', error);
         Alert.alert('Error', 'Failed to start recording. Please try again.');
         if (path) {
-          await deleteAttachmentFiles([`file://${path}`]);
-          await clearPendingRecording(path);
+          try {
+            await deleteAttachmentFiles([`file://${path}`], {
+              queueFailures: false,
+            });
+            await clearPendingRecording(path);
+          } catch (cleanupError) {
+            console.warn(
+              'Could not delete the failed recording:',
+              cleanupError,
+            );
+          }
         }
       } finally {
         startingRef.current = null;
