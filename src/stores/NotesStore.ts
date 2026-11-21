@@ -402,7 +402,11 @@ export class NotesStore {
       const pending = await readPendingRecording();
       return await cleanUpOrphanedRecordings({
         referencedFileNames,
-        keepPaths: new Set(pending ? [pending.path] : []),
+        keepPaths: new Set(
+          pending
+            ? [resolveOwnedAttachmentPath(pending.path) ?? pending.path]
+            : [],
+        ),
       });
     } catch (error) {
       console.warn('Orphaned recording cleanup did not run:', error);
