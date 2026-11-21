@@ -1,4 +1,6 @@
 import {
+  formatClock,
+  formatLength,
   is24HourFormat,
   formatTime,
   formatDateTime,
@@ -118,5 +120,28 @@ describe('timeFormat utilities', () => {
       // Different dates should produce different strings
       expect(result1).not.toBe(result2);
     });
+  });
+});
+
+describe('formatClock', () => {
+  it.each([
+    [0, '0:00'],
+    [7.9, '0:07'],
+    [65, '1:05'],
+    [-3, '0:00'],
+    [NaN, '0:00'],
+  ])('%p reads %p', (seconds, text) => {
+    expect(formatClock(seconds)).toBe(text);
+  });
+});
+
+describe('formatLength', () => {
+  it.each([
+    [12, '12 s'],
+    [60, '1 min'],
+    [150, '2 min 30 s'],
+    [300, '5 min'],
+  ])('%p reads %p', (seconds, text) => {
+    expect(formatLength(seconds)).toBe(text);
   });
 });

@@ -35,7 +35,14 @@ export function normalizeMeteringLevel(metering: number | undefined): number {
   return Math.max(0, Math.min(100, level));
 }
 
-/** How much recording time one waveform bar covers. */
+/**
+ * Bars in a recording's waveform at its maximum length. Each bar covers
+ * `maxDurationMs / WAVEFORM_BARS`, so the strip looks the same whatever the
+ * limit is set to.
+ */
+export const WAVEFORM_BARS = 60;
+
+/** How much recording time one waveform bar covers at the old 12 s limit. */
 export const WAVEFORM_BUCKET_MS = 200;
 
 /**

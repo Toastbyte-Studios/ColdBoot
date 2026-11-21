@@ -14,6 +14,10 @@ let mockPrevent: { active: boolean; onLeave: LeaveCallback } | null = null;
 const mockDispatch = jest.fn();
 const mockNavigate = jest.fn();
 const mockRenameNote = jest.fn();
+const mockSettings = {
+  voiceLogMaxSeconds: 12,
+  setVoiceLogMaxSeconds: jest.fn(),
+};
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
@@ -87,6 +91,7 @@ jest.mock('react-native-sound', () =>
   }),
 );
 jest.mock('../src/stores', () => ({
+  useSettingsStore: () => mockSettings,
   useNotesStore: () => ({
     notes: mockNotes,
     deleteNote: mockDeleteNote,
@@ -142,6 +147,8 @@ describe('Voice Log screen', () => {
     mockSounds.length = 0;
     mockCurrentTime = 0;
     mockDispatch.mockReset();
+    mockSettings.voiceLogMaxSeconds = 12;
+    mockSettings.setVoiceLogMaxSeconds.mockReset();
     mockNavigate.mockReset();
     mockRenameNote.mockReset().mockResolvedValue(undefined);
     mockDeleteNote.mockReset();
@@ -792,6 +799,48 @@ describe('Voice Log screen', () => {
       expect(mockCreateVoiceLog).toHaveBeenCalledWith(
         expect.objectContaining({ duration: 12 }),
       );
+    });
+
+    it('stops at the chosen length, with 60 bars whatever the length', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockSettings.voiceLogMaxSeconds = 60;
+      await render();
+      expect(controls().props.maxDurationMs).toBe(60000);
+      expect(controls().props.waveformSlots).toBe(60);
+      await startRecording();
+      ReactTestRenderer.act(() => {
+        // One bar per second at a 60 s limit.
+        mockOnRecord?.({ currentPosition: 900, currentMetering: -30 });
+        mockOnRecord?.({ currentPosition: 1100, currentMetering: -30 });
+      });
+      expect(liveWaveform().props.samples).toHaveLength(2);
+      await ReactTestRenderer.act(async () =>
+        mockOnRecord?.({ currentPosition: 12000, currentMetering: -30 }),
+      );
+      expect(mockStopRecorder).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () =>
+        mockOnRecord?.({ currentPosition: 60000, currentMetering: -30 }),
+      );
+      expect(mockStopRecorder).toHaveBeenCalledTimes(1);
+    });
+
+    it('offers the lengths while idle, and saves the choice', async () => {
+      const length = () =>
+        tree.root.findByProps({ testID: 'voice-log-length' }).parent!;
+      expect(
+        length().props.actions.map(
+          (a: { id: string; state: string }) => `${a.id}:${a.state}`,
+        ),
+      ).toEqual(['12:on', '30:off', '60:off', '120:off', '300:off']);
+      ReactTestRenderer.act(() =>
+        length().props.onPressAction({ nativeEvent: { event: '120' } }),
+      );
+      expect(mockSettings.setVoiceLogMaxSeconds).toHaveBeenCalledWith(120);
+
+      await startRecording();
+      expect(
+        tree.root.findAllByProps({ testID: 'voice-log-length' }),
+      ).toHaveLength(0);
     });
 
     it('ignores readings when not recording', () => {

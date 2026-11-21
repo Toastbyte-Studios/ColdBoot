@@ -1,3 +1,4 @@
+import { MenuView } from '@react-native-menu/menu';
 import React, { useMemo } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -6,9 +7,9 @@ import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
 import { SPACING } from '../../../theme';
 import { cardSurface } from '../../../theme/cardSurface';
-import { ColorScheme } from '../../../theme/colors';
+import { ColorScheme, DARK_COLORS } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
-import { formatClock } from '../../../utils/timeFormat';
+import { formatClock, formatLength } from '../../../utils/timeFormat';
 import Waveform from './Waveform';
 
 /**
@@ -32,6 +33,10 @@ type RecordingControlsProps = {
   /** Bars in the waveform strip: `maxDurationMs` / bucket length. */
   waveformSlots: number;
   disabled?: boolean;
+  /** The limits to choose from, in seconds. */
+  lengthOptions: readonly number[];
+  /** Called with a new limit, in seconds. Only offered while idle. */
+  onChangeMaxLength: (seconds: number) => void;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
@@ -43,6 +48,8 @@ export default function RecordingControls({
   waveform,
   waveformSlots,
   disabled,
+  lengthOptions,
+  onChangeMaxLength,
   onStartRecording,
   onStopRecording,
 }: RecordingControlsProps) {
@@ -59,6 +66,16 @@ export default function RecordingControls({
   const maxSeconds = Math.round(maxDurationMs / 1000);
   const remainingSeconds = Math.max(0, maxSeconds - elapsedSeconds);
   const warn = isRecording && remainingSeconds <= WARN_REMAINING_SECONDS;
+
+  const lengthActions = useMemo(
+    () =>
+      lengthOptions.map((seconds) => ({
+        id: String(seconds),
+        title: formatLength(seconds),
+        state: seconds === maxSeconds ? ('on' as const) : ('off' as const),
+      })),
+    [lengthOptions, maxSeconds],
+  );
 
   const statusText = {
     idle: 'Tap to record',
@@ -84,11 +101,41 @@ export default function RecordingControls({
           >
             {formatClock(elapsedSeconds)}
           </Text>
-          <Text style={[styles.remaining, warn && styles.remainingWarn]}>
-            {isRecording || status === 'saving'
-              ? `${remainingSeconds}s left`
-              : `Up to ${maxSeconds}s`}
-          </Text>
+          {status === 'idle' ? (
+            <MenuView
+              title="Stop recording after"
+              actions={lengthActions}
+              onPressAction={({ nativeEvent }) =>
+                onChangeMaxLength(Number(nativeEvent.event))
+              }
+              themeVariant={COLORS === DARK_COLORS ? 'dark' : 'light'}
+            >
+              {/* Not a Touchable: the native menu owns the tap. */}
+              <View
+                style={styles.lengthChip}
+                accessible
+                accessibilityRole="button"
+                accessibilityLabel={`Maximum length, ${formatLength(maxSeconds)}`}
+                accessibilityHint="Opens a menu to change it"
+                testID="voice-log-length"
+              >
+                <Text style={styles.remaining}>
+                  Up to {formatLength(maxSeconds)}
+                </Text>
+                <Icon
+                  name="chevron-down-outline"
+                  size={14}
+                  color={COLORS.MUTED}
+                />
+              </View>
+            </MenuView>
+          ) : (
+            <Text style={[styles.remaining, warn && styles.remainingWarn]}>
+              {remainingSeconds < 60
+                ? `${remainingSeconds}s left`
+                : `${formatClock(remainingSeconds)} left`}
+            </Text>
+          )}
         </View>
         <Waveform
           samples={waveform}
@@ -163,6 +210,13 @@ const makeStyles = (COLORS: ColorScheme) =>
       fontSize: 14,
       fontVariant: ['tabular-nums'],
       color: COLORS.MUTED,
+    },
+    lengthChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 2,
+      minHeight: 32,
+      paddingLeft: 8,
     },
     remainingWarn: {
       color: COLORS.ERROR,
