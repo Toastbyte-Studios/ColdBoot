@@ -36,6 +36,11 @@ jest.mock('../src/components/GroupContainer', () => {
 
 jest.mock('../src/components/IconButton', () => 'IconButton');
 
+jest.mock('../src/components/SectionEyebrow', () => 'SectionEyebrow');
+
+// The hero has its own test (ChecklistHero.test.tsx).
+jest.mock('../src/screens/Checklist/ChecklistHero', () => 'ChecklistHero');
+
 jest.mock('../src/components/ModuleRow', () => {
   const { Text: MockText } = require('react-native');
   return ({ title }: { title: string }) => (
