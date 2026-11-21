@@ -36,6 +36,9 @@ export const StoreProvider = ({ children }: { children: ReactNode }) => {
         }
         await rootStore.notesStore.loadNotes();
         await rootStore.checklistStore.loadChecklists();
+        // One-off: recordings older builds left behind. Not awaited; it
+        // only frees space.
+        rootStore.notesStore.cleanUpOrphanedRecordings().catch(() => {});
       } catch (e) {
         console.warn('Failed to load data on startup:', e);
       }

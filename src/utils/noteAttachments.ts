@@ -68,7 +68,17 @@ function isOwnedAttachmentFileName(fileName: string): boolean {
   return (
     /^photo_\d+_[a-z0-9]{1,6}\.(?:jpg|jpeg|png|gif|webp|heic|heif)$/i.test(
       fileName,
-    ) ||
+    ) || isRecordingFileName(fileName)
+  );
+}
+
+/**
+ * A file name the voice recorder gives a recording: `voice-log_<uuid>` for
+ * Voice Log, or `sound_<timestamp>`, the recorder library's own default,
+ * which older builds recorded to before copying.
+ */
+export function isRecordingFileName(fileName: string): boolean {
+  return (
     /^sound_\d+(?:\.\d+)?\.(?:m4a|mp4)$/i.test(fileName) ||
     /^voice-log_[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}\.(?:m4a|mp4|wav|aac|3gp)$/i.test(
       fileName,

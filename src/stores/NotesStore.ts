@@ -15,6 +15,12 @@ import {
   deleteAttachmentFiles,
   resolveOwnedAttachmentPath,
 } from '../utils/noteAttachments';
+import { readPendingRecording } from '../utils/pendingRecording';
+import {
+  cleanUpOrphanedRecordings,
+  fileNameOf,
+  RecordingCleanupResult,
+} from '../utils/recordingCleanup';
 import { formatTime } from '../utils/timeFormat';
 
 let SQLite: SQLiteStatic | null = null;
@@ -364,6 +370,44 @@ export class NotesStore {
       this.attachCurrentLocation(note.id).catch(() => {});
     }
     return note;
+  }
+
+  /**
+   * Deletes recordings left on disk by earlier builds that no note points
+   * at (see `utils/recordingCleanup`). Runs once per install; safe to call on
+   * every launch.
+   *
+   * Which files are in use is read from the database itself, not from
+   * `notes`: if the database didn't open, `notes` may be empty or partial,
+   * and every recording would look unused, so nothing is swept. A
+   * recording waiting to be recovered after a crash is kept too.
+   *
+   * @returns What was deleted, or `null` if nothing ran.
+   */
+  async cleanUpOrphanedRecordings(): Promise<RecordingCleanupResult | null> {
+    try {
+      await this.initNotesDb();
+      if (!this.notesDb) return null;
+      const res = await this.notesDb.executeSql(
+        'SELECT audioUri FROM notes WHERE audioUri IS NOT NULL',
+      );
+      const referencedFileNames = new Set<string>();
+      const rows = res[0].rows;
+      for (let i = 0; i < rows.length; i++) {
+        const uri: unknown = rows.item(i).audioUri;
+        if (typeof uri === 'string' && uri) {
+          referencedFileNames.add(fileNameOf(uri));
+        }
+      }
+      const pending = await readPendingRecording();
+      return await cleanUpOrphanedRecordings({
+        referencedFileNames,
+        keepPaths: new Set(pending ? [pending.path] : []),
+      });
+    } catch (error) {
+      console.warn('Orphaned recording cleanup did not run:', error);
+      return null;
+    }
   }
 
   /**

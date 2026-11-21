@@ -9,7 +9,7 @@ import {
   markRecordingStarted,
   newRecordingPath,
   readPendingRecording,
-} from '../src/screens/VoiceLog/pendingRecording';
+} from '../src/utils/pendingRecording';
 
 const storage = jest.mocked(AsyncStorage);
 let stored: string | null = null;

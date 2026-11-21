@@ -3,6 +3,8 @@
  * Tests for how NotesStore stores voice logs' extra fields.
  */
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import RNFS from 'react-native-fs';
 import { NotesStore } from '../src/stores/NotesStore';
 
 jest.spyOn(console, 'warn').mockImplementation(() => {});
@@ -16,8 +18,16 @@ jest.mock('../src/utils/locationPermission', () => ({
 type Row = Record<string, unknown>;
 /** Rows `SELECT * FROM notes` returns. */
 let mockNoteRows: Row[] = [];
+let mockSqlError: Error | null = null;
 const mockExecuteSql = jest.fn((query: string, _params?: unknown[]) => {
-  const rows = query.startsWith('SELECT * FROM notes') ? mockNoteRows : [];
+  if (mockSqlError && query.startsWith('SELECT audioUri')) {
+    return Promise.reject(mockSqlError);
+  }
+  const rows =
+    query.startsWith('SELECT * FROM notes') ||
+    query.startsWith('SELECT audioUri FROM notes')
+      ? mockNoteRows
+      : [];
   return Promise.resolve([
     {
       rows: {
@@ -167,6 +177,84 @@ describe('NotesStore voice logs', () => {
       expect(
         mockExecuteSql.mock.calls.some(([q]) => q.startsWith('UPDATE')),
       ).toBe(false);
+    });
+  });
+
+  describe('cleanUpOrphanedRecordings', () => {
+    const UUID = '0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b';
+    const old = (name: string) => ({
+      name,
+      path: `/tmp/documents/${name}`,
+      size: 10,
+      mtime: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      isFile: () => true,
+      isDirectory: () => false,
+    });
+    const storage = jest.mocked(AsyncStorage);
+    const fs = jest.mocked(RNFS);
+
+    beforeEach(() => {
+      mockSqlError = null;
+      storage.getItem.mockReset().mockResolvedValue(null);
+      storage.setItem.mockReset().mockResolvedValue(undefined);
+      storage.removeItem.mockReset().mockResolvedValue(undefined);
+      fs.unlink.mockReset().mockResolvedValue(undefined);
+      fs.readDir
+        .mockReset()
+        .mockResolvedValue([
+          old(`voice-log_${UUID}.m4a`),
+          old('sound_1700000000000.m4a'),
+          old('sound_1700000000001.m4a'),
+        ] as never);
+    });
+
+    it('keeps recordings notes point at, even under an old container path', async () => {
+      mockNoteRows = [
+        // iOS moved the app's container since this was saved.
+        {
+          audioUri: `file:///var/mobile/Containers/OLD/Documents/voice-log_${UUID}.m4a`,
+        },
+        { audioUri: 'file:///tmp/documents/sound_1700000000000.m4a' },
+      ];
+      const result = await store.cleanUpOrphanedRecordings();
+      expect(result).toMatchObject({ deleted: 1 });
+      expect(fs.unlink).toHaveBeenCalledTimes(1);
+      expect(fs.unlink).toHaveBeenCalledWith(
+        '/tmp/documents/sound_1700000000001.m4a',
+      );
+    });
+
+    it('keeps the recording waiting to be recovered', async () => {
+      storage.getItem.mockImplementation(async (key: string) =>
+        key === 'voiceLog.pendingRecording'
+          ? JSON.stringify({
+              path: '/tmp/documents/sound_1700000000001.m4a',
+              startedAt: 1,
+            })
+          : null,
+      );
+      mockNoteRows = [];
+      await store.cleanUpOrphanedRecordings();
+      expect(fs.unlink).not.toHaveBeenCalledWith(
+        '/tmp/documents/sound_1700000000001.m4a',
+      );
+      expect(fs.unlink).toHaveBeenCalledTimes(2);
+    });
+
+    it('does nothing if the database did not open', async () => {
+      jest
+        .mocked(require('react-native-sqlite-storage').openDatabase)
+        .mockRejectedValueOnce(new Error('disk I/O error'));
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toBeNull();
+      expect(fs.readDir).not.toHaveBeenCalled();
+      expect(fs.unlink).not.toHaveBeenCalled();
+    });
+
+    it('does nothing if it cannot read which recordings are in use', async () => {
+      mockSqlError = new Error('database is locked');
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toBeNull();
+      expect(fs.readDir).not.toHaveBeenCalled();
+      expect(fs.unlink).not.toHaveBeenCalled();
     });
   });
 });
