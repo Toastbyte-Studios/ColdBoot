@@ -7,8 +7,10 @@ import { observer } from 'mobx-react-lite';
 import React from 'react';
 import GroupContainer from '../../components/GroupContainer';
 import ModuleRow from '../../components/ModuleRow';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useEmergencyPlanStore } from '../../stores';
+import EmergencyPlanHero from './EmergencyPlanHero';
 
 /**
  * Emergency Contact & Rally Point Planner landing screen.
@@ -17,6 +19,8 @@ import { useEmergencyPlanStore } from '../../stores';
  * - Emergency Contacts
  * - Rally Points
  * - Communication Plan
+ *
+ * under a hero (see `EmergencyPlanHero`) that says what to add next.
  *
  * @returns A screen layout with navigation rows for each section.
  */
@@ -47,6 +51,8 @@ export default observer(function EmergencyPlanScreen() {
 
   return (
     <StackScreen title="Emergency Planner">
+      <EmergencyPlanHero />
+      <SectionEyebrow>Sections</SectionEyebrow>
       <GroupContainer>
         {sections.map((section, index) => (
           <ModuleRow
