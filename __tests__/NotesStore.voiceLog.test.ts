@@ -6,6 +6,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import RNFS from 'react-native-fs';
 import { NotesStore } from '../src/stores/NotesStore';
+import { withRecordingMaintenanceLock } from '../src/utils/recordingMaintenanceLock';
 
 jest.spyOn(console, 'warn').mockImplementation(() => {});
 jest.spyOn(console, 'error').mockImplementation(() => {});
@@ -292,6 +293,126 @@ describe('NotesStore voice logs', () => {
       await expect(store.cleanUpOrphanedRecordings()).resolves.toBeNull();
       expect(fs.readDir).not.toHaveBeenCalled();
       expect(fs.unlink).not.toHaveBeenCalled();
+    });
+
+    it('waits for a recovered recording to be saved before reading references', async () => {
+      await store.initNotesDb();
+      const path = `/tmp/documents/voice-log_${UUID}.m4a`;
+      let finishInsert: () => void = () => {};
+      let insertStarted: () => void = () => {};
+      const started = new Promise<void>((resolve) => {
+        insertStarted = resolve;
+      });
+      const blocked = new Promise<void>((resolve) => {
+        finishInsert = resolve;
+      });
+      mockExecuteSql.mockImplementationOnce(async () => {
+        insertStarted();
+        await blocked;
+        mockNoteRows = [{ audioUri: `file://${path}` }];
+        return [{ rows: { length: 0, item: () => ({}), raw: () => [] } }];
+      });
+      const save = store.createVoiceLog({
+        audioUri: `file://${path}`,
+        duration: 2,
+        locate: false,
+      });
+      await started;
+      const cleanup = store.cleanUpOrphanedRecordings();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(fs.readDir).not.toHaveBeenCalled();
+      finishInsert();
+      await Promise.all([save, cleanup]);
+      expect(fs.unlink).not.toHaveBeenCalledWith(path);
+    });
+
+    it('keeps the pending recording when cleanup starts before recovery saves it', async () => {
+      await store.initNotesDb();
+      mockExecuteSql.mockClear();
+      const path = `/tmp/documents/voice-log_${UUID}.m4a`;
+      storage.getItem.mockImplementation(async (key: string) =>
+        key === 'voiceLog.pendingRecording'
+          ? JSON.stringify({ path, startedAt: 1 })
+          : null,
+      );
+      let finishQuery: () => void = () => {};
+      let queryStarted: () => void = () => {};
+      const started = new Promise<void>((resolve) => {
+        queryStarted = resolve;
+      });
+      const blocked = new Promise<void>((resolve) => {
+        finishQuery = resolve;
+      });
+      mockExecuteSql.mockImplementationOnce(async () => {
+        queryStarted();
+        await blocked;
+        return [{ rows: { length: 0, item: () => ({}), raw: () => [] } }];
+      });
+      const cleanup = store.cleanUpOrphanedRecordings();
+      await started;
+      const save = store.createVoiceLog({
+        audioUri: `file://${path}`,
+        duration: 2,
+        locate: false,
+      });
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      const insertedWhileCleanupRan = mockExecuteSql.mock.calls.some(
+        ([query]) => query.startsWith('INSERT'),
+      );
+      finishQuery();
+      await Promise.all([cleanup, save]);
+      expect(insertedWhileCleanupRan).toBe(false);
+      expect(fs.unlink).not.toHaveBeenCalledWith(path);
+    });
+
+    it('waits for a restore to finish importing its recording references', async () => {
+      await store.initNotesDb();
+      const path = `/tmp/documents/voice-log_${UUID}.m4a`;
+      let finishRestore: () => void = () => {};
+      let restoreStarted: () => void = () => {};
+      const started = new Promise<void>((resolve) => {
+        restoreStarted = resolve;
+      });
+      const blocked = new Promise<void>((resolve) => {
+        finishRestore = resolve;
+      });
+      const restore = withRecordingMaintenanceLock(async () => {
+        restoreStarted();
+        await blocked;
+        await store.importNotesData(
+          [],
+          [
+            {
+              id: 'restored',
+              createdAt: 1,
+              category: 'Voice Logs',
+              type: 'voice',
+              photoUris: [],
+              audioUri: `file://${path}`,
+            },
+          ],
+          'merge',
+        );
+        mockNoteRows = [{ audioUri: `file://${path}` }];
+      });
+      await started;
+      const cleanup = store.cleanUpOrphanedRecordings();
+      await new Promise<void>((resolve) => setImmediate(resolve));
+      expect(fs.readDir).not.toHaveBeenCalled();
+      finishRestore();
+      await Promise.all([restore, cleanup]);
+      expect(fs.unlink).not.toHaveBeenCalledWith(path);
+    });
+
+    it('releases the maintenance lock after a restore fails', async () => {
+      await expect(
+        withRecordingMaintenanceLock(async () => {
+          throw new Error('restore failed');
+        }),
+      ).rejects.toThrow('restore failed');
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toMatchObject({
+        deleted: 3,
+      });
     });
   });
 });

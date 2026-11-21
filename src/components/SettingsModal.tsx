@@ -56,6 +56,7 @@ import {
   restoreNoteAttachments,
 } from '../utils/backupService';
 import { deleteAttachmentFiles } from '../utils/noteAttachments';
+import { withRecordingMaintenanceLock } from '../utils/recordingMaintenanceLock';
 import { getToolById } from '../utils/tools';
 import AppButton from './AppButton';
 import AppSwitch from './AppSwitch';
@@ -365,20 +366,22 @@ export const SettingsModal = observer(
                     ),
                 )
               : data.notes;
-          const restored = await restoreNoteAttachments(
-            notesToRestore,
-            data.attachments,
-          );
-          try {
-            await coreStore.importNotesData(
-              data.noteCategories,
-              restored.notes,
-              mode,
+          await withRecordingMaintenanceLock(async () => {
+            const restored = await restoreNoteAttachments(
+              notesToRestore,
+              data.attachments,
             );
-          } catch (error) {
-            await deleteAttachmentFiles(restored.createdUris);
-            throw error;
-          }
+            try {
+              await coreStore.importNotesData(
+                data.noteCategories,
+                restored.notes,
+                mode,
+              );
+            } catch (error) {
+              await deleteAttachmentFiles(restored.createdUris);
+              throw error;
+            }
+          });
 
           // Restore checklists
           await checklistStore.importChecklistsData(
