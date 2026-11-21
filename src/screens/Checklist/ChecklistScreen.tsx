@@ -8,8 +8,15 @@ import React from 'react';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useChecklistStore } from '../../stores';
+import ChecklistHero from './ChecklistHero';
+import {
+  checklistHeroState,
+  checklistProgress,
+  progressText,
+} from './checklistProgress';
 
 /**
  * Checklist landing screen.
@@ -17,6 +24,7 @@ import { useChecklistStore } from '../../stores';
  * @remarks
  * Presents a dashboard of checklist-related actions and routes:
  * - **New Checklist** → navigates to the `NewChecklist` screen
+ * - **Hero** → the list to finish next and overall progress (see `ChecklistHero`)
  * - **Checklist Cards** → listed as rows in one grouped list that navigate to individual checklist screens
  *
  * Uses React Navigation to perform screen transitions from row taps.
@@ -29,6 +37,10 @@ export default observer(function ChecklistScreen() {
   const sortedChecklists = [...checklistStore.checklists].sort((a, b) =>
     a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }),
   );
+  const progress = checklistProgress(sortedChecklists, (id) =>
+    checklistStore.getChecklistItems(id),
+  );
+  const heroState = checklistHeroState(progress);
 
   const checklistIcons: Record<string, string> = {
     'Bug-out bag': 'bag-outline',
@@ -50,15 +62,22 @@ export default observer(function ChecklistScreen() {
         </>
       }
     >
+      <ChecklistHero state={heroState} />
+      <SectionEyebrow>Lists</SectionEyebrow>
       <GroupContainer>
-        {sortedChecklists.map((checklist, index, all) => (
+        {progress.map((entry, index, all) => (
           <ModuleRow
-            key={checklist.id}
-            title={checklist.name}
-            icon={checklistIcons[checklist.name] || 'list-outline'}
+            key={entry.checklist.id}
+            title={entry.checklist.name}
+            icon={checklistIcons[entry.checklist.name] || 'list-outline'}
+            value={progressText(entry)}
             variant="tool"
             showSeparator={index < all.length - 1}
-            onPress={() => navigation.navigate('ChecklistEntry', { checklist })}
+            onPress={() =>
+              navigation.navigate('ChecklistEntry', {
+                checklist: entry.checklist,
+              })
+            }
           />
         ))}
       </GroupContainer>
