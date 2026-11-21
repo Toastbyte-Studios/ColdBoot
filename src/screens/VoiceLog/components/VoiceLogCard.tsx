@@ -180,11 +180,17 @@ export default function VoiceLogCard({
         {audioUri ? (
           <View style={styles.playSlot}>
             {isLoading ? (
-              <ActivityIndicator
-                color={COLORS.SECONDARY_ACCENT}
-                accessibilityLabel="Loading voice log"
-                testID="voice-log-loading"
-              />
+              <Pressable
+                style={styles.playSlot}
+                onPress={onPlay}
+                accessibilityRole="button"
+                accessibilityLabel="Cancel loading voice log"
+              >
+                <ActivityIndicator
+                  color={COLORS.SECONDARY_ACCENT}
+                  testID="voice-log-loading"
+                />
+              </Pressable>
             ) : (
               <IconButton
                 name={isPlaying ? 'pause-outline' : 'play-outline'}

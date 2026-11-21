@@ -102,9 +102,14 @@ export function useVoiceLogPlayer(): VoiceLogPlayer {
 
       stopPolling();
       pollRef.current = setInterval(() => {
+        const requestedPlayback = playbackRef.current;
         sound.getCurrentTime((seconds) => {
           const open = playbackRef.current;
-          if (versionRef.current !== version || open?.state !== 'playing') {
+          if (
+            versionRef.current !== version ||
+            open?.state !== 'playing' ||
+            open !== requestedPlayback
+          ) {
             return;
           }
           update({ ...open, positionSec: seconds });

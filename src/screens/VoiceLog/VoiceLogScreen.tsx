@@ -10,20 +10,84 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useNotesStore, useSettingsStore } from '../../stores';
+import { type Note, useNotesStore, useSettingsStore } from '../../stores';
 import { VOICE_LOG_LENGTHS } from '../../stores/SettingsStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BARS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
-import { useVoiceLogPlayer } from './useVoiceLogPlayer';
+import { type Playback, useVoiceLogPlayer } from './useVoiceLogPlayer';
 import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
 /** How much of the map "Show on map" frames around a log's location. */
 const MAP_RADIUS_MILES = 0.25;
+
+type SavedVoiceLogCardProps = {
+  log: Note;
+  isNew: boolean;
+  playback?: Playback;
+  onToggle: (id: string, audioUri: string) => void;
+  onSeek: (id: string, audioUri: string, fraction: number) => void;
+  onRename: (id: string, title: string) => Promise<void>;
+  onShowOnMap: (latitude: number, longitude: number) => Promise<void>;
+  onDelete: (id: string) => void;
+};
+
+const SavedVoiceLogCard = observer(function SavedVoiceLogCardContent({
+  log,
+  isNew,
+  playback,
+  onToggle,
+  onSeek,
+  onRename,
+  onShowOnMap,
+  onDelete,
+}: SavedVoiceLogCardProps) {
+  const handlePlay = useCallback(() => {
+    if (log.audioUri) onToggle(log.id, log.audioUri);
+  }, [log.audioUri, log.id, onToggle]);
+
+  const handleSeek = useCallback(
+    (fraction: number) => {
+      if (log.audioUri) onSeek(log.id, log.audioUri, fraction);
+    },
+    [log.audioUri, log.id, onSeek],
+  );
+
+  const handleDelete = useCallback(() => onDelete(log.id), [log.id, onDelete]);
+  const handleRename = useCallback(
+    (title: string) => onRename(log.id, title),
+    [log.id, onRename],
+  );
+  const { latitude, longitude } = log;
+  const handleShowOnMap = useCallback(() => {
+    if (latitude !== undefined && longitude !== undefined) {
+      return onShowOnMap(latitude, longitude);
+    }
+  }, [latitude, longitude, onShowOnMap]);
+
+  return (
+    <VoiceLogCard
+      title={log.title}
+      createdAt={log.createdAt}
+      duration={log.duration}
+      audioUri={log.audioUri}
+      waveform={log.waveform}
+      isNew={isNew}
+      latitude={latitude}
+      longitude={longitude}
+      playback={playback}
+      onPlay={handlePlay}
+      onSeek={handleSeek}
+      onRename={handleRename}
+      onShowOnMap={handleShowOnMap}
+      onDelete={handleDelete}
+    />
+  );
+});
 
 /**
  * Voice Log Screen
@@ -49,6 +113,7 @@ export default observer(function VoiceLogScreen() {
   const maxDurationMs = settings.voiceLogMaxSeconds * 1000;
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const player = useVoiceLogPlayer();
+  const { playback, toggle, seek, stop, release } = player;
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<NavigationAction | null>(
     null,
@@ -66,15 +131,16 @@ export default observer(function VoiceLogScreen() {
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
-    onWillStart: player.stop,
+    onWillStart: stop,
   });
+  const { settle } = recorder;
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
   // dispatching it from the save callback would be blocked a second time.
   usePreventRemove(recorder.status !== 'idle', ({ data }) => {
     if (pendingLeave) return;
-    player.stop();
+    stop();
     setPendingLeave(data.action);
     recorder.settle();
   });
@@ -91,23 +157,41 @@ export default observer(function VoiceLogScreen() {
   );
   const busy = recorder.status === 'starting' || recorder.status === 'saving';
 
-  const handleDelete = (noteId: string) => {
-    Alert.alert(
-      'Delete Voice Log',
-      'Are you sure you want to delete this voice log?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            player.release(noteId);
-            notes.deleteNote(noteId);
+  const handleDelete = useCallback(
+    (noteId: string) => {
+      Alert.alert(
+        'Delete Voice Log',
+        'Are you sure you want to delete this voice log?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              release(noteId);
+              notes.deleteNote(noteId);
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [notes, release],
+  );
+  const handleRename = useCallback(
+    (id: string, title: string) => notes.renameNote(id, title),
+    [notes],
+  );
+  const handleShowOnMap = useCallback(
+    async (latitude: number, longitude: number) => {
+      stop();
+      await settle();
+      navigation.navigate('MapScreen', {
+        center: { latitude, longitude },
+        radiusMiles: MAP_RADIUS_MILES,
+      });
+    },
+    [navigation, settle, stop],
+  );
 
   return (
     <StackScreen title="Voice Logs" keyboardShouldPersistTaps="handled">
@@ -134,36 +218,16 @@ export default observer(function VoiceLogScreen() {
           />
         ) : (
           voiceLogs.map((log) => (
-            <VoiceLogCard
+            <SavedVoiceLogCard
               key={log.id}
-              title={log.title}
-              createdAt={log.createdAt}
-              duration={log.duration}
-              audioUri={log.audioUri}
-              waveform={log.waveform}
+              log={log}
               isNew={log.id === lastSavedId}
-              playback={
-                player.playback?.id === log.id ? player.playback : undefined
-              }
-              onPlay={() => log.audioUri && player.toggle(log.id, log.audioUri)}
-              onSeek={(fraction) =>
-                log.audioUri && player.seek(log.id, log.audioUri, fraction)
-              }
-              latitude={log.latitude}
-              longitude={log.longitude}
-              onRename={(newTitle) => notes.renameNote(log.id, newTitle)}
-              onShowOnMap={async () => {
-                if (log.latitude === undefined || log.longitude === undefined) {
-                  return;
-                }
-                player.stop();
-                await recorder.settle();
-                navigation.navigate('MapScreen', {
-                  center: { latitude: log.latitude, longitude: log.longitude },
-                  radiusMiles: MAP_RADIUS_MILES,
-                });
-              }}
-              onDelete={() => handleDelete(log.id)}
+              playback={playback?.id === log.id ? playback : undefined}
+              onToggle={toggle}
+              onSeek={seek}
+              onRename={handleRename}
+              onShowOnMap={handleShowOnMap}
+              onDelete={handleDelete}
             />
           ))
         )}

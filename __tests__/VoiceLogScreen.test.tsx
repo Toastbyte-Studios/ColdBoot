@@ -1,3 +1,4 @@
+import { observable, runInAction } from 'mobx';
 import React from 'react';
 import { Alert, Text as RNText } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
@@ -469,18 +470,38 @@ describe('Voice Log screen', () => {
       expect(menuActions()).toEqual(['rename', 'map', 'delete']);
     });
 
+    it('updates a saved card when its observable title and location change', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      const log = observable.object<MockNote>({ ...FIRST_LOG });
+      mockNotes.splice(0, 1, log);
+      await render();
+
+      ReactTestRenderer.act(() => {
+        runInAction(() => {
+          log.title = 'Creek crossing';
+          log.latitude = 34.0522;
+          log.longitude = -118.2437;
+        });
+      });
+
+      expect(card().props.title).toBe('Creek crossing');
+      expect(menuActions()).toEqual(['rename', 'map', 'delete']);
+    });
+
     it('shows where it was recorded, and opens the Map there', async () => {
       await withLocation();
       const location = card().findByProps({ testID: 'voice-log-location' });
       expect(location.props.accessibilityLabel).toBe(
         'Recorded at 34.05220° N, 118.24370° W',
       );
-      ReactTestRenderer.act(() => location.props.onPress());
+      await ReactTestRenderer.act(async () => location.props.onPress());
       expect(mockNavigate).toHaveBeenCalledWith('MapScreen', {
         center: { latitude: 34.0522, longitude: -118.2437 },
         radiusMiles: 0.25,
       });
-      choose('map');
+      await ReactTestRenderer.act(async () => {
+        choose('map');
+      });
       expect(mockNavigate).toHaveBeenCalledTimes(2);
     });
 
