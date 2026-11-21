@@ -1,86 +1,141 @@
 import React, { useMemo } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import LevelMeter from '../../../components/LevelMeter';
 import { Text } from '../../../components/ScaledText';
 import Touchable from '../../../components/Touchable';
 import { useTheme } from '../../../hooks/useTheme';
+import { SPACING } from '../../../theme';
+import { cardSurface } from '../../../theme/cardSurface';
 import { ColorScheme } from '../../../theme/colors';
 import { onColor } from '../../../theme/colorUtils';
+import LiveWaveform from './LiveWaveform';
+
+/**
+ * Where the recorder is. `starting` covers the permission check and the
+ * recorder spinning up; `saving` runs from the stop tap until the log's row
+ * is written.
+ */
+export type RecordingStatus = 'idle' | 'starting' | 'recording' | 'saving';
+
+/** The last few seconds are called out so the auto-stop isn't a surprise. */
+const WARN_REMAINING_SECONDS = 3;
 
 type RecordingControlsProps = {
-  isRecording: boolean;
-  recordingTime: number;
-  progress: number;
-  maxDuration: number;
-  /** Live microphone level, 0-100. Only meaningful while recording. */
-  level: number;
+  status: RecordingStatus;
+  /** Recorded so far, in milliseconds. */
+  elapsedMs: number;
+  /** Recording stops itself at this length, in milliseconds. */
+  maxDurationMs: number;
+  /** One level per bar, from `addWaveformSample`. */
+  waveform: readonly number[];
+  /** Bars in the waveform strip: `maxDurationMs` / bucket length. */
+  waveformSlots: number;
   disabled?: boolean;
   onStartRecording: () => void;
   onStopRecording: () => void;
 };
 
+/** `m:ss`, the way a recorder shows time. */
+export function formatClock(totalSeconds: number): string {
+  const seconds = Math.max(0, Math.floor(totalSeconds));
+  const minutes = Math.floor(seconds / 60);
+  return `${minutes}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
 export default function RecordingControls({
-  isRecording,
-  recordingTime,
-  progress,
-  maxDuration,
-  level,
+  status,
+  elapsedMs,
+  maxDurationMs,
+  waveform,
+  waveformSlots,
   disabled,
   onStartRecording,
   onStopRecording,
 }: RecordingControlsProps) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
-  const glyphColor = onColor(
-    isRecording ? COLORS.ERROR : COLORS.SECONDARY_ACCENT,
-  );
 
-  const formatTime = (seconds: number): string => {
-    const remaining = maxDuration - seconds;
-    return `${remaining}s`;
-  };
+  const isRecording = status === 'recording';
+  const isBusy = status === 'starting' || status === 'saving';
+  const buttonColor =
+    isRecording || status === 'saving' ? COLORS.ERROR : COLORS.SECONDARY_ACCENT;
+  const glyphColor = onColor(buttonColor);
+
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+  const maxSeconds = Math.round(maxDurationMs / 1000);
+  const remainingSeconds = Math.max(0, maxSeconds - elapsedSeconds);
+  const warn = isRecording && remainingSeconds <= WARN_REMAINING_SECONDS;
+
+  const statusText = {
+    idle: 'Tap to record',
+    starting: 'Starting…',
+    recording: 'Tap to stop and save',
+    saving: 'Saving…',
+  }[status];
+
+  const buttonLabel = {
+    idle: 'Start recording',
+    starting: 'Starting recording',
+    recording: 'Stop and save recording',
+    saving: 'Saving voice log',
+  }[status];
 
   return (
     <View style={styles.container}>
-      {isRecording && (
-        <>
-          <View style={styles.progressContainer}>
-            <View
-              style={[styles.progressBar, { width: `${progress * 100}%` }]}
-            />
-          </View>
-          <Text style={styles.timerText}>{formatTime(recordingTime)}</Text>
-          {/* Shows the mic is picking the voice up; the number itself is the
-              Decibel Meter's job, so this is bars only. */}
-          <View style={styles.meterContainer}>
-            <LevelMeter level={level} accessibilityLabel="Microphone level" />
-          </View>
-        </>
-      )}
+      <View style={[styles.panel, cardSurface(COLORS)]}>
+        <View style={styles.clockRow}>
+          <Text
+            style={styles.clock}
+            accessibilityLabel={`${elapsedSeconds} of ${maxSeconds} seconds recorded`}
+          >
+            {formatClock(elapsedSeconds)}
+          </Text>
+          <Text style={[styles.remaining, warn && styles.remainingWarn]}>
+            {isRecording || status === 'saving'
+              ? `${remainingSeconds}s left`
+              : `Up to ${maxSeconds}s`}
+          </Text>
+        </View>
+        <LiveWaveform
+          samples={waveform}
+          slots={waveformSlots}
+          color={COLORS.ERROR}
+        />
+      </View>
 
-      {/* Not an IconButton: this is a 120pt circle, and IconButton pins its
+      {/* Not an IconButton: this is a 96pt circle, and IconButton pins its
           ripple radius to the 44/48 touch target. Touchable leaves the radius
           unset so Android derives it from the view bounds. */}
       <Touchable
-        style={[styles.recordButton, isRecording && styles.recordButtonActive]}
+        style={[styles.recordButton, { backgroundColor: buttonColor }]}
         rippleColor={glyphColor}
         onPress={isRecording ? onStopRecording : onStartRecording}
-        disabled={disabled}
-        accessibilityLabel={isRecording ? 'Stop Recording' : 'Start Recording'}
+        disabled={disabled || isBusy}
+        accessibilityLabel={buttonLabel}
         accessibilityRole="button"
+        accessibilityState={{ busy: isBusy, disabled: disabled || isBusy }}
       >
-        <Icon
-          name={isRecording ? 'stop-outline' : 'mic-outline'}
-          size={60}
-          color={glyphColor}
-        />
+        {isBusy ? (
+          <ActivityIndicator
+            size="large"
+            color={glyphColor}
+            testID="voice-log-busy"
+          />
+        ) : (
+          <Icon
+            name={isRecording ? 'stop-outline' : 'mic-outline'}
+            size={48}
+            color={glyphColor}
+          />
+        )}
       </Touchable>
 
-      {!isRecording && (
-        <Text style={styles.instruction}>Tap to start recording</Text>
-      )}
-      {isRecording && <Text style={styles.recordingText}>Recording...</Text>}
+      <Text
+        style={[styles.status, isRecording && styles.statusRecording]}
+        accessibilityLiveRegion="polite"
+      >
+        {statusText}
+      </Text>
     </View>
   );
 }
@@ -89,57 +144,56 @@ const makeStyles = (COLORS: ColorScheme) =>
   StyleSheet.create({
     container: {
       alignItems: 'center',
-      justifyContent: 'center',
-      marginVertical: 40,
+      marginTop: SPACING.lg,
+      marginBottom: SPACING.xl,
     },
-    progressContainer: {
-      width: 200,
-      height: 6,
-      backgroundColor: COLORS.PRIMARY_LIGHT,
-      borderRadius: 3,
-      marginBottom: 16,
-      overflow: 'hidden',
+    panel: {
+      alignSelf: 'stretch',
+      padding: SPACING.lg,
+      marginBottom: SPACING.xl,
     },
-    progressBar: {
-      height: '100%',
-      backgroundColor: COLORS.SECONDARY_ACCENT,
-      borderRadius: 3,
+    clockRow: {
+      flexDirection: 'row',
+      alignItems: 'baseline',
+      justifyContent: 'space-between',
+      marginBottom: SPACING.md,
     },
-    timerText: {
-      fontSize: 24,
-      fontWeight: 'bold',
+    clock: {
+      fontSize: 34,
+      fontWeight: '600',
+      fontVariant: ['tabular-nums'],
       color: COLORS.PRIMARY_DARK,
-      marginBottom: 12,
     },
-    meterContainer: {
-      width: 200,
-      marginBottom: 20,
+    remaining: {
+      fontSize: 14,
+      fontVariant: ['tabular-nums'],
+      color: COLORS.MUTED,
+    },
+    remainingWarn: {
+      color: COLORS.ERROR,
+      fontWeight: '600',
     },
     recordButton: {
-      width: 120,
-      height: 120,
-      borderRadius: 60,
-      backgroundColor: COLORS.SECONDARY_ACCENT,
+      width: 96,
+      height: 96,
+      borderRadius: 48,
       alignItems: 'center',
       justifyContent: 'center',
-      marginBottom: 16,
+      marginBottom: SPACING.md,
       shadowColor: '#000',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: 0.25,
       shadowRadius: 8,
-      elevation: 8,
+      elevation: 6,
     },
-    recordButtonActive: {
-      backgroundColor: COLORS.ERROR,
-    },
-    instruction: {
+    status: {
       fontSize: 16,
       color: COLORS.PRIMARY_DARK,
       opacity: 0.8,
     },
-    recordingText: {
-      fontSize: 16,
+    statusRecording: {
       color: COLORS.ERROR,
-      fontWeight: 'bold',
+      fontWeight: '600',
+      opacity: 1,
     },
   });

@@ -252,53 +252,30 @@ export class NotesStore {
   /**
    * Creates a voice log note with audio recording.
    *
-   * Attempts to capture current location and creates a note entry with the provided
-   * audio file URI. The note is categorized as "Voice Logs" and includes metadata
-   * such as timestamp, location (if available), and audio duration.
+   * Saves a note entry with the provided audio file URI straight away, then
+   * adds the current location in the background when a fix arrives. The note
+   * is categorized as "Voice Logs" and includes metadata such as timestamp,
+   * location (if available), and audio duration.
    *
    * @param params - The parameters for creating the voice log.
    * @param params.audioUri - The file URI of the recorded audio.
    * @param params.duration - The duration of the recording in seconds.
    * @param params.transcription - Optional transcription text (if available).
    *
-   * @returns A promise that resolves when the voice log has been created and persisted.
+   * @returns The saved note, once it has been persisted (before its location
+   *   is added).
    */
   async createVoiceLog(params: {
     audioUri: string;
     duration: number;
     transcription?: string;
-  }) {
-    let latitude: number | undefined;
-    let longitude: number | undefined;
-
-    // Try to get current location with a shorter timeout for voice logs
-    try {
-      const auth = await requestForegroundLocationPermission();
-      if (auth === 'granted') {
-        await new Promise<void>((resolve) => {
-          Geolocation.getCurrentPosition(
-            (pos) => {
-              latitude = pos.coords.latitude;
-              longitude = pos.coords.longitude;
-              resolve();
-            },
-            () => resolve(),
-            { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 },
-          );
-        });
-      }
-    } catch {
-      // Location unavailable, proceed without it
-    }
-
+  }): Promise<Note> {
     const now = Date.now();
     const timeStr = formatTime(new Date(now));
 
     const note: Note = {
       id: this.generateId(),
       createdAt: now,
-      ...(latitude !== undefined &&
-        longitude !== undefined && { latitude, longitude }),
       category: 'Voice Logs',
       type: 'voice',
       title: `Voice Log – ${timeStr}`,
@@ -314,7 +291,70 @@ export class NotesStore {
     runInAction(() => {
       this.notes.unshift(note);
     });
-    await this.persistNote(note);
+    try {
+      await this.persistNote(note);
+    } catch (error) {
+      // The caller deletes the audio file on failure; don't leave a row in
+      // memory pointing at it.
+      runInAction(() => {
+        this.notes = this.notes.filter((n) => n.id !== note.id);
+      });
+      throw error;
+    }
+
+    // The row is written before the GPS fix, not after: waiting for a fix
+    // held the save (and the user) for up to 5 s, and an app kill in that
+    // window lost the recording. The location is added when it arrives.
+    this.attachCurrentLocation(note.id).catch(() => {});
+    return note;
+  }
+
+  /**
+   * Adds the current position to a note that has already been saved.
+   *
+   * Writes only the two columns, by id, so a note deleted while the fix was
+   * pending is not written back. Fails quietly: a log without a location is
+   * still a log.
+   *
+   * @param noteId - The note to add the location to.
+   */
+  private async attachCurrentLocation(noteId: string): Promise<void> {
+    try {
+      const auth = await requestForegroundLocationPermission();
+      if (auth !== 'granted') return;
+      const coords = await new Promise<{
+        latitude: number;
+        longitude: number;
+      } | null>((resolve) => {
+        Geolocation.getCurrentPosition(
+          (pos) =>
+            resolve({
+              latitude: pos.coords.latitude,
+              longitude: pos.coords.longitude,
+            }),
+          () => resolve(null),
+          // A fix from the last few seconds is where the log was recorded.
+          { enableHighAccuracy: true, timeout: 10000, maximumAge: 15000 },
+        );
+      });
+      if (!coords) return;
+
+      const note = this.notes.find((n) => n.id === noteId);
+      if (!note) return;
+      runInAction(() => {
+        note.latitude = coords.latitude;
+        note.longitude = coords.longitude;
+      });
+
+      await this.initNotesDb();
+      if (!this.notesDb) return;
+      await this.notesDb.executeSql(
+        'UPDATE notes SET latitude = ?, longitude = ? WHERE id = ?',
+        [coords.latitude, coords.longitude, noteId],
+      );
+    } catch (error) {
+      console.warn('Could not add a location to the voice log:', error);
+    }
   }
 
   /**

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Alert } from 'react-native';
 import ReactTestRenderer from 'react-test-renderer';
+import LiveWaveform from '../src/screens/VoiceLog/components/LiveWaveform';
 import RecordingControls from '../src/screens/VoiceLog/components/RecordingControls';
 import VoiceLogCard from '../src/screens/VoiceLog/components/VoiceLogCard';
 import VoiceLogScreen from '../src/screens/VoiceLog/VoiceLogScreen';
@@ -10,7 +11,18 @@ let mockPrevent: { active: boolean; onBack: () => void } | null = null;
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
-const mockNotes = [
+/** The record-back callback Voice Log gave the recorder. */
+let mockOnRecord:
+  | ((e: { currentPosition: number; currentMetering?: number }) => void)
+  | undefined;
+const mockNotes: {
+  id: string;
+  category: string;
+  createdAt: number;
+  audioUri: string;
+  title?: string;
+  duration?: number;
+}[] = [
   {
     id: 'log-1',
     category: 'Voice Logs',
@@ -31,10 +43,13 @@ jest.mock('@react-navigation/native', () => ({
   },
 }));
 jest.mock('react-native-nitro-sound', () => ({
-  useSoundRecorder: () => ({
-    startRecorder: mockStartRecorder,
-    stopRecorder: mockStopRecorder,
-  }),
+  useSoundRecorder: (options: { onRecord?: typeof mockOnRecord }) => {
+    mockOnRecord = options.onRecord;
+    return {
+      startRecorder: mockStartRecorder,
+      stopRecorder: mockStopRecorder,
+    };
+  },
 }));
 jest.mock('react-native-sound', () =>
   jest.fn((_uri: string, _base: string, onLoad: (error?: Error) => void) => {
@@ -80,12 +95,17 @@ jest.mock('../src/components/ScaledText', () => ({
   Text: require('react-native').Text,
 }));
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
+jest.mock('../src/components/SectionEyebrow', () => {
+  const { Text } = require('react-native');
+  return ({ children }: { children: string }) => <Text>{children}</Text>;
+});
 
 describe('Voice Log back', () => {
   let tree!: ReactTestRenderer.ReactTestRenderer;
 
   beforeEach(async () => {
     mockPrevent = null;
+    mockNotes.splice(1);
     mockLoads.length = 0;
     mockSounds.length = 0;
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
@@ -256,10 +276,7 @@ describe('Voice Log back', () => {
 
     await ReactTestRenderer.act(async () => finishSave());
     expect(title()).toBe('Voice Logs');
-    expect(Alert.alert).toHaveBeenCalledWith(
-      'Saved',
-      'Voice log saved successfully',
-    );
+    expect(Alert.alert).not.toHaveBeenCalled();
     await openRow('Record voice log');
     await ReactTestRenderer.act(async () => {
       tree.root.findByType(RecordingControls).props.onStartRecording();
@@ -328,5 +345,126 @@ describe('Voice Log back', () => {
       tree.root.findByType(RecordingControls).props.onStartRecording();
     });
     expect(mockStartRecorder).toHaveBeenCalledTimes(2);
+  });
+
+  describe('saving', () => {
+    const controls = () => tree.root.findByType(RecordingControls);
+
+    const record = async () => {
+      await openRow('Record voice log');
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStartRecording(),
+      );
+    };
+
+    it('shows a spinner from the stop tap until the log is written', async () => {
+      let finishSave!: (note: { id: string }) => void;
+      mockCreateVoiceLog.mockReturnValue(
+        new Promise((resolve) => {
+          finishSave = resolve;
+        }),
+      );
+      await record();
+      expect(controls().props.status).toBe('recording');
+
+      // Not awaited: the stop resolves only once the save does.
+      await ReactTestRenderer.act(async () => {
+        controls().props.onStopRecording();
+      });
+      expect(controls().props.status).toBe('saving');
+      expect(controls().props.disabled).toBe(true);
+      expect(
+        tree.root.findAllByProps({ testID: 'voice-log-busy' }),
+      ).not.toHaveLength(0);
+
+      await ReactTestRenderer.act(async () => finishSave({ id: 'log-1' }));
+      expect(controls().props.status).toBe('idle');
+      expect(
+        tree.root.findAllByProps({ testID: 'voice-log-busy' }),
+      ).toHaveLength(0);
+    });
+
+    it('stays on Record and shows the new log, with no alert', async () => {
+      mockNotes.unshift({
+        id: 'log-new',
+        category: 'Voice Logs',
+        createdAt: 1,
+        audioUri: 'file:///new.m4a',
+        title: 'Voice Log – 10:42',
+        duration: 4,
+      });
+      mockCreateVoiceLog.mockResolvedValue({ id: 'log-new' });
+      await record();
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+
+      expect(title()).toBe('Record Voice Log');
+      expect(Alert.alert).not.toHaveBeenCalled();
+      const card = tree.root.findByType(VoiceLogCard);
+      expect(card.props.title).toBe('Voice Log – 10:42');
+      expect(card.props.duration).toBe(4);
+    });
+
+    it('saves the recorded length in whole seconds', async () => {
+      await record();
+      ReactTestRenderer.act(() =>
+        mockOnRecord?.({ currentPosition: 4600, currentMetering: -30 }),
+      );
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(mockCreateVoiceLog).toHaveBeenCalledWith(
+        expect.objectContaining({ duration: 5 }),
+      );
+    });
+  });
+
+  describe('waveform', () => {
+    const controls = () => tree.root.findByType(RecordingControls);
+
+    it('fills as the recording runs, and resets after saving', async () => {
+      await openRow('Record voice log');
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStartRecording(),
+      );
+      ReactTestRenderer.act(() => {
+        mockOnRecord?.({ currentPosition: 100, currentMetering: -30 });
+        mockOnRecord?.({ currentPosition: 300, currentMetering: -60 });
+      });
+      expect(controls().props.elapsedMs).toBe(300);
+      const samples = tree.root.findByType(LiveWaveform).props.samples;
+      expect(samples).toHaveLength(2);
+      expect(samples[0]).toBeGreaterThan(samples[1]);
+
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(controls().props.elapsedMs).toBe(0);
+      expect(tree.root.findByType(LiveWaveform).props.samples).toHaveLength(0);
+    });
+
+    it('stops by itself at 12 seconds', async () => {
+      await openRow('Record voice log');
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStartRecording(),
+      );
+      await ReactTestRenderer.act(async () =>
+        mockOnRecord?.({ currentPosition: 12000, currentMetering: -30 }),
+      );
+      expect(mockStopRecorder).toHaveBeenCalledTimes(1);
+      expect(mockCreateVoiceLog).toHaveBeenCalledWith(
+        expect.objectContaining({ duration: 12 }),
+      );
+    });
+
+    it('ignores readings when not recording', async () => {
+      await openRow('Record voice log');
+      ReactTestRenderer.act(() =>
+        mockOnRecord?.({ currentPosition: 500, currentMetering: -30 }),
+      );
+      expect(controls().props.elapsedMs).toBe(0);
+      expect(tree.root.findByType(LiveWaveform).props.samples).toHaveLength(0);
+    });
   });
 });

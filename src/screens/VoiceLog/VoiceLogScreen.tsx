@@ -8,6 +8,7 @@ import React, {
   useMemo,
 } from 'react';
 import {
+  AccessibilityInfo,
   StyleSheet,
   View,
   Alert,
@@ -27,20 +28,32 @@ import GroupContainer from '../../components/GroupContainer';
 import InfoBlock from '../../components/InfoBlock';
 import ModuleRow from '../../components/ModuleRow';
 import { Text } from '../../components/ScaledText';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useTheme } from '../../hooks/useTheme';
 import { useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { ColorScheme } from '../../theme/colors';
-import { normalizeMeteringLevel, smoothLevel } from '../../utils/audioLevel';
+import {
+  addWaveformSample,
+  normalizeMeteringLevel,
+  WAVEFORM_BUCKET_MS,
+} from '../../utils/audioLevel';
 import { deleteAttachmentFiles } from '../../utils/noteAttachments';
 import EmptyState from './components/EmptyState';
-import RecordingControls from './components/RecordingControls';
+import RecordingControls, {
+  RecordingStatus,
+} from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
 
 const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_SECONDS = 12;
+const MAX_DURATION_MS = MAX_DURATION_SECONDS * 1000;
+const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
+/** How often the recorder reports position and level, in seconds. */
+const RECORDER_UPDATE_SECONDS = 0.1;
+const NO_SAMPLES: readonly number[] = [];
 
 /**
  * Voice Log Screen
@@ -49,8 +62,9 @@ const MAX_DURATION_SECONDS = 12;
  * or view and manage previously recorded voice logs.
  *
  * Features:
- * - One-tap recording with visual feedback
+ * - One-tap recording with a live waveform that fills over the 12 seconds
  * - Auto-stop at 12-second limit
+ * - A saving state on the button, then the new log right below it
  * - Haptic feedback on completion
  * - Automatic timestamp and location capture
  * - View, play, and delete saved voice logs
@@ -63,10 +77,10 @@ export default observer(function VoiceLogScreen() {
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
   const core = useNotesStore();
   const [mode, setMode] = useState<'select' | 'record' | 'view'>('select');
-  const [isRecording, setIsRecording] = useState(false);
-  const [isBusy, setIsBusy] = useState(false);
-  const [recordingTime, setRecordingTime] = useState(0);
-  const [micLevel, setMicLevel] = useState(0);
+  const [status, setStatus] = useState<RecordingStatus>('idle');
+  const [elapsedMs, setElapsedMs] = useState(0);
+  const [waveform, setWaveform] = useState<readonly number[]>(NO_SAMPLES);
+  const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const soundRef = useRef<Sound | null>(null);
   const playingIdRef = useRef<string | null>(null);
@@ -76,7 +90,7 @@ export default observer(function VoiceLogScreen() {
   );
   const isRecordingRef = useRef(false);
   const audioPathRef = useRef<string | null>(null);
-  const recordingTimeRef = useRef(0);
+  const elapsedMsRef = useRef(0);
   const startingRef = useRef<Promise<void> | null>(null);
   const stoppingRef = useRef<Promise<void> | null>(null);
   const goingBackRef = useRef(false);
@@ -87,7 +101,7 @@ export default observer(function VoiceLogScreen() {
     if (stoppingRef.current) return stoppingRef.current;
     if (!isRecordingRef.current) return Promise.resolve();
 
-    setIsBusy(true);
+    setStatus('saving');
     const stopping = (async () => {
       try {
         // Stop recording first - wrap in try/catch in case recorder isn't active
@@ -99,23 +113,16 @@ export default observer(function VoiceLogScreen() {
           result = audioPathRef.current || undefined;
         }
 
-        const duration = recordingTimeRef.current;
+        // Whole seconds, at least one: a tap-and-release still made a file.
+        const duration = Math.max(1, Math.round(elapsedMsRef.current / 1000));
         const audioUri = result || audioPathRef.current;
+        isRecordingRef.current = false;
 
         // Validate audio path before changing state
         if (!audioUri) {
           Alert.alert('Error', 'Failed to record audio. Please try again.');
-          isRecordingRef.current = false;
-          setIsRecording(false);
-          setRecordingTime(0);
-          audioPathRef.current = null;
-          setMicLevel(0);
           return;
         }
-
-        // Update state after successful recording stop
-        isRecordingRef.current = false;
-        setIsRecording(false);
 
         // Haptic feedback
         Vibration.vibrate(200);
@@ -131,8 +138,9 @@ export default observer(function VoiceLogScreen() {
 
         // Save voice log
         const recordingUri = `file://${recordingPath}`;
+        let saved: { id: string } | undefined;
         try {
-          await core.createVoiceLog({
+          saved = await core.createVoiceLog({
             audioUri: recordingUri,
             duration: duration,
             transcription: undefined, // Transcription not implemented yet
@@ -142,25 +150,23 @@ export default observer(function VoiceLogScreen() {
           throw error;
         }
 
-        // Back to the Voice Logs menu, not out of the tool: the three views
-        // here are local state, so goBack() used to leave for the Core module.
-        setRecordingTime(0);
-        audioPathRef.current = null;
-        setMicLevel(0);
-        setMode('select');
-        Alert.alert('Saved', 'Voice log saved successfully');
+        // Stay on Record: the new log is shown under the button, ready to
+        // play or to record the next one. (Saving used to jump to the menu
+        // and raise an alert on top of it.)
+        if (saved) setLastSavedId(saved.id);
+        AccessibilityInfo.announceForAccessibility('Voice log saved');
       } catch (error) {
         console.error('Failed to save voice log:', error);
         Alert.alert('Error', 'Failed to save voice log. Please try again.');
-        // Ensure recording state is reset even when saving fails
-        isRecordingRef.current = false;
-        setIsRecording(false);
-        setRecordingTime(0);
-        audioPathRef.current = null;
-        setMicLevel(0);
       } finally {
+        // Every path that ends a recording resets the recorder.
+        isRecordingRef.current = false;
+        audioPathRef.current = null;
+        elapsedMsRef.current = 0;
+        setElapsedMs(0);
+        setWaveform(NO_SAMPLES);
+        setStatus('idle');
         stoppingRef.current = null;
-        setIsBusy(false);
       }
     })();
     stoppingRef.current = stopping;
@@ -173,21 +179,28 @@ export default observer(function VoiceLogScreen() {
   }, [handleStopRecording]);
 
   // Initialize sound recorder
+  // The library registers onRecord once, on mount, so it must only touch
+  // refs and state setters: anything else it closes over goes stale.
   const { startRecorder, stopRecorder } = useSoundRecorder({
+    subscriptionDuration: RECORDER_UPDATE_SECONDS,
     onRecord: (e) => {
       if (!isRecordingRef.current || stoppingRef.current) return;
-      const currentTime = Math.floor(e.currentPosition / 1000);
-      recordingTimeRef.current = currentTime;
-      setRecordingTime(currentTime);
-      setMicLevel((previous) =>
-        smoothLevel(previous, normalizeMeteringLevel(e.currentMetering)),
+      const position = Math.min(e.currentPosition, MAX_DURATION_MS);
+      elapsedMsRef.current = position;
+      setElapsedMs(position);
+      const level = normalizeMeteringLevel(e.currentMetering);
+      setWaveform((previous) =>
+        // The last update can land exactly on the limit; that's one bucket
+        // past the strip, so it goes in the final bar.
+        addWaveformSample(
+          previous,
+          Math.min(position, MAX_DURATION_MS - 1),
+          level,
+        ),
       );
 
       // Auto-stop at max duration - use ref to avoid stale closure
-      if (
-        currentTime >= MAX_DURATION_SECONDS &&
-        handleStopRecordingRef.current
-      ) {
+      if (position >= MAX_DURATION_MS && handleStopRecordingRef.current) {
         handleStopRecordingRef.current();
       }
     },
@@ -277,8 +290,12 @@ export default observer(function VoiceLogScreen() {
     )
       return;
 
-    setIsBusy(true);
+    // Playback would be picked up by the microphone.
+    stopPlayback();
+    setPlayingId(null);
+    setStatus('starting');
     const starting = (async () => {
+      let started = false;
       try {
         // Request permission on Android
         const hasPermission = await requestAudioPermission();
@@ -290,33 +307,33 @@ export default observer(function VoiceLogScreen() {
           return;
         }
 
-        setRecordingTime(0);
-        recordingTimeRef.current = 0;
-        setMicLevel(0);
+        elapsedMsRef.current = 0;
+        setElapsedMs(0);
+        setWaveform(NO_SAMPLES);
 
         // Start recording - library uses default writable cache directory
-        // Third argument enables metering, which feeds the level meter.
+        // Third argument enables metering, which feeds the waveform.
         const path = await startRecorder(undefined, undefined, true);
 
         audioPathRef.current = path;
         isRecordingRef.current = true;
-        setIsRecording(true);
+        started = true;
       } catch (error) {
         console.error('Failed to start recording:', error);
         Alert.alert('Error', 'Failed to start recording. Please try again.');
-        setIsRecording(false);
       } finally {
         startingRef.current = null;
-        setIsBusy(false);
+        setStatus(started ? 'recording' : 'idle');
       }
     })();
     startingRef.current = starting;
   };
 
-  const progress = recordingTime / MAX_DURATION_SECONDS;
-
   // Get only voice logs from notes
   const voiceLogs = core.notes.filter((note) => note.category === 'Voice Logs');
+  const lastSaved = lastSavedId
+    ? voiceLogs.find((log) => log.id === lastSavedId)
+    : undefined;
 
   const handlePlayVoiceLog = (noteId: string, audioUri: string) => {
     if (goingBackRef.current) return;
@@ -409,9 +426,8 @@ export default observer(function VoiceLogScreen() {
             icon="mic-outline"
             variant="tool"
             onPress={() => {
+              setLastSavedId(null);
               setMode('record');
-              setRecordingTime(0);
-              audioPathRef.current = null;
             }}
           />
           <ModuleRow
@@ -436,15 +452,33 @@ export default observer(function VoiceLogScreen() {
       >
         <View style={styles.column}>
           <RecordingControls
-            isRecording={isRecording}
-            recordingTime={recordingTime}
-            progress={progress}
-            maxDuration={MAX_DURATION_SECONDS}
-            level={micLevel}
-            disabled={isBusy}
+            status={status}
+            elapsedMs={elapsedMs}
+            maxDurationMs={MAX_DURATION_MS}
+            waveform={waveform}
+            waveformSlots={WAVEFORM_SLOTS}
+            disabled={status === 'starting' || status === 'saving'}
             onStartRecording={handleStartRecording}
             onStopRecording={handleStopRecording}
           />
+
+          {lastSaved && (
+            <View style={styles.justSaved}>
+              <SectionEyebrow inline>Just saved</SectionEyebrow>
+              <VoiceLogCard
+                title={lastSaved.title}
+                createdAt={lastSaved.createdAt}
+                duration={lastSaved.duration}
+                audioUri={lastSaved.audioUri}
+                isPlaying={playingId === lastSaved.id}
+                onPlay={() => {
+                  if (status !== 'idle') return;
+                  handlePlayVoiceLog(lastSaved.id, lastSaved.audioUri!);
+                }}
+                onDelete={() => handleDeleteVoiceLog(lastSaved.id)}
+              />
+            </View>
+          )}
 
           <InfoBlock
             inline
@@ -513,8 +547,11 @@ const makeStyles = (COLORS: ColorScheme) =>
       // StackScreen's Android content is full-bleed; cards carry the gutter.
       paddingHorizontal: isAndroid ? SCREEN_GUTTER : 0,
     },
+    justSaved: {
+      marginBottom: SPACING.sm,
+    },
     metadata: {
-      marginTop: SPACING.lg,
+      marginTop: SPACING.sm,
       marginBottom: 40,
     },
     featureRow: {
