@@ -8,8 +8,10 @@ import React from 'react';
 import GroupContainer from '../../components/GroupContainer';
 import IconButton from '../../components/IconButton';
 import ModuleRow from '../../components/ModuleRow';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useNotesStore } from '../../stores';
+import NotepadHero from './NotepadHero';
 
 /**
  * Notepad landing screen.
@@ -19,6 +21,7 @@ import { useNotesStore } from '../../stores';
  * - **New Note** → navigates to the `NewNote` screen
  * - **Recent Notes** → navigates to the `RecentNotes` screen
  * - **Saved Notes** → navigates to the `SavedNotes` screen
+ * - **Hero** → the latest note and bookmarked, weekly and voice-log counts (see `NotepadHero`)
  * - **Note Categories** → listed as rows in one grouped list that navigate to category-specific screens
  *
  * Uses React Navigation to perform screen transitions from row taps.
@@ -67,6 +70,8 @@ export default observer(function NotepadScreen() {
         </>
       }
     >
+      <NotepadHero />
+      <SectionEyebrow>Categories</SectionEyebrow>
       <GroupContainer>
         {core.categories.map((cat, index, all) => (
           <ModuleRow
