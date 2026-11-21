@@ -16,7 +16,7 @@ import {
   checklistHeroState,
   checklistProgress,
   progressText,
-} from './checklistHero';
+} from './checklistProgress';
 
 /**
  * Checklist landing screen.

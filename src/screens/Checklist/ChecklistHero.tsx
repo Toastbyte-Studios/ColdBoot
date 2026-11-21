@@ -8,7 +8,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import ModuleHero from '../../components/ModuleHero';
 import { useTheme } from '../../hooks/useTheme';
-import { ChecklistHeroState } from './checklistHero';
+import { ChecklistHeroState } from './checklistProgress';
 import type { Checklist } from '../../stores/ChecklistStore';
 
 const BAR_WIDTH = 64;

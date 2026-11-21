@@ -5,7 +5,7 @@ import {
   checklistHeroState,
   checklistProgress,
   progressText,
-} from '../src/screens/Checklist/checklistHero';
+} from '../src/screens/Checklist/checklistProgress';
 import type { Checklist, ChecklistItem } from '../src/stores/ChecklistStore';
 
 const list = (id: string, name: string): Checklist => ({
@@ -47,7 +47,7 @@ jest.mock('../src/components/ScaledText', () => ({
 }));
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
-describe('checklistHero', () => {
+describe('checklistProgress', () => {
   const bag = list('bag', 'Bug-out bag');
   const aid = list('aid', 'First-aid kit');
   const car = list('car', 'Car kit');
