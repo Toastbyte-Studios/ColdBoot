@@ -25,7 +25,9 @@ const mockSettings = {
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
+const mockHasSavedAudioAttachment = jest.fn();
 const mockDeleteNote = jest.fn();
+let mockStartupPromise: Promise<void> = Promise.resolve();
 /** The record-back callback Voice Log gave the recorder. */
 let mockOnRecord:
   | ((e: { currentPosition: number; currentMetering?: number }) => void)
@@ -96,8 +98,10 @@ jest.mock('react-native-sound', () =>
 );
 jest.mock('../src/stores', () => ({
   useSettingsStore: () => mockSettings,
+  useStores: () => ({ startupPromise: mockStartupPromise }),
   useNotesStore: () => ({
     notes: mockNotes,
+    hasSavedAudioAttachment: mockHasSavedAudioAttachment,
     deleteNote: mockDeleteNote,
     renameNote: mockRenameNote,
     createVoiceLog: mockCreateVoiceLog,
@@ -163,6 +167,8 @@ describe('Voice Log screen', () => {
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockCreateVoiceLog.mockReset().mockResolvedValue({ id: 'log-new' });
+    mockHasSavedAudioAttachment.mockReset().mockResolvedValue(false);
+    mockStartupPromise = Promise.resolve();
     jest.spyOn(Alert, 'alert').mockImplementation(() => {});
     mockMarker = null;
     storage.getItem.mockReset().mockImplementation(async () => mockMarker);
@@ -886,6 +892,62 @@ describe('Voice Log screen', () => {
   describe('when the app closes mid-recording', () => {
     const marker = (path: string, startedAt = 1_700_000_000_000) =>
       JSON.stringify({ path, startedAt });
+
+    it('waits for startup and clears a marker for already-saved audio', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      const path =
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a';
+      mockMarker = marker(path);
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      let finishStartup!: () => void;
+      mockStartupPromise = new Promise((resolve) => {
+        finishStartup = resolve;
+      });
+      mockHasSavedAudioAttachment.mockResolvedValue(true);
+      await render();
+      expect(mockHasSavedAudioAttachment).not.toHaveBeenCalled();
+      expect(RNFS.exists).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => finishStartup());
+      expect(mockHasSavedAudioAttachment).toHaveBeenCalledWith(path);
+      expect(mockMarker).toBeNull();
+      expect(mockSounds).toHaveLength(0);
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      expect(mockCreateVoiceLog).not.toHaveBeenCalled();
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+    });
+
+    it('leaves the recording alone if its ownership cannot be checked', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      mockHasSavedAudioAttachment.mockRejectedValue(new Error('database'));
+      await render();
+      expect(mockMarker).not.toBeNull();
+      expect(RNFS.exists).not.toHaveBeenCalled();
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      expect(mockSounds).toHaveLength(0);
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+    });
+
+    it('does not offer saved audio if clearing its marker fails', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      mockHasSavedAudioAttachment.mockResolvedValue(true);
+      storage.removeItem.mockRejectedValueOnce(new Error('storage'));
+      await render();
+      expect(mockMarker).not.toBeNull();
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      ReactTestRenderer.act(() => tree.unmount());
+      await render();
+      expect(mockMarker).toBeNull();
+      expect(mockCreateVoiceLog).not.toHaveBeenCalled();
+    });
 
     it('marks the recording while it runs, and clears it once saved', async () => {
       await startRecording();
