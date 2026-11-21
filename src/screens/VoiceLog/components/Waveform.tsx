@@ -19,8 +19,13 @@ type Props = {
   height?: number;
   /** Colour for recorded bars. */
   color: string;
-  /** Colour for bars still to come. @default `OUTLINE_VARIANT` */
+  /** Colour for bars still to come, or not yet played. @default `OUTLINE_VARIANT` */
   pendingColor?: string;
+  /**
+   * How much has been played, 0 to 1. Bars after that point take
+   * `pendingColor`. Leave unset to draw every recorded bar in `color`.
+   */
+  progress?: number;
   testID?: string;
 };
 
@@ -41,6 +46,7 @@ export default function Waveform({
   height = 56,
   color,
   pendingColor,
+  progress,
   testID,
 }: Props) {
   const COLORS = useTheme();
@@ -52,13 +58,19 @@ export default function Waveform({
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants"
       testID={testID}
+      // Inside a seek control the strip's own frame is the touch target,
+      // so a tap's position is measured across the whole strip, not a bar.
+      pointerEvents="none"
     >
       {Array.from({ length: slots }, (_, index) => {
         const sample = samples[index];
-        const recorded = sample !== undefined;
-        const fraction = recorded
-          ? Math.min(1, Math.max(0, sample / METERING_FULL_SCALE))
-          : 0;
+        const played =
+          progress === undefined || index < Math.round(progress * slots);
+        const lit = sample !== undefined && played;
+        const fraction =
+          sample !== undefined
+            ? Math.min(1, Math.max(0, sample / METERING_FULL_SCALE))
+            : 0;
         return (
           <View
             key={index}
@@ -66,7 +78,7 @@ export default function Waveform({
               styles.bar,
               {
                 height: Math.max(MIN_BAR_HEIGHT, fraction * height),
-                backgroundColor: recorded ? color : upcoming,
+                backgroundColor: lit ? color : upcoming,
               },
             ]}
           />

@@ -4,24 +4,69 @@ import {
   usePreventRemove,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { memo, useCallback, useEffect, useRef, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import { useShortcutNavigation } from '../../navigation/ShortcutNavigationContext';
-import { useNotesStore } from '../../stores';
+import { type Note, useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
-import { useVoiceLogPlayer } from './useVoiceLogPlayer';
+import { type Playback, useVoiceLogPlayer } from './useVoiceLogPlayer';
 import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_MS = 12 * 1000;
 const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
+type SavedVoiceLogCardProps = {
+  log: Note;
+  isNew: boolean;
+  playback?: Playback;
+  onToggle: (id: string, audioUri: string) => void;
+  onSeek: (id: string, audioUri: string, fraction: number) => void;
+  onDelete: (id: string) => void;
+};
+
+const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
+  log,
+  isNew,
+  playback,
+  onToggle,
+  onSeek,
+  onDelete,
+}: SavedVoiceLogCardProps) {
+  const handlePlay = useCallback(() => {
+    if (log.audioUri) onToggle(log.id, log.audioUri);
+  }, [log.audioUri, log.id, onToggle]);
+
+  const handleSeek = useCallback(
+    (fraction: number) => {
+      if (log.audioUri) onSeek(log.id, log.audioUri, fraction);
+    },
+    [log.audioUri, log.id, onSeek],
+  );
+
+  const handleDelete = useCallback(() => onDelete(log.id), [log.id, onDelete]);
+
+  return (
+    <VoiceLogCard
+      title={log.title}
+      createdAt={log.createdAt}
+      duration={log.duration}
+      audioUri={log.audioUri}
+      waveform={log.waveform}
+      isNew={isNew}
+      playback={playback}
+      onPlay={handlePlay}
+      onSeek={handleSeek}
+      onDelete={handleDelete}
+    />
+  );
+});
 
 /**
  * Voice Log Screen
@@ -35,7 +80,7 @@ const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
- * - Play and delete saved logs
+ * - Play, pause and seek saved logs (tap the waveform), and delete them
  *
  * @returns A React element rendering the Voice Log screen.
  */
@@ -43,6 +88,8 @@ export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
   const navigation = useNavigation();
   const player = useVoiceLogPlayer();
+  const { playback, toggle, seek, release } = player;
+  const stopPlayback = player.stop;
   const shortcutNavigation = useShortcutNavigation();
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<(() => void) | null>(null);
@@ -53,16 +100,14 @@ export default observer(function VoiceLogScreen() {
       notes.createVoiceLog({ audioUri, duration, waveform }),
     [notes],
   );
-
   const recorder = useVoiceRecorder({
     maxDurationMs: MAX_DURATION_MS,
     bucketMs: WAVEFORM_BUCKET_MS,
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
-    onWillStart: player.stop,
+    onWillStart: stopPlayback,
   });
-  const stopPlayback = player.stop;
   const settleRecorder = recorder.settle;
 
   // Leaving mid-recording saves the recording first. The leave is held until
@@ -110,23 +155,42 @@ export default observer(function VoiceLogScreen() {
   );
   const busy = recorder.status === 'starting' || recorder.status === 'saving';
 
-  const handleDelete = (noteId: string) => {
-    Alert.alert(
-      'Delete Voice Log',
-      'Are you sure you want to delete this voice log?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            player.release(noteId);
-            notes.deleteNote(noteId);
+  const handleToggle = useCallback(
+    (id: string, audioUri: string) => {
+      if (recorder.status !== 'idle' || pendingLeave !== null) return;
+      toggle(id, audioUri);
+    },
+    [pendingLeave, recorder.status, toggle],
+  );
+
+  const handleSeek = useCallback(
+    (id: string, audioUri: string, fraction: number) => {
+      if (recorder.status !== 'idle' || pendingLeave !== null) return;
+      seek(id, audioUri, fraction);
+    },
+    [pendingLeave, recorder.status, seek],
+  );
+
+  const handleDelete = useCallback(
+    (noteId: string) => {
+      Alert.alert(
+        'Delete Voice Log',
+        'Are you sure you want to delete this voice log?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              release(noteId);
+              notes.deleteNote(noteId);
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [notes, release],
+  );
 
   return (
     <StackScreen title="Voice Logs">
@@ -151,20 +215,14 @@ export default observer(function VoiceLogScreen() {
           />
         ) : (
           voiceLogs.map((log) => (
-            <VoiceLogCard
+            <SavedVoiceLogCard
               key={log.id}
-              title={log.title}
-              createdAt={log.createdAt}
-              duration={log.duration}
-              audioUri={log.audioUri}
-              waveform={log.waveform}
+              log={log}
               isNew={log.id === lastSavedId}
-              isPlaying={player.playingId === log.id}
-              onPlay={() => {
-                if (recorder.status !== 'idle' || pendingLeave !== null) return;
-                if (log.audioUri) player.toggle(log.id, log.audioUri);
-              }}
-              onDelete={() => handleDelete(log.id)}
+              playback={playback?.id === log.id ? playback : undefined}
+              onToggle={handleToggle}
+              onSeek={handleSeek}
+              onDelete={handleDelete}
             />
           ))
         )}
