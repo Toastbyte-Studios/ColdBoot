@@ -4,23 +4,69 @@ import {
   usePreventRemove,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { memo, useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useNotesStore } from '../../stores';
+import { type Note, useNotesStore } from '../../stores';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
-import { useVoiceLogPlayer } from './useVoiceLogPlayer';
+import { type Playback, useVoiceLogPlayer } from './useVoiceLogPlayer';
 import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
 const MAX_DURATION_MS = 12 * 1000;
 const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
+
+type SavedVoiceLogCardProps = {
+  log: Note;
+  isNew: boolean;
+  playback?: Playback;
+  onToggle: (id: string, audioUri: string) => void;
+  onSeek: (id: string, audioUri: string, fraction: number) => void;
+  onDelete: (id: string) => void;
+};
+
+const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
+  log,
+  isNew,
+  playback,
+  onToggle,
+  onSeek,
+  onDelete,
+}: SavedVoiceLogCardProps) {
+  const handlePlay = useCallback(() => {
+    if (log.audioUri) onToggle(log.id, log.audioUri);
+  }, [log.audioUri, log.id, onToggle]);
+
+  const handleSeek = useCallback(
+    (fraction: number) => {
+      if (log.audioUri) onSeek(log.id, log.audioUri, fraction);
+    },
+    [log.audioUri, log.id, onSeek],
+  );
+
+  const handleDelete = useCallback(() => onDelete(log.id), [log.id, onDelete]);
+
+  return (
+    <VoiceLogCard
+      title={log.title}
+      createdAt={log.createdAt}
+      duration={log.duration}
+      audioUri={log.audioUri}
+      waveform={log.waveform}
+      isNew={isNew}
+      playback={playback}
+      onPlay={handlePlay}
+      onSeek={handleSeek}
+      onDelete={handleDelete}
+    />
+  );
+});
 
 /**
  * Voice Log Screen
@@ -42,6 +88,7 @@ export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
   const navigation = useNavigation();
   const player = useVoiceLogPlayer();
+  const { playback, toggle, seek, stop, release } = player;
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
   const [pendingLeave, setPendingLeave] = useState<NavigationAction | null>(
     null,
@@ -59,7 +106,7 @@ export default observer(function VoiceLogScreen() {
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
-    onWillStart: player.stop,
+    onWillStart: stop,
   });
 
   // Leaving mid-recording saves the recording first. The leave is held until
@@ -67,7 +114,7 @@ export default observer(function VoiceLogScreen() {
   // dispatching it from the save callback would be blocked a second time.
   usePreventRemove(recorder.status !== 'idle', ({ data }) => {
     if (pendingLeave) return;
-    player.stop();
+    stop();
     setPendingLeave(data.action);
     recorder.settle();
   });
@@ -84,23 +131,26 @@ export default observer(function VoiceLogScreen() {
   );
   const busy = recorder.status === 'starting' || recorder.status === 'saving';
 
-  const handleDelete = (noteId: string) => {
-    Alert.alert(
-      'Delete Voice Log',
-      'Are you sure you want to delete this voice log?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: () => {
-            player.release(noteId);
-            notes.deleteNote(noteId);
+  const handleDelete = useCallback(
+    (noteId: string) => {
+      Alert.alert(
+        'Delete Voice Log',
+        'Are you sure you want to delete this voice log?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Delete',
+            style: 'destructive',
+            onPress: () => {
+              release(noteId);
+              notes.deleteNote(noteId);
+            },
           },
-        },
-      ],
-    );
-  };
+        ],
+      );
+    },
+    [notes, release],
+  );
 
   return (
     <StackScreen title="Voice Logs">
@@ -125,22 +175,14 @@ export default observer(function VoiceLogScreen() {
           />
         ) : (
           voiceLogs.map((log) => (
-            <VoiceLogCard
+            <SavedVoiceLogCard
               key={log.id}
-              title={log.title}
-              createdAt={log.createdAt}
-              duration={log.duration}
-              audioUri={log.audioUri}
-              waveform={log.waveform}
+              log={log}
               isNew={log.id === lastSavedId}
-              playback={
-                player.playback?.id === log.id ? player.playback : undefined
-              }
-              onPlay={() => log.audioUri && player.toggle(log.id, log.audioUri)}
-              onSeek={(fraction) =>
-                log.audioUri && player.seek(log.id, log.audioUri, fraction)
-              }
-              onDelete={() => handleDelete(log.id)}
+              playback={playback?.id === log.id ? playback : undefined}
+              onToggle={toggle}
+              onSeek={seek}
+              onDelete={handleDelete}
             />
           ))
         )}
