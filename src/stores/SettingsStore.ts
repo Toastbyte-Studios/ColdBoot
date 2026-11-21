@@ -8,6 +8,26 @@ export type ThemeMode = 'light' | 'dark' | 'system';
 export type NoteSortOrder = 'newest-oldest' | 'oldest-newest' | 'a-z' | 'z-a';
 export type MeasurementSystem = 'imperial' | 'metric';
 
+/** The lengths a voice log can be limited to, in seconds. */
+export const VOICE_LOG_LENGTHS = [12, 30, 60, 120, 300] as const;
+/**
+ * New installs start at 30 s. The old fixed limit of 12 s is still one of
+ * the choices.
+ */
+export const DEFAULT_VOICE_LOG_SECONDS = 30;
+
+/**
+ * A stored voice log length, or the default if it isn't one of the choices.
+ *
+ * @param value - The stored setting (a string from the settings table).
+ */
+export function resolveVoiceLogLength(value: unknown): number {
+  const seconds = typeof value === 'string' ? Number(value) : value;
+  return (VOICE_LOG_LENGTHS as readonly unknown[]).includes(seconds)
+    ? (seconds as number)
+    : DEFAULT_VOICE_LOG_SECONDS;
+}
+
 export const DEFAULT_SHORTCUTS = [
   'core_flashlight',
   'nav_map',
@@ -110,6 +130,11 @@ export class SettingsStore {
    * Turn off to keep scanning entirely on the phone.
    */
   productLookup: boolean = true;
+  /**
+   * The longest a voice log records before stopping itself, in seconds. One
+   * of `VOICE_LOG_LENGTHS`; chosen on the Voice Log screen.
+   */
+  voiceLogMaxSeconds: number = DEFAULT_VOICE_LOG_SECONDS;
   private settingsDb: SQLiteDatabase | null = null;
 
   constructor() {
@@ -123,6 +148,18 @@ export class SettingsStore {
   async setFontSize(size: FontSize) {
     runInAction(() => {
       this.fontSize = size;
+    });
+    await this.persistSettings();
+  }
+
+  /**
+   * Sets how long a voice log can run. Anything but one of
+   * `VOICE_LOG_LENGTHS` is replaced by the default.
+   * @param seconds - The new limit.
+   */
+  async setVoiceLogMaxSeconds(seconds: number) {
+    runInAction(() => {
+      this.voiceLogMaxSeconds = resolveVoiceLogLength(seconds);
     });
     await this.persistSettings();
   }
@@ -428,6 +465,16 @@ export class SettingsStore {
         });
       }
 
+      const voiceLogLengthRes = await this.settingsDb.executeSql(
+        "SELECT value FROM settings WHERE key = 'voiceLogMaxSeconds'",
+      );
+      if (voiceLogLengthRes[0].rows.length > 0) {
+        const value = voiceLogLengthRes[0].rows.item(0).value;
+        runInAction(() => {
+          this.voiceLogMaxSeconds = resolveVoiceLogLength(value);
+        });
+      }
+
       // Load trails overlay preference
       const showTrailsRes = await this.settingsDb.executeSql(
         "SELECT value FROM settings WHERE key = 'showTrails'",
@@ -540,6 +587,10 @@ export class SettingsStore {
       await this.settingsDb.executeSql(
         "INSERT OR REPLACE INTO settings (key, value) VALUES ('soundMeterCalibration', ?)",
         [String(this.soundMeterCalibration)],
+      );
+      await this.settingsDb.executeSql(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('voiceLogMaxSeconds', ?)",
+        [String(this.voiceLogMaxSeconds)],
       );
       if (this.lastBackupAt !== null) {
         await this.settingsDb.executeSql(

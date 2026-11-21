@@ -2,7 +2,11 @@
  * @format
  */
 
-import { DEFAULT_SHORTCUTS, SettingsStore } from '../src/stores/SettingsStore';
+import {
+  DEFAULT_SHORTCUTS,
+  resolveVoiceLogLength,
+  SettingsStore,
+} from '../src/stores/SettingsStore';
 
 // Mock database for testing
 const createMockDatabase = () => {
@@ -346,6 +350,46 @@ describe('SettingsStore', () => {
       await relaunched.loadSettings(mockDb);
 
       expect(relaunched.coldMode).toBe(true);
+    });
+  });
+
+  describe('voice log length', () => {
+    beforeEach(async () => {
+      await settingsStore.initSettingsDb(mockDb);
+    });
+
+    it('is 30 s by default', () => {
+      expect(settingsStore.voiceLogMaxSeconds).toBe(30);
+    });
+
+    it('saves one of the choices and restores it on the next launch', async () => {
+      await settingsStore.setVoiceLogMaxSeconds(120);
+      expect(settingsStore.voiceLogMaxSeconds).toBe(120);
+      expect(mockDb.executeSql).toHaveBeenCalledWith(
+        "INSERT OR REPLACE INTO settings (key, value) VALUES ('voiceLogMaxSeconds', ?)",
+        ['120'],
+      );
+
+      const relaunched = new SettingsStore();
+      await relaunched.initSettingsDb(mockDb);
+      await relaunched.loadSettings(mockDb);
+      expect(relaunched.voiceLogMaxSeconds).toBe(120);
+    });
+
+    it('replaces anything but a choice with the default', async () => {
+      await settingsStore.setVoiceLogMaxSeconds(45);
+      expect(settingsStore.voiceLogMaxSeconds).toBe(30);
+    });
+
+    it.each([
+      ['12', 12],
+      ['300', 300],
+      ['45', 30],
+      ['abc', 30],
+      [null, 30],
+      [60, 60],
+    ])('reads %p as %p', (stored, expected) => {
+      expect(resolveVoiceLogLength(stored)).toBe(expected);
     });
   });
 

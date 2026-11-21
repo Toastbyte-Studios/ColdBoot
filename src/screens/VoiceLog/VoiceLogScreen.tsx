@@ -1,16 +1,19 @@
 import {
   NavigationAction,
+  NavigationProp,
+  ParamListBase,
   useNavigation,
   usePreventRemove,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { memo, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { type Note, useNotesStore } from '../../stores';
+import { type Note, useNotesStore, useSettingsStore } from '../../stores';
+import { VOICE_LOG_LENGTHS } from '../../stores/SettingsStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
-import { WAVEFORM_BUCKET_MS } from '../../utils/audioLevel';
+import { WAVEFORM_BARS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
 import VoiceLogCard from './components/VoiceLogCard';
@@ -19,8 +22,8 @@ import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
 const isAndroid = Platform.OS === 'android';
 
-const MAX_DURATION_MS = 12 * 1000;
-const WAVEFORM_SLOTS = MAX_DURATION_MS / WAVEFORM_BUCKET_MS;
+/** How much of the map "Show on map" frames around a log's location. */
+const MAP_RADIUS_MILES = 0.25;
 
 type SavedVoiceLogCardProps = {
   log: Note;
@@ -28,15 +31,19 @@ type SavedVoiceLogCardProps = {
   playback?: Playback;
   onToggle: (id: string, audioUri: string) => void;
   onSeek: (id: string, audioUri: string, fraction: number) => void;
+  onRename: (id: string, title: string) => Promise<void>;
+  onShowOnMap: (latitude: number, longitude: number) => Promise<void>;
   onDelete: (id: string) => void;
 };
 
-const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
+const SavedVoiceLogCard = observer(function SavedVoiceLogCardContent({
   log,
   isNew,
   playback,
   onToggle,
   onSeek,
+  onRename,
+  onShowOnMap,
   onDelete,
 }: SavedVoiceLogCardProps) {
   const handlePlay = useCallback(() => {
@@ -51,6 +58,16 @@ const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
   );
 
   const handleDelete = useCallback(() => onDelete(log.id), [log.id, onDelete]);
+  const handleRename = useCallback(
+    (title: string) => onRename(log.id, title),
+    [log.id, onRename],
+  );
+  const { latitude, longitude } = log;
+  const handleShowOnMap = useCallback(() => {
+    if (latitude !== undefined && longitude !== undefined) {
+      return onShowOnMap(latitude, longitude);
+    }
+  }, [latitude, longitude, onShowOnMap]);
 
   return (
     <VoiceLogCard
@@ -60,9 +77,13 @@ const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
       audioUri={log.audioUri}
       waveform={log.waveform}
       isNew={isNew}
+      latitude={latitude}
+      longitude={longitude}
       playback={playback}
       onPlay={handlePlay}
       onSeek={handleSeek}
+      onRename={handleRename}
+      onShowOnMap={handleShowOnMap}
       onDelete={handleDelete}
     />
   );
@@ -73,20 +94,24 @@ const SavedVoiceLogCard = memo(function SavedVoiceLogCard({
  *
  * One screen: the recorder on top, saved logs below, newest first.
  *
- * - One-tap recording with a live waveform that fills over the 12 seconds,
- *   stopping by itself at the limit
+ * - One-tap recording with a live waveform that fills as the time runs,
+ *   stopping by itself at the limit (12 s to 5 min, chosen on the recorder
+ *   card and kept in Settings)
  * - A saving state on the button; the new log then appears at the top of the
  *   list, marked as new
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
- * - Play, pause and seek saved logs (tap the waveform), and delete them
+ * - Play, pause and seek saved logs (tap the waveform)
+ * - Rename a log, see where it was recorded and open the Map there, delete
  *
  * @returns A React element rendering the Voice Log screen.
  */
 export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
-  const navigation = useNavigation();
+  const settings = useSettingsStore();
+  const maxDurationMs = settings.voiceLogMaxSeconds * 1000;
+  const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const player = useVoiceLogPlayer();
   const { playback, toggle, seek, stop, release } = player;
   const [lastSavedId, setLastSavedId] = useState<string | null>(null);
@@ -101,13 +126,14 @@ export default observer(function VoiceLogScreen() {
   );
 
   const recorder = useVoiceRecorder({
-    maxDurationMs: MAX_DURATION_MS,
-    bucketMs: WAVEFORM_BUCKET_MS,
+    maxDurationMs,
+    bucketMs: maxDurationMs / WAVEFORM_BARS,
     save,
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
     onWillStart: stop,
   });
+  const { settle } = recorder;
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
@@ -151,16 +177,33 @@ export default observer(function VoiceLogScreen() {
     },
     [notes, release],
   );
+  const handleRename = useCallback(
+    (id: string, title: string) => notes.renameNote(id, title),
+    [notes],
+  );
+  const handleShowOnMap = useCallback(
+    async (latitude: number, longitude: number) => {
+      stop();
+      await settle();
+      navigation.navigate('MapScreen', {
+        center: { latitude, longitude },
+        radiusMiles: MAP_RADIUS_MILES,
+      });
+    },
+    [navigation, settle, stop],
+  );
 
   return (
-    <StackScreen title="Voice Logs">
+    <StackScreen title="Voice Logs" keyboardShouldPersistTaps="handled">
       <View style={styles.column}>
         <RecordingControls
           status={recorder.status}
           elapsedMs={recorder.elapsedMs}
-          maxDurationMs={MAX_DURATION_MS}
+          maxDurationMs={maxDurationMs}
           waveform={recorder.waveform}
-          waveformSlots={WAVEFORM_SLOTS}
+          waveformSlots={WAVEFORM_BARS}
+          lengthOptions={VOICE_LOG_LENGTHS}
+          onChangeMaxLength={settings.setVoiceLogMaxSeconds}
           disabled={busy || pendingLeave !== null}
           onStartRecording={recorder.start}
           onStopRecording={recorder.stop}
@@ -182,6 +225,8 @@ export default observer(function VoiceLogScreen() {
               playback={playback?.id === log.id ? playback : undefined}
               onToggle={toggle}
               onSeek={seek}
+              onRename={handleRename}
+              onShowOnMap={handleShowOnMap}
               onDelete={handleDelete}
             />
           ))
