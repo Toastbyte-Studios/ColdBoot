@@ -14,6 +14,7 @@ import {
 } from '../../utils/audioLevel';
 import { deleteAttachmentFiles } from '../../utils/noteAttachments';
 import {
+  beginActiveRecording,
   clearPendingRecording,
   markRecordingStarted,
   newRecordingPath,
@@ -45,6 +46,8 @@ type Options = {
   onSaved?: (id: string) => void;
   /** Called just before recording starts (to stop playback, say). */
   onWillStart?: () => void;
+  /** Recheck a marker that could not be cleared or written. */
+  onUnsettled?: () => void;
 };
 
 export type VoiceRecorder = {
@@ -114,6 +117,8 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
   const waveformRef = useRef<readonly number[]>(NO_SAMPLES);
   const startingRef = useRef<Promise<void> | null>(null);
   const stoppingRef = useRef<Promise<void> | null>(null);
+  const releaseActiveRef = useRef<(() => void) | null>(null);
+  const mountedRef = useRef(true);
   const stopRef = useRef<(() => Promise<void>) | null>(null);
   const stopRecorderRef = useRef<(() => Promise<string | undefined>) | null>(
     null,
@@ -126,7 +131,8 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
     setWaveform(NO_SAMPLES);
   };
 
-  const { startRecorder, stopRecorder } = useSoundRecorder({
+  const { startRecorder, stopRecorder, dispose } = useSoundRecorder({
+    autoDispose: false,
     subscriptionDuration: RECORDER_UPDATE_SECONDS,
     onRecord: (e) => {
       if (!isRecordingRef.current || stoppingRef.current) return;
@@ -160,6 +166,7 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
 
     setStatus('saving');
     const stopping = (async () => {
+      let unsettled = false;
       try {
         let result: string | undefined;
         try {
@@ -196,15 +203,27 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
             waveform: recordedWaveform,
           });
         } catch (error) {
-          await deleteAttachmentFiles([recordingUri], { queueFailures: false });
-          if (audioPathRef.current) {
-            await clearPendingRecording(audioPathRef.current);
+          try {
+            await deleteAttachmentFiles([recordingUri], {
+              queueFailures: false,
+            });
+            if (audioPathRef.current) {
+              await clearPendingRecording(audioPathRef.current);
+            }
+          } catch (cleanupError) {
+            unsettled = true;
+            console.warn('Could not settle the recording:', cleanupError);
           }
           throw error;
         }
 
         if (audioPathRef.current) {
-          await clearPendingRecording(audioPathRef.current);
+          try {
+            await clearPendingRecording(audioPathRef.current);
+          } catch (error) {
+            unsettled = true;
+            console.warn('Could not clear the recording marker:', error);
+          }
         }
         if (saved) optionsRef.current.onSaved?.(saved.id);
         AccessibilityInfo.announceForAccessibility('Voice log saved');
@@ -212,12 +231,15 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
         console.error('Failed to save voice log:', error);
         Alert.alert('Error', 'Failed to save voice log. Please try again.');
       } finally {
+        if (unsettled) optionsRef.current.onUnsettled?.();
         // Every path that ends a recording resets the recorder.
         isRecordingRef.current = false;
         audioPathRef.current = null;
         resetLive();
         setStatus('idle');
         stoppingRef.current = null;
+        releaseActiveRef.current?.();
+        releaseActiveRef.current = null;
       }
     })();
     stoppingRef.current = stopping;
@@ -238,6 +260,7 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
     const starting = (async () => {
       let started = false;
       let path: string | null = null;
+      let marked = false;
       try {
         const hasPermission = await requestAudioPermission();
         if (!hasPermission) {
@@ -248,37 +271,54 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
           return;
         }
 
+        if (!mountedRef.current) return;
         resetLive();
         path = newRecordingPath();
+        releaseActiveRef.current = beginActiveRecording();
         await markRecordingStarted({ path, startedAt: Date.now() });
+        marked = true;
+        if (!mountedRef.current) return;
         // The third argument turns on metering, which feeds the waveform.
         await startRecorder(path, undefined, true);
+        if (!mountedRef.current) {
+          await stopRecorder().catch((error) =>
+            console.warn('Error stopping recorder on unmount:', error),
+          );
+          return;
+        }
         audioPathRef.current = path;
         isRecordingRef.current = true;
         started = true;
       } catch (error) {
         console.error('Failed to start recording:', error);
         Alert.alert('Error', 'Failed to start recording. Please try again.');
-        if (path) {
+        if (path && marked) {
           try {
             await deleteAttachmentFiles([`file://${path}`], {
               queueFailures: false,
             });
             await clearPendingRecording(path);
           } catch (cleanupError) {
+            optionsRef.current.onUnsettled?.();
             console.warn(
               'Could not delete the failed recording:',
               cleanupError,
             );
           }
+        } else if (path) {
+          optionsRef.current.onUnsettled?.();
         }
       } finally {
         startingRef.current = null;
-        setStatus(started ? 'recording' : 'idle');
+        if (!started) {
+          releaseActiveRef.current?.();
+          releaseActiveRef.current = null;
+        }
+        if (mountedRef.current) setStatus(started ? 'recording' : 'idle');
       }
     })();
     startingRef.current = starting;
-  }, [startRecorder]);
+  }, [startRecorder, stopRecorder]);
 
   const settle = useCallback(async () => {
     await startingRef.current;
@@ -301,20 +341,38 @@ export function useVoiceRecorder(options: Options): VoiceRecorder {
   // Unmounting mid-recording (the app closing the screen some other way)
   // stops the recorder so the microphone is released. The marker stays, so
   // the finished file is offered back on the next visit.
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      if (startingRef.current) {
+        startingRef.current.finally(dispose);
+        return;
+      }
+      if (stoppingRef.current) {
+        stoppingRef.current.finally(dispose);
+        return;
+      }
       if (
         isRecordingRef.current &&
         !stoppingRef.current &&
         stopRecorderRef.current
       ) {
-        stopRecorderRef.current().catch((err) => {
-          console.warn('Error stopping recorder on unmount:', err);
-        });
+        stopRecorderRef
+          .current()
+          .catch((err) => {
+            console.warn('Error stopping recorder on unmount:', err);
+          })
+          .finally(() => {
+            releaseActiveRef.current?.();
+            releaseActiveRef.current = null;
+            dispose();
+          });
+      } else {
+        dispose();
       }
-    },
-    [],
-  );
+    };
+  }, [dispose]);
 
   return { status, elapsedMs, waveform, start, stop, settle };
 }

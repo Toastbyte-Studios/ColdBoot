@@ -25,6 +25,7 @@ const mockSettings = {
 };
 const mockStartRecorder = jest.fn();
 const mockStopRecorder = jest.fn();
+const mockDisposeRecorder = jest.fn();
 const mockCreateVoiceLog = jest.fn();
 const mockHasSavedAudioAttachment = jest.fn();
 const mockDeleteNote = jest.fn();
@@ -76,6 +77,7 @@ jest.mock('react-native-nitro-sound', () => ({
     return {
       startRecorder: mockStartRecorder,
       stopRecorder: mockStopRecorder,
+      dispose: mockDisposeRecorder,
     };
   },
 }));
@@ -167,6 +169,7 @@ describe('Voice Log screen', () => {
     mockDeleteNote.mockReset();
     mockStartRecorder.mockReset().mockResolvedValue('recording.m4a');
     mockStopRecorder.mockReset().mockResolvedValue('recording.m4a');
+    mockDisposeRecorder.mockReset();
     mockCreateVoiceLog.mockReset().mockResolvedValue({ id: 'log-new' });
     mockHasSavedAudioAttachment.mockReset().mockResolvedValue(false);
     mockStartupPromise = Promise.resolve();
@@ -906,6 +909,9 @@ describe('Voice Log screen', () => {
       });
       mockHasSavedAudioAttachment.mockResolvedValue(true);
       await render();
+      expect(controls().props.disabled).toBe(true);
+      await startRecording();
+      expect(mockStartRecorder).not.toHaveBeenCalled();
       expect(mockHasSavedAudioAttachment).not.toHaveBeenCalled();
       expect(RNFS.exists).not.toHaveBeenCalled();
       await ReactTestRenderer.act(async () => finishStartup());
@@ -915,6 +921,7 @@ describe('Voice Log screen', () => {
       expect(RNFS.unlink).not.toHaveBeenCalled();
       expect(mockCreateVoiceLog).not.toHaveBeenCalled();
       expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      expect(controls().props.disabled).toBe(false);
     });
 
     it('leaves the recording alone if its ownership cannot be checked', async () => {
@@ -929,7 +936,16 @@ describe('Voice Log screen', () => {
       expect(RNFS.exists).not.toHaveBeenCalled();
       expect(RNFS.unlink).not.toHaveBeenCalled();
       expect(mockSounds).toHaveLength(0);
-      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'error',
+      );
+      expect(controls().props.disabled).toBe(true);
+      mockHasSavedAudioAttachment.mockResolvedValue(false);
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onRetry(),
+      );
+      expect(mockMarker).toBeNull();
+      expect(controls().props.disabled).toBe(false);
     });
 
     it('does not offer saved audio if clearing its marker fails', async () => {
@@ -943,7 +959,10 @@ describe('Voice Log screen', () => {
       await render();
       expect(mockMarker).not.toBeNull();
       expect(RNFS.unlink).not.toHaveBeenCalled();
-      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'error',
+      );
+      expect(controls().props.disabled).toBe(true);
       ReactTestRenderer.act(() => tree.unmount());
       await render();
       expect(mockMarker).toBeNull();
@@ -958,6 +977,14 @@ describe('Voice Log screen', () => {
         controls().props.onStopRecording(),
       );
       expect(mockMarker).toBeNull();
+    });
+
+    it('does not start when the marker cannot be written', async () => {
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      storage.setItem.mockRejectedValueOnce(new Error('storage'));
+      await startRecording();
+      expect(mockStartRecorder).not.toHaveBeenCalled();
+      expect(controls().props.status).toBe('idle');
     });
 
     it('clears the marker and deletes the file when saving fails', async () => {
@@ -996,8 +1023,10 @@ describe('Voice Log screen', () => {
 
     it('keeps the marker and file recoverable when save and deletion fail', async () => {
       jest.spyOn(console, 'error').mockImplementation(() => {});
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
       mockCreateVoiceLog.mockRejectedValueOnce(new Error('db'));
       jest.mocked(RNFS.unlink).mockRejectedValueOnce(new Error('disk'));
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
       await startRecording();
       const path = mockStartRecorder.mock.calls[0][0];
       await ReactTestRenderer.act(async () =>
@@ -1006,6 +1035,7 @@ describe('Voice Log screen', () => {
       expect(JSON.parse(mockMarker!)).toMatchObject({ path });
       expect(RNFS.unlink).toHaveBeenCalledWith(path);
       expect(controls().props.status).toBe('idle');
+      expect(controls().props.disabled).toBe(true);
       expect(Alert.alert).toHaveBeenCalledWith(
         'Error',
         'Failed to save voice log. Please try again.',
@@ -1016,9 +1046,6 @@ describe('Voice Log screen', () => {
       expect(RNFS.unlink).toHaveBeenCalledTimes(1);
       expect(RNFS.unlink).not.toHaveBeenCalledWith(path);
 
-      ReactTestRenderer.act(() => tree.unmount());
-      jest.mocked(RNFS.exists).mockResolvedValue(true);
-      await render();
       await ReactTestRenderer.act(async () => mockLoads[0]());
       const notice = tree.root.findByType(RecoveryNotice);
       expect(notice.props.recovery.kind).toBe('recoverable');
@@ -1034,6 +1061,7 @@ describe('Voice Log screen', () => {
       jest.spyOn(console, 'warn').mockImplementation(() => {});
       mockStartRecorder.mockRejectedValueOnce(new Error('recorder'));
       jest.mocked(RNFS.unlink).mockRejectedValueOnce(new Error('disk'));
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
       await startRecording();
       const path = mockStartRecorder.mock.calls[0][0];
       expect(JSON.parse(mockMarker!)).toMatchObject({ path });
@@ -1066,6 +1094,9 @@ describe('Voice Log screen', () => {
         kind: 'recoverable',
         durationSec: 8,
       });
+      expect(controls().props.disabled).toBe(true);
+      await startRecording();
+      expect(mockStartRecorder).not.toHaveBeenCalled();
       expect(mockSounds[0].release).toHaveBeenCalled();
 
       await ReactTestRenderer.act(async () => notice.props.onSave());
@@ -1078,6 +1109,7 @@ describe('Voice Log screen', () => {
       });
       expect(mockMarker).toBeNull();
       expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      expect(controls().props.disabled).toBe(false);
     });
 
     it('discards a cut-off recording on request', async () => {
@@ -1098,6 +1130,123 @@ describe('Voice Log screen', () => {
       expect(mockCreateVoiceLog).not.toHaveBeenCalled();
     });
 
+    it('blocks recording until recovered save and marker cleanup finish', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      let finishClear!: () => void;
+      storage.removeItem.mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishClear = () => {
+              mockMarker = null;
+              resolve();
+            };
+          }),
+      );
+      await ReactTestRenderer.act(async () => {
+        tree.root.findByType(RecoveryNotice).props.onSave();
+        await Promise.resolve();
+        await Promise.resolve();
+        await Promise.resolve();
+      });
+      expect(controls().props.disabled).toBe(true);
+      expect(mockPrevent?.active).toBe(true);
+      expect(mockMarker).not.toBeNull();
+      await ReactTestRenderer.act(async () => finishClear());
+      expect(controls().props.disabled).toBe(false);
+      expect(mockMarker).toBeNull();
+    });
+
+    it('reconciles a saved recovery if clearing its marker fails', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      jest.spyOn(console, 'error').mockImplementation(() => {});
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      storage.removeItem.mockRejectedValueOnce(new Error('storage'));
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onSave(),
+      );
+      expect(mockCreateVoiceLog).toHaveBeenCalledTimes(1);
+      expect(controls().props.disabled).toBe(true);
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'error',
+      );
+      mockHasSavedAudioAttachment.mockResolvedValue(true);
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onRetry(),
+      );
+      expect(mockMarker).toBeNull();
+      expect(mockCreateVoiceLog).toHaveBeenCalledTimes(1);
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      expect(controls().props.disabled).toBe(false);
+    });
+
+    it('blocks recording and navigation until discard cleanup completes', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      let finishDelete!: () => void;
+      jest.mocked(RNFS.unlink).mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishDelete = resolve;
+          }),
+      );
+      await ReactTestRenderer.act(async () => {
+        tree.root.findByType(RecoveryNotice).props.onDiscard();
+        await Promise.resolve();
+      });
+      expect(controls().props.disabled).toBe(true);
+      expect(mockPrevent?.active).toBe(true);
+      expect(mockMarker).not.toBeNull();
+      await startRecording();
+      expect(mockStartRecorder).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => finishDelete());
+      expect(mockMarker).toBeNull();
+      expect(controls().props.disabled).toBe(false);
+      expect(mockPrevent?.active).toBe(false);
+    });
+
+    it('keeps recovery available when discarding fails', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      jest.spyOn(console, 'warn').mockImplementation(() => {});
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      jest.mocked(RNFS.unlink).mockRejectedValueOnce(new Error('disk'));
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onDiscard(),
+      );
+      expect(mockMarker).not.toBeNull();
+      expect(controls().props.disabled).toBe(true);
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'recoverable',
+      );
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onSave(),
+      );
+      expect(mockMarker).toBeNull();
+      jest.mocked(RNFS.unlink).mockClear();
+      await deleteAttachmentFiles(['file:///tmp/documents/photo_123_abc.jpg']);
+      expect(RNFS.unlink).toHaveBeenCalledTimes(1);
+    });
+
     it('says so, and cleans up, when the file will not play', async () => {
       ReactTestRenderer.act(() => tree.unmount());
       mockMarker = marker(
@@ -1116,6 +1265,127 @@ describe('Voice Log screen', () => {
       expect(mockMarker).toBeNull();
       ReactTestRenderer.act(() => notice.props.onDismiss());
       expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+    });
+
+    it('waits for cleanup from a previous screen before checking recovery', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      let finishDelete!: () => void;
+      jest.mocked(RNFS.unlink).mockImplementationOnce(
+        () =>
+          new Promise<void>((resolve) => {
+            finishDelete = resolve;
+          }),
+      );
+      await render();
+      await ReactTestRenderer.act(async () =>
+        mockLoads[0](new Error('no moov atom')),
+      );
+      expect(RNFS.unlink).toHaveBeenCalledTimes(1);
+      ReactTestRenderer.act(() => tree.unmount());
+      await render();
+      expect(controls().props.disabled).toBe(true);
+      expect(mockLoads).toHaveLength(1);
+      expect(tree.root.findAllByType(RecoveryNotice)).toHaveLength(0);
+      await ReactTestRenderer.act(async () => finishDelete());
+      expect(mockMarker).toBeNull();
+      expect(controls().props.disabled).toBe(false);
+      expect(mockCreateVoiceLog).not.toHaveBeenCalled();
+    });
+
+    it('releases an unfinished probe when leaving and checks again on return', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      expect(mockLoads).toHaveLength(1);
+      ReactTestRenderer.act(() => tree.unmount());
+      expect(mockSounds[0].release).toHaveBeenCalledTimes(1);
+      await render();
+      ReactTestRenderer.act(() => mockLoads[0]());
+      expect(mockSounds[0].release).toHaveBeenCalledTimes(2);
+      expect(mockLoads).toHaveLength(2);
+      await ReactTestRenderer.act(async () => mockLoads[1]());
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'recoverable',
+      );
+      expect(controls().props.disabled).toBe(true);
+    });
+
+    it('does not discard a recording saved from another screen', async () => {
+      ReactTestRenderer.act(() => tree.unmount());
+      mockMarker = marker(
+        '/tmp/documents/voice-log_0b6c1f2e-3a4d-4e5f-8a9b-0c1d2e3f4a5b.m4a',
+      );
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      let second!: ReactTestRenderer.ReactTestRenderer;
+      await ReactTestRenderer.act(async () => {
+        second = ReactTestRenderer.create(<VoiceLogScreen />);
+      });
+      await ReactTestRenderer.act(async () => mockLoads[1]());
+      await ReactTestRenderer.act(async () =>
+        tree.root.findByType(RecoveryNotice).props.onSave(),
+      );
+      await ReactTestRenderer.act(async () =>
+        second.root.findByType(RecoveryNotice).props.onDiscard(),
+      );
+      expect(mockCreateVoiceLog).toHaveBeenCalledTimes(1);
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      expect(mockMarker).toBeNull();
+      ReactTestRenderer.act(() => second.unmount());
+    });
+
+    it('waits for an active recorder before checking its marker', async () => {
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      let second!: ReactTestRenderer.ReactTestRenderer;
+      await ReactTestRenderer.act(async () => {
+        second = ReactTestRenderer.create(<VoiceLogScreen />);
+      });
+      expect(second.root.findByType(RecordingControls).props.disabled).toBe(
+        true,
+      );
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      expect(RNFS.exists).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () =>
+        controls().props.onStopRecording(),
+      );
+      expect(mockMarker).toBeNull();
+      expect(second.root.findByType(RecordingControls).props.disabled).toBe(
+        false,
+      );
+      expect(RNFS.unlink).not.toHaveBeenCalled();
+      ReactTestRenderer.act(() => second.unmount());
+    });
+
+    it('stops the original recorder before disposing after an interrupted start', async () => {
+      let finishStart!: (path: string) => void;
+      mockStartRecorder.mockReturnValueOnce(
+        new Promise<string>((resolve) => {
+          finishStart = resolve;
+        }),
+      );
+      await startRecording();
+      const path = mockStartRecorder.mock.calls[0][0];
+      ReactTestRenderer.act(() => tree.unmount());
+      expect(mockDisposeRecorder).not.toHaveBeenCalled();
+      await ReactTestRenderer.act(async () => finishStart(path));
+      expect(mockStopRecorder).toHaveBeenCalledTimes(1);
+      expect(mockDisposeRecorder).toHaveBeenCalledTimes(1);
+      expect(JSON.parse(mockMarker!)).toMatchObject({ path });
+      jest.mocked(RNFS.exists).mockResolvedValue(true);
+      await render();
+      await ReactTestRenderer.act(async () => mockLoads[0]());
+      expect(tree.root.findByType(RecoveryNotice).props.recovery.kind).toBe(
+        'recoverable',
+      );
     });
 
     it('quietly clears a marker whose file was never written', async () => {

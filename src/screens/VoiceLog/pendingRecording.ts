@@ -13,6 +13,37 @@ import { z } from 'zod';
  * recording never finished. See `useRecordingRecovery`.
  */
 const KEY = 'voiceLog.pendingRecording';
+let operations: Promise<void> = Promise.resolve();
+let activeRecording: Promise<void> | null = null;
+
+export function beginActiveRecording(): () => void {
+  if (activeRecording) throw new Error('A recording is already active');
+  let finish!: () => void;
+  const active = new Promise<void>((resolve) => {
+    finish = resolve;
+  });
+  activeRecording = active;
+  return () => {
+    if (activeRecording === active) activeRecording = null;
+    finish();
+  };
+}
+
+export async function waitForActiveRecording(): Promise<boolean> {
+  const active = activeRecording;
+  if (!active) return false;
+  await active;
+  return true;
+}
+
+function serialized<T>(operation: () => Promise<T>): Promise<T> {
+  const result = operations.then(operation);
+  operations = result.then(
+    () => undefined,
+    () => undefined,
+  );
+  return result;
+}
 
 const PendingRecordingSchema = z.object({
   /** Plain absolute path in the Documents directory (no `file://`). */
@@ -35,41 +66,41 @@ export function newRecordingPath(): string {
   return `${RNFS.DocumentDirectoryPath}/voice-log_${uuidv4()}.${extension}`;
 }
 
-/** Records that a recording has started at `path`. */
+/** Records that a recording has started without replacing an unresolved one. */
 export async function markRecordingStarted(
   pending: PendingRecording,
 ): Promise<void> {
-  try {
+  return serialized(async () => {
+    if (await readMarker()) throw new Error('A recording is awaiting recovery');
     await AsyncStorage.setItem(KEY, JSON.stringify(pending));
-  } catch (error) {
-    // Recording still works; only recovery after a crash is lost.
-    console.warn('Could not mark the voice log recording:', error);
-  }
+  });
 }
 
-/** The marker left by a recording that never finished, if any. */
-export async function readPendingRecording(): Promise<PendingRecording | null> {
+async function readMarker(): Promise<PendingRecording | null> {
+  const raw = await AsyncStorage.getItem(KEY);
+  if (!raw) return null;
   try {
-    const raw = await AsyncStorage.getItem(KEY);
-    if (!raw) return null;
     const parsed = PendingRecordingSchema.safeParse(JSON.parse(raw));
     if (parsed.success) return parsed.data;
   } catch {
-    // Unreadable: treat as no marker, and clear it below.
+    // Invalid JSON is handled like an invalid marker below.
   }
-  await AsyncStorage.removeItem(KEY).catch(() => {});
+  await AsyncStorage.removeItem(KEY);
   return null;
+}
+
+/** The marker left by a recording that never finished, if any. */
+export function readPendingRecording(): Promise<PendingRecording | null> {
+  return serialized(readMarker);
 }
 
 /**
  * Removes the marker, but only if it is still about `path`: a new recording
  * may have replaced it since this one was read.
  */
-export async function clearPendingRecording(path: string): Promise<void> {
-  try {
-    const current = await readPendingRecording();
+export function clearPendingRecording(path: string): Promise<void> {
+  return serialized(async () => {
+    const current = await readMarker();
     if (current?.path === path) await AsyncStorage.removeItem(KEY);
-  } catch (error) {
-    console.warn('Could not clear the voice log recording marker:', error);
-  }
+  });
 }

@@ -16,6 +16,7 @@ type Props = {
   onSave: () => void;
   onDiscard: () => void;
   onDismiss: () => void;
+  onRetry: () => void;
 };
 
 /**
@@ -28,9 +29,29 @@ export default function RecoveryNotice({
   onSave,
   onDiscard,
   onDismiss,
+  onRetry,
 }: Props) {
   const COLORS = useTheme();
   const styles = useMemo(() => makeStyles(COLORS), [COLORS]);
+  if (recovery.kind === 'error') {
+    return (
+      <InfoBlock
+        inline
+        tone="caution"
+        title="Recording unavailable"
+        style={styles.block}
+      >
+        <View>
+          <Text style={styles.body}>
+            Could not check the pending recording. Try again before recording.
+          </Text>
+          <View style={styles.actions}>
+            <AppButton label="Try again" size="small" onPress={onRetry} />
+          </View>
+        </View>
+      </InfoBlock>
+    );
+  }
   const when = formatDateTime(new Date(recovery.startedAt));
 
   if (recovery.kind === 'lost') {

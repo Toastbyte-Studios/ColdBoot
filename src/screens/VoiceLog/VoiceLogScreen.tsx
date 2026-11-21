@@ -83,12 +83,13 @@ export default observer(function VoiceLogScreen() {
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
     onWillStart: player.stop,
+    onUnsettled: recovered.retry,
   });
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
   // dispatching it from the save callback would be blocked a second time.
-  usePreventRemove(recorder.status !== 'idle', ({ data }) => {
+  usePreventRemove(recorder.status !== 'idle' || recovered.busy, ({ data }) => {
     if (pendingLeave) return;
     player.stop();
     setPendingLeave(data.action);
@@ -96,11 +97,11 @@ export default observer(function VoiceLogScreen() {
   });
 
   useEffect(() => {
-    if (pendingLeave && recorder.status === 'idle') {
+    if (pendingLeave && recorder.status === 'idle' && !recovered.busy) {
       setPendingLeave(null);
       navigation.dispatch(pendingLeave);
     }
-  }, [navigation, pendingLeave, recorder.status]);
+  }, [navigation, pendingLeave, recorder.status, recovered.busy]);
 
   const voiceLogs = notes.notes.filter(
     (note) => note.category === 'Voice Logs',
@@ -135,6 +136,7 @@ export default observer(function VoiceLogScreen() {
             onSave={recovered.keep}
             onDiscard={recovered.discard}
             onDismiss={recovered.dismiss}
+            onRetry={recovered.retry}
           />
         ) : null}
         <RecordingControls
@@ -145,8 +147,10 @@ export default observer(function VoiceLogScreen() {
           waveformSlots={WAVEFORM_BARS}
           lengthOptions={VOICE_LOG_LENGTHS}
           onChangeMaxLength={settings.setVoiceLogMaxSeconds}
-          disabled={busy || pendingLeave !== null}
-          onStartRecording={recorder.start}
+          disabled={busy || pendingLeave !== null || recovered.blocked}
+          onStartRecording={() => {
+            if (!recovered.blocked) recorder.start();
+          }}
           onStopRecording={recorder.stop}
         />
 

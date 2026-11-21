@@ -61,11 +61,77 @@ describe('pendingRecording', () => {
     expect(stored).toBeNull();
   });
 
-  it('keeps recording when the marker cannot be written', async () => {
-    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  it('rejects when the marker cannot be written', async () => {
     storage.setItem.mockRejectedValue(new Error('full'));
     await expect(
       markRecordingStarted({ path: '/a', startedAt: 1 }),
-    ).resolves.toBeUndefined();
+    ).rejects.toThrow('full');
+  });
+
+  it('does not replace an unresolved marker', async () => {
+    await markRecordingStarted({ path: '/a', startedAt: 1 });
+    await expect(
+      markRecordingStarted({ path: '/b', startedAt: 2 }),
+    ).rejects.toThrow('awaiting recovery');
+    expect(JSON.parse(stored!)).toEqual({ path: '/a', startedAt: 1 });
+  });
+
+  it('serializes a conditional clear and a later write', async () => {
+    stored = JSON.stringify({ path: '/a', startedAt: 1 });
+    let finishRemove!: () => void;
+    let removing!: () => void;
+    const removingStarted = new Promise<void>((resolve) => {
+      removing = resolve;
+    });
+    storage.removeItem.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          removing();
+          finishRemove = () => {
+            stored = null;
+            resolve();
+          };
+        }),
+    );
+    const clear = clearPendingRecording('/a');
+    await removingStarted;
+    const write = markRecordingStarted({ path: '/b', startedAt: 2 });
+    expect(storage.setItem).not.toHaveBeenCalled();
+    finishRemove();
+    await Promise.all([clear, write]);
+    expect(JSON.parse(stored!)).toEqual({ path: '/b', startedAt: 2 });
+  });
+
+  it('serializes invalid-marker cleanup and a later write', async () => {
+    stored = 'invalid';
+    let finishRemove!: () => void;
+    let removing!: () => void;
+    const removingStarted = new Promise<void>((resolve) => {
+      removing = resolve;
+    });
+    storage.removeItem.mockImplementationOnce(
+      () =>
+        new Promise<void>((resolve) => {
+          removing();
+          finishRemove = () => {
+            stored = null;
+            resolve();
+          };
+        }),
+    );
+    const read = readPendingRecording();
+    await removingStarted;
+    const write = markRecordingStarted({ path: '/b', startedAt: 2 });
+    expect(storage.setItem).not.toHaveBeenCalled();
+    finishRemove();
+    await Promise.all([read, write]);
+    expect(JSON.parse(stored!)).toEqual({ path: '/b', startedAt: 2 });
+  });
+
+  it('keeps the queue usable after a storage failure', async () => {
+    storage.getItem.mockRejectedValueOnce(new Error('unavailable'));
+    await expect(readPendingRecording()).rejects.toThrow('unavailable');
+    await markRecordingStarted({ path: '/a', startedAt: 1 });
+    expect(JSON.parse(stored!)).toEqual({ path: '/a', startedAt: 1 });
   });
 });
