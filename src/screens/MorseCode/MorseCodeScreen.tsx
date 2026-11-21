@@ -1,7 +1,9 @@
 import React from 'react';
+import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
 import ToolList from '../../components/ToolList';
 import { ToolType } from '../../types/common-types';
+import MorseHero from './MorseHero';
 
 const morseCodeTools: ToolType[] = [
   {
@@ -33,7 +35,9 @@ const morseCodeTools: ToolType[] = [
 /**
  * Renders the Morse Code screen.
  *
- * A menu: the shared stack frame over the module's tools as grouped rows.
+ * Today's character (see `MorseHero`) over the screen's tools as grouped
+ * rows, laid out like a module screen: hero, then a "Tools" label, then the
+ * list.
  * `scrollable={false}` because `StackScreen` already scrolls, and two nested
  * scroll views would fight each other.
  *
@@ -42,6 +46,8 @@ const morseCodeTools: ToolType[] = [
 export default function MorseCodeScreen() {
   return (
     <StackScreen title="Morse Code">
+      <MorseHero />
+      <SectionEyebrow>Tools</SectionEyebrow>
       <ToolList tools={morseCodeTools} scrollable={false} />
     </StackScreen>
   );
