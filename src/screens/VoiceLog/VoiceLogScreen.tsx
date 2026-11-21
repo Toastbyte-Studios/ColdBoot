@@ -108,7 +108,7 @@ export default observer(function VoiceLogScreen() {
   };
 
   return (
-    <StackScreen title="Voice Logs">
+    <StackScreen title="Voice Logs" keyboardShouldPersistTaps="handled">
       <View style={styles.column}>
         <RecordingControls
           status={recorder.status}
