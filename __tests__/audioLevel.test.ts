@@ -7,6 +7,8 @@ import {
   addWaveformSample,
   METERING_FULL_SCALE,
   normalizeMeteringLevel,
+  parseStoredWaveform,
+  serializeWaveform,
   WAVEFORM_BUCKET_MS,
 } from '../src/utils/audioLevel';
 
@@ -98,5 +100,31 @@ describe('addWaveformSample', () => {
 
   test('a full-scale reading is what the waveform scales to', () => {
     expect(normalizeMeteringLevel(0)).toBeCloseTo(METERING_FULL_SCALE, 5);
+  });
+});
+
+describe('stored waveforms', () => {
+  test('round-trip as whole numbers', () => {
+    const stored = serializeWaveform([1.4, 2.6, 75]);
+    expect(stored).toBe('[1,3,75]');
+    expect(parseStoredWaveform(stored)).toEqual([1, 3, 75]);
+  });
+
+  test('none is stored as null', () => {
+    expect(serializeWaveform(undefined)).toBeNull();
+    expect(serializeWaveform([])).toBeNull();
+  });
+
+  test.each([null, undefined, 5, '', 'x', '{}', '[]', '[1,null]', '[1,"2"]'])(
+    'reads %p as none',
+    (raw) => {
+      expect(parseStoredWaveform(raw)).toBeUndefined();
+    },
+  );
+
+  test('caps a very long waveform', () => {
+    const long = Array.from({ length: 1000 }, () => 1);
+    expect(JSON.parse(serializeWaveform(long)!)).toHaveLength(600);
+    expect(parseStoredWaveform(JSON.stringify(long))).toHaveLength(600);
   });
 });

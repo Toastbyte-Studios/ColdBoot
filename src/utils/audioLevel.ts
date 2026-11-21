@@ -71,3 +71,42 @@ export function addWaveformSample(
   next[index] = Math.max(current ?? 0, level);
   return next;
 }
+
+/** The most bars a stored waveform keeps; longer input is cut. */
+const MAX_STORED_BARS = 600;
+
+/**
+ * A waveform as stored in the notes table: a JSON list of whole numbers, or
+ * null when there is none.
+ */
+export function serializeWaveform(
+  waveform: readonly number[] | undefined,
+): string | null {
+  if (!waveform || waveform.length === 0) return null;
+  return JSON.stringify(
+    waveform.slice(0, MAX_STORED_BARS).map((level) => Math.round(level)),
+  );
+}
+
+/**
+ * Reads a stored waveform. Anything but a list of finite numbers gives
+ * undefined: the card then draws no waveform rather than a broken one.
+ *
+ * @param raw - The `waveform` column value.
+ */
+export function parseStoredWaveform(raw: unknown): number[] | undefined {
+  if (typeof raw !== 'string' || raw === '') return undefined;
+  try {
+    const parsed: unknown = JSON.parse(raw);
+    if (
+      !Array.isArray(parsed) ||
+      parsed.length === 0 ||
+      !parsed.every((level) => typeof level === 'number' && isFinite(level))
+    ) {
+      return undefined;
+    }
+    return (parsed as number[]).slice(0, MAX_STORED_BARS);
+  } catch {
+    return undefined;
+  }
+}
