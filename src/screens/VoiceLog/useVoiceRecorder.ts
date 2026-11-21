@@ -17,7 +17,7 @@ import {
   clearPendingRecording,
   markRecordingStarted,
   newRecordingPath,
-} from './pendingRecording';
+} from '../../utils/pendingRecording';
 import type { RecordingStatus } from './components/RecordingControls';
 
 /** How often the recorder reports position and level, in seconds. */

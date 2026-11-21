@@ -15,6 +15,13 @@ import {
   deleteAttachmentFiles,
   resolveOwnedAttachmentPath,
 } from '../utils/noteAttachments';
+import { readPendingRecordingStrict } from '../utils/pendingRecording';
+import {
+  cleanUpOrphanedRecordings,
+  fileNameOf,
+  RecordingCleanupResult,
+} from '../utils/recordingCleanup';
+import { withRecordingMaintenanceLock } from '../utils/recordingMaintenanceLock';
 import { formatTime } from '../utils/timeFormat';
 
 let SQLite: SQLiteStatic | null = null;
@@ -322,48 +329,94 @@ export class NotesStore {
      */
     locate?: boolean;
   }): Promise<Note> {
-    const now = params.createdAt ?? Date.now();
-    const timeStr = formatTime(new Date(now));
+    return withRecordingMaintenanceLock(async () => {
+      const now = params.createdAt ?? Date.now();
+      const timeStr = formatTime(new Date(now));
 
-    const note: Note = {
-      id: this.generateId(),
-      createdAt: now,
-      category: 'Voice Logs',
-      type: 'voice',
-      title: `Voice Log – ${timeStr}`,
-      text: params.transcription ?? 'Audio only',
-      bookmarked: false,
-      sketchDataUri: undefined,
-      photoUris: [],
-      audioUri: params.audioUri,
-      transcription: params.transcription,
-      duration: params.duration,
-      ...(params.waveform && params.waveform.length > 0
-        ? { waveform: params.waveform.map((level) => Math.round(level)) }
-        : {}),
-    };
+      const note: Note = {
+        id: this.generateId(),
+        createdAt: now,
+        category: 'Voice Logs',
+        type: 'voice',
+        title: `Voice Log – ${timeStr}`,
+        text: params.transcription ?? 'Audio only',
+        bookmarked: false,
+        sketchDataUri: undefined,
+        photoUris: [],
+        audioUri: params.audioUri,
+        transcription: params.transcription,
+        duration: params.duration,
+        ...(params.waveform && params.waveform.length > 0
+          ? { waveform: params.waveform.map((level) => Math.round(level)) }
+          : {}),
+      };
 
-    runInAction(() => {
-      this.notes.unshift(note);
-    });
-    try {
-      await this.persistNote(note);
-    } catch (error) {
-      // The caller deletes the audio file on failure; don't leave a row in
-      // memory pointing at it.
       runInAction(() => {
-        this.notes = this.notes.filter((n) => n.id !== note.id);
+        this.notes.unshift(note);
       });
-      throw error;
-    }
+      try {
+        await this.persistNote(note);
+      } catch (error) {
+        // The caller deletes the audio file on failure; don't leave a row in
+        // memory pointing at it.
+        runInAction(() => {
+          this.notes = this.notes.filter((n) => n.id !== note.id);
+        });
+        throw error;
+      }
 
-    // The row is written before the GPS fix, not after: waiting for a fix
-    // held the save (and the user) for up to 5 s, and an app kill in that
-    // window lost the recording. The location is added when it arrives.
-    if (params.locate !== false) {
-      this.attachCurrentLocation(note.id).catch(() => {});
-    }
-    return note;
+      // The row is written before the GPS fix, not after: waiting for a fix
+      // held the save (and the user) for up to 5 s, and an app kill in that
+      // window lost the recording. The location is added when it arrives.
+      if (params.locate !== false) {
+        this.attachCurrentLocation(note.id).catch(() => {});
+      }
+      return note;
+    });
+  }
+
+  /**
+   * Deletes recordings left on disk by earlier builds that no note points
+   * at (see `utils/recordingCleanup`). Runs once per install; safe to call on
+   * every launch.
+   *
+   * Which files are in use is read from the database itself, not from
+   * `notes`: if the database didn't open, `notes` may be empty or partial,
+   * and every recording would look unused, so nothing is swept. A
+   * recording waiting to be recovered after a crash is kept too.
+   *
+   * @returns What was deleted, or `null` if nothing ran.
+   */
+  async cleanUpOrphanedRecordings(): Promise<RecordingCleanupResult | null> {
+    return withRecordingMaintenanceLock(async () => {
+      try {
+        await this.initNotesDb();
+        if (!this.notesDb) return null;
+        const res = await this.notesDb.executeSql(
+          'SELECT audioUri FROM notes WHERE audioUri IS NOT NULL',
+        );
+        const referencedFileNames = new Set<string>();
+        const rows = res[0].rows;
+        for (let i = 0; i < rows.length; i++) {
+          const uri: unknown = rows.item(i).audioUri;
+          if (typeof uri === 'string' && uri) {
+            referencedFileNames.add(fileNameOf(uri));
+          }
+        }
+        const pending = await readPendingRecordingStrict();
+        return await cleanUpOrphanedRecordings({
+          referencedFileNames,
+          keepPaths: new Set(
+            pending
+              ? [resolveOwnedAttachmentPath(pending.path) ?? pending.path]
+              : [],
+          ),
+        });
+      } catch (error) {
+        console.warn('Orphaned recording cleanup did not run:', error);
+        return null;
+      }
+    });
   }
 
   /**

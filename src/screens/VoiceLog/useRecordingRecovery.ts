@@ -7,7 +7,7 @@ import {
   clearPendingRecording,
   PendingRecording,
   readPendingRecording,
-} from './pendingRecording';
+} from '../../utils/pendingRecording';
 
 /** Shorter than this, a leftover file is treated as nothing worth keeping. */
 const MIN_RECOVERABLE_SECONDS = 0.5;
