@@ -10,13 +10,15 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Alert, Platform, StyleSheet, View } from 'react-native';
 import SectionEyebrow from '../../components/SectionEyebrow';
 import StackScreen from '../../components/StackScreen';
-import { useNotesStore, useSettingsStore } from '../../stores';
+import { useNotesStore, useSettingsStore, useStores } from '../../stores';
 import { VOICE_LOG_LENGTHS } from '../../stores/SettingsStore';
 import { SCREEN_GUTTER, SPACING } from '../../theme';
 import { WAVEFORM_BARS } from '../../utils/audioLevel';
 import EmptyState from './components/EmptyState';
 import RecordingControls from './components/RecordingControls';
+import RecoveryNotice from './components/RecoveryNotice';
 import VoiceLogCard from './components/VoiceLogCard';
+import { useRecordingRecovery } from './useRecordingRecovery';
 import { useVoiceLogPlayer } from './useVoiceLogPlayer';
 import { RecordedVoiceLog, useVoiceRecorder } from './useVoiceRecorder';
 
@@ -38,6 +40,8 @@ const MAP_RADIUS_MILES = 0.25;
  * - Leaving while recording (the swipe, Back, the logo, a tab) stops and
  *   saves first, then leaves
  * - Timestamp saved at once; GPS location added when a fix arrives
+ * - Going to the background saves a recording in progress; one cut off by
+ *   the app closing is offered back on the next visit if its file plays
  * - Play, pause and seek saved logs (tap the waveform)
  * - Rename a log, see where it was recorded and open the Map there, delete
  *
@@ -45,6 +49,7 @@ const MAP_RADIUS_MILES = 0.25;
  */
 export default observer(function VoiceLogScreen() {
   const notes = useNotesStore();
+  const rootStore = useStores();
   const settings = useSettingsStore();
   const maxDurationMs = settings.voiceLogMaxSeconds * 1000;
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
@@ -60,6 +65,17 @@ export default observer(function VoiceLogScreen() {
     [notes],
   );
 
+  // A recording cut off by the app closing, offered back once.
+  const recovered = useRecordingRecovery({
+    isSaved: async (path) => {
+      await rootStore.startupPromise;
+      return notes.hasSavedAudioAttachment(path);
+    },
+    save: ({ audioUri, duration, createdAt }) =>
+      notes.createVoiceLog({ audioUri, duration, createdAt, locate: false }),
+    onSaved: setLastSavedId,
+  });
+
   const recorder = useVoiceRecorder({
     maxDurationMs,
     bucketMs: maxDurationMs / WAVEFORM_BARS,
@@ -67,12 +83,13 @@ export default observer(function VoiceLogScreen() {
     onSaved: setLastSavedId,
     // Playback would be picked up by the microphone.
     onWillStart: player.stop,
+    onUnsettled: recovered.retry,
   });
 
   // Leaving mid-recording saves the recording first. The leave is held until
   // the recorder is idle again (and so no longer preventing removal);
   // dispatching it from the save callback would be blocked a second time.
-  usePreventRemove(recorder.status !== 'idle', ({ data }) => {
+  usePreventRemove(recorder.status !== 'idle' || recovered.busy, ({ data }) => {
     if (pendingLeave) return;
     player.stop();
     setPendingLeave(data.action);
@@ -80,11 +97,11 @@ export default observer(function VoiceLogScreen() {
   });
 
   useEffect(() => {
-    if (pendingLeave && recorder.status === 'idle') {
+    if (pendingLeave && recorder.status === 'idle' && !recovered.busy) {
       setPendingLeave(null);
       navigation.dispatch(pendingLeave);
     }
-  }, [navigation, pendingLeave, recorder.status]);
+  }, [navigation, pendingLeave, recorder.status, recovered.busy]);
 
   const voiceLogs = notes.notes.filter(
     (note) => note.category === 'Voice Logs',
@@ -112,6 +129,16 @@ export default observer(function VoiceLogScreen() {
   return (
     <StackScreen title="Voice Logs">
       <View style={styles.column}>
+        {recovered.recovery ? (
+          <RecoveryNotice
+            recovery={recovered.recovery}
+            busy={recovered.busy}
+            onSave={recovered.keep}
+            onDiscard={recovered.discard}
+            onDismiss={recovered.dismiss}
+            onRetry={recovered.retry}
+          />
+        ) : null}
         <RecordingControls
           status={recorder.status}
           elapsedMs={recorder.elapsedMs}
@@ -120,8 +147,10 @@ export default observer(function VoiceLogScreen() {
           waveformSlots={WAVEFORM_BARS}
           lengthOptions={VOICE_LOG_LENGTHS}
           onChangeMaxLength={settings.setVoiceLogMaxSeconds}
-          disabled={busy || pendingLeave !== null}
-          onStartRecording={recorder.start}
+          disabled={busy || pendingLeave !== null || recovered.blocked}
+          onStartRecording={() => {
+            if (!recovered.blocked) recorder.start();
+          }}
           onStopRecording={recorder.stop}
         />
 

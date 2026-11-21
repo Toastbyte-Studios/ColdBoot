@@ -314,8 +314,15 @@ export class NotesStore {
     duration: number;
     transcription?: string;
     waveform?: readonly number[];
+    /** When it was recorded, if not now (a recording recovered later). */
+    createdAt?: number;
+    /**
+     * Add the current location once saved. Off for a recording recovered
+     * later, which wasn't made where the phone is now. @default true
+     */
+    locate?: boolean;
   }): Promise<Note> {
-    const now = Date.now();
+    const now = params.createdAt ?? Date.now();
     const timeStr = formatTime(new Date(now));
 
     const note: Note = {
@@ -353,7 +360,9 @@ export class NotesStore {
     // The row is written before the GPS fix, not after: waiting for a fix
     // held the save (and the user) for up to 5 s, and an app kill in that
     // window lost the recording. The location is added when it arrives.
-    this.attachCurrentLocation(note.id).catch(() => {});
+    if (params.locate !== false) {
+      this.attachCurrentLocation(note.id).catch(() => {});
+    }
     return note;
   }
 
@@ -779,6 +788,25 @@ export class NotesStore {
     runInAction(() => {
       this.notes = loaded;
     });
+  }
+
+  /** Checks persisted audio references without waiting for the notes list to load. */
+  async hasSavedAudioAttachment(path: string): Promise<boolean> {
+    if (!this.notesDb) throw new Error('Notes database is unavailable');
+    const target = resolveOwnedAttachmentPath(path) ?? path;
+    const matches = (uri: unknown) =>
+      typeof uri === 'string' &&
+      (resolveOwnedAttachmentPath(uri) ?? uri.replace(/^file:\/\//, '')) ===
+        target;
+    if (this.notes.some((note) => matches(note.audioUri))) return true;
+    const result = await this.notesDb.executeSql(
+      'SELECT audioUri FROM notes WHERE audioUri IS NOT NULL',
+    );
+    const rows = result[0].rows;
+    for (let i = 0; i < rows.length; i++) {
+      if (matches(rows.item(i).audioUri)) return true;
+    }
+    return false;
   }
 
   /**

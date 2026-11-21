@@ -673,7 +673,8 @@ const SYNTHETIC_TOOL_ENTRIES: ReferenceEntryType[] = [
     do_not: [],
     watch_for: [],
     notes: [
-      'Leaving the screen while recording saves the recording first',
+      'Leaving the screen or switching away from the app while recording saves the recording first',
+      'If the app closes mid-recording, Voice Log offers the recording back next time when it can still be played',
       'Requires microphone permission on first use',
     ],
     related_screen: 'VoiceLog',

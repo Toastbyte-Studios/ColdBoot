@@ -210,4 +210,20 @@ describe('NotesStore location capture', () => {
 
     expect(store.notes).toHaveLength(0);
   });
+
+  it('createVoiceLog keeps a recovered log at its own time, without locating it', async () => {
+    const recordedAt = new Date(2026, 10, 20, 9, 5).getTime();
+    const saved = await store.createVoiceLog({
+      audioUri: 'file:///recovered.m4a',
+      duration: 6,
+      createdAt: recordedAt,
+      locate: false,
+    });
+    await flushBackgroundWork();
+
+    expect(saved.createdAt).toBe(recordedAt);
+    expect(saved.title).toMatch(/9:05/);
+    expect(mockRequestForegroundLocationPermission).not.toHaveBeenCalled();
+    expect(geo.getCurrentPosition).not.toHaveBeenCalled();
+  });
 });
