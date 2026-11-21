@@ -7,6 +7,7 @@ import {
   useSettingsStore,
 } from '../../stores/StoreContext';
 import { getValidRegionMetadata } from '../../utils/offlinePacks';
+import { hasCommsPlan } from '../EmergencyPlan/planHero';
 import { ReadinessItem, readinessItems } from './readiness';
 
 /**
@@ -46,14 +47,7 @@ export function useReadinessItems(): ReadinessItem[] {
     plan: {
       contacts: plan.contacts.length,
       rallyPoints: plan.rallyPoints.length,
-      hasCommsPlan:
-        plan.communicationPlan.updatedAt > 0 &&
-        [
-          plan.communicationPlan.whoCallsWhom,
-          plan.communicationPlan.ifPhonesDown,
-          plan.communicationPlan.outOfAreaContact,
-          plan.communicationPlan.checkInSchedule,
-        ].some((value) => value.trim().length > 0),
+      hasCommsPlan: hasCommsPlan(plan.communicationPlan),
     },
   });
 }
