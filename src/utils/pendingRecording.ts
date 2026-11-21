@@ -47,6 +47,13 @@ export async function markRecordingStarted(
   }
 }
 
+/** Reads the marker without clearing it; errors must abort destructive work. */
+export async function readPendingRecordingStrict(): Promise<PendingRecording | null> {
+  const raw = await AsyncStorage.getItem(KEY);
+  if (raw === null) return null;
+  return PendingRecordingSchema.parse(JSON.parse(raw));
+}
+
 /** The marker left by a recording that never finished, if any. */
 export async function readPendingRecording(): Promise<PendingRecording | null> {
   try {

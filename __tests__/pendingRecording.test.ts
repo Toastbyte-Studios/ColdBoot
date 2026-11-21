@@ -9,6 +9,7 @@ import {
   markRecordingStarted,
   newRecordingPath,
   readPendingRecording,
+  readPendingRecordingStrict,
 } from '../src/utils/pendingRecording';
 
 const storage = jest.mocked(AsyncStorage);
@@ -42,7 +43,34 @@ describe('pendingRecording', () => {
 
   it('has no marker by default', async () => {
     await expect(readPendingRecording()).resolves.toBeNull();
+    await expect(readPendingRecordingStrict()).resolves.toBeNull();
   });
+
+  it('reads a valid marker strictly', async () => {
+    stored = JSON.stringify({ path: '/a.m4a', startedAt: 1 });
+    await expect(readPendingRecordingStrict()).resolves.toEqual({
+      path: '/a.m4a',
+      startedAt: 1,
+    });
+  });
+
+  it('propagates storage read failures without clearing the marker', async () => {
+    storage.getItem.mockRejectedValue(new Error('storage unavailable'));
+    await expect(readPendingRecordingStrict()).rejects.toThrow(
+      'storage unavailable',
+    );
+    expect(storage.removeItem).not.toHaveBeenCalled();
+  });
+
+  it.each(['', 'not json', '{"path":""}', '{"path":"/a","startedAt":"x"}'])(
+    'rejects an invalid marker without clearing it (%p)',
+    async (raw) => {
+      stored = raw;
+      await expect(readPendingRecordingStrict()).rejects.toThrow();
+      expect(storage.removeItem).not.toHaveBeenCalled();
+      expect(stored).toBe(raw);
+    },
+  );
 
   it.each(['not json', '{"path":""}', '{"path":"/a","startedAt":"x"}'])(
     'drops an unreadable marker (%p)',

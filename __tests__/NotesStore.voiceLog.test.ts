@@ -295,6 +295,40 @@ describe('NotesStore voice logs', () => {
       expect(fs.unlink).not.toHaveBeenCalled();
     });
 
+    it('retries safely after a pending marker read fails', async () => {
+      const path = `/tmp/documents/voice-log_${UUID}.m4a`;
+      let failRead = true;
+      storage.getItem.mockImplementation(async (key: string) => {
+        if (key !== 'voiceLog.pendingRecording') return null;
+        if (failRead) throw new Error('storage unavailable');
+        return JSON.stringify({ path, startedAt: 1 });
+      });
+
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toBeNull();
+      expect(storage.removeItem).not.toHaveBeenCalled();
+      expect(storage.setItem).not.toHaveBeenCalled();
+      expect(fs.readDir).not.toHaveBeenCalled();
+      expect(fs.unlink).not.toHaveBeenCalled();
+
+      failRead = false;
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toMatchObject({
+        deleted: 2,
+      });
+      expect(fs.unlink).not.toHaveBeenCalledWith(path);
+      expect(storage.setItem).toHaveBeenCalled();
+    });
+
+    it('does not sweep or clear an invalid pending marker', async () => {
+      storage.getItem.mockImplementation(async (key: string) =>
+        key === 'voiceLog.pendingRecording' ? 'not json' : null,
+      );
+      await expect(store.cleanUpOrphanedRecordings()).resolves.toBeNull();
+      expect(storage.removeItem).not.toHaveBeenCalled();
+      expect(storage.setItem).not.toHaveBeenCalled();
+      expect(fs.readDir).not.toHaveBeenCalled();
+      expect(fs.unlink).not.toHaveBeenCalled();
+    });
+
     it('waits for a recovered recording to be saved before reading references', async () => {
       await store.initNotesDb();
       const path = `/tmp/documents/voice-log_${UUID}.m4a`;

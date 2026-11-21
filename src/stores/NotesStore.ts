@@ -15,7 +15,7 @@ import {
   deleteAttachmentFiles,
   resolveOwnedAttachmentPath,
 } from '../utils/noteAttachments';
-import { readPendingRecording } from '../utils/pendingRecording';
+import { readPendingRecordingStrict } from '../utils/pendingRecording';
 import {
   cleanUpOrphanedRecordings,
   fileNameOf,
@@ -403,7 +403,7 @@ export class NotesStore {
             referencedFileNames.add(fileNameOf(uri));
           }
         }
-        const pending = await readPendingRecording();
+        const pending = await readPendingRecordingStrict();
         return await cleanUpOrphanedRecordings({
           referencedFileNames,
           keepPaths: new Set(
