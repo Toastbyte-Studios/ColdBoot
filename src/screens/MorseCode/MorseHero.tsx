@@ -4,13 +4,14 @@ import {
   useNavigation,
 } from '@react-navigation/native';
 import { observer } from 'mobx-react-lite';
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import AppButton from '../../components/AppButton';
 import ModuleHero from '../../components/ModuleHero';
+import { useLocalDate } from '../../hooks/useLocalDate';
 import { useTheme } from '../../hooks/useTheme';
 import { useSignalingStore } from '../../stores/StoreContext';
-import { characterOfTheDay, morseSpoken } from './morseHero';
+import { characterOfTheDay, morseSpoken } from './characterOfTheDay';
 
 /** Dots and dashes as the hero draws them, sized to sit beside the headline. */
 const DOT = 7;
@@ -50,14 +51,8 @@ const MorseHero = observer(() => {
   const COLORS = useTheme();
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const signaling = useSignalingStore();
-  const [today, setToday] = useState(() => new Date());
-
-  // The character changes at local midnight; re-check when the screen
-  // comes back into view, as it may have been open in the background.
-  useEffect(
-    () => navigation.addListener('focus', () => setToday(new Date())),
-    [navigation],
-  );
+  // Rolls over at local midnight, even with the screen left open.
+  const today = useLocalDate();
 
   const { char, morse, sound } = characterOfTheDay(today);
   const sending = signaling.isMorseTransmitting;

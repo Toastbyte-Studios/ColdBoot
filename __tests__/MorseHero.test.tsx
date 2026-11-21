@@ -1,15 +1,14 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import MorseHero from '../src/screens/MorseCode/MorseHero';
 import {
   characterOfTheDay,
   KOCH_ORDER,
   morseSound,
   morseSpoken,
-} from '../src/screens/MorseCode/morseHero';
+} from '../src/screens/MorseCode/characterOfTheDay';
+import MorseHero from '../src/screens/MorseCode/MorseHero';
 
 const mockNavigate = jest.fn();
-const mockAddListener = jest.fn(() => () => {});
 const mockSignaling = {
   isMorseTransmitting: false,
   transmitMorseMessage: jest.fn(),
@@ -19,7 +18,7 @@ const mockSignaling = {
 jest.mock('@react-navigation/native', () => ({
   useNavigation: () => ({
     navigate: mockNavigate,
-    addListener: mockAddListener,
+    addListener: jest.fn(() => () => {}),
   }),
 }));
 jest.mock('../src/stores/StoreContext', () => ({
@@ -36,7 +35,7 @@ jest.mock('../src/components/ScaledText', () => ({
 }));
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
-describe('morseHero', () => {
+describe('characterOfTheDay', () => {
   it('says a pattern the way operators learn it', () => {
     expect(morseSound('-.-')).toBe('dah-di-dah');
     expect(morseSound('...')).toBe('di-di-dit');
@@ -142,8 +141,16 @@ describe('MorseHero', () => {
     expect(mockNavigate).toHaveBeenCalledWith('MorseTrainer');
   });
 
-  it('re-checks the day when the screen regains focus', async () => {
+  it('moves to the next character at local midnight', async () => {
+    jest.setSystemTime(new Date(2026, 10, 21, 23, 59, 30));
     await render();
-    expect(mockAddListener).toHaveBeenCalledWith('focus', expect.any(Function));
+    const before = characterOfTheDay(new Date(2026, 10, 21));
+    const after = characterOfTheDay(new Date(2026, 10, 22));
+    expect(texts()).toContain(before.char);
+    await ReactTestRenderer.act(async () => {
+      jest.advanceTimersByTime(60_000);
+    });
+    expect(texts()).toContain(after.char);
+    expect(texts()).not.toContain(before.char);
   });
 });
