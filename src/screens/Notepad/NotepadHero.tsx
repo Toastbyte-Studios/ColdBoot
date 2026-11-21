@@ -7,8 +7,9 @@ import { observer } from 'mobx-react-lite';
 import React, { useEffect, useState } from 'react';
 import AppButton from '../../components/AppButton';
 import ModuleHero from '../../components/ModuleHero';
+import { useLocalDate } from '../../hooks/useLocalDate';
 import { useNotesStore } from '../../stores';
-import { latestNote, noteCounts, noteHeadline, whenText } from './notepadHero';
+import { latestNote, noteCounts, noteHeadline, whenText } from './latestNote';
 
 const countText = (count: number) => (count === 0 ? 'None' : String(count));
 
@@ -21,13 +22,16 @@ const countText = (count: number) => (count === 0 ? 'None' : String(count));
 const NotepadHero = observer(() => {
   const navigation = useNavigation<NavigationProp<ParamListBase>>();
   const notesStore = useNotesStore();
-  const [now, setNow] = useState(() => new Date());
-
-  // "Today" and "this week" move with the clock, not with the store.
+  // "Today" and "this week" move with the clock, not with the store: re-read
+  // it at midnight, on returning to the app, and when the screen regains
+  // focus.
+  const localDate = useLocalDate();
+  const [focusedAt, setFocusedAt] = useState(0);
   useEffect(
-    () => navigation.addListener('focus', () => setNow(new Date())),
+    () => navigation.addListener('focus', () => setFocusedAt(Date.now())),
     [navigation],
   );
+  const now = new Date(Math.max(localDate.getTime(), focusedAt));
 
   const latest = latestNote(notesStore.notes);
   const counts = noteCounts(notesStore.notes, now.getTime());

@@ -1,12 +1,12 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import NotepadHero from '../src/screens/Notepad/NotepadHero';
 import {
   latestNote,
   noteCounts,
   noteHeadline,
   whenText,
-} from '../src/screens/Notepad/notepadHero';
+} from '../src/screens/Notepad/latestNote';
+import NotepadHero from '../src/screens/Notepad/NotepadHero';
 import type { Note } from '../src/stores/NotesStore';
 
 const DAY = 24 * 60 * 60 * 1000;
@@ -50,7 +50,7 @@ jest.mock('../src/components/ScaledText', () => ({
 }));
 jest.mock('react-native-vector-icons/Ionicons', () => 'Ionicons');
 
-describe('notepadHero', () => {
+describe('latestNote', () => {
   it('finds the newest note, skipping voice logs', () => {
     const notes = [
       note('old', { createdAt: 1 }),

@@ -44,8 +44,15 @@ export function whenText(createdAt: number, now: Date): string {
     now.getMonth(),
     now.getDate(),
   ).getTime();
+  // From the calendar, not 24 hours back: days are 23 or 25 hours long at
+  // daylight-saving changes.
+  const startOfYesterday = new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate() - 1,
+  ).getTime();
   if (createdAt >= startOfToday) return `Today, ${formatTime(date)}`;
-  if (createdAt >= startOfToday - DAY_MS) {
+  if (createdAt >= startOfYesterday) {
     return `Yesterday, ${formatTime(date)}`;
   }
   return formatDateTime(date);
